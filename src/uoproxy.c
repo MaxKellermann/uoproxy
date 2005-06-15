@@ -101,7 +101,19 @@ static int getaddrinfo_helper(const char *host_and_port, int default_port,
 }
 
 static void packet_from_client(struct connection *c,
-                               struct packet *packet) {
+                               const unsigned char *p,
+                               size_t length) {
+    assert(length > 0);
+
+    switch (p[0]) {
+    case PCK_GameLogin:
+        c->compressed = 1;
+        break;
+    }
+}
+
+static void recv_from_client(struct connection *c,
+                             struct packet *packet) {
     unsigned char *p, *next;
     size_t length;
 
@@ -129,14 +141,14 @@ static void packet_from_client(struct connection *c,
     if (packet->length < 3)
         return;
 
-    while (next + 3 <= packet->data + packet->length) {
+    while (next < packet->data + packet->length) {
         printf("from client: %02x %02x %02x\n",
                next[0], next[1], next[2]);
 
         p = next;
 
         length = packet_lengths[p[0]];
-        if (length == 0)
+        if (length == 0 && next + 3 <= packet->data + packet->length)
             length = ntohs(*(uint16_t*)(p + 1));
         printf("length=%u\n", (unsigned)length);
         next = p + length;
@@ -146,16 +158,71 @@ static void packet_from_client(struct connection *c,
             return;
         }
 
-        switch (p[0]) {
-        case PCK_GameLogin:
-            c->compressed = 1;
-            break;
-        }
+        packet_from_client(c, p, length);
     }
 }
 
 static void packet_from_server(struct connection *c,
-                               struct packet *packet) {
+                               unsigned char *p,
+                               size_t length) {
+    assert(length > 0);
+
+    switch (p[0]) {
+        unsigned count, i, k;
+        struct server_info *server_info;
+        pid_t pid;
+
+    case 0xa8: /* AccountLoginAck */
+        if (length < 6 || p[3] != 0x5d)
+            return;
+
+        count = ntohs(*(uint16_t*)(p + 4));
+        printf("serverlist: %u servers\n", count);
+        if (length != 6 + count * sizeof(*server_info))
+            return;
+
+        server_info = (struct server_info*)(p + 6);
+        for (i = 0; i < count; i++, server_info++) {
+            k = ntohs(server_info->index);
+            if (k != i)
+                return;
+
+            printf("server %u: name=%s address=0x%08x\n",
+                   ntohs(server_info->index),
+                   server_info->name,
+                   ntohl(server_info->address));
+        }
+        break;
+
+    case 0x8c: /* PlayServerAck */
+        /* this packet tells the UO client where to connect; what
+           we do here is replace the server IP with our own one,
+           and accept incoming connections with a new proxy
+           process */
+
+        printf("play_ack: address=0x%08x port=%u\n",
+               ntohl(*(uint32_t*)(p + 1)),
+               ntohs(*(uint16_t*)(p + 5)));
+        pid = fork();
+        if (pid < 0) {
+            fprintf(stderr, "fork failed: %s", strerror(errno));
+            return;
+        }
+
+        if (pid == 0)
+            handle_incoming(c->local_ip,
+                            *(uint16_t*)(p + 5),
+                            *(uint32_t*)(p + 1),
+                            *(uint16_t*)(p + 5));
+
+        *(uint32_t*)(p + 1) = c->local_ip;
+
+        break;
+    }
+}
+
+static void recv_from_server(struct connection *c,
+                             struct packet *packet) {
     unsigned char *p, *next;
     size_t length;
 
@@ -168,14 +235,14 @@ static void packet_from_server(struct connection *c,
 
     next = packet->data;
 
-    while (next + 3 <= packet->data + packet->length) {
+    while (next < packet->data + packet->length) {
         printf("from server: %02x %02x %02x\n",
                next[0], next[1], next[2]);
 
         p = next;
 
         length = packet_lengths[p[0]];
-        if (length == 0)
+        if (length == 0 && next + 3 <= packet->data + packet->length)
             length = ntohs(*(uint16_t*)(p + 1));
         printf("length=%u\n", (unsigned)length);
         next = p + length;
@@ -185,58 +252,7 @@ static void packet_from_server(struct connection *c,
             return;
         }
 
-        switch (p[0]) {
-            unsigned count, i, k;
-            struct server_info *server_info;
-            pid_t pid;
-
-        case 0xa8: /* AccountLoginAck */
-            if (length < 6 || p[3] != 0x5d)
-                continue;
-
-            count = ntohs(*(uint16_t*)(p + 4));
-            printf("serverlist: %u servers\n", count);
-            if (length != 6 + count * sizeof(*server_info))
-                continue;
-
-            server_info = (struct server_info*)(p + 6);
-            for (i = 0; i < count; i++, server_info++) {
-                k = ntohs(server_info->index);
-                if (k != i)
-                    break;
-
-                printf("server %u: name=%s address=0x%08x\n",
-                       ntohs(server_info->index),
-                       server_info->name,
-                       ntohl(server_info->address));
-            }
-            break;
-
-        case 0x8c: /* PlayServerAck */
-            /* this packet tells the UO client where to connect; what
-               we do here is replace the server IP with our own one,
-               and accept incoming connections with a new proxy
-               process */
-
-            printf("play_ack: address=0x%08x port=%u\n",
-                   ntohl(*(uint32_t*)(p + 1)),
-                   ntohs(*(uint16_t*)(p + 5)));
-            pid = fork();
-            if (pid < 0) {
-                fprintf(stderr, "fork failed: %s", strerror(errno));
-                continue;
-            }
-
-            if (pid == 0)
-                handle_incoming(c->local_ip,
-                                *(uint16_t*)(p + 5),
-                                *(uint32_t*)(p + 1),
-                                *(uint16_t*)(p + 5));
-
-            *(uint32_t*)(p + 1) = c->local_ip;
-
-            break;
-        }
+        packet_from_server(c, p, length);
     }
 }
 
@@ -300,7 +316,7 @@ static void handle_connection(struct connection *c) {
 
                 if (nbytes > 0) {
                     packet1.length = (size_t)nbytes;
-                    packet_from_client(c, &packet1);
+                    recv_from_client(c, &packet1);
                 }
             }
         } else {
@@ -342,10 +358,10 @@ static void handle_connection(struct connection *c) {
                             fprintf(stderr, "decompress failed\n");
                         } else {
                             packet3.length = (size_t)nbytes;
-                            packet_from_server(c, &packet3);
+                            recv_from_server(c, &packet3);
                         }
                     } else {
-                        packet_from_server(c, &packet2);
+                        recv_from_server(c, &packet2);
                     }
                 }
             }
@@ -583,6 +599,6 @@ int main(int argc, char **argv) {
 
     freeaddrinfo(ai);
 
-    /* call main loop */    
+    /* call main loop */
     run_server(local_ip, local_port, remote_ip, remote_port);
 }
