@@ -243,7 +243,7 @@ static void handle_connection(struct connection *c) {
         if (packet1.length == 0) {
             if (FD_ISSET(c->client_socket, &rfds)) {
                 nbytes = recv(c->client_socket, packet1.data, sizeof(packet1.data), 0);
-                if (nbytes < 0) {
+                if (nbytes <= 0) {
                     printf("client disconnected\n");
                     exit(0);
                 }
@@ -274,7 +274,7 @@ static void handle_connection(struct connection *c) {
         if (packet2.length == 0) {
             if (FD_ISSET(c->server_socket, &rfds)) {
                 nbytes = recv(c->server_socket, packet2.data, sizeof(packet2.data), 0);
-                if (nbytes < 0) {
+                if (nbytes <= 0) {
                     printf("server disconnected\n");
                     exit(0);
                 }
