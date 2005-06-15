@@ -127,7 +127,7 @@ static void packet_from_client(struct connection *c,
 
     while (next + 3 <= packet->data + packet->length) {
         printf("from client: %02x %02x %02x\n",
-               next[0], next[1], next[2];
+               next[0], next[1], next[2]);
 
         p = next;
 
