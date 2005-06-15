@@ -58,6 +58,10 @@ struct server_info {
 static void usage(void)
      __attribute__ ((noreturn));
 
+static void handle_incoming(uint32_t local_ip, uint16_t local_port,
+                            uint32_t server_ip, uint16_t server_port)
+     __attribute__ ((noreturn));
+
 static void usage(void) {
     fprintf(stderr, "usage: uoproxy local:port server:port\n");
     exit(1);
@@ -150,10 +154,6 @@ static void packet_from_client(struct connection *c,
     }
 }
 
-static void run_server(uint32_t local_ip, uint16_t local_port,
-                       uint32_t server_ip, uint16_t server_port)
-     __attribute__ ((noreturn));
-
 static void packet_from_server(struct connection *c,
                                struct packet *packet) {
     unsigned char *p, *next;
@@ -228,10 +228,10 @@ static void packet_from_server(struct connection *c,
             }
 
             if (pid == 0)
-                run_server(c->local_ip,
-                           *(uint16_t*)(p + 5),
-                           *(uint32_t*)(p + 1),
-                           *(uint16_t*)(p + 5));
+                handle_incoming(c->local_ip,
+                                *(uint16_t*)(p + 5),
+                                *(uint32_t*)(p + 1),
+                                *(uint16_t*)(p + 5));
 
             *(uint32_t*)(p + 1) = c->local_ip;
 
@@ -434,6 +434,56 @@ static int setup_client_socket(uint32_t ip, uint16_t port) {
     return sockfd;
 }
 
+static void handle_incoming(uint32_t local_ip, uint16_t local_port,
+                            uint32_t server_ip, uint16_t server_port) {
+    int sockfd, ret;
+    fd_set rfds;
+    struct timeval tv;
+    struct sockaddr addr;
+    socklen_t addrlen = sizeof(addr);
+    struct connection c;
+
+    sockfd = setup_server_socket(local_ip, local_port);
+
+    tv.tv_sec = 10;
+    tv.tv_usec = 0;
+
+    FD_ZERO(&rfds);
+    FD_SET(sockfd, &rfds);
+
+    ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
+    if (ret < 0) {
+        fprintf(stderr, "select failed: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    if (ret <= 0) {
+        fprintf(stderr, "timeout\n");
+        exit(1);
+    }
+
+    ret = accept(sockfd, &addr, &addrlen);
+    if (ret < 0) {
+        fprintf(stderr, "accept failed: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    close(sockfd);
+
+    memset(&c, 0, sizeof(c));
+
+    c.local_ip = local_ip;
+    c.client_socket = ret;
+    c.server_socket = setup_client_socket(server_ip, server_port);
+
+    handle_connection(&c);
+}
+
+static void run_server(uint32_t local_ip, uint16_t local_port,
+                       uint32_t server_ip, uint16_t server_port)
+     __attribute__ ((noreturn));
+
 static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
     int sockfd, sockfd2;
@@ -464,7 +514,7 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
                 c.local_ip = local_ip;
                 c.client_socket = sockfd2;
                 c.server_socket = setup_client_socket(server_ip, server_port);
-                
+
                 handle_connection(&c);
             }
 
