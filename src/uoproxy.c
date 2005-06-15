@@ -67,6 +67,11 @@ static void usage(void) {
     exit(1);
 }
 
+static void signal_handler(int sig) {
+    (void)sig;
+    /* do nothing, just interrupt system calls */
+}
+
 static int getaddrinfo_helper(const char *host_and_port, int default_port,
                               const struct addrinfo *hints,
                               struct addrinfo **aip) {
@@ -274,6 +279,7 @@ static void handle_connection(struct connection *c) {
     fd_set rfds, wfds;
     struct packet packet1, packet2, packet3;
     ssize_t nbytes;
+    pid_t pid;
 
     printf("entering handle_connection\n");
 
@@ -309,90 +315,95 @@ static void handle_connection(struct connection *c) {
         }
 
         ret = select(ret + 1, &rfds, &wfds, NULL, NULL);
-        if (ret < 0) {
+        assert(ret != 0);
+        if (ret > 0) {
+            if (packet1.length == 0) {
+                if (FD_ISSET(c->client_socket, &rfds)) {
+                    nbytes = recv(c->client_socket, packet1.data, sizeof(packet1.data), 0);
+                    if (nbytes <= 0) {
+                        printf("client disconnected\n");
+                        exit(0);
+                    }
+
+                    if (nbytes > 0) {
+                        packet1.length = (size_t)nbytes;
+                        recv_from_client(c, &packet1);
+                    }
+                }
+            } else {
+                if (FD_ISSET(c->server_socket, &wfds)) {
+                    nbytes = send(c->server_socket, packet1.data, packet1.length, 0);
+                    if (nbytes < 0) {
+                        fprintf(stderr, "failed to write: %s\n",
+                                strerror(errno));
+                        exit(1);
+                    }
+
+                    if ((size_t)nbytes < packet1.length) {
+                        fprintf(stderr, "short write\n");
+                        exit(1);
+                    }
+
+                    packet1.length = 0;
+                }
+            }
+
+            if (packet2.length == 0) {
+                if (FD_ISSET(c->server_socket, &rfds)) {
+                    nbytes = recv(c->server_socket, packet2.data, sizeof(packet2.data), 0);
+                    if (nbytes <= 0) {
+                        printf("server disconnected\n");
+                        exit(0);
+                    }
+
+                    if (nbytes > 0) {
+                        packet2.length = (size_t)nbytes;
+
+                        if (c->compressed) {
+                            nbytes = uo_decompress(packet3.data, sizeof(packet3.data),
+                                                   packet2.data, packet2.length);
+                            fprintf(stderr, "decompressed %lu bytes to %ld\n",
+                                    (unsigned long)packet2.length,
+                                    (long)nbytes);
+                            if (nbytes < 0) {
+                                fprintf(stderr, "decompress failed\n");
+                            } else {
+                                packet3.length = (size_t)nbytes;
+                                recv_from_server(c, &packet3);
+                            }
+                        } else {
+                            recv_from_server(c, &packet2);
+                        }
+                    }
+                }
+            } else {
+                if (FD_ISSET(c->client_socket, &wfds)) {
+                    nbytes = send(c->client_socket, packet2.data, packet2.length, 0);
+                    if (nbytes < 0) {
+                        fprintf(stderr, "failed to write: %s\n",
+                                strerror(errno));
+                        exit(1);
+                    }
+
+                    if ((size_t)nbytes < packet2.length) {
+                        fprintf(stderr, "short write\n");
+                        exit(1);
+                    }
+
+                    packet2.length = 0;
+                }
+            }
+        } else if (errno != EINTR) {
             fprintf(stderr, "select failed: %s\n",
                     strerror(errno));
             exit(1);
         }
 
-        assert(ret > 0);
+        do {
+            int status;
 
-        if (packet1.length == 0) {
-            if (FD_ISSET(c->client_socket, &rfds)) {
-                nbytes = recv(c->client_socket, packet1.data, sizeof(packet1.data), 0);
-                if (nbytes <= 0) {
-                    printf("client disconnected\n");
-                    exit(0);
-                }
-
-                if (nbytes > 0) {
-                    packet1.length = (size_t)nbytes;
-                    recv_from_client(c, &packet1);
-                }
-            }
-        } else {
-            if (FD_ISSET(c->server_socket, &wfds)) {
-                nbytes = send(c->server_socket, packet1.data, packet1.length, 0);
-                if (nbytes < 0) {
-                    fprintf(stderr, "failed to write: %s\n",
-                            strerror(errno));
-                    exit(1);
-                }
-
-                if ((size_t)nbytes < packet1.length) {
-                    fprintf(stderr, "short write\n");
-                    exit(1);
-                }
-
-                packet1.length = 0;
-            }
-        }
-
-        if (packet2.length == 0) {
-            if (FD_ISSET(c->server_socket, &rfds)) {
-                nbytes = recv(c->server_socket, packet2.data, sizeof(packet2.data), 0);
-                if (nbytes <= 0) {
-                    printf("server disconnected\n");
-                    exit(0);
-                }
-
-                if (nbytes > 0) {
-                    packet2.length = (size_t)nbytes;
-
-                    if (c->compressed) {
-                        nbytes = uo_decompress(packet3.data, sizeof(packet3.data),
-                                               packet2.data, packet2.length);
-                        fprintf(stderr, "decompressed %lu bytes to %ld\n",
-                                (unsigned long)packet2.length,
-                                (long)nbytes);
-                        if (nbytes < 0) {
-                            fprintf(stderr, "decompress failed\n");
-                        } else {
-                            packet3.length = (size_t)nbytes;
-                            recv_from_server(c, &packet3);
-                        }
-                    } else {
-                        recv_from_server(c, &packet2);
-                    }
-                }
-            }
-        } else {
-            if (FD_ISSET(c->client_socket, &wfds)) {
-                nbytes = send(c->client_socket, packet2.data, packet2.length, 0);
-                if (nbytes < 0) {
-                    fprintf(stderr, "failed to write: %s\n",
-                            strerror(errno));
-                    exit(1);
-                }
-
-                if ((size_t)nbytes < packet2.length) {
-                    fprintf(stderr, "short write\n");
-                    exit(1);
-                }
-
-                packet2.length = 0;
-            }
-        }
+            pid = waitpid(-1, &status, WNOHANG);
+        } while (pid > 0);
     }
 }
 
@@ -515,6 +526,12 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
     int sockfd, sockfd2;
     pid_t pid;
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = signal_handler;
+
+    sigaction(SIGCHLD, &sa, NULL);
 
     sockfd = setup_server_socket(local_ip, local_port);
 
