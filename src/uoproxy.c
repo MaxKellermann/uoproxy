@@ -32,9 +32,14 @@
 #include <errno.h>
 #include <netdb.h>
 
+#include "compression.h"
+#include "packets.h"
+
 struct connection {
+    uint32_t seed;
     uint32_t local_ip, server_ip;
     int client_socket, server_socket;
+    int compressed;
 };
 
 struct packet {
@@ -48,10 +53,6 @@ struct server_info {
     char full;
     unsigned char timezone;
     uint32_t address;
-};
-
-static const size_t packet_lengths[0x100] = {
-    [0x8c] = 11,
 };
 
 static void usage(void)
@@ -97,9 +98,56 @@ static int getaddrinfo_helper(const char *host_and_port, int default_port,
 
 static void packet_from_client(struct connection *c,
                                struct packet *packet) {
-    (void)c;
+    unsigned char *p, *next;
+    size_t length;
 
-    printf("from client: %02x\n", packet->data[0]);
+    printf("packet from client: %u\n", (unsigned)packet->length);
+
+    next = packet->data;
+
+    if (c->seed == 0) {
+        if (packet->length < 4) {
+            fprintf(stderr, "malformed seed packet from client\n");
+            return;
+        }
+
+        c->seed = ntohl(*(uint32_t*)packet->data);
+        if (c->seed == 0) {
+            fprintf(stderr, "zero seed from client\n");
+            return;
+        }
+
+        printf("seed=%08x\n", c->seed);
+
+        next += 4;
+    }
+
+    if (packet->length < 3)
+        return;
+
+    while (next + 3 <= packet->data + packet->length) {
+        printf("from client: %02x %02x %02x\n",
+               next[0], next[1], next[2];
+
+        p = next;
+
+        length = packet_lengths[p[0]];
+        if (length == 0)
+            length = ntohs(*(uint16_t*)(p + 1));
+        printf("length=%u\n", length);
+        next = p + length;
+
+        if (length == 0 || next > packet->data + packet->length) {
+            fprintf(stderr, "malformed packet from client\n");
+            return;
+        }
+
+        switch (p[0]) {
+        case PCK_GameLogin:
+            c->compressed = 1;
+            break;
+        }
+    }
 }
 
 static void run_server(uint32_t local_ip, uint16_t local_port,
@@ -113,6 +161,8 @@ static void packet_from_server(struct connection *c,
 
     (void)c;
 
+    printf("packet from server: %u\n", (unsigned)packet->length);
+
     if (packet->length < 3)
         return;
 
@@ -120,17 +170,17 @@ static void packet_from_server(struct connection *c,
 
     while (next + 3 <= packet->data + packet->length) {
         printf("from server: %02x %02x %02x\n",
-               packet->data[0], packet->data[1], packet->data[2]);
+               next[0], next[1], next[2]);
 
         p = next;
 
-        length = packet_lengths[packet->data[0]];
+        length = packet_lengths[p[0]];
         if (length == 0)
             length = ntohs(*(uint16_t*)(p + 1));
         printf("length=%u\n", length);
         next = p + length;
 
-        if (next > packet->data + packet->length) {
+        if (length == 0 || next > packet->data + packet->length) {
             fprintf(stderr, "malformed packet from server\n");
             return;
         }
@@ -195,7 +245,7 @@ static void handle_connection(struct connection *c)
 static void handle_connection(struct connection *c) {
     int ret;
     fd_set rfds, wfds;
-    struct packet packet1, packet2;
+    struct packet packet1, packet2, packet3;
     ssize_t nbytes;
 
     printf("entering handle_connection\n");
@@ -281,7 +331,22 @@ static void handle_connection(struct connection *c) {
 
                 if (nbytes > 0) {
                     packet2.length = (size_t)nbytes;
-                    packet_from_server(c, &packet2);
+
+                    if (c->compressed) {
+                        nbytes = uo_decompress(packet3.data, sizeof(packet3.data),
+                                               packet2.data, packet2.length);
+                        fprintf(stderr, "decompressed %lu bytes to %ld\n",
+                                (unsigned long)packet2.length,
+                                (long)nbytes);
+                        if (nbytes < 0) {
+                            fprintf(stderr, "decompress failed\n");
+                        } else {
+                            packet3.length = (size_t)nbytes;
+                            packet_from_server(c, &packet3);
+                        }
+                    } else {
+                        packet_from_server(c, &packet2);
+                    }
                 }
             }
         } else {
