@@ -134,7 +134,7 @@ static void packet_from_client(struct connection *c,
         length = packet_lengths[p[0]];
         if (length == 0)
             length = ntohs(*(uint16_t*)(p + 1));
-        printf("length=%u\n", length);
+        printf("length=%u\n", (unsigned)length);
         next = p + length;
 
         if (length == 0 || next > packet->data + packet->length) {
@@ -177,7 +177,7 @@ static void packet_from_server(struct connection *c,
         length = packet_lengths[p[0]];
         if (length == 0)
             length = ntohs(*(uint16_t*)(p + 1));
-        printf("length=%u\n", length);
+        printf("length=%u\n", (unsigned)length);
         next = p + length;
 
         if (length == 0 || next > packet->data + packet->length) {
