@@ -148,7 +148,7 @@ enum uo_packet_type_t {
     PCK_MenuChoice = 0x7d,
     PCK_GodGetView = 0x7e,
     PCK_GodViewInfo = 0x7f,
-    PCK_ServersReq = 0x80,
+    PCK_AccountLogin = 0x80,
     PCK_CharList3 = 0x81,
     PCK_LogBad = 0x82,
     PCK_CharDelete = 0x83,
@@ -225,7 +225,15 @@ enum uo_packet_type_t {
     PCK_UnkUTripTime = 0xca,
     PCK_UnkGQCount = 0xcb,
     PCK_UnkTextIDandStr = 0xcc,
+    PCK_AccountLogin2 = 0xcf,
     PCK_AOSTooltip = 0xd6,
 };
 
 extern const size_t packet_lengths[0x100];
+
+struct uo_packet_login {
+    unsigned char cmd;
+    char username[30];
+    char password[30];
+    unsigned char unknown1;
+} __attribute__ ((packed));

@@ -139,5 +139,6 @@ const size_t packet_lengths[0x100] = {
     [0xC8] = 2,
     [0xC9] = 6,
     [0xCA] = 6,
+    [0xcf] = 62,
     [0xD1] = 2,
 };

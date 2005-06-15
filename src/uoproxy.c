@@ -53,7 +53,7 @@ struct server_info {
     char full;
     unsigned char timezone;
     uint32_t address;
-};
+} __attribute__ ((packed));
 
 static void usage(void)
      __attribute__ ((noreturn));
@@ -106,6 +106,17 @@ static void packet_from_client(struct connection *c,
     assert(length > 0);
 
     switch (p[0]) {
+        const struct uo_packet_login *packet_login;
+
+    case PCK_AccountLogin:
+    case PCK_AccountLogin2:
+        packet_login = (const struct uo_packet_login*)p;
+
+        printf("account_login: username=%s password=%s\n",
+               packet_login->username, packet_login->password);
+
+        break;
+
     case PCK_GameLogin:
         c->compressed = 1;
         break;
