@@ -9,13 +9,13 @@ WARNING_CFLAGS += -W -Wall -D_REENTRANT -std=gnu99 -Wmissing-prototypes -Wwrite-
 LDFLAGS =
 
 
-all: uoproxy
+all: src/uoproxy
 
 clean:
-	rm -f uoproxy
+	rm -f src/uoproxy
 
-uoproxy: uoproxy.c packets.c compression.c
+src/uoproxy: src/uoproxy.c src/packets.c src/compression.c
 	$(CC) $(CFLAGS) $(WARNING_CFLAGS) $(LDFLAGS) -o $@ $^
 
-strip: uoproxy
-	strip --strip-all uoproxy
+strip: src/uoproxy
+	strip --strip-all $^
