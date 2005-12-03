@@ -324,16 +324,6 @@ static struct connection *create_connection(int server_socket,
     return c;
 }
 
-static void setup_signal_handlers(void) {
-    struct sigaction sa;
-
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = exit_signal_handler;
-
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
-}
-
 static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
     int sockfd, ret;
@@ -383,6 +373,16 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
     }
 
     delete_all_connections(connections_head);
+}
+
+static void setup_signal_handlers(void) {
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = exit_signal_handler;
+
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
 }
 
 int main(int argc, char **argv) {
