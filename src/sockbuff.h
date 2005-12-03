@@ -40,6 +40,8 @@ static inline int sock_buff_alive(const struct sock_buff *sb) {
     return sb->fd >= 0;
 }
 
+int sock_buff_flush(struct sock_buff *sb);
+
 void sock_buff_pre_select(struct sock_buff *sb,
                           struct selectx *sx);
 int sock_buff_post_select(struct sock_buff *sb,

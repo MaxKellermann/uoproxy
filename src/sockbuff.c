@@ -64,6 +64,28 @@ void sock_buff_dispose(struct sock_buff *sb) {
     free(sb);
 }
 
+int sock_buff_flush(struct sock_buff *sb) {
+    const unsigned char *p;
+    size_t length;
+    ssize_t nbytes;
+
+    p = buffer_peek(sb->output, &length);
+    if (p == NULL)
+        return 0;
+
+    nbytes = write(sb->fd, p, length);
+    if (nbytes < 0) {
+        int save_errno = errno;
+        close(sb->fd);
+        sb->fd = -1;
+        return -save_errno;
+    }
+
+    buffer_remove_head(sb->output, (size_t)nbytes);
+
+    return 0;
+}
+
 void sock_buff_pre_select(struct sock_buff *sb,
                           struct selectx *sx) {
     if (sb->fd < 0)
@@ -102,23 +124,8 @@ int sock_buff_post_select(struct sock_buff *sb,
         buffer_expand(sb->input, (size_t)nbytes);
     }
 
-    if (FD_ISSET(sb->fd, &sx->writefds)) {
-        const unsigned char *p;
-        size_t length;
-
-        p = buffer_peek(sb->output, &length);
-        if (p != NULL) {
-            nbytes = write(sb->fd, p, length);
-            if (nbytes < 0) {
-                int save_errno = errno;
-                close(sb->fd);
-                sb->fd = -1;
-                return -save_errno;
-            }
-
-            buffer_remove_head(sb->output, (size_t)nbytes);
-        }
-    }
+    if (FD_ISSET(sb->fd, &sx->writefds))
+        return sock_buff_flush(sb);
 
     return 0;
 }
