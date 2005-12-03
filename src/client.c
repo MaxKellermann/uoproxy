@@ -43,7 +43,9 @@ struct uo_client {
     struct buffer *decompressed_buffer;
 };
 
-int uo_client_create(uint32_t ip, uint16_t port, struct uo_client **clientp) {
+int uo_client_create(uint32_t ip, uint16_t port,
+                     uint32_t seed,
+                     struct uo_client **clientp) {
     int sockfd, ret;
     struct uo_client *client;
 
@@ -67,10 +69,16 @@ int uo_client_create(uint32_t ip, uint16_t port, struct uo_client **clientp) {
     uo_decompression_init(&client->decompression);
     client->decompressed_buffer = buffer_new(65536);
     if (client->decompressed_buffer == NULL) {
-        sock_buff_dispose(client->sock);
-        free(client);
-        close(sockfd);
+        uo_client_dispose(client);
         return -ENOMEM;
+    }
+
+    /* seed must be the first 4 bytes, and it must be flushed */
+    uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
+    ret = sock_buff_flush(client->sock);
+    if (ret < 0) {
+        uo_client_dispose(client);
+        return ret;
     }
 
     *clientp = client;

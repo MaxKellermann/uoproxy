@@ -26,7 +26,9 @@ struct selectx;
 
 struct uo_client;
 
-int uo_client_create(uint32_t ip, uint16_t port, struct uo_client **clientp);
+int uo_client_create(uint32_t ip, uint16_t port,
+                     uint32_t seed,
+                     struct uo_client **clientp);
 void uo_client_dispose(struct uo_client *client);
 
 int uo_client_alive(const struct uo_client *client);
