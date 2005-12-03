@@ -326,9 +326,11 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
 
 static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
-    int sockfd, sockfd2;
     pid_t pid;
+    int sockfd;
     struct sigaction sa;
+    int ret;
+    struct selectx sx;
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = signal_handler;
@@ -338,64 +340,75 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
     sockfd = setup_server_socket(local_ip, local_port);
 
     while (1) {
-        struct sockaddr addr;
-        socklen_t addrlen = sizeof(addr);
+        selectx_clear(&sx);
+        selectx_add_read(&sx, sockfd);
 
-        sockfd2 = accept(sockfd, &addr, &addrlen);
-        if (sockfd2 >= 0) {
-            pid = fork();
-            if (pid < 0) {
-                fprintf(stderr, "fork failed: %s\n",
-                        strerror(errno));
-                exit(1);
+        ret = selectx(&sx, NULL);
+        assert(ret != 0);
+        if (ret > 0) {
+            if (FD_ISSET(sockfd, &sx.readfds)) {
+                int sockfd2;
+                struct sockaddr addr;
+                socklen_t addrlen = sizeof(addr);
+
+                sockfd2 = accept(sockfd, &addr, &addrlen);
+                if (sockfd2 >= 0) {
+                    pid = fork();
+                    if (pid < 0) {
+                        fprintf(stderr, "fork failed: %s\n",
+                                strerror(errno));
+                        exit(1);
+                    }
+
+                    if (pid == 0) {
+                        struct connection c;
+
+                        close(sockfd);
+
+                        memset(&c, 0, sizeof(c));
+
+                        c.local_ip = local_ip;
+                        c.local_port = local_port;
+                        ret = sock_buff_create(sockfd2, 4096, 65536, &c.server);
+                        if (ret != 0) {
+                            fprintf(stderr, "sock_buff_create() failed: %s\n",
+                                    strerror(-ret));
+                            exit(2);
+                        }
+
+                        ret = setup_client_socket(server_ip, server_port);
+                        ret = sock_buff_create(ret, 4096, 65536, &c.client);
+                        if (ret != 0) {
+                            fprintf(stderr, "sock_buff_create() failed: %s\n",
+                                    strerror(-ret));
+                            exit(2);
+                        }
+
+                        uo_decompression_init(&c.decompression);
+                        c.decompressed_buffer = buffer_new(65536);
+                        if (c.decompressed_buffer == NULL) {
+                            fprintf(stderr, "out of memory\n");
+                            exit(2);
+                        }
+
+                        handle_connection(&c);
+                    }
+
+                    close(sockfd2);
+                } else if (errno != EINTR) {
+                    fprintf(stderr, "accept failed: %s\n",
+                            strerror(errno));
+                    exit(1);
+                }
             }
-
-            if (pid == 0) {
-                int ret;
-                struct connection c;
-
-                close(sockfd);
-
-                memset(&c, 0, sizeof(c));
-
-                c.local_ip = local_ip;
-                c.local_port = local_port;
-                ret = sock_buff_create(sockfd2, 4096, 65536, &c.server);
-                if (ret != 0) {
-                    fprintf(stderr, "sock_buff_create() failed: %s\n",
-                            strerror(-ret));
-                    exit(2);
-                }
-
-                ret = setup_client_socket(server_ip, server_port);
-                ret = sock_buff_create(ret, 4096, 65536, &c.client);
-                if (ret != 0) {
-                    fprintf(stderr, "sock_buff_create() failed: %s\n",
-                            strerror(-ret));
-                    exit(2);
-                }
-
-                uo_decompression_init(&c.decompression);
-                c.decompressed_buffer = buffer_new(65536);
-                if (c.decompressed_buffer == NULL) {
-                    fprintf(stderr, "out of memory\n");
-                    exit(2);
-                }
-
-                handle_connection(&c);
-            }
-
-            close(sockfd2);
         } else if (errno != EINTR) {
-            fprintf(stderr, "accept failed: %s\n",
+            fprintf(stderr, "select failed: %s\n",
                     strerror(errno));
             exit(1);
         }
 
         do {
-            int status;
-
-            pid = waitpid(-1, &status, WNOHANG);
+            pid = waitpid(-1, &ret, WNOHANG);
         } while (pid > 0);
     }
 }
