@@ -78,7 +78,8 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
             connection_invalidate(c);
         }
 
-        if (!uo_server_alive(c->server)) {
+        if (c->server != NULL &&
+            !uo_server_alive(c->server)) {
             fprintf(stderr, "client disconnected\n");
             connection_invalidate(c);
         }
@@ -91,7 +92,8 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
 
         if (c->client != NULL)
             uo_client_pre_select(c->client, sx);
-        uo_server_pre_select(c->server, sx);
+        if (c->server != NULL)
+            uo_server_pre_select(c->server, sx);
 
         cp = &c->next;
     }
@@ -126,27 +128,29 @@ static void connection_post_select(struct connection *c, struct selectx *sx) {
         }
     }
 
-    uo_server_post_select(c->server, sx);
-
-    length = sizeof(buffer);
-    while ((p = uo_server_receive(c->server, buffer, &length)) != NULL) {
-        action = handle_packet(client_packet_bindings,
-                               c, p, length);
-        switch (action) {
-        case PA_ACCEPT:
-            if (c->client != NULL)
-                uo_client_send(c->client, p, length);
-            break;
-
-        case PA_DROP:
-            break;
-
-        case PA_DISCONNECT:
-            connection_invalidate(c);
-            break;
-        }
+    if (c->server != NULL) {
+        uo_server_post_select(c->server, sx);
 
         length = sizeof(buffer);
+        while ((p = uo_server_receive(c->server, buffer, &length)) != NULL) {
+            action = handle_packet(client_packet_bindings,
+                                   c, p, length);
+            switch (action) {
+            case PA_ACCEPT:
+                if (c->client != NULL)
+                    uo_client_send(c->client, p, length);
+                break;
+
+            case PA_DROP:
+                break;
+
+            case PA_DISCONNECT:
+                connection_invalidate(c);
+                break;
+            }
+
+            length = sizeof(buffer);
+        }
     }
 }
 
