@@ -37,6 +37,8 @@ static packet_action_t handle_account_login(struct connection *c,
     int ret;
 
     assert(length == sizeof(*p));
+    assert(sizeof(p->username) == sizeof(c->username));
+    assert(sizeof(p->password) == sizeof(c->password));
 
     printf("account_login: username=%s password=%s\n",
            p->username, p->password);
@@ -63,6 +65,9 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DROP;
     }
 
+    memcpy(c->username, p->username, sizeof(c->username));
+    memcpy(c->password, p->password, sizeof(c->password));
+
     return PA_ACCEPT;
 }
 
@@ -73,6 +78,8 @@ static packet_action_t handle_game_login(struct connection *c,
     const struct relay *relay;
 
     assert(length == sizeof(*p));
+    assert(sizeof(p->username) == sizeof(c->username));
+    assert(sizeof(p->password) == sizeof(c->password));
 
     printf("game_login: username=%s password=%s\n",
            p->username, p->password);
@@ -100,6 +107,9 @@ static packet_action_t handle_game_login(struct connection *c,
                 strerror(-ret));
         return PA_DISCONNECT;
     }
+
+    memcpy(c->username, p->username, sizeof(c->username));
+    memcpy(c->password, p->password, sizeof(c->password));
 
     return PA_ACCEPT;
 }

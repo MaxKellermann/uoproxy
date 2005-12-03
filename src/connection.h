@@ -33,6 +33,9 @@ struct connection {
     u_int32_t local_ip, server_ip;
     u_int16_t local_port, server_port;
 
+    /* state */
+    char username[30], password[30];
+
     /* sub-objects */
     struct uo_client *client;
     struct uo_server *server;
