@@ -35,6 +35,7 @@
 #include "compression.h"
 #include "packets.h"
 #include "netutil.h"
+#include "ioutil.h"
 
 struct connection {
     uint32_t seed;
@@ -254,7 +255,7 @@ static void handle_connection(struct connection *c)
      __attribute__ ((noreturn));
 static void handle_connection(struct connection *c) {
     int ret;
-    fd_set rfds, wfds;
+    struct selectx sx;
     struct packet packet1, packet2, packet3;
     ssize_t nbytes;
     pid_t pid;
@@ -267,36 +268,25 @@ static void handle_connection(struct connection *c) {
     while (1) {
         /* select() all file handles */
 
-        FD_ZERO(&rfds);
-        FD_ZERO(&wfds);
-
-        ret = 0;
+        selectx_clear(&sx);
 
         if (packet1.length == 0) {
-            FD_SET(c->client_socket, &rfds);
-            if (c->client_socket > ret)
-                ret = c->client_socket;
+            selectx_add_read(&sx, c->client_socket);
         } else {
-            FD_SET(c->server_socket, &wfds);
-            if (c->server_socket > ret)
-                ret = c->server_socket;
+            selectx_add_write(&sx, c->server_socket);
         }
 
         if (packet2.length == 0) {
-            FD_SET(c->server_socket, &rfds);
-            if (c->server_socket > ret)
-                ret = c->server_socket;
+            selectx_add_read(&sx, c->server_socket);
         } else {
-            FD_SET(c->client_socket, &wfds);
-            if (c->client_socket > ret)
-                ret = c->client_socket;
+            selectx_add_write(&sx, c->client_socket);
         }
 
-        ret = select(ret + 1, &rfds, &wfds, NULL, NULL);
+        ret = selectx(&sx, NULL);
         assert(ret != 0);
         if (ret > 0) {
             if (packet1.length == 0) {
-                if (FD_ISSET(c->client_socket, &rfds)) {
+                if (FD_ISSET(c->client_socket, &sx.readfds)) {
                     nbytes = recv(c->client_socket, packet1.data, sizeof(packet1.data), 0);
                     if (nbytes <= 0) {
                         printf("client disconnected\n");
@@ -309,7 +299,7 @@ static void handle_connection(struct connection *c) {
                     }
                 }
             } else {
-                if (FD_ISSET(c->server_socket, &wfds)) {
+                if (FD_ISSET(c->server_socket, &sx.writefds)) {
                     nbytes = send(c->server_socket, packet1.data, packet1.length, 0);
                     if (nbytes < 0) {
                         fprintf(stderr, "failed to write: %s\n",
@@ -327,7 +317,7 @@ static void handle_connection(struct connection *c) {
             }
 
             if (packet2.length == 0) {
-                if (FD_ISSET(c->server_socket, &rfds)) {
+                if (FD_ISSET(c->server_socket, &sx.readfds)) {
                     nbytes = recv(c->server_socket, packet2.data, sizeof(packet2.data), 0);
                     if (nbytes <= 0) {
                         printf("server disconnected\n");
@@ -355,7 +345,7 @@ static void handle_connection(struct connection *c) {
                     }
                 }
             } else {
-                if (FD_ISSET(c->client_socket, &wfds)) {
+                if (FD_ISSET(c->client_socket, &sx.writefds)) {
                     nbytes = send(c->client_socket, packet2.data, packet2.length, 0);
                     if (nbytes < 0) {
                         fprintf(stderr, "failed to write: %s\n",
