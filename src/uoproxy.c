@@ -263,6 +263,16 @@ static void handle_connection(struct connection *c) {
             size_t length;
             ssize_t nbytes;
 
+            if (!sock_buff_alive(c->client)) {
+                fprintf(stderr, "client disconnected\n");
+                exit(0);
+            }
+
+            if (!sock_buff_alive(c->server)) {
+                fprintf(stderr, "server disconnected\n");
+                exit(0);
+            }
+
             sock_buff_post_select(c->client, &sx);
             sock_buff_post_select(c->server, &sx);
 
