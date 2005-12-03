@@ -103,7 +103,7 @@ unsigned char *uo_server_receive(struct uo_server *server,
         if (length < 4)
             return NULL;
 
-        server->seed = ntohl(*(uint32_t*)p);
+        server->seed = *(uint32_t*)p;
         if (server->seed == 0) {
             fprintf(stderr, "zero seed from client\n");
             sock_buff_dispose(server->sock);
