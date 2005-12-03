@@ -23,10 +23,17 @@
 #define __CONNECTION_H
 
 struct connection {
+    /* linked list */
     struct connection *next;
+
+    /* flags */
     int invalid;
+
+    /* network addresses */
     u_int32_t local_ip, server_ip;
     u_int16_t local_port, server_port;
+
+    /* sub-objects */
     struct uo_client *client;
     struct uo_server *server;
 };
