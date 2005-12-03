@@ -14,7 +14,7 @@ all: src/uoproxy
 clean:
 	rm -f src/uoproxy
 
-src/uoproxy: src/uoproxy.c src/packets.c src/compression.c
+src/uoproxy: src/uoproxy.c src/packets.c src/compression.c src/netutil.c
 	$(CC) $(CFLAGS) $(WARNING_CFLAGS) $(LDFLAGS) -o $@ $^
 
 strip: src/uoproxy
