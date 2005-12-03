@@ -141,4 +141,5 @@ const size_t packet_lengths[0x100] = {
     [0xCA] = 6,
     [0xcf] = 62,
     [0xD1] = 2,
+    [PCK_AOSObjProp] = 9,
 };

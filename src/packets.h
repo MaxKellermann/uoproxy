@@ -227,6 +227,7 @@ enum uo_packet_type_t {
     PCK_UnkTextIDandStr = 0xcc,
     PCK_AccountLogin2 = 0xcf,
     PCK_AOSTooltip = 0xd6,
+    PCK_AOSObjProp = 0xdc,
 };
 
 extern const size_t packet_lengths[0x100];
