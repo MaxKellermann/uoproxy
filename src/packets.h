@@ -257,7 +257,6 @@ struct uo_packet_game_login {
     u_int32_t auth_id;
     char username[30];
     char password[30];
-    unsigned char unknown1;
 } __attribute__ ((packed));
 
 struct uo_packet_relay {
