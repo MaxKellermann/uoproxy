@@ -102,62 +102,6 @@ int setup_server_socket(uint32_t ip, uint16_t port) {
     return sockfd;
 }
 
-static int bind_random(int sockfd, uint32_t ip, uint16_t *portp) {
-    int ret;
-    struct sockaddr_in sin;
-
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = ip;
-
-    for (;;) {
-        sin.sin_port = htons(*portp);
-
-        ret = bind(sockfd, (const struct sockaddr*)&sin, sizeof(sin));
-        if (ret == 0)
-            return 0;
-
-        if (errno != EADDRINUSE)
-            return -1;
-
-        ++(*portp);
-    }
-}
-
-int setup_server_socket_random_port(uint32_t ip, uint16_t *portp) {
-    int sockfd, ret, param;
-
-    sockfd = socket(PF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        fprintf(stderr, "failed to create socket: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-
-    param = 1;
-    ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
-    if (ret < 0) {
-        fprintf(stderr, "setsockopt failed: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-
-    ret = bind_random(sockfd, ip, portp);
-    if (ret < 0) {
-        fprintf(stderr, "failed to bind: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-
-    ret = listen(sockfd, 4);
-    if (ret < 0) {
-        fprintf(stderr, "listen failed: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-
-    return sockfd;
-}
-
 int setup_client_socket(uint32_t ip, uint16_t port) {
     int sockfd, ret;
     struct sockaddr_in sin;
