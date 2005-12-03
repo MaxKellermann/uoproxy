@@ -100,7 +100,8 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
 }
 
 static void connection_post_select(struct connection *c, struct selectx *sx) {
-    unsigned char buffer[2048], *p;
+    static unsigned char buffer[8192];
+    unsigned char *p;
     size_t length;
     packet_action_t action;
 
