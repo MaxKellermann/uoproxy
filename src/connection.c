@@ -19,24 +19,46 @@
  *
  */
 
-#ifndef __CONNECTION_H
-#define __CONNECTION_H
+#include <sys/types.h>
+#include <stdlib.h>
+#include <errno.h>
 
-struct connection {
-    struct connection *next;
-    u_int32_t local_ip, server_ip;
-    u_int16_t local_port, server_port;
-    struct uo_client *client;
-    struct uo_server *server;
-};
-
-struct relay_list relays;
+#include "connection.h"
+#include "server.h"
+#include "client.h"
+#include "relay.h"
 
 int connection_new(int server_socket,
                    u_int32_t local_ip, u_int16_t local_port,
                    u_int32_t server_ip, u_int16_t server_port,
-                   struct connection **connectionp);
+                   struct connection **connectionp) {
+    struct connection *c;
+    int ret;
 
-void connection_delete(struct connection *c);
+    c = calloc(1, sizeof(*c));
+    if (c == NULL)
+        return -ENOMEM;
 
-#endif
+    c->local_ip = local_ip;
+    c->local_port = local_port;
+    ret = uo_server_create(server_socket, &c->server);
+    if (ret != 0) {
+        connection_delete(c);
+        return ret;
+    }
+
+    c->server_ip = server_ip;
+    c->server_port = server_port;
+
+    *connectionp = c;
+
+    return 0;
+}
+
+void connection_delete(struct connection *c) {
+    if (c->server != NULL)
+        uo_server_dispose(c->server);
+    if (c->client != NULL)
+        uo_client_dispose(c->client);
+    free(c);
+}

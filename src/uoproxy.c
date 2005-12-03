@@ -60,18 +60,11 @@ static void exit_signal_handler(int sig) {
     should_exit = 1;
 }
 
-static void delete_connection(struct connection *c) {
-    uo_server_dispose(c->server);
-    if (c->client != NULL)
-        uo_client_dispose(c->client);
-    free(c);
-}
-
 static void delete_all_connections(struct connection *head) {
     while (head != NULL) {
         struct connection *c = head;
         head = head->next;
-        delete_connection(c);
+        connection_delete(c);
     }
 }
 
@@ -83,14 +76,14 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
             !uo_client_alive(c->client)) {
             fprintf(stderr, "server disconnected\n");
             *cp = c->next;
-            delete_connection(c);
+            connection_delete(c);
             continue;
         }
 
         if (!uo_server_alive(c->server)) {
             fprintf(stderr, "client disconnected\n");
             *cp = c->next;
-            delete_connection(c);
+            connection_delete(c);
             continue;
         }
 
@@ -162,35 +155,6 @@ static void connections_post_select(struct connection *c, struct selectx *sx) {
     }
 }
 
-static struct connection *create_connection(int server_socket,
-                                            uint32_t local_ip, uint16_t local_port,
-                                            uint32_t server_ip, uint16_t server_port) {
-    struct connection *c;
-    int ret;
-
-    c = calloc(1, sizeof(*c));
-    if (c == NULL) {
-        fprintf(stderr, "out of memory\n");
-        return NULL;
-    }
-
-    c->local_ip = local_ip;
-    c->local_port = local_port;
-    ret = uo_server_create(server_socket, &c->server);
-    if (ret != 0) {
-        fprintf(stderr, "sock_buff_create() failed: %s\n",
-                strerror(-ret));
-        close(server_socket);
-        free(c);
-        return NULL;
-    }
-
-    c->server_ip = server_ip;
-    c->server_port = server_port;
-
-    return c;
-}
-
 static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
     int sockfd, ret;
@@ -214,14 +178,18 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
 
                 sockfd2 = accept(sockfd, &addr, &addrlen);
                 if (sockfd2 >= 0) {
-                    struct connection *c = create_connection
-                        (sockfd2, local_ip, local_port,
-                         server_ip, server_port);
+                    struct connection *c;
 
-                    if (c != NULL) {
+                    ret = connection_new(sockfd2,
+                                         local_ip, local_port,
+                                         server_ip, server_port,
+                                         &c);
+                    if (ret == 0) {
                         c->next = connections_head;
                         connections_head = c;
                     } else {
+                        fprintf(stderr, "connection_new() failed: %s\n",
+                                strerror(-ret));
                         close(sockfd2);
                     }
                 } else if (errno != EINTR) {
