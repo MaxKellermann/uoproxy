@@ -1,7 +1,7 @@
 CC := gcc-4.0
 
 # change the comments to enable the non-debugging version
-CFLAGS = -g -O0
+CFLAGS += -g -O0
 #CFLAGS = -Os -DNDEBUG=1
 LDFLAGS = -g -O0
 
@@ -23,7 +23,7 @@ $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c $(CFLAGS) $(WARNING_CFLAGS) -o $@ $<
 
 src/uoproxy: $(OBJECTS)
-	$(CC) $(LDFLAGS) $(WARNING_CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) $(LDFLAGS) -o $@ $^
 
 strip: src/uoproxy
 	strip --strip-all $^
