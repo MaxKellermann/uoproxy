@@ -244,6 +244,14 @@ struct uo_packet_login_bad {
     unsigned char reason;
 } __attribute__ ((packed));
 
+struct uo_fragment_server_info {
+    u_int16_t index;
+    char name[32];
+    char full;
+    unsigned char timezone;
+    u_int32_t address;
+} __attribute__ ((packed));
+
 struct uo_packet_game_login {
     unsigned char cmd;
     u_int32_t auth_id;
