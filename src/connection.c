@@ -66,8 +66,13 @@ void connection_delete(struct connection *c) {
 void connection_invalidate(struct connection *c) {
     c->invalid = 1;
 
-    if (c->server != NULL)
+    if (c->server != NULL) {
         uo_server_dispose(c->server);
-    if (c->client != NULL)
+        c->server = NULL;
+    }
+
+    if (c->client != NULL) {
         uo_client_dispose(c->client);
+        c->client = NULL;
+    }
 }
