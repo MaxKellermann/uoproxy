@@ -40,6 +40,7 @@
 #include "sockbuff.h"
 
 struct connection {
+    struct connection *next;
     uint32_t seed;
     uint32_t local_ip, server_ip;
     uint16_t local_port;
@@ -240,84 +241,126 @@ static void recv_from_server(struct connection *c,
     }
 }
 
-static void handle_connection(struct connection *c)
-     __attribute__ ((noreturn));
-static void handle_connection(struct connection *c) {
-    int ret;
-    struct selectx sx;
+static void delete_connection(struct connection *c) {
+    sock_buff_dispose(c->server);
+    sock_buff_dispose(c->client);
+    buffer_delete(c->decompressed_buffer);
+    free(c);
+}
 
-    printf("entering handle_connection\n");
+static void connections_pre_select(struct connection **cp, struct selectx *sx) {
+    while (*cp != NULL) {
+        struct connection *c = *cp;
 
-    while (1) {
-        /* select() all file handles */
-
-        selectx_clear(&sx);
-
-        sock_buff_pre_select(c->client, &sx);
-        sock_buff_pre_select(c->server, &sx);
-
-        ret = selectx(&sx, NULL);
-        assert(ret != 0);
-        if (ret > 0) {
-            const unsigned char *p;
-            size_t length;
-            ssize_t nbytes;
-
-            if (!sock_buff_alive(c->client)) {
-                fprintf(stderr, "client disconnected\n");
-                exit(0);
-            }
-
-            if (!sock_buff_alive(c->server)) {
-                fprintf(stderr, "server disconnected\n");
-                exit(0);
-            }
-
-            sock_buff_post_select(c->client, &sx);
-            sock_buff_post_select(c->server, &sx);
-
-            p = buffer_peek(c->client->input, &length);
-            if (p != NULL) {
-                if (c->compressed) {
-                    nbytes = uo_decompress(&c->decompression,
-                                           buffer_tail(c->decompressed_buffer),
-                                           buffer_free(c->decompressed_buffer),
-                                           p, length);
-                    if (nbytes < 0) {
-                        fprintf(stderr, "decompression failed\n");
-                        exit(3);
-                    }
-
-                    buffer_remove_head(c->client->input, length);
-                    buffer_expand(c->decompressed_buffer, (size_t)nbytes);
-
-                    printf("decompressed %zu bytes to %zd\n",
-                           length, nbytes);
-
-                    recv_from_server(c, c->decompressed_buffer);
-                } else {
-                    recv_from_server(c, c->client->input);
-                }
-            }
-
-            p = buffer_peek(c->server->input, &length);
-            if (p != NULL)
-                recv_from_client(c, c->server->input);
-        } else if (errno != EINTR) {
-            fprintf(stderr, "select failed: %s\n",
-                    strerror(errno));
-            exit(1);
+        if (!sock_buff_alive(c->client)) {
+            fprintf(stderr, "client disconnected\n");
+            *cp = c->next;
+            delete_connection(c);
+            continue;
         }
 
-        /*
-        do {
-            int status;
-            pid_t pid;
+        if (!sock_buff_alive(c->server)) {
+            fprintf(stderr, "server disconnected\n");
+            *cp = c->next;
+            delete_connection(c);
+            continue;
+        }
 
-            pid = waitpid(-1, &status, WNOHANG);
-        } while (pid > 0);
-        */
+        sock_buff_pre_select(c->client, sx);
+        sock_buff_pre_select(c->server, sx);
+
+        cp = &c->next;
     }
+}
+
+static void connection_post_select(struct connection *c, struct selectx *sx) {
+    unsigned char *p;
+    size_t length;
+
+    sock_buff_post_select(c->client, sx);
+    sock_buff_post_select(c->server, sx);
+
+    p = buffer_peek(c->client->input, &length);
+    if (p != NULL) {
+        if (c->compressed) {
+            ssize_t nbytes;
+
+            nbytes = uo_decompress(&c->decompression,
+                                   buffer_tail(c->decompressed_buffer),
+                                   buffer_free(c->decompressed_buffer),
+                                   p, length);
+            if (nbytes < 0) {
+                fprintf(stderr, "decompression failed\n");
+                exit(3);
+            }
+
+            buffer_remove_head(c->client->input, length);
+            buffer_expand(c->decompressed_buffer, (size_t)nbytes);
+
+            printf("decompressed %zu bytes to %zd\n",
+                   length, nbytes);
+
+            recv_from_server(c, c->decompressed_buffer);
+        } else {
+            recv_from_server(c, c->client->input);
+        }
+    }
+
+    p = buffer_peek(c->server->input, &length);
+    if (p != NULL)
+        recv_from_client(c, c->server->input);
+}
+
+static void connections_post_select(struct connection *c, struct selectx *sx) {
+    while (c != NULL) {
+        connection_post_select(c, sx);
+        c = c->next;
+    }
+}
+
+static struct connection *create_connection(int server_socket,
+                                            uint32_t local_ip, uint16_t local_port,
+                                            uint32_t server_ip, uint16_t server_port) {
+    struct connection *c;
+    int ret;
+
+    c = calloc(1, sizeof(*c));
+    if (c == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return NULL;
+    }
+
+    c->local_ip = local_ip;
+    c->local_port = local_port;
+    ret = sock_buff_create(server_socket, 4096, 65536, &c->server);
+    if (ret != 0) {
+        fprintf(stderr, "sock_buff_create() failed: %s\n",
+                strerror(-ret));
+        free(c);
+        return NULL;
+    }
+
+    ret = setup_client_socket(server_ip, server_port);
+    ret = sock_buff_create(ret, 4096, 65536, &c->client);
+    if (ret != 0) {
+        fprintf(stderr, "sock_buff_create() failed: %s\n",
+                strerror(-ret));
+        sock_buff_dispose(c->server);
+        free(c);
+        return NULL;
+    }
+
+    uo_decompression_init(&c->decompression);
+    c->decompressed_buffer = buffer_new(65536);
+    if (c->decompressed_buffer == NULL) {
+        fprintf(stderr, "out of memory\n");
+        sock_buff_dispose(c->client);
+        sock_buff_dispose(c->server);
+        free(c);
+        return NULL;
+    }
+
+    return c;
 }
 
 static void run_server(uint32_t local_ip, uint16_t local_port,
@@ -326,11 +369,11 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
 
 static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
-    pid_t pid;
     int sockfd;
     struct sigaction sa;
     int ret;
     struct selectx sx;
+    struct connection *connections_head = NULL;
 
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = signal_handler;
@@ -342,6 +385,7 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
     while (1) {
         selectx_clear(&sx);
         selectx_add_read(&sx, sockfd);
+        connections_pre_select(&connections_head, &sx);
 
         ret = selectx(&sx, NULL);
         assert(ret != 0);
@@ -353,63 +397,29 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
 
                 sockfd2 = accept(sockfd, &addr, &addrlen);
                 if (sockfd2 >= 0) {
-                    pid = fork();
-                    if (pid < 0) {
-                        fprintf(stderr, "fork failed: %s\n",
-                                strerror(errno));
-                        exit(1);
+                    struct connection *c = create_connection
+                        (sockfd2, local_ip, local_port,
+                         server_ip, server_port);
+
+                    if (c != NULL) {
+                        c->next = connections_head;
+                        connections_head = c;
+                    } else {
+                        close(sockfd2);
                     }
-
-                    if (pid == 0) {
-                        struct connection c;
-
-                        close(sockfd);
-
-                        memset(&c, 0, sizeof(c));
-
-                        c.local_ip = local_ip;
-                        c.local_port = local_port;
-                        ret = sock_buff_create(sockfd2, 4096, 65536, &c.server);
-                        if (ret != 0) {
-                            fprintf(stderr, "sock_buff_create() failed: %s\n",
-                                    strerror(-ret));
-                            exit(2);
-                        }
-
-                        ret = setup_client_socket(server_ip, server_port);
-                        ret = sock_buff_create(ret, 4096, 65536, &c.client);
-                        if (ret != 0) {
-                            fprintf(stderr, "sock_buff_create() failed: %s\n",
-                                    strerror(-ret));
-                            exit(2);
-                        }
-
-                        uo_decompression_init(&c.decompression);
-                        c.decompressed_buffer = buffer_new(65536);
-                        if (c.decompressed_buffer == NULL) {
-                            fprintf(stderr, "out of memory\n");
-                            exit(2);
-                        }
-
-                        handle_connection(&c);
-                    }
-
-                    close(sockfd2);
                 } else if (errno != EINTR) {
                     fprintf(stderr, "accept failed: %s\n",
                             strerror(errno));
                     exit(1);
                 }
             }
+
+            connections_post_select(connections_head, &sx);
         } else if (errno != EINTR) {
             fprintf(stderr, "select failed: %s\n",
                     strerror(errno));
             exit(1);
         }
-
-        do {
-            pid = waitpid(-1, &ret, WNOHANG);
-        } while (pid > 0);
     }
 }
 
