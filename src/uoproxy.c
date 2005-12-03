@@ -36,17 +36,17 @@
 #include "packets.h"
 #include "netutil.h"
 #include "ioutil.h"
+#include "buffer.h"
+#include "sockbuff.h"
 
 struct connection {
     uint32_t seed;
     uint32_t local_ip, server_ip;
-    int client_socket, server_socket;
+    uint16_t local_port;
+    struct sock_buff *client, *server;
     int compressed;
-};
-
-struct packet {
-    size_t length;
-    unsigned char data[65536];
+    struct uo_decompression decompression;
+    struct buffer *decompressed_buffer;
 };
 
 struct server_info {
@@ -58,11 +58,6 @@ struct server_info {
 } __attribute__ ((packed));
 
 static void usage(void)
-     __attribute__ ((noreturn));
-
-static void handle_incoming(int sockfd,
-                            uint32_t local_ip, uint16_t local_port,
-                            uint32_t server_ip, uint16_t server_port)
      __attribute__ ((noreturn));
 
 static void usage(void) {
@@ -99,52 +94,51 @@ static void packet_from_client(struct connection *c,
 }
 
 static void recv_from_client(struct connection *c,
-                             struct packet *packet) {
-    unsigned char *p, *next;
-    size_t length;
-
-    printf("packet from client: %u\n", (unsigned)packet->length);
-
-    next = packet->data;
+                             struct buffer *buffer) {
+    unsigned char *p;
+    size_t length, packet_length;
 
     if (c->seed == 0) {
-        if (packet->length < 4) {
-            fprintf(stderr, "malformed seed packet from client\n");
+        p = buffer_peek(buffer, &length);
+        if (p == NULL || length < 4)
             return;
-        }
 
-        c->seed = ntohl(*(uint32_t*)packet->data);
+        c->seed = ntohl(*(uint32_t*)p);
         if (c->seed == 0) {
             fprintf(stderr, "zero seed from client\n");
-            return;
+            exit(3);
         }
 
         printf("seed=%08x\n", c->seed);
 
-        next += 4;
+        buffer_append(c->client->output, p, 4);
+        buffer_remove_head(buffer, 4);
     }
 
-    if (packet->length < 3)
-        return;
-
-    while (next < packet->data + packet->length) {
+    while ((p = buffer_peek(buffer, &length)) != NULL) {
         printf("from client: %02x %02x %02x\n",
-               next[0], next[1], next[2]);
+               p[0], p[1], p[2]);
 
-        p = next;
+        packet_length = packet_lengths[p[0]];
+        if (packet_length == 0) {
+            if (length < 3)
+                return;
 
-        length = packet_lengths[p[0]];
-        if (length == 0 && next + 3 <= packet->data + packet->length)
-            length = ntohs(*(uint16_t*)(p + 1));
-        printf("length=%u\n", (unsigned)length);
-        next = p + length;
-
-        if (length == 0 || next > packet->data + packet->length) {
-            fprintf(stderr, "malformed packet from client\n");
-            return;
+            packet_length = ntohs(*(uint16_t*)(p + 1));
+            if (packet_length == 0) {
+                fprintf(stderr, "malformed packet from client\n");
+                exit(3);
+            }
         }
 
-        packet_from_client(c, p, length);
+        printf("packet_length=%zu\n", packet_length);
+        if (packet_length > length)
+            return;
+
+        packet_from_client(c, p, packet_length);
+
+        buffer_append(c->client->output, p, packet_length);
+        buffer_remove_head(buffer, packet_length);
     }
 }
 
@@ -156,9 +150,6 @@ static void packet_from_server(struct connection *c,
     switch (p[0]) {
         unsigned count, i, k;
         struct server_info *server_info;
-        uint16_t local_port;
-        int sockfd;
-        pid_t pid;
 
     case 0xa8: /* AccountLoginAck */
         if (length < 6 || p[3] != 0x5d)
@@ -184,70 +175,68 @@ static void packet_from_server(struct connection *c,
 
     case 0x8c: /* PlayServerAck */
         /* this packet tells the UO client where to connect; what
-           we do here is replace the server IP with our own one,
-           and accept incoming connections with a new proxy
-           process */
+           we do here is replace the server IP with our own one */
 
         printf("play_ack: address=0x%08x port=%u\n",
                ntohl(*(uint32_t*)(p + 1)),
                ntohs(*(uint16_t*)(p + 5)));
 
-        local_port = ntohs(*(uint16_t*)(p + 5));
-        sockfd = setup_server_socket_random_port(c->local_ip,
-                                                 &local_port);
-
-        pid = fork();
-        if (pid < 0) {
-            fprintf(stderr, "fork failed: %s", strerror(errno));
-            return;
-        }
-
-        if (pid == 0)
-            handle_incoming(sockfd,
-                            c->local_ip,
-                            local_port,
-                            *(uint32_t*)(p + 1),
-                            *(uint16_t*)(p + 5));
-
         *(uint32_t*)(p + 1) = c->local_ip;
-        *(uint16_t*)(p + 5) = htons(local_port);
+        *(uint16_t*)(p + 5) = c->local_port;
 
         break;
     }
 }
 
 static void recv_from_server(struct connection *c,
-                             struct packet *packet) {
-    unsigned char *p, *next;
-    size_t length;
+                             struct buffer *buffer) {
+    unsigned char *p;
+    size_t length, packet_length;
 
     (void)c;
 
-    printf("packet from server: %u\n", (unsigned)packet->length);
-
-    if (packet->length < 3)
-        return;
-
-    next = packet->data;
-
-    while (next < packet->data + packet->length) {
+    while ((p = buffer_peek(buffer, &length)) != NULL) {
         printf("from server: %02x %02x %02x\n",
-               next[0], next[1], next[2]);
+               p[0], p[1], p[2]);
 
-        p = next;
+        packet_length = packet_lengths[p[0]];
+        if (packet_length == 0) {
+            if (length < 3)
+                return;
 
-        length = packet_lengths[p[0]];
-        if (length == 0 && next + 3 <= packet->data + packet->length)
-            length = ntohs(*(uint16_t*)(p + 1));
-        printf("length=%u\n", (unsigned)length);
-        next = p + length;
-
-        if (length == 0 || next > packet->data + packet->length) {
-            fprintf(stderr, "malformed packet from server\n");
-            return;
+            packet_length = ntohs(*(uint16_t*)(p + 1));
+            if (packet_length == 0) {
+                fprintf(stderr, "malformed packet from server\n");
+                exit(3);
+            }
         }
 
-        packet_from_server(c, p, length);
+        printf("packet_length=%zu\n", packet_length);
+        if (packet_length > length)
+            return;
+
+        packet_from_server(c, p, packet_length);
+
+        if (c->compressed) {
+            ssize_t nbytes;
+
+            nbytes = uo_compress(buffer_tail(c->server->output),
+                                 buffer_free(c->server->output),
+                                 p, packet_length);
+            if (nbytes < 0) {
+                fprintf(stderr, "uo_compress() failed\n");
+                exit(3);
+            }
+
+            printf("compressed %zu bytes to %zd\n",
+                   packet_length, nbytes);
+
+            buffer_expand(c->server->output, (size_t)nbytes);
+        } else {
+            buffer_append(c->server->output, p, packet_length);
+        }
+
+        buffer_remove_head(buffer, packet_length);
     }
 }
 
@@ -256,170 +245,69 @@ static void handle_connection(struct connection *c)
 static void handle_connection(struct connection *c) {
     int ret;
     struct selectx sx;
-    struct packet packet1, packet2, packet3;
-    ssize_t nbytes;
-    pid_t pid;
 
     printf("entering handle_connection\n");
-
-    packet1.length = 0;
-    packet2.length = 0;
 
     while (1) {
         /* select() all file handles */
 
         selectx_clear(&sx);
 
-        if (packet1.length == 0) {
-            selectx_add_read(&sx, c->client_socket);
-        } else {
-            selectx_add_write(&sx, c->server_socket);
-        }
-
-        if (packet2.length == 0) {
-            selectx_add_read(&sx, c->server_socket);
-        } else {
-            selectx_add_write(&sx, c->client_socket);
-        }
+        sock_buff_pre_select(c->client, &sx);
+        sock_buff_pre_select(c->server, &sx);
 
         ret = selectx(&sx, NULL);
         assert(ret != 0);
         if (ret > 0) {
-            if (packet1.length == 0) {
-                if (FD_ISSET(c->client_socket, &sx.readfds)) {
-                    nbytes = recv(c->client_socket, packet1.data, sizeof(packet1.data), 0);
-                    if (nbytes <= 0) {
-                        printf("client disconnected\n");
-                        exit(0);
-                    }
+            const unsigned char *p;
+            size_t length;
+            ssize_t nbytes;
 
-                    if (nbytes > 0) {
-                        packet1.length = (size_t)nbytes;
-                        recv_from_client(c, &packet1);
-                    }
-                }
-            } else {
-                if (FD_ISSET(c->server_socket, &sx.writefds)) {
-                    nbytes = send(c->server_socket, packet1.data, packet1.length, 0);
+            sock_buff_post_select(c->client, &sx);
+            sock_buff_post_select(c->server, &sx);
+
+            p = buffer_peek(c->client->input, &length);
+            if (p != NULL) {
+                if (c->compressed) {
+                    nbytes = uo_decompress(&c->decompression,
+                                           buffer_tail(c->decompressed_buffer),
+                                           buffer_free(c->decompressed_buffer),
+                                           p, length);
                     if (nbytes < 0) {
-                        fprintf(stderr, "failed to write: %s\n",
-                                strerror(errno));
-                        exit(1);
+                        fprintf(stderr, "decompression failed\n");
+                        exit(3);
                     }
 
-                    if ((size_t)nbytes < packet1.length) {
-                        fprintf(stderr, "short write\n");
-                        exit(1);
-                    }
+                    buffer_remove_head(c->client->input, length);
+                    buffer_expand(c->decompressed_buffer, (size_t)nbytes);
 
-                    packet1.length = 0;
+                    printf("decompressed %zu bytes to %zd\n",
+                           length, nbytes);
+
+                    recv_from_server(c, c->decompressed_buffer);
+                } else {
+                    recv_from_server(c, c->client->input);
                 }
             }
 
-            if (packet2.length == 0) {
-                if (FD_ISSET(c->server_socket, &sx.readfds)) {
-                    nbytes = recv(c->server_socket, packet2.data, sizeof(packet2.data), 0);
-                    if (nbytes <= 0) {
-                        printf("server disconnected\n");
-                        exit(0);
-                    }
-
-                    if (nbytes > 0) {
-                        packet2.length = (size_t)nbytes;
-
-                        if (c->compressed) {
-                            nbytes = uo_decompress(packet3.data, sizeof(packet3.data),
-                                                   packet2.data, packet2.length);
-                            fprintf(stderr, "decompressed %lu bytes to %ld\n",
-                                    (unsigned long)packet2.length,
-                                    (long)nbytes);
-                            if (nbytes < 0) {
-                                fprintf(stderr, "decompress failed\n");
-                            } else {
-                                packet3.length = (size_t)nbytes;
-                                recv_from_server(c, &packet3);
-                            }
-                        } else {
-                            recv_from_server(c, &packet2);
-                        }
-                    }
-                }
-            } else {
-                if (FD_ISSET(c->client_socket, &sx.writefds)) {
-                    nbytes = send(c->client_socket, packet2.data, packet2.length, 0);
-                    if (nbytes < 0) {
-                        fprintf(stderr, "failed to write: %s\n",
-                                strerror(errno));
-                        exit(1);
-                    }
-
-                    if ((size_t)nbytes < packet2.length) {
-                        fprintf(stderr, "short write\n");
-                        exit(1);
-                    }
-
-                    packet2.length = 0;
-                }
-            }
+            p = buffer_peek(c->server->input, &length);
+            if (p != NULL)
+                recv_from_client(c, c->server->input);
         } else if (errno != EINTR) {
             fprintf(stderr, "select failed: %s\n",
                     strerror(errno));
             exit(1);
         }
 
+        /*
         do {
             int status;
+            pid_t pid;
 
             pid = waitpid(-1, &status, WNOHANG);
         } while (pid > 0);
+        */
     }
-}
-
-static void handle_incoming(int sockfd,
-                            uint32_t local_ip, uint16_t local_port,
-                            uint32_t server_ip, uint16_t server_port) {
-    int ret;
-    fd_set rfds;
-    struct timeval tv;
-    struct sockaddr addr;
-    socklen_t addrlen = sizeof(addr);
-    struct connection c;
-
-    (void)local_port;
-
-    tv.tv_sec = 10;
-    tv.tv_usec = 0;
-
-    FD_ZERO(&rfds);
-    FD_SET(sockfd, &rfds);
-
-    ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
-    if (ret < 0) {
-        fprintf(stderr, "select failed: %s\n", strerror(errno));
-        exit(1);
-    }
-
-    if (ret <= 0) {
-        fprintf(stderr, "timeout\n");
-        exit(1);
-    }
-
-    ret = accept(sockfd, &addr, &addrlen);
-    if (ret < 0) {
-        fprintf(stderr, "accept failed: %s\n",
-                strerror(errno));
-        exit(1);
-    }
-
-    close(sockfd);
-
-    memset(&c, 0, sizeof(c));
-
-    c.local_ip = local_ip;
-    c.client_socket = ret;
-    c.server_socket = setup_client_socket(server_ip, server_port);
-
-    handle_connection(&c);
 }
 
 static void run_server(uint32_t local_ip, uint16_t local_port,
@@ -453,6 +341,7 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
             }
 
             if (pid == 0) {
+                int ret;
                 struct connection c;
 
                 close(sockfd);
@@ -460,8 +349,28 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
                 memset(&c, 0, sizeof(c));
 
                 c.local_ip = local_ip;
-                c.client_socket = sockfd2;
-                c.server_socket = setup_client_socket(server_ip, server_port);
+                c.local_port = local_port;
+                ret = sock_buff_create(sockfd2, 4096, 65536, &c.server);
+                if (ret != 0) {
+                    fprintf(stderr, "sock_buff_create() failed: %s\n",
+                            strerror(-ret));
+                    exit(2);
+                }
+
+                ret = setup_client_socket(server_ip, server_port);
+                ret = sock_buff_create(ret, 4096, 65536, &c.client);
+                if (ret != 0) {
+                    fprintf(stderr, "sock_buff_create() failed: %s\n",
+                            strerror(-ret));
+                    exit(2);
+                }
+
+                uo_decompression_init(&c.decompression);
+                c.decompressed_buffer = buffer_new(65536);
+                if (c.decompressed_buffer == NULL) {
+                    fprintf(stderr, "out of memory\n");
+                    exit(2);
+                }
 
                 handle_connection(&c);
             }
