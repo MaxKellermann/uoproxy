@@ -154,8 +154,8 @@ static unsigned char *receive_from_buffer(struct uo_client *client,
     return dest;
 }
 
-unsigned char *uo_client_receive(struct uo_client *client,
-                                 unsigned char *dest, size_t *lengthp) {
+void *uo_client_receive(struct uo_client *client,
+                        void *dest, size_t *lengthp) {
     if (client->sock == NULL)
         return NULL;
 
@@ -194,13 +194,13 @@ unsigned char *uo_client_receive(struct uo_client *client,
 }
 
 void uo_client_send(struct uo_client *client,
-                    const unsigned char *src, size_t length) {
+                    const void *src, size_t length) {
     assert(length > 0);
 
     if (client->sock == NULL)
         return;
 
-    if (src[0] == PCK_GameLogin)
+    if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = 1;
 
     buffer_append(client->sock->output, src, length);

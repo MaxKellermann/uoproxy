@@ -38,10 +38,10 @@ void uo_client_pre_select(struct uo_client *client,
 int uo_client_post_select(struct uo_client *client,
                           struct selectx *sx);
 
-unsigned char *uo_client_receive(struct uo_client *client,
-                                 unsigned char *dest, size_t *lengthp);
+void *uo_client_receive(struct uo_client *client,
+                        void *dest, size_t *lengthp);
 
 void uo_client_send(struct uo_client *client,
-                    const unsigned char *src, size_t length);
+                    const void *src, size_t length);
 
 #endif

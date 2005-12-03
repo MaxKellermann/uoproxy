@@ -46,7 +46,7 @@ void buffer_delete(struct buffer *b) {
     free(b);
 }
 
-void buffer_append(struct buffer *b, const unsigned char *data,
+void buffer_append(struct buffer *b, const void *data,
                    size_t nbytes) {
     assert(nbytes <= buffer_free(b));
 

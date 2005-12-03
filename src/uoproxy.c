@@ -99,7 +99,7 @@ static void packet_from_client_account_login(struct connection *c,
         response.cmd = PCK_LogBad;
         response.reason = 0x02; /* blocked */
 
-        uo_server_send(c->server, (const unsigned char*)&response,
+        uo_server_send(c->server, &response,
                        sizeof(response));
         return;
     }

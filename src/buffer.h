@@ -38,7 +38,7 @@ static inline int buffer_empty(const struct buffer *b) {
     return b->length == 0;
 }
 
-static inline unsigned char *buffer_tail(struct buffer *b) {
+static inline void *buffer_tail(struct buffer *b) {
     return b->data + b->length;
 }
 
@@ -48,11 +48,11 @@ static inline void buffer_expand(struct buffer *b, size_t nbytes) {
     b->length += nbytes;
 }
 
-void buffer_append(struct buffer *b, const unsigned char *data,
+void buffer_append(struct buffer *b, const void *data,
                    size_t nbytes);
 
-static inline unsigned char *buffer_peek(struct buffer *b,
-                                         size_t *lengthp) {
+static inline void *buffer_peek(struct buffer *b,
+                                size_t *lengthp) {
     if (b->length == 0)
         return NULL;
 

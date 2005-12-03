@@ -89,8 +89,8 @@ int uo_server_post_select(struct uo_server *server,
     return sock_buff_post_select(server->sock, sx);
 }
 
-unsigned char *uo_server_receive(struct uo_server *server,
-                                 unsigned char *dest, size_t *lengthp) {
+void *uo_server_receive(struct uo_server *server,
+                        void *dest, size_t *lengthp) {
     unsigned char *p;
     size_t length, packet_length;
 
@@ -158,7 +158,7 @@ unsigned char *uo_server_receive(struct uo_server *server,
 }
 
 void uo_server_send(struct uo_server *server,
-                    const unsigned char *src, size_t length) {
+                    const void *src, size_t length) {
     assert(length > 0);
 
     if (server->sock == NULL)
