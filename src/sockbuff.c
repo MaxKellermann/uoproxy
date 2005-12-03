@@ -61,6 +61,7 @@ void sock_buff_dispose(struct sock_buff *sb) {
         close(sb->fd);
 
     buffer_delete(sb->input);
+    buffer_delete(sb->output);
     free(sb);
 }
 
