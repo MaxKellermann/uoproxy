@@ -38,16 +38,16 @@
 #include "ioutil.h"
 #include "buffer.h"
 #include "sockbuff.h"
+#include "client.h"
 
 struct connection {
     struct connection *next;
     uint32_t seed;
     uint32_t local_ip, server_ip;
     uint16_t local_port;
-    struct sock_buff *client, *server;
+    struct uo_client *client;
+    struct sock_buff *server;
     int compressed;
-    struct uo_decompression decompression;
-    struct buffer *decompressed_buffer;
 };
 
 struct server_info {
@@ -112,7 +112,7 @@ static void recv_from_client(struct connection *c,
 
         printf("seed=%08x\n", c->seed);
 
-        buffer_append(c->client->output, p, 4);
+        uo_client_send(c->client, p, 4);
         buffer_remove_head(buffer, 4);
     }
 
@@ -138,7 +138,7 @@ static void recv_from_client(struct connection *c,
 
         packet_from_client(c, p, packet_length);
 
-        buffer_append(c->client->output, p, packet_length);
+        uo_client_send(c->client, p, packet_length);
         buffer_remove_head(buffer, packet_length);
     }
 }
@@ -147,6 +147,8 @@ static void packet_from_server(struct connection *c,
                                unsigned char *p,
                                size_t length) {
     assert(length > 0);
+
+    printf("packet from server: 0x%02x length=%zu\n", p[0], length);
 
     switch (p[0]) {
         unsigned count, i, k;
@@ -189,62 +191,9 @@ static void packet_from_server(struct connection *c,
     }
 }
 
-static void recv_from_server(struct connection *c,
-                             struct buffer *buffer) {
-    unsigned char *p;
-    size_t length, packet_length;
-
-    (void)c;
-
-    while ((p = buffer_peek(buffer, &length)) != NULL) {
-        printf("from server: %02x %02x %02x\n",
-               p[0], p[1], p[2]);
-
-        packet_length = packet_lengths[p[0]];
-        if (packet_length == 0) {
-            if (length < 3)
-                return;
-
-            packet_length = ntohs(*(uint16_t*)(p + 1));
-            if (packet_length == 0) {
-                fprintf(stderr, "malformed packet from server\n");
-                exit(3);
-            }
-        }
-
-        printf("packet_length=%zu\n", packet_length);
-        if (packet_length > length)
-            return;
-
-        packet_from_server(c, p, packet_length);
-
-        if (c->compressed) {
-            ssize_t nbytes;
-
-            nbytes = uo_compress(buffer_tail(c->server->output),
-                                 buffer_free(c->server->output),
-                                 p, packet_length);
-            if (nbytes < 0) {
-                fprintf(stderr, "uo_compress() failed\n");
-                exit(3);
-            }
-
-            printf("compressed %zu bytes to %zd\n",
-                   packet_length, nbytes);
-
-            buffer_expand(c->server->output, (size_t)nbytes);
-        } else {
-            buffer_append(c->server->output, p, packet_length);
-        }
-
-        buffer_remove_head(buffer, packet_length);
-    }
-}
-
 static void delete_connection(struct connection *c) {
     sock_buff_dispose(c->server);
-    sock_buff_dispose(c->client);
-    buffer_delete(c->decompressed_buffer);
+    uo_client_dispose(c->client);
     free(c);
 }
 
@@ -252,21 +201,21 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
     while (*cp != NULL) {
         struct connection *c = *cp;
 
-        if (!sock_buff_alive(c->client)) {
-            fprintf(stderr, "client disconnected\n");
-            *cp = c->next;
-            delete_connection(c);
-            continue;
-        }
-
-        if (!sock_buff_alive(c->server)) {
+        if (!uo_client_alive(c->client)) {
             fprintf(stderr, "server disconnected\n");
             *cp = c->next;
             delete_connection(c);
             continue;
         }
 
-        sock_buff_pre_select(c->client, sx);
+        if (!sock_buff_alive(c->server)) {
+            fprintf(stderr, "client disconnected\n");
+            *cp = c->next;
+            delete_connection(c);
+            continue;
+        }
+
+        uo_client_pre_select(c->client, sx);
         sock_buff_pre_select(c->server, sx);
 
         cp = &c->next;
@@ -274,36 +223,36 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
 }
 
 static void connection_post_select(struct connection *c, struct selectx *sx) {
-    unsigned char *p;
+    unsigned char buffer[2048], *p;
     size_t length;
 
-    sock_buff_post_select(c->client, sx);
+    uo_client_post_select(c->client, sx);
     sock_buff_post_select(c->server, sx);
 
-    p = buffer_peek(c->client->input, &length);
-    if (p != NULL) {
+    length = sizeof(buffer);
+    while ((p = uo_client_receive(c->client, buffer, &length)) != NULL) {
+        packet_from_server(c, p, length);
+
         if (c->compressed) {
             ssize_t nbytes;
 
-            nbytes = uo_decompress(&c->decompression,
-                                   buffer_tail(c->decompressed_buffer),
-                                   buffer_free(c->decompressed_buffer),
-                                   p, length);
+            nbytes = uo_compress(buffer_tail(c->server->output),
+                                 buffer_free(c->server->output),
+                                 p, length);
             if (nbytes < 0) {
-                fprintf(stderr, "decompression failed\n");
+                fprintf(stderr, "uo_compress() failed\n");
                 exit(3);
             }
 
-            buffer_remove_head(c->client->input, length);
-            buffer_expand(c->decompressed_buffer, (size_t)nbytes);
-
-            printf("decompressed %zu bytes to %zd\n",
+            printf("compressed %zu bytes to %zd\n",
                    length, nbytes);
 
-            recv_from_server(c, c->decompressed_buffer);
+            buffer_expand(c->server->output, (size_t)nbytes);
         } else {
-            recv_from_server(c, c->client->input);
+            buffer_append(c->server->output, p, length);
         }
+
+        length = sizeof(buffer);
     }
 
     p = buffer_peek(c->server->input, &length);
@@ -340,21 +289,10 @@ static struct connection *create_connection(int server_socket,
         return NULL;
     }
 
-    ret = setup_client_socket(server_ip, server_port);
-    ret = sock_buff_create(ret, 4096, 65536, &c->client);
+    ret = uo_client_create(server_ip, server_port, &c->client);
     if (ret != 0) {
         fprintf(stderr, "sock_buff_create() failed: %s\n",
                 strerror(-ret));
-        sock_buff_dispose(c->server);
-        free(c);
-        return NULL;
-    }
-
-    uo_decompression_init(&c->decompression);
-    c->decompressed_buffer = buffer_new(65536);
-    if (c->decompressed_buffer == NULL) {
-        fprintf(stderr, "out of memory\n");
-        sock_buff_dispose(c->client);
         sock_buff_dispose(c->server);
         free(c);
         return NULL;
