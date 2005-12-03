@@ -37,12 +37,16 @@
 #include "ioutil.h"
 #include "client.h"
 #include "server.h"
+#include "relay.h"
+
+static struct relay_list relays = {
+    .next = 0,
+};
 
 struct connection {
     struct connection *next;
-    uint32_t seed;
     uint32_t local_ip, server_ip;
-    uint16_t local_port;
+    uint16_t local_port, server_port;
     struct uo_client *client;
     struct uo_server *server;
     int compressed;
@@ -69,35 +73,109 @@ static void signal_handler(int sig) {
     /* do nothing, just interrupt system calls */
 }
 
+static void packet_from_client_account_login(struct connection *c,
+                                             const struct uo_packet_login *p) {
+    int ret;
+
+    printf("account_login: username=%s password=%s\n",
+           p->username, p->password);
+
+    if (c->client != NULL) {
+        fprintf(stderr, "already logged in\n");
+        return;
+    }
+
+    ret = uo_client_create(c->server_ip, c->server_port,
+                           uo_server_seed(c->server),
+                           &c->client);
+    if (ret != 0) {
+        struct uo_packet_login_bad response;
+
+        fprintf(stderr, "uo_client_create() failed: %s\n",
+                strerror(-ret));
+
+        response.cmd = PCK_LogBad;
+        response.reason = 0x02; /* blocked */
+
+        uo_server_send(c->server, (const unsigned char*)&response,
+                       sizeof(response));
+        return;
+    }
+}
+
+static void packet_from_client_game_login(struct connection *c,
+                                          const struct uo_packet_game_login *p) {
+    int ret;
+    const struct relay *relay;
+
+    c->compressed = 1;
+
+    printf("game_login: username=%s password=%s\n",
+           p->username, p->password);
+
+    if (c->client != NULL) {
+        fprintf(stderr, "already logged in\n");
+        return;
+    }
+
+    relay = relay_find(&relays, p->auth_id);
+    if (relay == NULL) {
+        fprintf(stderr, "invalid or expired auth_id: 0x%08x\n",
+                p->auth_id);
+        return;
+    }
+
+    c->server_ip = relay->server_ip;
+    c->server_port = relay->server_port;
+
+    ret = uo_client_create(c->server_ip, c->server_port,
+                           uo_server_seed(c->server),
+                           &c->client);
+    if (ret != 0) {
+        fprintf(stderr, "uo_client_create() failed: %s\n",
+                strerror(-ret));
+        return;
+    }
+}
+
 static void packet_from_client(struct connection *c,
                                const unsigned char *p,
                                size_t length) {
     assert(length > 0);
 
-    if (c->seed == 0) {
-        /* the first packet from a client is the seed, 4 bytes without
-           header */
-        assert(length == 4);
-        c->seed = ntohl(*(const uint32_t*)p);
-        return;
-    }
-
     switch (p[0]) {
-        const struct uo_packet_login *packet_login;
-
     case PCK_AccountLogin:
     case PCK_AccountLogin2:
-        packet_login = (const struct uo_packet_login*)p;
-
-        printf("account_login: username=%s password=%s\n",
-               packet_login->username, packet_login->password);
-
+        packet_from_client_account_login(c, (const struct uo_packet_login*)p);
         break;
 
     case PCK_GameLogin:
-        c->compressed = 1;
+        packet_from_client_game_login(c, (const struct uo_packet_game_login*)p);
         break;
     }
+}
+
+static void packet_from_server_relay(struct connection *c,
+                                     struct uo_packet_relay *p) {
+    /* this packet tells the UO client where to connect; what
+       we do here is replace the server IP with our own one */
+    struct relay relay;
+
+    printf("play_ack: address=0x%08x port=%u\n",
+           ntohl(p->ip), ntohs(p->port));
+
+    /* remember the original IP/port */
+    relay = (struct relay){
+        .auth_id = p->auth_id,
+        .server_ip = p->ip,
+        .server_port = p->port,
+    };
+
+    relay_add(&relays, &relay);
+
+    /* now overwrite the packet */
+    p->ip = c->local_ip;
+    p->port = c->local_port;
 }
 
 static void packet_from_server(struct connection *c,
@@ -133,24 +211,16 @@ static void packet_from_server(struct connection *c,
         }
         break;
 
-    case 0x8c: /* PlayServerAck */
-        /* this packet tells the UO client where to connect; what
-           we do here is replace the server IP with our own one */
-
-        printf("play_ack: address=0x%08x port=%u\n",
-               ntohl(*(uint32_t*)(p + 1)),
-               ntohs(*(uint16_t*)(p + 5)));
-
-        *(uint32_t*)(p + 1) = c->local_ip;
-        *(uint16_t*)(p + 5) = c->local_port;
-
+    case PCK_Relay:
+        packet_from_server_relay(c, (struct uo_packet_relay*)p);
         break;
     }
 }
 
 static void delete_connection(struct connection *c) {
     uo_server_dispose(c->server);
-    uo_client_dispose(c->client);
+    if (c->client != NULL)
+        uo_client_dispose(c->client);
     free(c);
 }
 
@@ -158,7 +228,8 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
     while (*cp != NULL) {
         struct connection *c = *cp;
 
-        if (!uo_client_alive(c->client)) {
+        if (c->client != NULL &&
+            !uo_client_alive(c->client)) {
             fprintf(stderr, "server disconnected\n");
             *cp = c->next;
             delete_connection(c);
@@ -172,7 +243,8 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
             continue;
         }
 
-        uo_client_pre_select(c->client, sx);
+        if (c->client != NULL)
+            uo_client_pre_select(c->client, sx);
         uo_server_pre_select(c->server, sx);
 
         cp = &c->next;
@@ -183,21 +255,24 @@ static void connection_post_select(struct connection *c, struct selectx *sx) {
     unsigned char buffer[2048], *p;
     size_t length;
 
-    uo_client_post_select(c->client, sx);
-    uo_server_post_select(c->server, sx);
-
-    length = sizeof(buffer);
-    while ((p = uo_client_receive(c->client, buffer, &length)) != NULL) {
-        packet_from_server(c, p, length);
-        uo_server_send(c->server, p, length);
-
+    if (c->client != NULL) {
+        uo_client_post_select(c->client, sx);
         length = sizeof(buffer);
+        while ((p = uo_client_receive(c->client, buffer, &length)) != NULL) {
+            packet_from_server(c, p, length);
+            uo_server_send(c->server, p, length);
+
+            length = sizeof(buffer);
+        }
     }
+
+    uo_server_post_select(c->server, sx);
 
     length = sizeof(buffer);
     while ((p = uo_server_receive(c->server, buffer, &length)) != NULL) {
         packet_from_client(c, p, length);
-        uo_client_send(c->client, p, length);
+        if (c->client != NULL)
+            uo_client_send(c->client, p, length);
 
         length = sizeof(buffer);
     }
@@ -233,14 +308,8 @@ static struct connection *create_connection(int server_socket,
         return NULL;
     }
 
-    ret = uo_client_create(server_ip, server_port, &c->client);
-    if (ret != 0) {
-        fprintf(stderr, "sock_buff_create() failed: %s\n",
-                strerror(-ret));
-        uo_server_dispose(c->server);
-        free(c);
-        return NULL;
-    }
+    c->server_ip = server_ip;
+    c->server_port = server_port;
 
     return c;
 }
