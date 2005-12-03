@@ -239,6 +239,21 @@ struct uo_packet_login {
     unsigned char unknown1;
 } __attribute__ ((packed));
 
+struct uo_packet_game_login {
+    unsigned char cmd;
+    u_int32_t auth_id;
+    char username[30];
+    char password[30];
+    unsigned char unknown1;
+} __attribute__ ((packed));
+
+struct uo_packet_relay {
+    unsigned char cmd;
+    u_int32_t ip;
+    u_int16_t port;
+    u_int32_t auth_id;
+} __attribute__ ((packed));
+
 struct uo_packet_create_character {
     unsigned char cmd;
     u_int32_t unknown0, unknown1, unknown2;
