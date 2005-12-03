@@ -32,4 +32,6 @@ int setup_server_socket_random_port(uint32_t ip, uint16_t *portp);
 
 int setup_client_socket(uint32_t ip, uint16_t port);
 
+int socket_connect(uint32_t ip, uint16_t port);
+
 #endif

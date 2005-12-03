@@ -182,3 +182,22 @@ int setup_client_socket(uint32_t ip, uint16_t port) {
 
     return sockfd;
 }
+
+int socket_connect(uint32_t ip, uint16_t port) {
+    int sockfd, ret;
+    struct sockaddr_in sin;
+
+    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0)
+        return -1;
+
+    sin.sin_family = AF_INET;
+    sin.sin_port = port;
+    sin.sin_addr.s_addr = ip;
+
+    ret = connect(sockfd, (struct sockaddr*)&sin, sizeof(sin));
+    if (ret < 0)
+        return -1;
+
+    return sockfd;
+}
