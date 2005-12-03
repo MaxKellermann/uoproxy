@@ -173,9 +173,6 @@ void uo_server_send(struct uo_server *server,
             return;
         }
 
-        printf("compressed %zu bytes to %zd\n",
-               length, nbytes);
-
         buffer_expand(server->sock->output, (size_t)nbytes);
     } else {
         buffer_append(server->sock->output, src, length);

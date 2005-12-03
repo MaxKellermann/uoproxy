@@ -168,9 +168,6 @@ void *uo_client_peek(struct uo_client *client, size_t *lengthp) {
 
             buffer_shift(client->sock->input, length);
             buffer_expand(client->decompressed_buffer, (size_t)nbytes);
-
-            printf("decompressed %zu bytes to %zd\n",
-                   length, nbytes);
         }
 
         return peek_from_buffer(client, client->decompressed_buffer, lengthp);
