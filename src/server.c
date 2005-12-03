@@ -71,6 +71,10 @@ int uo_server_alive(const struct uo_server *server) {
     return server->sock != NULL && sock_buff_alive(server->sock);
 }
 
+u_int32_t uo_server_seed(const struct uo_server *server) {
+    return server->seed;
+}
+
 void uo_server_pre_select(struct uo_server *server,
                           struct selectx *sx) {
     if (server->sock != NULL)
@@ -111,26 +115,30 @@ unsigned char *uo_server_receive(struct uo_server *server,
             return NULL;
         }
 
-        packet_length = 4;
-    } else {
-        packet_length = packet_lengths[p[0]];
-        if (packet_length == 0) {
-            if (length < 3)
-                return NULL;
+        buffer_remove_head(server->sock->input, 4);
 
-            packet_length = ntohs(*(uint16_t*)(p + 1));
-            if (packet_length == 0) {
-                fprintf(stderr, "malformed packet from client\n");
-                sock_buff_dispose(server->sock);
-                server->sock = NULL;
-                return NULL;
-            }
-        }
-
-        printf("from client: 0x%02x length=%zu\n", p[0], packet_length);
-        if (packet_length > length)
+        p = buffer_peek(server->sock->input, &length);
+        if (p == NULL)
             return NULL;
     }
+
+    packet_length = packet_lengths[p[0]];
+    if (packet_length == 0) {
+        if (length < 3)
+            return NULL;
+
+        packet_length = ntohs(*(uint16_t*)(p + 1));
+        if (packet_length == 0) {
+            fprintf(stderr, "malformed packet from client\n");
+            sock_buff_dispose(server->sock);
+            server->sock = NULL;
+            return NULL;
+        }
+    }
+
+    printf("from client: 0x%02x length=%zu\n", p[0], packet_length);
+    if (packet_length > length)
+        return NULL;
 
     if (packet_length > *lengthp) {
         fprintf(stderr, "buffer too small\n");
