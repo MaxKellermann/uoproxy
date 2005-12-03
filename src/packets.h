@@ -239,6 +239,11 @@ struct uo_packet_login {
     unsigned char unknown1;
 } __attribute__ ((packed));
 
+struct uo_packet_login_bad {
+    unsigned char cmd;
+    unsigned char reason;
+} __attribute__ ((packed));
+
 struct uo_packet_game_login {
     unsigned char cmd;
     u_int32_t auth_id;
