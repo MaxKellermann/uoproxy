@@ -237,3 +237,24 @@ struct uo_packet_login {
     char password[30];
     unsigned char unknown1;
 } __attribute__ ((packed));
+
+struct uo_packet_create_character {
+    unsigned char cmd;
+    u_int32_t unknown0, unknown1, unknown2;
+    char name[30];
+    u_int8_t unknown3[2];
+    u_int32_t flags;
+    u_int8_t unknown4[8];
+    u_int8_t profession;
+    u_int8_t unknown5[15];
+    u_int8_t female;
+    u_int8_t strength, dexterity, intelligence;
+    u_int8_t is1, vs1, is2, vs2, is3, vs3;
+    u_int16_t hue;
+    u_int16_t hair_val, hair_hue;
+    u_int16_t hair_valf, hair_huef;
+    u_int8_t unknown6;
+    u_int8_t city_index;
+    u_int32_t char_slot, client_ip;
+    u_int16_t shirt_hue, pants_hue;
+} __attribute__ ((packed));
