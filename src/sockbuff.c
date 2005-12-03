@@ -82,7 +82,7 @@ int sock_buff_flush(struct sock_buff *sb) {
         return -save_errno;
     }
 
-    buffer_remove_head(sb->output, (size_t)nbytes);
+    buffer_shift(sb->output, (size_t)nbytes);
 
     return 0;
 }

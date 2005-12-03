@@ -114,7 +114,7 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
             return NULL;
         }
 
-        buffer_remove_head(server->sock->input, 4);
+        buffer_shift(server->sock->input, 4);
 
         p = buffer_peek(server->sock->input, &length);
         if (p == NULL)
@@ -150,7 +150,7 @@ void uo_server_shift(struct uo_server *server, size_t nbytes) {
     if (server->sock == NULL)
         return;
 
-    buffer_remove_head(server->sock->input, nbytes);
+    buffer_shift(server->sock->input, nbytes);
 }
 
 void uo_server_send(struct uo_server *server,

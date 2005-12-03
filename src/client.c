@@ -166,7 +166,7 @@ void *uo_client_peek(struct uo_client *client, size_t *lengthp) {
                 return NULL;
             }
 
-            buffer_remove_head(client->sock->input, length);
+            buffer_shift(client->sock->input, length);
             buffer_expand(client->decompressed_buffer, (size_t)nbytes);
 
             printf("decompressed %zu bytes to %zd\n",
@@ -183,10 +183,10 @@ void uo_client_shift(struct uo_client *client, size_t nbytes) {
     if (client->sock == NULL)
         return;
 
-    buffer_remove_head(client->compression_enabled
-                       ? client->decompressed_buffer
-                       : client->sock->input,
-                       nbytes);
+    buffer_shift(client->compression_enabled
+                 ? client->decompressed_buffer
+                 : client->sock->input,
+                 nbytes);
 }
 
 void uo_client_send(struct uo_client *client,

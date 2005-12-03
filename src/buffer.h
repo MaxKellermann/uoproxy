@@ -60,6 +60,6 @@ static inline void *buffer_peek(struct buffer *b,
     return b->data;
 }
 
-void buffer_remove_head(struct buffer *b, size_t nbytes);
+void buffer_shift(struct buffer *b, size_t nbytes);
 
 #endif

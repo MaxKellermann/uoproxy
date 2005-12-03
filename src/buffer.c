@@ -54,8 +54,7 @@ void buffer_append(struct buffer *b, const void *data,
     b->length += nbytes;
 }
 
-void buffer_remove_head(struct buffer *b,
-                        size_t nbytes) {
+void buffer_shift(struct buffer *b, size_t nbytes) {
     assert(nbytes <= b->length);
 
     b->length -= nbytes;
