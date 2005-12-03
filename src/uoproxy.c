@@ -55,10 +55,13 @@ struct server_info {
     uint32_t address;
 } __attribute__ ((packed));
 
+static int setup_server_socket_random(uint32_t ip, uint16_t *portp);
+
 static void usage(void)
      __attribute__ ((noreturn));
 
-static void handle_incoming(uint32_t local_ip, uint16_t local_port,
+static void handle_incoming(int sockfd,
+                            uint32_t local_ip, uint16_t local_port,
                             uint32_t server_ip, uint16_t server_port)
      __attribute__ ((noreturn));
 
@@ -186,6 +189,8 @@ static void packet_from_server(struct connection *c,
     switch (p[0]) {
         unsigned count, i, k;
         struct server_info *server_info;
+        uint16_t local_port;
+        int sockfd;
         pid_t pid;
 
     case 0xa8: /* AccountLoginAck */
@@ -219,6 +224,11 @@ static void packet_from_server(struct connection *c,
         printf("play_ack: address=0x%08x port=%u\n",
                ntohl(*(uint32_t*)(p + 1)),
                ntohs(*(uint16_t*)(p + 5)));
+
+        local_port = ntohs(*(uint16_t*)(p + 5));
+        sockfd = setup_server_socket_random(c->local_ip,
+                                            &local_port);
+
         pid = fork();
         if (pid < 0) {
             fprintf(stderr, "fork failed: %s", strerror(errno));
@@ -226,12 +236,14 @@ static void packet_from_server(struct connection *c,
         }
 
         if (pid == 0)
-            handle_incoming(c->local_ip,
-                            *(uint16_t*)(p + 5),
+            handle_incoming(sockfd,
+                            c->local_ip,
+                            local_port,
                             *(uint32_t*)(p + 1),
                             *(uint16_t*)(p + 5));
 
         *(uint32_t*)(p + 1) = c->local_ip;
+        *(uint16_t*)(p + 5) = htons(local_port);
 
         break;
     }
@@ -447,6 +459,62 @@ static int setup_server_socket(uint32_t ip, uint16_t port) {
     return sockfd;
 }
 
+static int bind_random(int sockfd, uint32_t ip, uint16_t *portp) {
+    int ret;
+    struct sockaddr_in sin;
+
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = ip;
+
+    for (;;) {
+        sin.sin_port = htons(*portp);
+
+        ret = bind(sockfd, (const struct sockaddr*)&sin, sizeof(sin));
+        if (ret == 0)
+            return 0;
+
+        if (errno != EADDRINUSE)
+            return -1;
+
+        ++(*portp);
+    }
+}
+
+static int setup_server_socket_random(uint32_t ip, uint16_t *portp) {
+    int sockfd, ret, param;
+
+    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        fprintf(stderr, "failed to create socket: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    param = 1;
+    ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
+    if (ret < 0) {
+        fprintf(stderr, "setsockopt failed: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    ret = bind_random(sockfd, ip, portp);
+    if (ret < 0) {
+        fprintf(stderr, "failed to bind: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    ret = listen(sockfd, 4);
+    if (ret < 0) {
+        fprintf(stderr, "listen failed: %s\n",
+                strerror(errno));
+        exit(1);
+    }
+
+    return sockfd;
+}
+
 static int setup_client_socket(uint32_t ip, uint16_t port) {
     int sockfd, ret;
     struct sockaddr_in sin;
@@ -472,16 +540,17 @@ static int setup_client_socket(uint32_t ip, uint16_t port) {
     return sockfd;
 }
 
-static void handle_incoming(uint32_t local_ip, uint16_t local_port,
+static void handle_incoming(int sockfd,
+                            uint32_t local_ip, uint16_t local_port,
                             uint32_t server_ip, uint16_t server_port) {
-    int sockfd, ret;
+    int ret;
     fd_set rfds;
     struct timeval tv;
     struct sockaddr addr;
     socklen_t addrlen = sizeof(addr);
     struct connection c;
 
-    sockfd = setup_server_socket(local_ip, local_port);
+    (void)local_port;
 
     tv.tv_sec = 10;
     tv.tv_usec = 0;
