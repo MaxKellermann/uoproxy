@@ -62,3 +62,12 @@ void connection_delete(struct connection *c) {
         uo_client_dispose(c->client);
     free(c);
 }
+
+void connection_invalidate(struct connection *c) {
+    c->invalid = 1;
+
+    if (c->server != NULL)
+        uo_server_dispose(c->server);
+    if (c->client != NULL)
+        uo_client_dispose(c->client);
+}

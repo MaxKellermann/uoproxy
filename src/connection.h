@@ -24,6 +24,7 @@
 
 struct connection {
     struct connection *next;
+    int invalid;
     u_int32_t local_ip, server_ip;
     u_int16_t local_port, server_port;
     struct uo_client *client;
@@ -38,5 +39,7 @@ int connection_new(int server_socket,
                    struct connection **connectionp);
 
 void connection_delete(struct connection *c);
+
+void connection_invalidate(struct connection *c);
 
 #endif

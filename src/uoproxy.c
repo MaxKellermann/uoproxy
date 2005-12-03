@@ -75,13 +75,15 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
         if (c->client != NULL &&
             !uo_client_alive(c->client)) {
             fprintf(stderr, "server disconnected\n");
-            *cp = c->next;
-            connection_delete(c);
-            continue;
+            connection_invalidate(c);
         }
 
         if (!uo_server_alive(c->server)) {
             fprintf(stderr, "client disconnected\n");
+            connection_invalidate(c);
+        }
+
+        if (c->invalid) {
             *cp = c->next;
             connection_delete(c);
             continue;
@@ -116,7 +118,7 @@ static void connection_post_select(struct connection *c, struct selectx *sx) {
                 break;
 
             case PA_DISCONNECT:
-                /* XXX */
+                connection_invalidate(c);
                 break;
             }
 
@@ -140,7 +142,7 @@ static void connection_post_select(struct connection *c, struct selectx *sx) {
             break;
 
         case PA_DISCONNECT:
-            /* XXX */
+            connection_invalidate(c);
             break;
         }
 
