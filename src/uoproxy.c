@@ -226,6 +226,14 @@ static void delete_connection(struct connection *c) {
     free(c);
 }
 
+static void delete_all_connections(struct connection *head) {
+    while (head != NULL) {
+        struct connection *c = head;
+        head = head->next;
+        delete_connection(c);
+    }
+}
+
 static void connections_pre_select(struct connection **cp, struct selectx *sx) {
     while (*cp != NULL) {
         struct connection *c = *cp;
@@ -373,6 +381,8 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
             exit(1);
         }
     }
+
+    delete_all_connections(connections_head);
 }
 
 int main(int argc, char **argv) {
