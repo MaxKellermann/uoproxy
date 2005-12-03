@@ -111,10 +111,9 @@ int uo_client_post_select(struct uo_client *client,
     return sock_buff_post_select(client->sock, sx);
 }
 
-static unsigned char *receive_from_buffer(struct uo_client *client,
-                                          struct buffer *buffer,
-                                          unsigned char *dest,
-                                          size_t *lengthp) {
+static unsigned char *peek_from_buffer(struct uo_client *client,
+                                       struct buffer *buffer,
+                                       size_t *lengthp) {
     unsigned char *p;
     size_t length, packet_length;
 
@@ -140,22 +139,11 @@ static unsigned char *receive_from_buffer(struct uo_client *client,
     if (packet_length > length)
         return NULL;
 
-    if (packet_length > *lengthp) {
-        fprintf(stderr, "buffer too small\n");
-        sock_buff_dispose(client->sock);
-        client->sock = NULL;
-        return NULL;
-    }
-
-    memcpy(dest, p, packet_length);
-    buffer_remove_head(buffer, packet_length);
     *lengthp = packet_length;
-
-    return dest;
+    return p;
 }
 
-void *uo_client_receive(struct uo_client *client,
-                        void *dest, size_t *lengthp) {
+void *uo_client_peek(struct uo_client *client, size_t *lengthp) {
     if (client->sock == NULL)
         return NULL;
 
@@ -185,12 +173,20 @@ void *uo_client_receive(struct uo_client *client,
                    length, nbytes);
         }
 
-        return receive_from_buffer(client, client->decompressed_buffer,
-                                   dest, lengthp);
+        return peek_from_buffer(client, client->decompressed_buffer, lengthp);
     } else {
-        return receive_from_buffer(client, client->sock->input,
-                                   dest, lengthp);
+        return peek_from_buffer(client, client->sock->input, lengthp);
     }
+}
+
+void uo_client_shift(struct uo_client *client, size_t nbytes) {
+    if (client->sock == NULL)
+        return;
+
+    buffer_remove_head(client->compression_enabled
+                       ? client->decompressed_buffer
+                       : client->sock->input,
+                       nbytes);
 }
 
 void uo_client_send(struct uo_client *client,

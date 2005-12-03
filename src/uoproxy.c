@@ -100,15 +100,14 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
 }
 
 static void connection_post_select(struct connection *c, struct selectx *sx) {
-    static unsigned char buffer[8192];
     unsigned char *p;
     size_t length;
     packet_action_t action;
 
     if (c->client != NULL) {
         uo_client_post_select(c->client, sx);
-        length = sizeof(buffer);
-        while ((p = uo_client_receive(c->client, buffer, &length)) != NULL) {
+        while (c->client != NULL &&
+               (p = uo_client_peek(c->client, &length)) != NULL) {
             action = handle_packet(server_packet_bindings,
                                    c, p, length);
             switch (action) {
@@ -125,15 +124,15 @@ static void connection_post_select(struct connection *c, struct selectx *sx) {
                 break;
             }
 
-            length = sizeof(buffer);
+            if (c->client != NULL)
+                uo_client_shift(c->client, length);
         }
     }
 
     if (c->server != NULL) {
         uo_server_post_select(c->server, sx);
-
-        length = sizeof(buffer);
-        while ((p = uo_server_receive(c->server, buffer, &length)) != NULL) {
+        while (c->server != NULL &&
+               (p = uo_server_peek(c->server, &length)) != NULL) {
             action = handle_packet(client_packet_bindings,
                                    c, p, length);
             switch (action) {
@@ -150,7 +149,8 @@ static void connection_post_select(struct connection *c, struct selectx *sx) {
                 break;
             }
 
-            length = sizeof(buffer);
+            if (c->server != NULL)
+                uo_server_shift(c->server, length);
         }
     }
 }

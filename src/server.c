@@ -89,8 +89,7 @@ int uo_server_post_select(struct uo_server *server,
     return sock_buff_post_select(server->sock, sx);
 }
 
-void *uo_server_receive(struct uo_server *server,
-                        void *dest, size_t *lengthp) {
+void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
     unsigned char *p;
     size_t length, packet_length;
 
@@ -140,21 +139,18 @@ void *uo_server_receive(struct uo_server *server,
     if (packet_length > length)
         return NULL;
 
-    if (packet_length > *lengthp) {
-        fprintf(stderr, "buffer too small\n");
-        sock_buff_dispose(server->sock);
-        server->sock = NULL;
-        return NULL;
-    }
-
-    memcpy(dest, p, packet_length);
-    buffer_remove_head(server->sock->input, packet_length);
-    *lengthp = packet_length;
-
     if (p[0] == PCK_GameLogin)
         server->compression_enabled = 1;
 
-    return dest;
+    *lengthp = packet_length;
+    return p;
+}
+
+void uo_server_shift(struct uo_server *server, size_t nbytes) {
+    if (server->sock == NULL)
+        return;
+
+    buffer_remove_head(server->sock->input, nbytes);
 }
 
 void uo_server_send(struct uo_server *server,

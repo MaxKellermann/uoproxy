@@ -38,8 +38,9 @@ void uo_client_pre_select(struct uo_client *client,
 int uo_client_post_select(struct uo_client *client,
                           struct selectx *sx);
 
-void *uo_client_receive(struct uo_client *client,
-                        void *dest, size_t *lengthp);
+void *uo_client_peek(struct uo_client *client, size_t *lengthp);
+
+void uo_client_shift(struct uo_client *client, size_t nbytes);
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length);
