@@ -21,12 +21,14 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
 
 #include "connection.h"
 #include "server.h"
 #include "client.h"
 #include "relay.h"
+#include "handler.h"
 
 int connection_new(int server_socket,
                    u_int32_t local_ip, u_int16_t local_port,
@@ -75,4 +77,90 @@ void connection_invalidate(struct connection *c) {
         uo_client_dispose(c->client);
         c->client = NULL;
     }
+}
+
+void connection_pre_select(struct connection *c, struct selectx *sx) {
+    if (c->invalid)
+        return;
+
+    if (c->client != NULL &&
+        !uo_client_alive(c->client)) {
+        printf("server disconnected\n");
+        connection_invalidate(c);
+        return;
+    }
+
+    if (c->server != NULL &&
+        !uo_server_alive(c->server)) {
+        printf("client disconnected\n");
+        connection_invalidate(c);
+        return;
+    }
+
+    if (c->client != NULL)
+        uo_client_pre_select(c->client, sx);
+
+    if (c->server != NULL)
+        uo_server_pre_select(c->server, sx);
+}
+
+int connection_post_select(struct connection *c, struct selectx *sx) {
+    void *p;
+    size_t length;
+    packet_action_t action;
+
+    if (c->invalid)
+        return 0;
+
+    if (c->client != NULL) {
+        uo_client_post_select(c->client, sx);
+        while (c->client != NULL &&
+               (p = uo_client_peek(c->client, &length)) != NULL) {
+            action = handle_packet(server_packet_bindings,
+                                   c, p, length);
+            switch (action) {
+            case PA_ACCEPT:
+                if (c->server != NULL)
+                    uo_server_send(c->server, p, length);
+                break;
+
+            case PA_DROP:
+                break;
+
+            case PA_DISCONNECT:
+                connection_invalidate(c);
+                break;
+            }
+
+            if (c->client != NULL)
+                uo_client_shift(c->client, length);
+        }
+    }
+
+    if (c->server != NULL) {
+        uo_server_post_select(c->server, sx);
+        while (c->server != NULL &&
+               (p = uo_server_peek(c->server, &length)) != NULL) {
+            action = handle_packet(client_packet_bindings,
+                                   c, p, length);
+            switch (action) {
+            case PA_ACCEPT:
+                if (c->client != NULL)
+                    uo_client_send(c->client, p, length);
+                break;
+
+            case PA_DROP:
+                break;
+
+            case PA_DISCONNECT:
+                connection_invalidate(c);
+                break;
+            }
+
+            if (c->server != NULL)
+                uo_server_shift(c->server, length);
+        }
+    }
+
+    return 0;
 }

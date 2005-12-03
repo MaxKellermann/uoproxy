@@ -22,6 +22,8 @@
 #ifndef __CONNECTION_H
 #define __CONNECTION_H
 
+struct selectx;
+
 struct connection {
     /* linked list */
     struct connection *next;
@@ -51,5 +53,9 @@ int connection_new(int server_socket,
 void connection_delete(struct connection *c);
 
 void connection_invalidate(struct connection *c);
+
+void connection_pre_select(struct connection *c, struct selectx *sx);
+
+int connection_post_select(struct connection *c, struct selectx *sx);
 
 #endif
