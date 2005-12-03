@@ -39,6 +39,8 @@
 #include "server.h"
 #include "relay.h"
 
+static int should_exit = 0;
+
 static struct relay_list relays = {
     .next = 0,
 };
@@ -68,9 +70,9 @@ static void usage(void) {
     exit(1);
 }
 
-static void signal_handler(int sig) {
+static void exit_signal_handler(int sig) {
     (void)sig;
-    /* do nothing, just interrupt system calls */
+    should_exit = 1;
 }
 
 static void packet_from_client_account_login(struct connection *c,
@@ -314,26 +316,25 @@ static struct connection *create_connection(int server_socket,
     return c;
 }
 
-static void run_server(uint32_t local_ip, uint16_t local_port,
-                       uint32_t server_ip, uint16_t server_port)
-     __attribute__ ((noreturn));
+static void setup_signal_handlers(void) {
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = exit_signal_handler;
+
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
+}
 
 static void run_server(uint32_t local_ip, uint16_t local_port,
                        uint32_t server_ip, uint16_t server_port) {
-    int sockfd;
-    struct sigaction sa;
-    int ret;
+    int sockfd, ret;
     struct selectx sx;
     struct connection *connections_head = NULL;
 
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = signal_handler;
-
-    sigaction(SIGCHLD, &sa, NULL);
-
     sockfd = setup_server_socket(local_ip, local_port);
 
-    while (1) {
+    while (!should_exit) {
         selectx_clear(&sx);
         selectx_add_read(&sx, sockfd);
         connections_pre_select(&connections_head, &sx);
@@ -424,6 +425,12 @@ int main(int argc, char **argv) {
 
     freeaddrinfo(ai);
 
+    /* set up */
+
+    setup_signal_handlers();
+
     /* call main loop */
     run_server(local_ip, local_port, remote_ip, remote_port);
+
+    return 0;
 }
