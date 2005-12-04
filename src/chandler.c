@@ -33,6 +33,31 @@
 #include "server.h"
 #include "relay.h"
 
+static packet_action_t handle_walk(struct connection *c,
+                                   void *data, size_t length) {
+    const struct uo_packet_walk *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->reconnecting) {
+        /* while reconnecting, reject all walk requests */
+        struct uo_packet_walk_cancel p2 = {
+            .cmd = PCK_WalkCancel,
+            .seq = p->seq,
+            .x = c->packet_start.x,
+            .y = c->packet_start.y,
+            .direction = c->packet_start.direction,
+            .z = c->packet_start.z,
+        };
+
+        uo_server_send(c->server, &p2, sizeof(p2));
+
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_ping(struct connection *c,
                                    void *data, size_t length) {
     uo_server_send(c->server, data, length);
@@ -188,6 +213,9 @@ static packet_action_t handle_extended(struct connection *c,
 }
 
 struct packet_binding client_packet_bindings[] = {
+    { .cmd = PCK_Walk,
+      .handler = handle_walk,
+    },
     { .cmd = PCK_Ping,
       .handler = handle_ping,
     },

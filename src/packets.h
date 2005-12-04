@@ -266,15 +266,22 @@ static inline size_t get_packet_length(const void *q, size_t max_length) {
     return length;
 }
 
+/* 0x02 Walk */
+struct uo_packet_walk {
+    unsigned char cmd;
+    u_int8_t direction, seq;
+    u_int32_t key;
+} __attribute__ ((packed));
+
 struct uo_packet_ping {
     unsigned char cmd;
     unsigned char id;
-};
+} __attribute__ ((packed));
 
 struct uo_packet_ping_ack {
     unsigned char cmd;
     unsigned char id;
-};
+} __attribute__ ((packed));
 
 struct uo_packet_account_login {
     unsigned char cmd;
@@ -437,6 +444,15 @@ struct uo_packet_mobile_update {
     u_int8_t packet_flags;
     int16_t x, y;
     u_int16_t unknown1;
+    u_int8_t direction;
+    int8_t z;
+} __attribute__ ((packed));
+
+/* 0x21 WalkCancel */
+struct uo_packet_walk_cancel {
+    unsigned char cmd;
+    u_int8_t seq;
+    int16_t x, y;
     u_int8_t direction;
     int8_t z;
 } __attribute__ ((packed));
