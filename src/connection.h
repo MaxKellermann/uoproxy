@@ -48,6 +48,7 @@ struct connection {
 
     /* flags */
     int invalid, background, attaching, welcome;
+    int autoreconnect, reconnecting;
 
     /* state */
     char username[30], password[30];

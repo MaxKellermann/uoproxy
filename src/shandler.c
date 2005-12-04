@@ -146,6 +146,10 @@ static packet_action_t handle_start(struct connection *c,
 
     c->packet_start = *p;
 
+    /* if we're auto-reconnecting, this is the point where it
+       succeeded */
+    c->reconnecting = 0;
+
     return PA_ACCEPT;
 }
 

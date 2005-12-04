@@ -50,6 +50,7 @@ int connection_new(struct instance *instance,
     }
 
     c->background = 1; /* XXX: testing this option */
+    c->autoreconnect = 1; /* XXX: testing this option */
 
     *connectionp = c;
 
@@ -103,8 +104,19 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     if (c->client != NULL &&
         !uo_client_alive(c->client)) {
-        printf("server disconnected\n");
-        connection_invalidate(c);
+        if (c->autoreconnect) {
+            uo_client_dispose(c->client);
+            c->client = NULL;
+
+            c->reconnecting = 1;
+
+            if (c->server != NULL)
+                uo_server_speak_console(c->server,
+                                        "uoproxy was disconnected, auto-reconnecting...");
+        } else {
+            printf("server disconnected\n");
+            connection_invalidate(c);
+        }
         return;
     }
 
@@ -168,7 +180,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                                    c, p, length);
             switch (action) {
             case PA_ACCEPT:
-                if (c->client != NULL)
+                if (c->client != NULL && !c->reconnecting)
                     uo_client_send(c->client, p, length);
                 break;
 
