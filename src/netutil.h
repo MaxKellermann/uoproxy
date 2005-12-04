@@ -30,8 +30,6 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 
 int setup_server_socket(const struct addrinfo *bind_address);
 
-int setup_client_socket(uint32_t ip, uint16_t port);
-
 int socket_connect(const struct addrinfo *connect_address);
 
 #endif
