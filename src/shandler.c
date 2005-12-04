@@ -217,6 +217,8 @@ static packet_action_t handle_mobile_update(struct connection *c,
         c->packet_start.direction = p->direction;
     }
 
+    connection_mobile_update(c, p);
+
     return PA_ACCEPT;
 }
 
@@ -249,6 +251,17 @@ static packet_action_t handle_put(struct connection *c,
     assert(length <= sizeof(*p));
 
     connection_add_item(c, p);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_mobile_moving(struct connection *c,
+                                            void *data, size_t length) {
+    const struct uo_packet_mobile_moving *p = data;
+
+    assert(length == sizeof(*p));
+
+    connection_mobile_moving(c, p);
 
     return PA_ACCEPT;
 }
@@ -371,6 +384,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_Put,
       .handler = handle_put,
+    },
+    { .cmd = PCK_MobileMoving,
+      .handler = handle_mobile_moving,
     },
     { .cmd = PCK_MobileIncoming,
       .handler = handle_mobile_incoming,

@@ -157,6 +157,52 @@ void connection_mobile_status(struct connection *c,
                        p, ntohs(p->length));
 }
 
+void connection_mobile_update(struct connection *c,
+                              const struct uo_packet_mobile_update *p) {
+    struct mobile *m;
+
+    m = *find_mobile(c, p->serial);
+    if (m == NULL) {
+        fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
+                ntohl(p->serial));
+        return;
+    }
+
+    /* copy values to m->packet_mobile_incoming */
+    if (m->packet_mobile_incoming != NULL) {
+        m->packet_mobile_incoming->body = p->body;
+        m->packet_mobile_incoming->x = p->x;
+        m->packet_mobile_incoming->y = p->y;
+        m->packet_mobile_incoming->z = p->z;
+        m->packet_mobile_incoming->direction = p->direction;
+        m->packet_mobile_incoming->hue = p->hue;
+    }
+}
+
+void connection_mobile_moving(struct connection *c,
+                              const struct uo_packet_mobile_moving *p) {
+    struct mobile *m;
+
+    m = *find_mobile(c, p->serial);
+    if (m == NULL) {
+        fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
+                ntohl(p->serial));
+        return;
+    }
+
+    /* copy values to m->packet_mobile_incoming */
+    if (m->packet_mobile_incoming != NULL) {
+        m->packet_mobile_incoming->body = p->body;
+        m->packet_mobile_incoming->x = p->x;
+        m->packet_mobile_incoming->y = p->y;
+        m->packet_mobile_incoming->z = p->z;
+        m->packet_mobile_incoming->direction = p->direction;
+        m->packet_mobile_incoming->hue = p->hue;
+        m->packet_mobile_incoming->flags = p->flags;
+        m->packet_mobile_incoming->notoriety = p->notoriety;
+    }
+}
+
 void connection_remove_mobile(struct connection *c, u_int32_t serial) {
     struct mobile **mp, *m;
 

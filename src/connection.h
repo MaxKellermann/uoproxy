@@ -105,6 +105,12 @@ void connection_mobile_incoming(struct connection *c,
 void connection_mobile_status(struct connection *c,
                               const struct uo_packet_mobile_status *p);
 
+void connection_mobile_update(struct connection *c,
+                              const struct uo_packet_mobile_update *p);
+
+void connection_mobile_moving(struct connection *c,
+                              const struct uo_packet_mobile_moving *p);
+
 void connection_remove_mobile(struct connection *c, u_int32_t serial);
 
 /* attach */

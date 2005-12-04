@@ -144,7 +144,7 @@ enum uo_packet_type_t {
     PCK_VendOpenBuy = 0x74,
     PCK_CharName = 0x75,
     PCK_ZoneChange = 0x76,
-    PCK_CharMove = 0x77,
+    PCK_MobileMoving = 0x77,
     PCK_MobileIncoming = 0x78,
     PCK_UnkResourceGet = 0x79,
     PCK_UnkResourceData = 0x7a,
@@ -466,6 +466,19 @@ struct uo_packet_fragment_mobile_item {
     u_int16_t item_id;
     u_int8_t layer;
     u_int16_t hue; /* optional */
+} __attribute__ ((packed));
+
+/* 0x77 MobileMoving */
+struct uo_packet_mobile_moving {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t body;
+    int16_t x, y;
+    int8_t z;
+    u_int8_t direction;
+    u_int16_t hue;
+    u_int8_t flags;
+    u_int8_t notoriety;
 } __attribute__ ((packed));
 
 struct uo_packet_mobile_incoming {
