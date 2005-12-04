@@ -152,7 +152,7 @@ void connection_mobile_status(struct connection *c,
 
     /* XXX: check if p->flags is available */
     if (m->packet_mobile_status == NULL ||
-        m->packet_mobile_status->flags < p->flags)
+        m->packet_mobile_status->flags <= p->flags)
         replace_packet((void**)&m->packet_mobile_status,
                        p, ntohs(p->length));
 }
