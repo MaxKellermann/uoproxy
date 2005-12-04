@@ -185,7 +185,7 @@ void connection_mobile_moving(struct connection *c,
 
     m = *find_mobile(c, p->serial);
     if (m == NULL) {
-        fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
+        fprintf(stderr, "warning in connection_mobile_moving: no such mobile 0x%x\n",
                 ntohl(p->serial));
         return;
     }
