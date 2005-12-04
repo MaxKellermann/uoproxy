@@ -35,6 +35,7 @@
 #include "buffer.h"
 #include "compression.h"
 #include "packets.h"
+#include "dump.h"
 
 struct uo_client {
     struct sock_buff *sock;
@@ -125,9 +126,13 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
     if (p == NULL)
         return NULL;
 
+    assert(length > 0);
+
     packet_length = get_packet_length(p, length);
     if (packet_length == PACKET_LENGTH_INVALID) {
-        fprintf(stderr, "malformed packet from server\n");
+        fprintf(stderr, "malformed packet from server:\n");
+        fhexdump(stderr, "  ", p, length);
+        fflush(stderr);
         sock_buff_dispose(client->sock);
         client->sock = NULL;
         return NULL;
@@ -190,6 +195,11 @@ void uo_client_send(struct uo_client *client,
 
     if (client->sock == NULL)
         return;
+
+#ifdef DUMP_CLIENT_SEND
+    printf("sending to packet to server, length=%zu:\n", length);
+    fhexdump(stdout, "  ", src, length);
+#endif
 
     if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = 1;

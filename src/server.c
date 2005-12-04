@@ -35,6 +35,7 @@
 #include "buffer.h"
 #include "compression.h"
 #include "packets.h"
+#include "dump.h"
 
 struct uo_server {
     struct sock_buff *sock;
@@ -127,7 +128,9 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
 
     packet_length = get_packet_length(p, length);
     if (packet_length == PACKET_LENGTH_INVALID) {
-        fprintf(stderr, "malformed packet from client\n");
+        fprintf(stderr, "malformed packet from client:\n");
+        fhexdump(stderr, "  ", p, length);
+        fflush(stderr);
         sock_buff_dispose(server->sock);
         server->sock = NULL;
         return NULL;
@@ -159,6 +162,11 @@ void uo_server_send(struct uo_server *server,
     if (server->sock == NULL)
         return;
 
+#ifdef DUMP_SERVER_SEND
+    printf("sending to packet to client, length=%zu:\n", length);
+    fhexdump(stdout, "  ", src, length);
+#endif
+
     if (server->compression_enabled) {
         ssize_t nbytes;
 
@@ -176,5 +184,4 @@ void uo_server_send(struct uo_server *server,
     } else {
         buffer_append(server->sock->output, src, length);
     }
-
 }
