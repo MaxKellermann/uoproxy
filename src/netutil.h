@@ -22,6 +22,8 @@
 #ifndef __NETUTIL_H
 #define __NETUTIL_H
 
+struct addrinfo;
+
 int getaddrinfo_helper(const char *host_and_port, int default_port,
                        const struct addrinfo *hints,
                        struct addrinfo **aip);
