@@ -205,7 +205,7 @@ enum uo_packet_type_t {
     PCK_ToolTipReq = 0xb6,
     PCK_ToolTip = 0xb7,
     PCK_CharProfile = 0xb8,
-    PCK_ChatEnable = 0xb9,
+    PCK_SupportedFeatures = 0xb9,
     PCK_Arrow = 0xba,
     PCK_MailMsg = 0xbb,
     PCK_Season = 0xbc,
@@ -295,6 +295,11 @@ struct uo_packet_create_character {
     u_int8_t city_index;
     u_int32_t char_slot, client_ip;
     u_int16_t shirt_hue, pants_hue;
+} __attribute__ ((packed));
+
+struct uo_packet_supported_features {
+    unsigned char cmd;
+    u_int16_t flags;
 } __attribute__ ((packed));
 
 struct uo_packet_extended {

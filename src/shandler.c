@@ -129,6 +129,17 @@ static packet_action_t handle_relay(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_supported_features(struct connection *c,
+                                                 void *data, size_t length) {
+    struct uo_packet_supported_features *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->supported_features_flags = p->flags;
+
+    return PA_ACCEPT;
+}
+
 struct packet_binding server_packet_bindings[] = {
     { .cmd = PCK_Ping,
       .handler = handle_ping,
@@ -138,6 +149,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_Relay,
       .handler = handle_relay,
+    },
+    { .cmd = PCK_SupportedFeatures,
+      .handler = handle_supported_features,
     },
     { .handler = NULL }
 };

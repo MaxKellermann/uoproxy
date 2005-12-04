@@ -35,6 +35,7 @@ struct connection {
 
     /* state */
     char username[30], password[30];
+    u_int16_t supported_features_flags;
     unsigned char ping_request, ping_ack;
 
     /* sub-objects */
