@@ -409,6 +409,13 @@ struct uo_packet_war_mode {
     u_int8_t unknown0[3];
 };
 
+struct uo_packet_put {
+    unsigned char mode;
+    u_int32_t serial;
+    u_int16_t item_id;
+    /* ... */
+};
+
 struct uo_packet_extended {
     unsigned char cmd;
     u_int16_t length;
