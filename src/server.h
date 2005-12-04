@@ -47,4 +47,18 @@ void uo_server_shift(struct uo_server *server, size_t nbytes);
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);
 
+
+/* utilities */
+
+void uo_server_speak_ascii(struct uo_server *server,
+                           u_int32_t serial,
+                           int16_t graphic,
+                           u_int8_t type,
+                           u_int16_t hue, u_int16_t font,
+                           const char *name,
+                           const char *text);
+
+void uo_server_speak_console(struct uo_server *server,
+                             const char *text);
+
 #endif

@@ -199,7 +199,7 @@ enum uo_packet_type_t {
     PCK_GumpInpVal = 0xab,
     PCK_GumpInpValRet = 0xac,
     PCK_TalkUNICODE = 0xad,
-    PCK_SpeakUNICODE = 0xae,
+    PCK_SpeakUnicode = 0xae,
     PCK_CharDeath = 0xaf,
     PCK_GumpDialog = 0xb0,
     PCK_GumpDialogRet = 0xb1,
