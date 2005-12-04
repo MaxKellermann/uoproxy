@@ -48,8 +48,10 @@ static packet_action_t handle_account_login(struct connection *c,
     assert(sizeof(p->username) == sizeof(c->username));
     assert(sizeof(p->password) == sizeof(c->password));
 
+#ifdef DUMP_LOGIN
     printf("account_login: username=%s password=%s\n",
            p->username, p->password);
+#endif
 
     if (c->client != NULL) {
         fprintf(stderr, "already logged in\n");
@@ -92,8 +94,10 @@ static packet_action_t handle_game_login(struct connection *c,
     assert(sizeof(p->username) == sizeof(c->username));
     assert(sizeof(p->password) == sizeof(c->password));
 
+#ifdef DUMP_LOGIN
     printf("game_login: username=%s password=%s\n",
            p->username, p->password);
+#endif
 
     if (c->client != NULL) {
         fprintf(stderr, "already logged in\n");
@@ -119,7 +123,9 @@ static packet_action_t handle_game_login(struct connection *c,
                 c2->server = NULL;
             }
 
+#ifdef DUMP_LOGIN
             printf("attaching connection\n");
+#endif
             attach_after_game_login(c2, c);
 
             return PA_DISCONNECT;
@@ -174,7 +180,9 @@ static packet_action_t handle_extended(struct connection *c,
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
+#ifdef DUMP_HEADERS
     printf("from client: extended 0x%04x\n", ntohs(p->extended_cmd));
+#endif
 
     return PA_ACCEPT;
 }

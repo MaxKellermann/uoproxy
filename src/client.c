@@ -146,7 +146,9 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
         return NULL;
     }
 
+#ifdef DUMP_HEADERS
     printf("from server: 0x%02x length=%zu\n", p[0], packet_length);
+#endif
     if (packet_length == 0 || packet_length > length)
         return NULL;
 

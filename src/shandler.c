@@ -59,7 +59,9 @@ static packet_action_t handle_server_list(struct connection *c,
         return PA_DISCONNECT;
 
     count = ntohs(*(uint16_t*)(p + 4));
+#ifdef DUMP_LOGIN
     printf("serverlist: %u servers\n", count);
+#endif
     if (length != 6 + count * sizeof(*server_info))
         return PA_DISCONNECT;
 
@@ -69,10 +71,12 @@ static packet_action_t handle_server_list(struct connection *c,
         if (k != i)
             return PA_DISCONNECT;
 
+#ifdef DUMP_LOGIN
         printf("server %u: name=%s address=0x%08x\n",
                ntohs(server_info->index),
                server_info->name,
                ntohl(server_info->address));
+#endif
     }
 
     return PA_ACCEPT;
@@ -92,9 +96,6 @@ static packet_action_t handle_relay(struct connection *c,
 
     if (c->server == NULL)
         return PA_ACCEPT;
-
-    printf("relay: address=0x%08x port=%u\n",
-           ntohl(p->ip), ntohs(p->port));
 
     /* remember the original IP/port */
     relay = (struct relay){
@@ -122,9 +123,6 @@ static packet_action_t handle_relay(struct connection *c,
     /* now overwrite the packet */
     p->ip = sin.sin_addr.s_addr;
     p->port = sin.sin_port;
-
-    printf("new relay: address=0x%08x port=%u\n",
-           ntohl(p->ip), ntohs(p->port));
 
     return PA_ACCEPT;
 }
@@ -324,19 +322,17 @@ static packet_action_t handle_extended(struct connection *c,
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
+#ifdef DUMP_HEADERS
     printf("from server: extended 0x%04x\n", ntohs(p->extended_cmd));
+#endif
 
     switch (ntohs(p->extended_cmd)) {
     case 0x0008:
-        if (length <= sizeof(c->packet_map_change))
-            printf("copying packet_map_change\n");
         if (length <= sizeof(c->packet_map_change))
             memcpy(&c->packet_map_change, data, length);
         break;
 
     case 0x0018:
-        if (length <= sizeof(c->packet_map_patches))
-            printf("copying packet_map_patches\n");
         if (length <= sizeof(c->packet_map_patches))
             memcpy(&c->packet_map_patches, data, length);
         break;

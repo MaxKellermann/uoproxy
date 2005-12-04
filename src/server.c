@@ -136,7 +136,9 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
         return NULL;
     }
 
+#ifdef DUMP_HEADERS
     printf("from client: 0x%02x length=%zu\n", p[0], packet_length);
+#endif
     if (packet_length == 0 || packet_length > length)
         return NULL;
 
