@@ -36,6 +36,7 @@ void attach_after_game_login(struct connection *old,
     printf("attaching connection\n");
     old->server = new->server;
     old->attaching = 1;
+    new->welcome = 0;
     new->server = NULL;
 
     supported_features.cmd = PCK_SupportedFeatures;

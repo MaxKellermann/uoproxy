@@ -263,6 +263,35 @@ static packet_action_t handle_mobile_status(struct connection *c,
     return PA_ACCEPT;
 }
 
+static void welcome(struct connection *c) {
+    uo_server_speak_console(c->server, "Welcome to uoproxy v0.1.0!  "
+                            "http://max.kellermann.name/projects/uoproxy/");
+
+    c->welcome = 1;
+}
+
+static packet_action_t handle_speak_ascii(struct connection *c,
+                                          void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (!c->welcome)
+        welcome(c);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_speak_unicode(struct connection *c,
+                                            void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (!c->welcome)
+        welcome(c);
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_extended(struct connection *c,
                                        void *data, size_t length) {
     const struct uo_packet_extended *p = data;
@@ -333,6 +362,12 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_MobileStatus,
       .handler = handle_mobile_status,
+    },
+    { .cmd = PCK_SpeakAscii,
+      .handler = handle_speak_ascii,
+    },
+    { .cmd = PCK_SpeakUnicode,
+      .handler = handle_speak_unicode,
     },
     { .cmd = PCK_ExtData,
       .handler = handle_extended,

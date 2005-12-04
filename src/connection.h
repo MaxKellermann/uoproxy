@@ -46,7 +46,7 @@ struct connection {
     struct instance *instance;
 
     /* flags */
-    int invalid, background, attaching;
+    int invalid, background, attaching, welcome;
 
     /* state */
     char username[30], password[30];
