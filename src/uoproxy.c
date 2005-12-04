@@ -112,7 +112,6 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
                     struct connection *c;
 
                     ret = connection_new(sockfd2,
-                                         local_ip, local_port,
                                          server_ip, server_port,
                                          &c);
                     if (ret == 0) {

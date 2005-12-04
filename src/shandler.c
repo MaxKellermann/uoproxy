@@ -23,11 +23,14 @@
 #include <assert.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 #include "packets.h"
 #include "handler.h"
 #include "relay.h"
 #include "connection.h"
+#include "server.h"
 
 static packet_action_t handle_server_list(struct connection *c,
                                           void *data, size_t length) {
@@ -70,8 +73,14 @@ static packet_action_t handle_relay(struct connection *c,
        we do here is replace the server IP with our own one */
     struct uo_packet_relay *p = data;
     struct relay relay;
+    int ret;
+    struct sockaddr_in sin;
+    socklen_t sin_len = sizeof(sin);
 
     assert(length == sizeof(*p));
+
+    if (c->server == NULL)
+        return PA_ACCEPT;
 
     printf("relay: address=0x%08x port=%u\n",
            ntohl(p->ip), ntohs(p->port));
@@ -85,9 +94,26 @@ static packet_action_t handle_relay(struct connection *c,
 
     relay_add(&relays, &relay);
 
+    /* get our local address */
+    ret = getsockname(uo_server_fileno(c->server),
+                      (struct sockaddr*)&sin, &sin_len);
+    if (ret < 0) {
+        fprintf(stderr, "getsockname() failed: %s\n",
+                strerror(errno));
+        return PA_DISCONNECT;
+    }
+
+    if (sin.sin_family != AF_INET) {
+        fprintf(stderr, "not AF_INET\n");
+        return PA_DISCONNECT;
+    }
+
     /* now overwrite the packet */
-    p->ip = c->local_ip;
-    p->port = c->local_port;
+    p->ip = sin.sin_addr.s_addr;
+    p->port = sin.sin_port;
+
+    printf("new relay: address=0x%08x port=%u\n",
+           ntohl(p->ip), ntohs(p->port));
 
     return PA_ACCEPT;
 }

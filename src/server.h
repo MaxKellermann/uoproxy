@@ -31,6 +31,8 @@ void uo_server_dispose(struct uo_server *server);
 
 int uo_server_alive(const struct uo_server *server);
 
+int uo_server_fileno(const struct uo_server *server);
+
 u_int32_t uo_server_seed(const struct uo_server *server);
 
 void uo_server_pre_select(struct uo_server *server,

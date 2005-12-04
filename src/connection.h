@@ -32,8 +32,8 @@ struct connection {
     int invalid;
 
     /* network addresses */
-    u_int32_t local_ip, server_ip;
-    u_int16_t local_port, server_port;
+    u_int32_t server_ip;
+    u_int16_t server_port;
 
     /* state */
     char username[30], password[30];
@@ -46,7 +46,6 @@ struct connection {
 struct relay_list relays;
 
 int connection_new(int server_socket,
-                   u_int32_t local_ip, u_int16_t local_port,
                    u_int32_t server_ip, u_int16_t server_port,
                    struct connection **connectionp);
 

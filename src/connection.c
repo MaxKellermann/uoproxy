@@ -31,7 +31,6 @@
 #include "handler.h"
 
 int connection_new(int server_socket,
-                   u_int32_t local_ip, u_int16_t local_port,
                    u_int32_t server_ip, u_int16_t server_port,
                    struct connection **connectionp) {
     struct connection *c;
@@ -41,8 +40,6 @@ int connection_new(int server_socket,
     if (c == NULL)
         return -ENOMEM;
 
-    c->local_ip = local_ip;
-    c->local_port = local_port;
     ret = uo_server_create(server_socket, &c->server);
     if (ret != 0) {
         connection_delete(c);

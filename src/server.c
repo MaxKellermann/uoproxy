@@ -71,6 +71,10 @@ int uo_server_alive(const struct uo_server *server) {
     return server->sock != NULL && sock_buff_alive(server->sock);
 }
 
+int uo_server_fileno(const struct uo_server *server) {
+    return server->sock->fd;
+}
+
 u_int32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
 }
