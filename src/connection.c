@@ -52,6 +52,8 @@ int connection_new(struct instance *instance,
         return ret;
     }
 
+    c->background = 1; /* XXX: testing this option */
+
     *connectionp = c;
 
     return 0;
@@ -111,8 +113,14 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     if (c->server != NULL &&
         !uo_server_alive(c->server)) {
-        fprintf(stderr, "client disconnected\n");
-        connection_invalidate(c);
+        if (c->background) {
+            fprintf(stderr, "client disconnected, backgrounding\n");
+            uo_server_dispose(c->server);
+            c->server = NULL;
+        } else {
+            fprintf(stderr, "client disconnected\n");
+            connection_invalidate(c);
+        }
     }
 
     if (c->client != NULL)
@@ -138,7 +146,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                                    c, p, length);
             switch (action) {
             case PA_ACCEPT:
-                if (c->server != NULL)
+                if (c->server != NULL && !c->attaching)
                     uo_server_send(c->server, p, length);
                 break;
 

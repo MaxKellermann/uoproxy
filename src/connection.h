@@ -46,7 +46,7 @@ struct connection {
     struct instance *instance;
 
     /* flags */
-    int invalid;
+    int invalid, background, attaching;
 
     /* state */
     char username[30], password[30];
@@ -100,5 +100,10 @@ void connection_mobile_incoming(struct connection *c,
 
 void connection_mobile_status(struct connection *c,
                               const struct uo_packet_mobile_status *p);
+
+void attach_after_game_login(struct connection *old,
+                             struct connection *new);
+
+void attach_after_play_character(struct connection *c);
 
 #endif

@@ -83,6 +83,7 @@ static packet_action_t handle_game_login(struct connection *c,
     const struct uo_packet_game_login *p = data;
     int ret;
     const struct relay *relay;
+    struct connection *c2;
 
     assert(length == sizeof(*p));
     assert(sizeof(p->username) == sizeof(c->username));
@@ -103,6 +104,25 @@ static packet_action_t handle_game_login(struct connection *c,
         return PA_DISCONNECT;
     }
 
+    for (c2 = c->instance->connections_head; c2 != NULL; c2 = c2->next) {
+        if (c2 != c && c2->packet_start.serial != 0 &&
+            memcmp(p->username, c2->username, sizeof(c2->username)) == 0 &&
+            memcmp(p->password, c2->password, sizeof(c2->password)) == 0) {
+            uo_server_shift(c->server, length); /* XXX */
+
+            if (c2->server != NULL) {
+                /* disconnect old client */
+                uo_server_dispose(c2->server);
+                c2->server = NULL;
+            }
+
+            printf("attaching connection\n");
+            attach_after_game_login(c2, c);
+
+            return PA_DISCONNECT;
+        }
+    }
+
     ret = uo_client_create(relay->server_ip, relay->server_port,
                            uo_server_seed(c->server),
                            &c->client);
@@ -118,15 +138,31 @@ static packet_action_t handle_game_login(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_play_character(struct connection *c,
+                                             void *data, size_t length) {
+    const struct uo_packet_play_character *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->attaching) {
+        printf("attaching connection, stage II\n");
+        attach_after_play_character(c);
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_extended(struct connection *c,
                                        void *data, size_t length) {
     const struct uo_packet_extended *p = data;
 
     (void)c;
-    (void)length;
-    assert(length >= sizeof(*p));
 
-    printf("from client: extended 0x%x\n", htons(p->id));
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    printf("from client: extended 0x%04x\n", ntohs(p->extended_cmd));
 
     return PA_ACCEPT;
 }
@@ -143,6 +179,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_GameLogin,
       .handler = handle_game_login,
+    },
+    { .cmd = PCK_PlayCharacter,
+      .handler = handle_play_character,
     },
     { .cmd = PCK_ExtData,
       .handler = handle_extended,

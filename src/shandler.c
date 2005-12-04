@@ -166,20 +166,126 @@ static packet_action_t handle_zone_change(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_global_light_level(struct connection *c,
+                                                 void *data, size_t length) {
+    struct uo_packet_global_light_level *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->packet_global_light_level = *p;
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_personal_light_level(struct connection *c,
+                                                   void *data, size_t length) {
+    struct uo_packet_personal_light_level *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->packet_start.serial == p->serial)
+        c->packet_personal_light_level = *p;
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_mobile_update(struct connection *c,
                                             void *data, size_t length) {
     struct uo_packet_mobile_update *p = data;
 
-    fprintf(stderr, "l1=%lu l2=%lu\n",
-            length, sizeof(*p));
     assert(length == sizeof(*p));
 
     if (c->packet_start.serial == p->serial) {
+        c->packet_mobile_update = *p;
+
         c->packet_start.body = p->body;
         c->packet_start.x = p->x;
         c->packet_start.y = p->y;
         c->packet_start.z = p->z;
         c->packet_start.direction = p->direction;
+    }
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_season(struct connection *c,
+                                     void *data, size_t length) {
+    const struct uo_packet_season *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->packet_season = *p;
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_war_mode(struct connection *c,
+                                       void *data, size_t length) {
+    const struct uo_packet_war_mode *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->packet_war_mode = *p;
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_put(struct connection *c,
+                                  void *data, size_t length) {
+    const struct uo_packet_put *p = data;
+
+    assert(length <= sizeof(*p));
+
+    connection_add_item(c, p);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_mobile_incoming(struct connection *c,
+                                              void *data, size_t length) {
+    const struct uo_packet_mobile_incoming *p = data;
+
+    (void)length;
+
+    connection_mobile_incoming(c, p);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_mobile_status(struct connection *c,
+                                            void *data, size_t length) {
+    const struct uo_packet_mobile_status *p = data;
+
+    (void)length;
+
+    connection_mobile_status(c, p);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_extended(struct connection *c,
+                                       void *data, size_t length) {
+    const struct uo_packet_extended *p = data;
+
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    printf("from server: extended 0x%04x\n", ntohs(p->extended_cmd));
+
+    switch (ntohs(p->extended_cmd)) {
+    case 0x0008:
+        if (length <= sizeof(c->packet_map_change))
+            printf("copying packet_map_change\n");
+        if (length <= sizeof(c->packet_map_change))
+            memcpy(&c->packet_map_change, data, length);
+        break;
+
+    case 0x0018:
+        if (length <= sizeof(c->packet_map_patches))
+            printf("copying packet_map_patches\n");
+        if (length <= sizeof(c->packet_map_patches))
+            memcpy(&c->packet_map_patches, data, length);
+        break;
     }
 
     return PA_ACCEPT;
@@ -201,11 +307,35 @@ struct packet_binding server_packet_bindings[] = {
     { .cmd = PCK_Start,
       .handler = handle_start,
     },
+    { .cmd = PCK_Season,
+      .handler = handle_season,
+    },
     { .cmd = PCK_ZoneChange,
       .handler = handle_zone_change,
     },
+    { .cmd = PCK_GlobalLightLevel,
+      .handler = handle_global_light_level,
+    },
+    { .cmd = PCK_PersonalLightLevel,
+      .handler = handle_personal_light_level,
+    },
     { .cmd = PCK_MobileUpdate,
       .handler = handle_mobile_update,
+    },
+    { .cmd = PCK_WarMode,
+      .handler = handle_war_mode,
+    },
+    { .cmd = PCK_Put,
+      .handler = handle_put,
+    },
+    { .cmd = PCK_MobileIncoming,
+      .handler = handle_mobile_incoming,
+    },
+    { .cmd = PCK_MobileStatus,
+      .handler = handle_mobile_status,
+    },
+    { .cmd = PCK_ExtData,
+      .handler = handle_extended,
     },
     { .handler = NULL }
 };
