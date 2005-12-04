@@ -143,7 +143,7 @@ enum uo_packet_type_t {
     PCK_CharName = 0x75,
     PCK_ZoneChange = 0x76,
     PCK_CharMove = 0x77,
-    PCK_Char = 0x78,
+    PCK_MobileIncoming = 0x78,
     PCK_UnkResourceGet = 0x79,
     PCK_UnkResourceData = 0x7a,
     PCK_UnkSequence = 0x7b,
@@ -407,14 +407,68 @@ struct uo_packet_war_mode {
     unsigned char cmd;
     u_int8_t war_mode;
     u_int8_t unknown0[3];
-};
+} __attribute__ ((packed));
 
 struct uo_packet_put {
-    unsigned char mode;
+    unsigned char cmd;
+    u_int16_t length;
     u_int32_t serial;
     u_int16_t item_id;
-    /* ... */
-};
+    /* warning: the following properties may be optional */
+    u_int16_t amount;
+    int16_t x, y;
+    u_int8_t direction;
+    int8_t z;
+    u_int16_t hue;
+    u_int8_t flags;
+} __attribute__ ((packed));
+
+struct uo_packet_fragment_mobile_item {
+    u_int32_t serial;
+    u_int16_t item_id;
+    u_int8_t layer;
+    u_int16_t hue; /* optional */
+} __attribute__ ((packed));
+
+struct uo_packet_mobile_incoming {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int32_t serial;
+    u_int16_t body;
+    int16_t x, y;
+    int8_t z;
+    u_int8_t direction;
+    u_int16_t hue;
+    u_int8_t flags;
+    u_int8_t notoriety;
+    struct uo_packet_fragment_mobile_item items[];
+    /* u_int32_t zero; */
+} __attribute__ ((packed));
+
+struct uo_packet_mobile_status {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int32_t serial;
+    char name[30];
+    u_int16_t hits, hits_max;
+    u_int8_t rename;
+    u_int8_t flags;
+    /* only if flags >= 0x03 */
+    u_int8_t female;
+    u_int16_t strength, dexterity, intelligence;
+    u_int16_t stamina, stamina_max, mana, mana_max;
+    u_int32_t total_gold;
+    u_int16_t physical_resistance_or_armor_rating;
+    u_int16_t weight;
+    u_int16_t stat_cap;
+    u_int8_t followers, followers_max;
+    /* only if flags >= 0x04 */
+    u_int16_t fire_resistance, cold_resistance;
+    u_int16_t poison_resistance, energy_resistance;
+    u_int16_t luck;
+    u_int16_t damage_min, damage_max;
+    u_int32_t tithing_points;
+} __attribute__ ((packed));
 
 struct uo_packet_extended {
     unsigned char cmd;
