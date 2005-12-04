@@ -32,7 +32,7 @@ enum uo_packet_type_t {
     PCK_GodMode = 0x04,
     PCK_Attack = 0x05,
     PCK_Use = 0x06,
-    PCK_ItemPickupReq = 0x07,
+    PCK_LiftRequest = 0x07,
     PCK_ItemDropReq = 0x08,
     PCK_Click = 0x09,
     PCK_EditItem = 0x0A,
@@ -64,7 +64,7 @@ enum uo_packet_type_t {
     PCK_ContOpen = 0x24,
     PCK_ContAdd = 0x25,
     PCK_Kick = 0x26,
-    PCK_DragCancel = 0x27,
+    PCK_LiftReject = 0x27,
     PCK_ClearSquare = 0x28,
     PCK_ObjectDropped = 0x29,
     PCK_UnkBlood = 0x2A,
@@ -273,6 +273,20 @@ struct uo_packet_walk {
     u_int32_t key;
 } __attribute__ ((packed));
 
+/* 0x07 LiftRequest */
+struct uo_packet_lift_request {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t amount;
+} __attribute__ ((packed));
+
+/* 0x27 LiftReject */
+struct uo_packet_lift_reject {
+    unsigned char cmd;
+    u_int8_t reason;
+} __attribute__ ((packed));
+
+/* 0x73 Ping */
 struct uo_packet_ping {
     unsigned char cmd;
     unsigned char id;

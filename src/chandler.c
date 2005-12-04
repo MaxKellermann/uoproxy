@@ -58,6 +58,27 @@ static packet_action_t handle_walk(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_lift_request(struct connection *c,
+                                           void *data, size_t length) {
+    const struct uo_packet_lift_request *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->reconnecting) {
+        /* while reconnecting, reject all lift requests */
+        struct uo_packet_lift_reject p2 = {
+            .cmd = PCK_LiftReject,
+            .reason = 0x00, /* CannotLift */
+        };
+
+        uo_server_send(c->server, &p2, sizeof(p2));
+
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_ping(struct connection *c,
                                    void *data, size_t length) {
     uo_server_send(c->server, data, length);
@@ -215,6 +236,9 @@ static packet_action_t handle_extended(struct connection *c,
 struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Walk,
       .handler = handle_walk,
+    },
+    { .cmd = PCK_LiftRequest,
+      .handler = handle_lift_request,
     },
     { .cmd = PCK_Ping,
       .handler = handle_ping,
