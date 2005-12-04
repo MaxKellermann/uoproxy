@@ -30,8 +30,8 @@
 #include "relay.h"
 #include "handler.h"
 
-int connection_new(int server_socket,
-                   u_int32_t server_ip, u_int16_t server_port,
+int connection_new(struct instance *instance,
+                   int server_socket,
                    struct connection **connectionp) {
     struct connection *c;
     int ret;
@@ -40,14 +40,13 @@ int connection_new(int server_socket,
     if (c == NULL)
         return -ENOMEM;
 
+    c->instance = instance;
+
     ret = uo_server_create(server_socket, &c->server);
     if (ret != 0) {
         connection_delete(c);
         return ret;
     }
-
-    c->server_ip = server_ip;
-    c->server_port = server_port;
 
     *connectionp = c;
 

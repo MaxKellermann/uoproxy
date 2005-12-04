@@ -23,17 +23,15 @@
 #define __CONNECTION_H
 
 struct selectx;
+struct instance;
 
 struct connection {
-    /* linked list */
+    /* linked list and parent */
     struct connection *next;
+    struct instance *instance;
 
     /* flags */
     int invalid;
-
-    /* network addresses */
-    u_int32_t server_ip;
-    u_int16_t server_port;
 
     /* state */
     char username[30], password[30];
@@ -43,10 +41,17 @@ struct connection {
     struct uo_server *server;
 };
 
-struct relay_list relays;
+struct instance {
+    /* login server */
+    u_int32_t login_ip;
+    u_int16_t login_port;
 
-int connection_new(int server_socket,
-                   u_int32_t server_ip, u_int16_t server_port,
+    /* state */
+    struct relay_list *relays;
+};
+
+int connection_new(struct instance *instance,
+                   int server_socket,
                    struct connection **connectionp);
 
 void connection_delete(struct connection *c);

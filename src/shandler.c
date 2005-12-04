@@ -92,7 +92,7 @@ static packet_action_t handle_relay(struct connection *c,
         .server_port = p->port,
     };
 
-    relay_add(&relays, &relay);
+    relay_add(c->instance->relays, &relay);
 
     /* get our local address */
     ret = getsockname(uo_server_fileno(c->server),

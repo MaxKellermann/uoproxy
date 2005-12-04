@@ -48,7 +48,7 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DISCONNECT;
     }
 
-    ret = uo_client_create(c->server_ip, c->server_port,
+    ret = uo_client_create(c->instance->login_ip, c->instance->login_port,
                            uo_server_seed(c->server),
                            &c->client);
     if (ret != 0) {
@@ -89,17 +89,14 @@ static packet_action_t handle_game_login(struct connection *c,
         return PA_DISCONNECT;
     }
 
-    relay = relay_find(&relays, p->auth_id);
+    relay = relay_find(c->instance->relays, p->auth_id);
     if (relay == NULL) {
         fprintf(stderr, "invalid or expired auth_id: 0x%08x\n",
                 p->auth_id);
         return PA_DISCONNECT;
     }
 
-    c->server_ip = relay->server_ip;
-    c->server_port = relay->server_port;
-
-    ret = uo_client_create(c->server_ip, c->server_port,
+    ret = uo_client_create(relay->server_ip, relay->server_port,
                            uo_server_seed(c->server),
                            &c->client);
     if (ret != 0) {

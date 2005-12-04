@@ -39,10 +39,6 @@
 
 static int should_exit = 0;
 
-struct relay_list relays = {
-    .next = 0,
-};
-
 static void usage(void)
      __attribute__ ((noreturn));
 
@@ -86,8 +82,8 @@ static void connections_post_select(struct connection *c, struct selectx *sx) {
     }
 }
 
-static void run_server(uint32_t local_ip, uint16_t local_port,
-                       uint32_t server_ip, uint16_t server_port) {
+static void run_server(struct instance *instance,
+                       uint32_t local_ip, uint16_t local_port) {
     int sockfd, ret;
     struct selectx sx;
     struct connection *connections_head = NULL;
@@ -111,8 +107,8 @@ static void run_server(uint32_t local_ip, uint16_t local_port,
                 if (sockfd2 >= 0) {
                     struct connection *c;
 
-                    ret = connection_new(sockfd2,
-                                         server_ip, server_port,
+                    ret = connection_new(instance,
+                                         sockfd2,
                                          &c);
                     if (ret == 0) {
                         c->next = connections_head;
@@ -153,9 +149,13 @@ static void setup_signal_handlers(void) {
 int main(int argc, char **argv) {
     int ret;
     struct addrinfo hints, *ai;
-    uint32_t local_ip, remote_ip;
-    uint16_t local_port, remote_port;
+    uint32_t local_ip;
+    uint16_t local_port;
     const struct sockaddr_in *sin;
+    struct relay_list relays = { .next = 0, };
+    struct instance instance = {
+        .relays = &relays,
+    };
 
     if (argc != 3)
         usage();
@@ -195,8 +195,8 @@ int main(int argc, char **argv) {
     }
 
     sin = (const struct sockaddr_in*)ai->ai_addr;
-    remote_port = sin->sin_port;
-    remote_ip = sin->sin_addr.s_addr;
+    instance.login_port = sin->sin_port;
+    instance.login_ip = sin->sin_addr.s_addr;
 
     freeaddrinfo(ai);
 
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
     setup_signal_handlers();
 
     /* call main loop */
-    run_server(local_ip, local_port, remote_ip, remote_port);
+    run_server(&instance, local_ip, local_port);
 
     return 0;
 }
