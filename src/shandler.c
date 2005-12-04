@@ -145,6 +145,7 @@ static packet_action_t handle_start(struct connection *c,
     assert(length == sizeof(*p));
 
     c->packet_start = *p;
+    c->in_game = 1;
 
     /* if we're auto-reconnecting, this is the point where it
        succeeded */

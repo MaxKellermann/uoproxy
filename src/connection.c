@@ -58,28 +58,13 @@ int connection_new(struct instance *instance,
 }
 
 void connection_delete(struct connection *c) {
-    while (c->items_head != NULL) {
-        struct item *i = c->items_head;
-        c->items_head = i->next;
-
-        free(i);
-    }
-
-    while (c->mobiles_head != NULL) {
-        struct mobile *m = c->mobiles_head;
-        c->mobiles_head = m->next;
-
-        if (m->packet_mobile_incoming != NULL)
-            free(m->packet_mobile_incoming);
-        if (m->packet_mobile_status != NULL)
-            free(m->packet_mobile_status);
-        free(m);
-    }
-
     if (c->server != NULL)
         uo_server_dispose(c->server);
     if (c->client != NULL)
         uo_client_dispose(c->client);
+
+    connection_delete_items(c);
+    connection_delete_mobiles(c);
 
     free(c);
 }
@@ -113,16 +98,18 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
             if (c->server != NULL)
                 uo_server_speak_console(c->server,
                                         "uoproxy was disconnected, auto-reconnecting...");
+
+            connection_delete_items(c);
+            connection_delete_mobiles(c);
         } else {
             printf("server disconnected\n");
             connection_invalidate(c);
         }
-        return;
     }
 
     if (c->server != NULL &&
         !uo_server_alive(c->server)) {
-        if (c->background) {
+        if (c->background && c->in_game) {
             fprintf(stderr, "client disconnected, backgrounding\n");
             uo_server_dispose(c->server);
             c->server = NULL;

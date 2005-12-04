@@ -47,8 +47,10 @@ struct connection {
     struct instance *instance;
 
     /* flags */
-    int invalid, background, attaching, welcome;
+    int invalid, background, attaching;
     int autoreconnect, reconnecting;
+
+    int in_game, welcome;
 
     /* state */
     char username[30], password[30];
@@ -100,6 +102,8 @@ void connection_add_item(struct connection *c,
 
 void connection_remove_item(struct connection *c, u_int32_t serial);
 
+void connection_delete_items(struct connection *c);
+
 void connection_mobile_incoming(struct connection *c,
                                 const struct uo_packet_mobile_incoming *p);
 
@@ -113,6 +117,8 @@ void connection_mobile_moving(struct connection *c,
                               const struct uo_packet_mobile_moving *p);
 
 void connection_remove_mobile(struct connection *c, u_int32_t serial);
+
+void connection_delete_mobiles(struct connection *c);
 
 /* attach */
 

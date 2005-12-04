@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "connection.h"
+#include "server.h"
 
 static struct item **find_item(struct connection *c,
                                u_int32_t serial) {
@@ -76,6 +77,22 @@ void connection_remove_item(struct connection *c, u_int32_t serial) {
     *ip = i->next;
 
     free(i);
+}
+
+void connection_delete_items(struct connection *c) {
+    struct uo_packet_delete p = { .cmd = PCK_Delete };
+
+    while (c->items_head != NULL) {
+        struct item *i = c->items_head;
+        c->items_head = i->next;
+
+        if (c->server != NULL) {
+            p.serial = i->serial;
+            uo_server_send(c->server, &p, sizeof(p));
+        }
+
+        free(i);
+    }
 }
 
 static struct mobile **find_mobile(struct connection *c,
@@ -214,4 +231,24 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial) {
     *mp = m->next;
 
     free(m);
+}
+
+void connection_delete_mobiles(struct connection *c) {
+    struct uo_packet_delete p = { .cmd = PCK_Delete };
+
+    while (c->mobiles_head != NULL) {
+        struct mobile *m = c->mobiles_head;
+        c->mobiles_head = m->next;
+
+        if (c->server != NULL) {
+            p.serial = m->serial;
+            uo_server_send(c->server, &p, sizeof(p));
+        }
+
+        if (m->packet_mobile_incoming != NULL)
+            free(m->packet_mobile_incoming);
+        if (m->packet_mobile_status != NULL)
+            free(m->packet_mobile_status);
+        free(m);
+    }
 }
