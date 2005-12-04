@@ -364,7 +364,8 @@ struct uo_packet_start {
     unsigned char cmd;
     u_int32_t serial;
     u_int32_t unknown0;
-    u_int16_t body, x, y, z;
+    u_int16_t body;
+    int16_t x, y, z;
     u_int8_t direction;
     u_int8_t unknown1;
     u_int32_t unknown2;
@@ -400,7 +401,7 @@ struct uo_packet_map_patches {
 
 struct uo_packet_zone_change {
     unsigned char cmd;
-    u_int16_t x, y, z;
+    int16_t x, y, z;
     u_int8_t unknown0;
     u_int16_t unknown1, unknown2;
     u_int16_t map_width, map_height;
@@ -428,7 +429,7 @@ struct uo_packet_mobile_update {
     u_int8_t unknown0;
     u_int16_t hue;
     u_int8_t packet_flags;
-    u_int16_t x, y;
+    int16_t x, y;
     u_int16_t unknown1;
     u_int8_t direction;
     int8_t z;
