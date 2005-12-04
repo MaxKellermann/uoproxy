@@ -116,7 +116,7 @@ enum uo_packet_type_t {
     PCK_EffectUpdate = 0x5a,
     PCK_Time = 0x5b,
     PCK_UnkVersionRestart = 0x5c,
-    PCK_CharPlay = 0x5d,
+    PCK_PlayCharacter = 0x5d,
     PCK_UnkServerList = 0x5e,
     PCK_UnkServerAdd = 0x5f,
     PCK_UnkServerDel = 0x60,
@@ -272,6 +272,11 @@ struct uo_packet_game_login {
     char password[30];
 } __attribute__ ((packed));
 
+struct uo_packet_supported_features {
+    unsigned char cmd;
+    u_int16_t flags;
+} __attribute__ ((packed));
+
 struct uo_packet_relay {
     unsigned char cmd;
     u_int32_t ip;
@@ -300,9 +305,28 @@ struct uo_packet_create_character {
     u_int16_t shirt_hue, pants_hue;
 } __attribute__ ((packed));
 
-struct uo_packet_supported_features {
+struct uo_fragment_character_info {
+    char name[30];
+    char password[30];
+} __attribute__ ((packed));
+
+struct uo_packet_simple_character_list {
     unsigned char cmd;
-    u_int16_t flags;
+    u_int16_t length;
+    u_int8_t character_count;
+    struct uo_fragment_character_info character_info[1];
+    u_int8_t city_count;
+    u_int32_t flags;
+} __attribute__ ((packed));
+
+struct uo_packet_play_character {
+    unsigned char cmd;
+    u_int32_t unknown0;
+    char name[30];
+    u_int16_t unknown1;
+    u_int32_t flags;
+    u_int8_t unknown2[24];
+    u_int32_t slot, client_ip;
 } __attribute__ ((packed));
 
 struct uo_packet_start {
@@ -316,6 +340,26 @@ struct uo_packet_start {
     u_int16_t unknown3, unknown4;
     u_int16_t map_width, map_height;
     unsigned char unknown5[6];
+} __attribute__ ((packed));
+
+struct uo_packet_map_change {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t extended_cmd; /* 0x0008 */
+    u_int8_t map_id;
+} __attribute__ ((packed));
+
+struct uo_fragment_map_patch {
+    u_int32_t static_blocks;
+    u_int32_t land_blocks;
+};
+
+struct uo_packet_map_patches {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t extended_cmd; /* 0x0018 */
+    u_int32_t map_count;
+    struct uo_fragment_map_patch map_patches[4];
 } __attribute__ ((packed));
 
 struct uo_packet_zone_change {
