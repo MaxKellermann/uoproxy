@@ -42,7 +42,7 @@ enum uo_packet_type_t {
     PCK_EditTemplate = 0x0E,
     PCK_EditPaperdoll = 0x0F,
     PCK_EditHues = 0x10,
-    PCK_Status = 0x11,
+    PCK_MobileStatus = 0x11,
     PCK_DoAction = 0x12,
     PCK_ItemEquipReq = 0x13,
     PCK_GodLevitate = 0x14,
