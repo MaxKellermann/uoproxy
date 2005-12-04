@@ -125,22 +125,16 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
             return NULL;
     }
 
-    packet_length = packet_lengths[p[0]];
-    if (packet_length == 0) {
-        if (length < 3)
-            return NULL;
-
-        packet_length = ntohs(*(uint16_t*)(p + 1));
-        if (packet_length == 0) {
-            fprintf(stderr, "malformed packet from client\n");
-            sock_buff_dispose(server->sock);
-            server->sock = NULL;
-            return NULL;
-        }
+    packet_length = get_packet_length(p, length);
+    if (packet_length == PACKET_LENGTH_INVALID) {
+        fprintf(stderr, "malformed packet from client\n");
+        sock_buff_dispose(server->sock);
+        server->sock = NULL;
+        return NULL;
     }
 
     printf("from client: 0x%02x length=%zu\n", p[0], packet_length);
-    if (packet_length > length)
+    if (packet_length == 0 || packet_length > length)
         return NULL;
 
     if (p[0] == PCK_GameLogin)
@@ -160,6 +154,7 @@ void uo_server_shift(struct uo_server *server, size_t nbytes) {
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length) {
     assert(length > 0);
+    assert(get_packet_length(src, length) == length);
 
     if (server->sock == NULL)
         return;

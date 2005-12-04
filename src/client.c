@@ -125,22 +125,16 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
     if (p == NULL)
         return NULL;
 
-    packet_length = packet_lengths[p[0]];
-    if (packet_length == 0) {
-        if (length < 3)
-            return NULL;
-
-        packet_length = ntohs(*(uint16_t*)(p + 1));
-        if (packet_length == 0) {
-            fprintf(stderr, "malformed packet from server\n");
-            sock_buff_dispose(client->sock);
-            client->sock = NULL;
-            return NULL;
-        }
+    packet_length = get_packet_length(p, length);
+    if (packet_length == PACKET_LENGTH_INVALID) {
+        fprintf(stderr, "malformed packet from server\n");
+        sock_buff_dispose(client->sock);
+        client->sock = NULL;
+        return NULL;
     }
 
     printf("from server: 0x%02x length=%zu\n", p[0], packet_length);
-    if (packet_length > length)
+    if (packet_length == 0 || packet_length > length)
         return NULL;
 
     *lengthp = packet_length;
