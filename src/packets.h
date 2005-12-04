@@ -232,6 +232,16 @@ enum uo_packet_type_t {
 
 extern const size_t packet_lengths[0x100];
 
+struct uo_packet_ping {
+    unsigned char cmd;
+    unsigned char id;
+};
+
+struct uo_packet_ping_ack {
+    unsigned char cmd;
+    unsigned char id;
+};
+
 struct uo_packet_account_login {
     unsigned char cmd;
     char username[30];

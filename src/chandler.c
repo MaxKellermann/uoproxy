@@ -31,6 +31,12 @@
 #include "server.h"
 #include "relay.h"
 
+static packet_action_t handle_ping(struct connection *c,
+                                   void *data, size_t length) {
+    uo_server_send(c->server, data, length);
+    return PA_DROP;
+}
+
 static packet_action_t handle_account_login(struct connection *c,
                                             void *data, size_t length) {
     const struct uo_packet_account_login *p = data;
@@ -112,6 +118,9 @@ static packet_action_t handle_game_login(struct connection *c,
 }
 
 struct packet_binding client_packet_bindings[] = {
+    { .cmd = PCK_Ping,
+      .handler = handle_ping,
+    },
     { .cmd = PCK_AccountLogin,
       .handler = handle_account_login,
     },

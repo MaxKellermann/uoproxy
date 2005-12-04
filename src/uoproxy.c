@@ -86,10 +86,21 @@ static void instance_post_select(struct instance *instance,
         connection_post_select(c, sx);
 }
 
+static void instance_idle(struct instance *instance) {
+    struct connection *c;
+
+    for (c = instance->connections_head; c != NULL; c = c->next)
+        connection_idle(c);
+}
+
 static void run_server(struct instance *instance,
                        uint32_t local_ip, uint16_t local_port) {
     int sockfd, ret;
     struct selectx sx;
+    struct timeval tv = {
+        .tv_sec = 30,
+        .tv_usec = 0,
+    };
 
     sockfd = setup_server_socket(local_ip, local_port);
 
@@ -98,9 +109,11 @@ static void run_server(struct instance *instance,
         selectx_add_read(&sx, sockfd);
         instance_pre_select(instance, &sx);
 
-        ret = selectx(&sx, NULL);
-        assert(ret != 0);
-        if (ret > 0) {
+        ret = selectx(&sx, &tv);
+        if (ret == 0) {
+            instance_idle(instance);
+            tv.tv_sec = 30;
+        } else if (ret > 0) {
             if (FD_ISSET(sockfd, &sx.readfds)) {
                 int sockfd2;
                 struct sockaddr addr;

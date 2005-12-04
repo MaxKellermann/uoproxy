@@ -35,6 +35,7 @@ struct connection {
 
     /* state */
     char username[30], password[30];
+    unsigned char ping_request, ping_ack;
 
     /* sub-objects */
     struct uo_client *client;
@@ -62,5 +63,7 @@ void connection_invalidate(struct connection *c);
 void connection_pre_select(struct connection *c, struct selectx *sx);
 
 int connection_post_select(struct connection *c, struct selectx *sx);
+
+void connection_idle(struct connection *c);
 
 #endif

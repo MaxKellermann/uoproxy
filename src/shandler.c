@@ -32,6 +32,17 @@
 #include "connection.h"
 #include "server.h"
 
+static packet_action_t handle_ping(struct connection *c,
+                                   void *data, size_t length) {
+    struct uo_packet_ping *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->ping_ack = p->id;
+
+    return PA_DROP;
+}
+
 static packet_action_t handle_server_list(struct connection *c,
                                           void *data, size_t length) {
     /* this packet tells the UO client where to connect; what
@@ -119,6 +130,9 @@ static packet_action_t handle_relay(struct connection *c,
 }
 
 struct packet_binding server_packet_bindings[] = {
+    { .cmd = PCK_Ping,
+      .handler = handle_ping,
+    },
     { .cmd = PCK_ServerList,
       .handler = handle_server_list,
     },

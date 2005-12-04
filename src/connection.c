@@ -29,6 +29,7 @@
 #include "client.h"
 #include "relay.h"
 #include "handler.h"
+#include "packets.h"
 
 int connection_new(struct instance *instance,
                    int server_socket,
@@ -159,4 +160,19 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
     }
 
     return 0;
+}
+
+void connection_idle(struct connection *c) {
+    if (c->invalid)
+        return;
+
+    if (c->client != NULL) {
+        struct uo_packet_ping ping;
+
+        ping.cmd = PCK_Ping;
+        ping.id = ++c->ping_request;
+
+        fprintf(stderr, "sending ping\n");
+        uo_client_send(c->client, &ping, sizeof(ping));
+    }
 }
