@@ -47,6 +47,7 @@ struct instance {
     u_int16_t login_port;
 
     /* state */
+    struct connection *connections_head;
     struct relay_list *relays;
 };
 

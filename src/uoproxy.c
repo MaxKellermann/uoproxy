@@ -60,7 +60,10 @@ static void delete_all_connections(struct connection *head) {
     }
 }
 
-static void connections_pre_select(struct connection **cp, struct selectx *sx) {
+static void instance_pre_select(struct instance *instance,
+                                struct selectx *sx) {
+    struct connection **cp = &instance->connections_head;
+
     while (*cp != NULL) {
         struct connection *c = *cp;
 
@@ -75,25 +78,25 @@ static void connections_pre_select(struct connection **cp, struct selectx *sx) {
     }
 }
 
-static void connections_post_select(struct connection *c, struct selectx *sx) {
-    while (c != NULL) {
+static void instance_post_select(struct instance *instance,
+                                 struct selectx *sx) {
+    struct connection *c;
+
+    for (c = instance->connections_head; c != NULL; c = c->next)
         connection_post_select(c, sx);
-        c = c->next;
-    }
 }
 
 static void run_server(struct instance *instance,
                        uint32_t local_ip, uint16_t local_port) {
     int sockfd, ret;
     struct selectx sx;
-    struct connection *connections_head = NULL;
 
     sockfd = setup_server_socket(local_ip, local_port);
 
     while (!should_exit) {
         selectx_clear(&sx);
         selectx_add_read(&sx, sockfd);
-        connections_pre_select(&connections_head, &sx);
+        instance_pre_select(instance, &sx);
 
         ret = selectx(&sx, NULL);
         assert(ret != 0);
@@ -111,8 +114,8 @@ static void run_server(struct instance *instance,
                                          sockfd2,
                                          &c);
                     if (ret == 0) {
-                        c->next = connections_head;
-                        connections_head = c;
+                        c->next = instance->connections_head;
+                        instance->connections_head = c;
                     } else {
                         fprintf(stderr, "connection_new() failed: %s\n",
                                 strerror(-ret));
@@ -125,7 +128,7 @@ static void run_server(struct instance *instance,
                 }
             }
 
-            connections_post_select(connections_head, &sx);
+            instance_post_select(instance, &sx);
         } else if (errno != EINTR) {
             fprintf(stderr, "select failed: %s\n",
                     strerror(errno));
@@ -133,7 +136,7 @@ static void run_server(struct instance *instance,
         }
     }
 
-    delete_all_connections(connections_head);
+    delete_all_connections(instance->connections_head);
 }
 
 static void setup_signal_handlers(void) {
@@ -154,6 +157,7 @@ int main(int argc, char **argv) {
     const struct sockaddr_in *sin;
     struct relay_list relays = { .next = 0, };
     struct instance instance = {
+        .connections_head = NULL,
         .relays = &relays,
     };
 
