@@ -95,6 +95,7 @@ static void run_server(struct instance *instance) {
     };
 
     sockfd = setup_server_socket(instance->bind_address);
+    freeaddrinfo(instance->bind_address);
 
     while (!should_exit) {
         selectx_clear(&sx);
@@ -140,8 +141,6 @@ static void run_server(struct instance *instance) {
             exit(1);
         }
     }
-
-    delete_all_connections(instance->connections_head);
 }
 
 static void setup_signal_handlers(void) {
@@ -168,7 +167,14 @@ int main(int argc, char **argv) {
     setup_signal_handlers();
 
     /* call main loop */
+
     run_server(&instance);
+
+    /* cleanup */
+
+    delete_all_connections(instance.connections_head);
+
+    freeaddrinfo(instance.login_address);
 
     return 0;
 }
