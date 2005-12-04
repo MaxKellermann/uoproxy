@@ -92,14 +92,22 @@ int connection_post_select(struct connection *c, struct selectx *sx);
 
 void connection_idle(struct connection *c);
 
+/* state */
+
 void connection_add_item(struct connection *c,
                          const struct uo_packet_put *p);
+
+void connection_remove_item(struct connection *c, u_int32_t serial);
 
 void connection_mobile_incoming(struct connection *c,
                                 const struct uo_packet_mobile_incoming *p);
 
 void connection_mobile_status(struct connection *c,
                               const struct uo_packet_mobile_status *p);
+
+void connection_remove_mobile(struct connection *c, u_int32_t serial);
+
+/* attach */
 
 void attach_after_game_login(struct connection *old,
                              struct connection *new);

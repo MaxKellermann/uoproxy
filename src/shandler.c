@@ -151,6 +151,18 @@ static packet_action_t handle_start(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_delete(struct connection *c,
+                                     void *data, size_t length) {
+    struct uo_packet_delete *p = data;
+
+    assert(length == sizeof(*p));
+
+    connection_remove_item(c, p->serial);
+    connection_remove_mobile(c, p->serial);
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_zone_change(struct connection *c,
                                           void *data, size_t length) {
     struct uo_packet_zone_change *p = data;
@@ -335,6 +347,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_Start,
       .handler = handle_start,
+    },
+    { .cmd = PCK_Delete,
+      .handler = handle_delete,
     },
     { .cmd = PCK_Season,
       .handler = handle_season,

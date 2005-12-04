@@ -65,6 +65,19 @@ void connection_add_item(struct connection *c,
     i->packet_put = *p;
 }
 
+void connection_remove_item(struct connection *c, u_int32_t serial) {
+    struct item **ip, *i;
+
+    ip = find_item(c, serial);
+    i = *ip;
+    if (i == NULL)
+        return;
+
+    *ip = i->next;
+
+    free(i);
+}
+
 static struct mobile **find_mobile(struct connection *c,
                                    u_int32_t serial) {
     struct mobile **m = &c->mobiles_head;
@@ -142,4 +155,17 @@ void connection_mobile_status(struct connection *c,
         m->packet_mobile_status->flags < p->flags)
         replace_packet((void**)&m->packet_mobile_status,
                        p, ntohs(p->length));
+}
+
+void connection_remove_mobile(struct connection *c, u_int32_t serial) {
+    struct mobile **mp, *m;
+
+    mp = find_mobile(c, serial);
+    m = *mp;
+    if (m == NULL)
+        return;
+
+    *mp = m->next;
+
+    free(m);
 }

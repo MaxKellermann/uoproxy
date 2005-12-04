@@ -374,6 +374,12 @@ struct uo_packet_start {
     unsigned char unknown5[6];
 } __attribute__ ((packed));
 
+/* 0x1d Delete */
+struct uo_packet_delete {
+    unsigned char cmd;
+    u_int32_t serial;
+} __attribute__ ((packed));
+
 struct uo_packet_map_change {
     unsigned char cmd;
     u_int16_t length;
