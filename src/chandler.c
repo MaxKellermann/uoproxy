@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <netinet/in.h>
+#include <netdb.h>
 
 #include "packets.h"
 #include "handler.h"
@@ -55,7 +56,7 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DISCONNECT;
     }
 
-    ret = uo_client_create(c->instance->login_ip, c->instance->login_port,
+    ret = uo_client_create(c->instance->login_address,
                            uo_server_seed(c->server),
                            &c->client);
     if (ret != 0) {
@@ -84,6 +85,8 @@ static packet_action_t handle_game_login(struct connection *c,
     int ret;
     const struct relay *relay;
     struct connection *c2;
+    struct addrinfo server_address;
+    struct sockaddr_in sin;
 
     assert(length == sizeof(*p));
     assert(sizeof(p->username) == sizeof(c->username));
@@ -123,7 +126,16 @@ static packet_action_t handle_game_login(struct connection *c,
         }
     }
 
-    ret = uo_client_create(relay->server_ip, relay->server_port,
+    sin.sin_family = AF_INET;
+    sin.sin_port = relay->server_port;
+    sin.sin_addr.s_addr = relay->server_ip;
+
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.ai_family = AF_INET;
+    server_address.ai_addrlen = sizeof(sin);
+    server_address.ai_addr = (struct sockaddr*)&sin;
+
+    ret = uo_client_create(&server_address,
                            uo_server_seed(c->server),
                            &c->client);
     if (ret != 0) {

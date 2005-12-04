@@ -36,16 +36,9 @@
 #include "ioutil.h"
 #include "relay.h"
 #include "connection.h"
+#include "config.h"
 
 static int should_exit = 0;
-
-static void usage(void)
-     __attribute__ ((noreturn));
-
-static void usage(void) {
-    fprintf(stderr, "usage: uoproxy local:port server:port\n");
-    exit(1);
-}
 
 static void exit_signal_handler(int sig) {
     (void)sig;
@@ -93,8 +86,7 @@ static void instance_idle(struct instance *instance) {
         connection_idle(c);
 }
 
-static void run_server(struct instance *instance,
-                       uint32_t local_ip, uint16_t local_port) {
+static void run_server(struct instance *instance) {
     int sockfd, ret;
     struct selectx sx;
     struct timeval tv = {
@@ -102,7 +94,7 @@ static void run_server(struct instance *instance,
         .tv_usec = 0,
     };
 
-    sockfd = setup_server_socket(local_ip, local_port);
+    sockfd = setup_server_socket(instance->bind_address);
 
     while (!should_exit) {
         selectx_clear(&sx);
@@ -163,66 +155,20 @@ static void setup_signal_handlers(void) {
 }
 
 int main(int argc, char **argv) {
-    int ret;
-    struct addrinfo hints, *ai;
-    uint32_t local_ip;
-    uint16_t local_port;
-    const struct sockaddr_in *sin;
     struct relay_list relays = { .next = 0, };
     struct instance instance = {
         .connections_head = NULL,
         .relays = &relays,
     };
 
-    if (argc != 3)
-        usage();
-
-    /* parse local address */
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    ret = getaddrinfo_helper(argv[1], 2593, &hints, &ai);
-    if (ret != 0 || ai == NULL) {
-        fprintf(stderr, "failed to resolve local hostname\n");
-        exit(1);
-    }
-
-    if (ai->ai_family != PF_INET) {
-        fprintf(stderr, "only IPv4 supported\n");
-        exit(1);
-    }
-
-    sin = (const struct sockaddr_in*)ai->ai_addr;
-    local_port = sin->sin_port;
-    local_ip = sin->sin_addr.s_addr;
-
-    freeaddrinfo(ai);
-
-    /* parse server address */
-    ret = getaddrinfo_helper(argv[2], 2593, &hints, &ai);
-    if (ret != 0 || ai == NULL) {
-        fprintf(stderr, "failed to resolve server hostname\n");
-        exit(1);
-    }
-
-    if (ai->ai_family != PF_INET) {
-        fprintf(stderr, "only IPv4 supported\n");
-        exit(1);
-    }
-
-    sin = (const struct sockaddr_in*)ai->ai_addr;
-    instance.login_port = sin->sin_port;
-    instance.login_ip = sin->sin_addr.s_addr;
-
-    freeaddrinfo(ai);
+    parse_cmdline(&instance, argc, argv);
 
     /* set up */
 
     setup_signal_handlers();
 
     /* call main loop */
-    run_server(&instance, local_ip, local_port);
+    run_server(&instance);
 
     return 0;
 }

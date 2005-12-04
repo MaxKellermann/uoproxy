@@ -62,11 +62,10 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
     return getaddrinfo(host, port, hints, aip);
 }
 
-int setup_server_socket(uint32_t ip, uint16_t port) {
+int setup_server_socket(const struct addrinfo *bind_address) {
     int sockfd, ret, param;
-    struct sockaddr_in sin;
 
-    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    sockfd = socket(bind_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0) {
         fprintf(stderr, "failed to create socket: %s\n",
                 strerror(errno));
@@ -81,11 +80,8 @@ int setup_server_socket(uint32_t ip, uint16_t port) {
         exit(1);
     }
 
-    sin.sin_family = AF_INET;
-    sin.sin_port = port;
-    sin.sin_addr.s_addr = ip;
-
-    ret = bind(sockfd, (const struct sockaddr*)&sin, sizeof(sin));
+    ret = bind(sockfd, bind_address->ai_addr,
+               bind_address->ai_addrlen);
     if (ret < 0) {
         fprintf(stderr, "failed to bind: %s\n",
                 strerror(errno));
@@ -127,19 +123,15 @@ int setup_client_socket(uint32_t ip, uint16_t port) {
     return sockfd;
 }
 
-int socket_connect(uint32_t ip, uint16_t port) {
+int socket_connect(const struct addrinfo *connect_address) {
     int sockfd, ret;
-    struct sockaddr_in sin;
 
-    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    sockfd = socket(connect_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0)
         return -1;
 
-    sin.sin_family = AF_INET;
-    sin.sin_port = port;
-    sin.sin_addr.s_addr = ip;
-
-    ret = connect(sockfd, (struct sockaddr*)&sin, sizeof(sin));
+    ret = connect(sockfd, connect_address->ai_addr,
+                  connect_address->ai_addrlen);
     if (ret < 0)
         return -1;
 

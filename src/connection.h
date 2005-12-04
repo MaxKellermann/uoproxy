@@ -26,6 +26,7 @@
 
 struct selectx;
 struct instance;
+struct addrinfo;
 
 struct item {
     struct item *next;
@@ -69,9 +70,8 @@ struct connection {
 };
 
 struct instance {
-    /* login server */
-    u_int32_t login_ip;
-    u_int16_t login_port;
+    /* configuration */
+    struct addrinfo *bind_address, *login_address;
 
     /* state */
     struct connection *connections_head;

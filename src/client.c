@@ -44,13 +44,13 @@ struct uo_client {
     struct buffer *decompressed_buffer;
 };
 
-int uo_client_create(uint32_t ip, uint16_t port,
+int uo_client_create(const struct addrinfo *login_address,
                      uint32_t seed,
                      struct uo_client **clientp) {
     int sockfd, ret;
     struct uo_client *client;
 
-    sockfd = socket_connect(ip, port);
+    sockfd = socket_connect(login_address);
     if (sockfd < 0)
         return -errno;
 

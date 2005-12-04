@@ -19,19 +19,12 @@
  *
  */
 
-#ifndef __NETUTIL_H
-#define __NETUTIL_H
+#ifndef __CONFIG_H
+#define __CONFIG_H
 
-struct addrinfo;
+struct instance;
 
-int getaddrinfo_helper(const char *host_and_port, int default_port,
-                       const struct addrinfo *hints,
-                       struct addrinfo **aip);
-
-int setup_server_socket(const struct addrinfo *bind_address);
-
-int setup_client_socket(uint32_t ip, uint16_t port);
-
-int socket_connect(const struct addrinfo *connect_address);
+/** read configuration options from the command line */
+void parse_cmdline(struct instance *instance, int argc, char **argv);
 
 #endif
