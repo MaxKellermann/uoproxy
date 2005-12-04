@@ -97,6 +97,10 @@ int uo_client_alive(const struct uo_client *client) {
     return client->sock != NULL && sock_buff_alive(client->sock);
 }
 
+int uo_client_fileno(const struct uo_client *client) {
+    return client->sock->fd;
+}
+
 void uo_client_pre_select(struct uo_client *client,
                           struct selectx *sx) {
     if (client->sock != NULL)

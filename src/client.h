@@ -33,6 +33,8 @@ void uo_client_dispose(struct uo_client *client);
 
 int uo_client_alive(const struct uo_client *client);
 
+int uo_client_fileno(const struct uo_client *client);
+
 void uo_client_pre_select(struct uo_client *client,
                           struct selectx *sx);
 int uo_client_post_select(struct uo_client *client,
