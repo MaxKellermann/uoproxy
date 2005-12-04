@@ -316,7 +316,6 @@ struct uo_packet_start {
     u_int16_t unknown3, unknown4;
     u_int16_t map_width, map_height;
     unsigned char unknown5[6];
-    /* XXX */
 } __attribute__ ((packed));
 
 struct uo_packet_zone_change {
