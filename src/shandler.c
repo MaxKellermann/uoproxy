@@ -140,6 +140,51 @@ static packet_action_t handle_supported_features(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_start(struct connection *c,
+                                    void *data, size_t length) {
+    struct uo_packet_start *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->packet_start = *p;
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_zone_change(struct connection *c,
+                                          void *data, size_t length) {
+    struct uo_packet_zone_change *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->packet_start.x = p->x;
+    c->packet_start.y = p->y;
+    c->packet_start.z = p->z;
+    c->packet_start.map_width = p->map_width;
+    c->packet_start.map_height = p->map_height;
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_mobile_update(struct connection *c,
+                                            void *data, size_t length) {
+    struct uo_packet_mobile_update *p = data;
+
+    fprintf(stderr, "l1=%lu l2=%lu\n",
+            length, sizeof(*p));
+    assert(length == sizeof(*p));
+
+    if (c->packet_start.serial == p->serial) {
+        c->packet_start.body = p->body;
+        c->packet_start.x = p->x;
+        c->packet_start.y = p->y;
+        c->packet_start.z = p->z;
+        c->packet_start.direction = p->direction;
+    }
+
+    return PA_ACCEPT;
+}
+
 struct packet_binding server_packet_bindings[] = {
     { .cmd = PCK_Ping,
       .handler = handle_ping,
@@ -152,6 +197,15 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_SupportedFeatures,
       .handler = handle_supported_features,
+    },
+    { .cmd = PCK_Start,
+      .handler = handle_start,
+    },
+    { .cmd = PCK_ZoneChange,
+      .handler = handle_zone_change,
+    },
+    { .cmd = PCK_MobileUpdate,
+      .handler = handle_mobile_update,
     },
     { .handler = NULL }
 };

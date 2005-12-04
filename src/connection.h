@@ -22,6 +22,8 @@
 #ifndef __CONNECTION_H
 #define __CONNECTION_H
 
+#include "packets.h"
+
 struct selectx;
 struct instance;
 
@@ -36,6 +38,7 @@ struct connection {
     /* state */
     char username[30], password[30];
     u_int16_t supported_features_flags;
+    struct uo_packet_start packet_start;
     unsigned char ping_request, ping_ack;
 
     /* sub-objects */

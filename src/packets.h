@@ -19,6 +19,9 @@
  *
  */
 
+#ifndef __PACKETS_H
+#define __PACKETS_H
+
 enum uo_packet_type_t {
     PCK_Create = 0x00,
     PCK_Disconnect = 0x01,
@@ -52,7 +55,7 @@ enum uo_packet_type_t {
     PCK_Delete = 0x1d,
     PCK_UnkAnimate = 0x1e,
     PCK_UnkExplode = 0x1f,
-    PCK_View = 0x20,
+    PCK_MobileUpdate = 0x20,
     PCK_WalkCancel = 0x21,
     PCK_WalkAck = 0x22,
     PCK_DragAnim = 0x23,
@@ -302,8 +305,45 @@ struct uo_packet_supported_features {
     u_int16_t flags;
 } __attribute__ ((packed));
 
+struct uo_packet_start {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int32_t unknown0;
+    u_int16_t body, x, y, z;
+    u_int8_t direction;
+    u_int8_t unknown1;
+    u_int32_t unknown2;
+    u_int16_t unknown3, unknown4;
+    u_int16_t map_width, map_height;
+    unsigned char unknown5[6];
+    /* XXX */
+} __attribute__ ((packed));
+
+struct uo_packet_zone_change {
+    unsigned char cmd;
+    u_int16_t x, y, z;
+    u_int8_t unknown0;
+    u_int16_t unknown1, unknown2;
+    u_int16_t map_width, map_height;
+} __attribute__ ((packed));
+
+struct uo_packet_mobile_update {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t body;
+    u_int8_t unknown0;
+    u_int16_t hue;
+    u_int8_t packet_flags;
+    u_int16_t x, y;
+    u_int16_t unknown1;
+    u_int8_t direction;
+    int8_t z;
+} __attribute__ ((packed));
+
 struct uo_packet_extended {
     unsigned char cmd;
     u_int16_t length;
     u_int16_t id;
 } __attribute__ ((packed));
+
+#endif
