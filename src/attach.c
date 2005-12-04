@@ -102,14 +102,6 @@ void attach_after_play_character(struct connection *c) {
     uo_server_send(c->server, &supported_features,
                    sizeof(supported_features));
 
-    /* 0x20 MobileUpdate */
-    if (c->packet_mobile_update.cmd == PCK_MobileUpdate) {
-        uo_server_send(c->server, &c->packet_mobile_update,
-                       sizeof(c->packet_mobile_update));
-        uo_server_send(c->server, &c->packet_mobile_update,
-                       sizeof(c->packet_mobile_update));
-    }
-
     /* 0x4f GlobalLightLevel */
     if (c->packet_global_light_level.cmd == PCK_GlobalLightLevel)
         uo_server_send(c->server, &c->packet_global_light_level,
