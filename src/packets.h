@@ -31,7 +31,7 @@ enum uo_packet_type_t {
     PCK_Talk = 0x03,
     PCK_GodMode = 0x04,
     PCK_Attack = 0x05,
-    PCK_DClick = 0x06,
+    PCK_Use = 0x06,
     PCK_ItemPickupReq = 0x07,
     PCK_ItemDropReq = 0x08,
     PCK_Click = 0x09,
@@ -53,7 +53,7 @@ enum uo_packet_type_t {
     PCK_UnkSpeakNPC = 0x19,
     PCK_Put = 0x1a,
     PCK_Start = 0x1b,
-    PCK_Speak = 0x1c,
+    PCK_SpeakAscii = 0x1c,
     PCK_Delete = 0x1d,
     PCK_UnkAnimate = 0x1e,
     PCK_UnkExplode = 0x1f,
@@ -500,6 +500,18 @@ struct uo_packet_mobile_status {
     u_int16_t luck;
     u_int16_t damage_min, damage_max;
     u_int32_t tithing_points;
+} __attribute__ ((packed));
+
+struct uo_packet_speak_ascii {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int32_t serial;
+    int16_t graphic;
+    u_int8_t type;
+    u_int16_t hue;
+    u_int16_t font;
+    char name[30];
+    char text[1];
 } __attribute__ ((packed));
 
 struct uo_packet_extended {
