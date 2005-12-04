@@ -70,29 +70,29 @@ void attach_after_play_character(struct connection *c) {
         return;
 
     /* 0x1b LoginConfirm */
-    assert(c->packet_start.cmd == PCK_Start);
     if (c->packet_start.cmd == PCK_Start)
         uo_server_send(c->server, &c->packet_start,
                        sizeof(c->packet_start));
 
     /* 0xbf 0x08 MapChange */
-    assert(ntohs(c->packet_map_change.length) == sizeof(c->packet_map_change));
-    assert(c->packet_map_change.cmd == PCK_ExtData);
-    assert(ntohs(c->packet_map_change.extended_cmd) == 0x0008);
-    if (ntohs(c->packet_map_change.length) > 0)
+    if (ntohs(c->packet_map_change.length) > 0) {
+        assert(c->packet_map_change.cmd == PCK_ExtData);
+        assert(ntohs(c->packet_map_change.length) == sizeof(c->packet_map_change));
+        assert(ntohs(c->packet_map_change.extended_cmd) == 0x0008);
         uo_server_send(c->server, &c->packet_map_change,
                        ntohs(c->packet_map_change.length));
+    }
 
     /* 0xbf 0x18 MapPatches */
-    assert(ntohs(c->packet_map_patches.length) == sizeof(c->packet_map_patches));
-    assert(c->packet_map_patches.cmd == PCK_ExtData);
-    assert(ntohs(c->packet_map_patches.extended_cmd) == 0x0018);
-    if (ntohs(c->packet_map_patches.length) > 0)
+    if (ntohs(c->packet_map_patches.length) > 0) {
+        assert(c->packet_map_patches.cmd == PCK_ExtData);
+        assert(ntohs(c->packet_map_patches.length) == sizeof(c->packet_map_patches));
+        assert(ntohs(c->packet_map_patches.extended_cmd) == 0x0018);
         uo_server_send(c->server, &c->packet_map_patches,
                        ntohs(c->packet_map_patches.length));
+    }
 
     /* 0xbc SeasonChange */
-    assert(c->packet_season.cmd == PCK_Season);
     if (c->packet_season.cmd == PCK_Season)
         uo_server_send(c->server, &c->packet_season, sizeof(c->packet_season));
 
@@ -103,7 +103,6 @@ void attach_after_play_character(struct connection *c) {
                    sizeof(supported_features));
 
     /* 0x20 MobileUpdate */
-    assert(c->packet_mobile_update.cmd == PCK_MobileUpdate);
     if (c->packet_mobile_update.cmd == PCK_MobileUpdate) {
         uo_server_send(c->server, &c->packet_mobile_update,
                        sizeof(c->packet_mobile_update));
@@ -112,25 +111,21 @@ void attach_after_play_character(struct connection *c) {
     }
 
     /* 0x4f GlobalLightLevel */
-    assert(c->packet_global_light_level.cmd == PCK_GlobalLightLevel);
     if (c->packet_global_light_level.cmd == PCK_GlobalLightLevel)
         uo_server_send(c->server, &c->packet_global_light_level,
                        sizeof(c->packet_global_light_level));
 
     /* 0x4e PersonalLightLevel */
-    assert(c->packet_personal_light_level.cmd == PCK_PersonalLightLevel);
     if (c->packet_personal_light_level.cmd == PCK_PersonalLightLevel)
         uo_server_send(c->server, &c->packet_personal_light_level,
                        sizeof(c->packet_personal_light_level));
 
     /* 0x20 MobileUpdate */
-    assert(c->packet_mobile_update.cmd == PCK_MobileUpdate);
     if (c->packet_mobile_update.cmd == PCK_MobileUpdate)
         uo_server_send(c->server, &c->packet_mobile_update,
                        sizeof(c->packet_mobile_update));
 
     /* WarMode */
-    assert(c->packet_war_mode.cmd == PCK_WarMode);
     if (c->packet_war_mode.cmd == PCK_WarMode)
         uo_server_send(c->server, &c->packet_war_mode,
                        sizeof(c->packet_war_mode));
