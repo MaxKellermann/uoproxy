@@ -50,7 +50,7 @@ int uo_server_create(int sockfd, struct uo_server **serverp) {
     if (server == NULL)
         return -ENOMEM;
 
-    ret = sock_buff_create(sockfd, 4096, 65536, &server->sock);
+    ret = sock_buff_create(sockfd, 8192, 65536, &server->sock);
     if (ret < 0) {
         free(server);
         return -ENOMEM;

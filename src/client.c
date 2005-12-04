@@ -59,7 +59,7 @@ int uo_client_create(uint32_t ip, uint16_t port,
         return -ENOMEM;
     }
 
-    ret = sock_buff_create(sockfd, 4096, 65536, &client->sock);
+    ret = sock_buff_create(sockfd, 8192, 65536, &client->sock);
     if (ret < 0) {
         free(client);
         close(sockfd);
