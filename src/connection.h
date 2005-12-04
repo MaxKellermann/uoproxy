@@ -27,6 +27,19 @@
 struct selectx;
 struct instance;
 
+struct item {
+    struct item *next;
+    u_int32_t serial;
+    struct uo_packet_put packet_put;
+};
+
+struct mobile {
+    struct mobile *next;
+    u_int32_t serial;
+    struct uo_packet_mobile_incoming *packet_mobile_incoming;
+    struct uo_packet_mobile_status *packet_mobile_status;
+};
+
 struct connection {
     /* linked list and parent */
     struct connection *next;
@@ -39,7 +52,16 @@ struct connection {
     char username[30], password[30];
     u_int16_t supported_features_flags;
     struct uo_packet_start packet_start;
+    struct uo_packet_map_change packet_map_change;
+    struct uo_packet_map_patches packet_map_patches;
+    struct uo_packet_season packet_season;
+    struct uo_packet_mobile_update packet_mobile_update;
+    struct uo_packet_global_light_level packet_global_light_level;
+    struct uo_packet_personal_light_level packet_personal_light_level;
+    struct uo_packet_war_mode packet_war_mode;
     unsigned char ping_request, ping_ack;
+    struct item *items_head;
+    struct mobile *mobiles_head;
 
     /* sub-objects */
     struct uo_client *client;
@@ -69,5 +91,14 @@ void connection_pre_select(struct connection *c, struct selectx *sx);
 int connection_post_select(struct connection *c, struct selectx *sx);
 
 void connection_idle(struct connection *c);
+
+void connection_add_item(struct connection *c,
+                         const struct uo_packet_put *p);
+
+void connection_mobile_incoming(struct connection *c,
+                                const struct uo_packet_mobile_incoming *p);
+
+void connection_mobile_status(struct connection *c,
+                              const struct uo_packet_mobile_status *p);
 
 #endif
