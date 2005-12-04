@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <netinet/in.h>
 
 #include "packets.h"
 #include "handler.h"
@@ -117,6 +118,19 @@ static packet_action_t handle_game_login(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_extended(struct connection *c,
+                                       void *data, size_t length) {
+    const struct uo_packet_extended *p = data;
+
+    (void)c;
+    (void)length;
+    assert(length >= sizeof(*p));
+
+    printf("from client: extended 0x%x\n", htons(p->id));
+
+    return PA_ACCEPT;
+}
+
 struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Ping,
       .handler = handle_ping,
@@ -129,6 +143,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_GameLogin,
       .handler = handle_game_login,
+    },
+    { .cmd = PCK_ExtData,
+      .handler = handle_extended,
     },
     { .handler = NULL }
 };

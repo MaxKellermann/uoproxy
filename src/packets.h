@@ -296,3 +296,9 @@ struct uo_packet_create_character {
     u_int32_t char_slot, client_ip;
     u_int16_t shirt_hue, pants_hue;
 } __attribute__ ((packed));
+
+struct uo_packet_extended {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t id;
+} __attribute__ ((packed));
