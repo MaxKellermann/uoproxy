@@ -22,6 +22,8 @@
 #ifndef __PACKETS_H
 #define __PACKETS_H
 
+#include <netinet/in.h>
+
 enum uo_packet_type_t {
     PCK_Create = 0x00,
     PCK_Disconnect = 0x01,
@@ -234,6 +236,35 @@ enum uo_packet_type_t {
 };
 
 extern const size_t packet_lengths[0x100];
+
+#define PACKET_LENGTH_INVALID ((size_t)-1)
+
+/**
+ * Determines the length of the packet.  Returns '0' when the length
+ * cannot be determined (yet) because max_length is too small.
+ * Returns PACKET_LENGTH_INVALID when the packet contains invalid
+ * data.  The length being bigger than max_length is not an error.
+ */
+static inline size_t get_packet_length(const void *q, size_t max_length) {
+    const unsigned char *p = q;
+    size_t length;
+
+    if (max_length == 0)
+        return 0;
+
+    length = packet_lengths[p[0]];
+    if (length > 0)
+        return length;
+
+    if (max_length < 3)
+        return 0;
+
+    length = ntohs(*(const u_int16_t*)(p + 1));
+    if (length < 3 || length > 8192)
+        return PACKET_LENGTH_INVALID;
+
+    return length;
+}
 
 struct uo_packet_ping {
     unsigned char cmd;
