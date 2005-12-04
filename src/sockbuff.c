@@ -107,6 +107,8 @@ int sock_buff_post_select(struct sock_buff *sb,
         return 0;
 
     if (FD_ISSET(sb->fd, &sx->readfds)) {
+        FD_CLR(sb->fd, &sx->readfds);
+
         nbytes = read(sb->fd, buffer_tail(sb->input),
                       buffer_free(sb->input));
         if (nbytes < 0) {
@@ -125,8 +127,10 @@ int sock_buff_post_select(struct sock_buff *sb,
         buffer_expand(sb->input, (size_t)nbytes);
     }
 
-    if (FD_ISSET(sb->fd, &sx->writefds))
+    if (FD_ISSET(sb->fd, &sx->writefds)) {
+        FD_CLR(sb->fd, &sx->writefds);
         return sock_buff_flush(sb);
+    }
 
     return 0;
 }
