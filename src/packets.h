@@ -101,8 +101,8 @@ enum uo_packet_type_t {
     PCK_UnkCheckVersion = 0x4b,
     PCK__ScriptsNames = 0x4c,
     PCK_ScriptsFile = 0x4d,
-    PCK_LightPoint = 0x4e,
-    PCK_Light = 0x4f,
+    PCK_PersonalLightLevel = 0x4e,
+    PCK_GlobalLightLevel = 0x4f,
     PCK_UnkBBHeader = 0x50,
     PCK_UnkBBMessage = 0x51,
     PCK_UnkPostMsg = 0x52,
@@ -137,7 +137,7 @@ enum uo_packet_type_t {
     PCK_SecureTrade = 0x6f,
     PCK_Effect = 0x70,
     PCK_BBoard = 0x71,
-    PCK_War = 0x72,
+    PCK_WarMode = 0x72,
     PCK_Ping = 0x73,
     PCK_VendOpenBuy = 0x74,
     PCK_CharName = 0x75,
@@ -354,6 +354,11 @@ struct uo_fragment_map_patch {
     u_int32_t land_blocks;
 };
 
+struct uo_packet_season {
+    unsigned char cmd;
+    u_int8_t season, play_sound;
+} __attribute__ ((packed));
+
 struct uo_packet_map_patches {
     unsigned char cmd;
     u_int16_t length;
@@ -370,6 +375,21 @@ struct uo_packet_zone_change {
     u_int16_t map_width, map_height;
 } __attribute__ ((packed));
 
+struct uo_packet_global_light_level {
+    unsigned char cmd;
+    int8_t level;
+} __attribute__ ((packed));
+
+struct uo_packet_personal_light_level {
+    unsigned char cmd;
+    u_int32_t serial;
+    int8_t level;
+} __attribute__ ((packed));
+
+struct uo_packet_login_complete {
+    unsigned char cmd;
+} __attribute__ ((packed));
+
 struct uo_packet_mobile_update {
     unsigned char cmd;
     u_int32_t serial;
@@ -383,10 +403,16 @@ struct uo_packet_mobile_update {
     int8_t z;
 } __attribute__ ((packed));
 
+struct uo_packet_war_mode {
+    unsigned char cmd;
+    u_int8_t war_mode;
+    u_int8_t unknown0[3];
+};
+
 struct uo_packet_extended {
     unsigned char cmd;
     u_int16_t length;
-    u_int16_t id;
+    u_int16_t extended_cmd;
 } __attribute__ ((packed));
 
 #endif
