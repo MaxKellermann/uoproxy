@@ -97,18 +97,3 @@ int setup_server_socket(const struct addrinfo *bind_address) {
 
     return sockfd;
 }
-
-int socket_connect(const struct addrinfo *connect_address) {
-    int sockfd, ret;
-
-    sockfd = socket(connect_address->ai_family, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        return -1;
-
-    ret = connect(sockfd, connect_address->ai_addr,
-                  connect_address->ai_addrlen);
-    if (ret < 0)
-        return -1;
-
-    return sockfd;
-}

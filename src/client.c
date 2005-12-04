@@ -44,15 +44,23 @@ struct uo_client {
     struct buffer *decompressed_buffer;
 };
 
-int uo_client_create(const struct addrinfo *login_address,
+int uo_client_create(const struct addrinfo *server_address,
                      uint32_t seed,
                      struct uo_client **clientp) {
     int sockfd, ret;
     struct uo_client *client;
 
-    sockfd = socket_connect(login_address);
+    sockfd = socket(server_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0)
         return -errno;
+
+    ret = connect(sockfd, server_address->ai_addr,
+                  server_address->ai_addrlen);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(sockfd);
+        return -save_errno;
+    }
 
     client = (struct uo_client*)calloc(1, sizeof(*client));
     if (client == NULL) {
