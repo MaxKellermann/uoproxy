@@ -33,7 +33,7 @@
 
 static packet_action_t handle_account_login(struct connection *c,
                                             void *data, size_t length) {
-    const struct uo_packet_login *p = data;
+    const struct uo_packet_account_login *p = data;
     int ret;
 
     assert(length == sizeof(*p));
