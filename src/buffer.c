@@ -47,7 +47,7 @@ void buffer_delete(struct buffer *b) {
     free(b);
 }
 
-static inline void buffer_flush(struct buffer *b) {
+void buffer_commit(struct buffer *b) {
     assert(b->position <= b->length);
 
     if (b->position == 0)
@@ -63,8 +63,6 @@ static inline void buffer_flush(struct buffer *b) {
 void buffer_append(struct buffer *b, const void *data,
                    size_t nbytes) {
     assert(nbytes <= buffer_free(b));
-
-    buffer_flush(b);
 
     memcpy(b->data + b->length, data, nbytes);
     b->length += nbytes;

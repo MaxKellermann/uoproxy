@@ -48,6 +48,8 @@ static inline void buffer_expand(struct buffer *b, size_t nbytes) {
     b->length += nbytes;
 }
 
+void buffer_commit(struct buffer *b);
+
 void buffer_append(struct buffer *b, const void *data,
                    size_t nbytes);
 

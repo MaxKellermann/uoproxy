@@ -178,6 +178,8 @@ void *uo_client_peek(struct uo_client *client, size_t *lengthp) {
         if (p != NULL) {
             ssize_t nbytes;
 
+            buffer_commit(client->decompressed_buffer),
+
             nbytes = uo_decompress(&client->decompression,
                                    buffer_tail(client->decompressed_buffer),
                                    buffer_free(client->decompressed_buffer),

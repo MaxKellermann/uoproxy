@@ -83,6 +83,7 @@ int sock_buff_flush(struct sock_buff *sb) {
     }
 
     buffer_shift(sb->output, (size_t)nbytes);
+    buffer_commit(sb->output);
 
     return 0;
 }
@@ -108,6 +109,8 @@ int sock_buff_post_select(struct sock_buff *sb,
 
     if (FD_ISSET(sb->fd, &sx->readfds)) {
         FD_CLR(sb->fd, &sx->readfds);
+
+        buffer_commit(sb->input);
 
         nbytes = read(sb->fd, buffer_tail(sb->input),
                       buffer_free(sb->input));
