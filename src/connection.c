@@ -89,7 +89,7 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     if (c->client != NULL &&
         !uo_client_alive(c->client)) {
-        if (c->autoreconnect) {
+        if (c->autoreconnect && c->in_game) {
             uo_client_dispose(c->client);
             c->client = NULL;
 
