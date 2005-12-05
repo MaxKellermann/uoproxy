@@ -134,6 +134,11 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
     if (p == NULL)
         return NULL;
 
+#ifdef DUMP_CLIENT_PEEK
+    printf("peek from server, length=%zu:\n", length);
+    fhexdump(stdout, "  ", p, length);
+#endif
+
     assert(length > 0);
 
     packet_length = get_packet_length(p, length);
@@ -151,6 +156,9 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
 #endif
     if (packet_length == 0 || packet_length > length)
         return NULL;
+#ifdef DUMP_CLIENT_RECEIVE
+    fhexdump(stdout, "  ", p, packet_length);
+#endif
 
     *lengthp = packet_length;
     return p;

@@ -5,7 +5,10 @@ CFLAGS += -g -O0
 #CFLAGS = -Os -DNDEBUG=1
 LDFLAGS = -g -O0
 
-#CFLAGS += -DDUMP_SERVER_SEND -DDUMP_CLIENT_SEND -DDUMP_HEADERS -DDUMP_LOGIN
+#CFLAGS += -DDUMP_HEADERS -DDUMP_LOGIN
+#CFLAGS += -DDUMP_SERVER_SEND -DDUMP_CLIENT_SEND
+#CFLAGS += -DDUMP_SERVER_RECEIVE -DDUMP_CLIENT_RECEIVE
+#CFLAGS += -DDUMP_SERVER_PEEK -DDUMP_CLIENT_PEEK
 
 WARNING_CFLAGS += -W -Wall -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef -pedantic-errors -Werror
 

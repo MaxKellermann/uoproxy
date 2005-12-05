@@ -105,6 +105,11 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
     if (p == NULL)
         return NULL;
 
+#ifdef DUMP_SERVER_PEEK
+    printf("peek from client, length=%zu:\n", length);
+    fhexdump(stdout, "  ", p, length);
+#endif
+
     if (server->seed == 0) {
         /* the first packet from a client is the seed, 4 bytes without
            header */
@@ -141,6 +146,9 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
 #endif
     if (packet_length == 0 || packet_length > length)
         return NULL;
+#ifdef DUMP_SERVER_RECEIVE
+    fhexdump(stdout, "  ", p, packet_length);
+#endif
 
     if (p[0] == PCK_GameLogin)
         server->compression_enabled = 1;
