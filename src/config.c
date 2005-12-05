@@ -73,7 +73,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
     };
 #endif
     u_int16_t bind_port = 0;
-    const char *login_address;
+    const char *login_address = NULL;
     struct addrinfo hints;
 
     while (1) {
@@ -108,13 +108,9 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 
     /* check non-option arguments */
 
-    if (optind >= argc && config->login_address == NULL) {
-        fprintf(stderr, "uoproxy: login server missing\n");
-        fprintf(stderr, "Try 'uoproxy -h' for more information\n");
-        exit(1);
-    }
+    if (optind < argc)
+        login_address = argv[optind++];
 
-    login_address = argv[optind++];
 
     if (optind < argc) {
         fprintf(stderr, "uoproxy: unrecognized argument: %s\n",
@@ -123,9 +119,15 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         exit(1);
     }
 
+    if (login_address == NULL && config->login_address == NULL) {
+        fprintf(stderr, "uoproxy: login server missing\n");
+        fprintf(stderr, "Try 'uoproxy -h' for more information\n");
+        exit(1);
+    }
+
     /* resolve login_address */
 
-    if (optind < argc) {
+    if (login_address != NULL) {
         if (config->login_address != NULL)
             freeaddrinfo(config->login_address);
 
