@@ -43,6 +43,25 @@ static void usage(void) {
            );
 }
 
+static struct addrinfo *port_to_addrinfo(unsigned port) {
+    struct addrinfo hints, *ai;
+    int ret;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    ret = getaddrinfo_helper("*", port, &hints,
+                             &ai);
+    if (ret != 0) {
+        fprintf(stderr, "getaddrinfo_helper failed: %s\n",
+                gai_strerror(ret));
+        exit(2);
+    }
+
+    return ai;
+}
+
 /** read configuration options from the command line */
 void parse_cmdline(struct config *config, int argc, char **argv) {
     int ret;
@@ -53,7 +72,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         {0,0,0,0}
     };
 #endif
-    u_int16_t bind_port = 2593;
+    u_int16_t bind_port = 0;
     const char *login_address;
     struct addrinfo hints;
 
@@ -120,17 +139,99 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 
     /* resolve bind_address */
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_INET;
-    hints.ai_socktype = SOCK_STREAM;
+    if (bind_port != 0) {
+        if (config->bind_address != NULL)
+            freeaddrinfo(config->bind_address);
 
-    ret = getaddrinfo_helper("*", bind_port, &hints,
-                             &config->bind_address);
-    if (ret < 0) {
-        fprintf(stderr, "getaddrinfo_helper failed: %s\n",
-                gai_strerror(ret));
-        exit(1);
+        config->bind_address = port_to_addrinfo(bind_port);
     }
+}
+
+static const char *next_word(char **pp) {
+    const char *word;
+
+    while (**pp > 0 && **pp <= 0x20)
+        ++(*pp);
+
+    if (**pp == 0)
+        return NULL;
+
+    if (**pp == '"') {
+        word = (*pp)++;
+        while (**pp != 0 && **pp != '"')
+            ++(*pp);
+    } else {
+        word = *pp;
+        while (**pp < 0 || **pp > 0x20)
+            ++(*pp);
+    }
+
+    if (**pp == 0)
+        return word;
+
+    **pp = 0;
+    ++(*pp);
+
+    return word;
+}
+
+int config_read_file(struct config *config, const char *path) {
+    FILE *file;
+    char line[2048], *p;
+    const char *key, *value;
+    unsigned no = 0;
+
+    file = fopen(path, "r");
+    if (file == NULL)
+        return -errno;
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        /* increase line number */
+        ++no;
+
+        p = line;
+        key = next_word(&p);
+        if (key == NULL || *key == '#')
+            continue;
+
+        /* parse line */
+        value = next_word(&p);
+        if (value == NULL) {
+            fprintf(stderr, "%s line %u: value missing after keyword\n",
+                    path, no);
+            exit(2);
+        }
+
+        if (next_word(&p) != NULL) {
+            fprintf(stderr, "%s line %u: extra token after value\n",
+                    path, no);
+            exit(2);
+        }
+
+        /* check command */
+        if (strcmp(key, "port") == 0) {
+            unsigned long port = strtoul(value, NULL, 0);
+
+            if (port == 0 || port > 0xffff) {
+                fprintf(stderr, "%s line %u: invalid port\n",
+                        path, no);
+                exit(2);
+            }
+
+            if (config->bind_address != NULL)
+                freeaddrinfo(config->bind_address);
+
+            config->bind_address = port_to_addrinfo((unsigned)port);
+        } else {
+            fprintf(stderr, "%s line %u: invalid keyword '%s'\n",
+                    path, no, key);
+            exit(2);
+        }
+    }
+
+    fclose(file);
+
+    return 0;
 }
 
 void config_dispose(struct config *config) {

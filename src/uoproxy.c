@@ -45,6 +45,27 @@ static void exit_signal_handler(int sig) {
     should_exit = 1;
 }
 
+static void config_get(struct config *config, int argc, char **argv) {
+    const char *home;
+    char path[4096];
+    int ret;
+
+    memset(config, 0, sizeof(*config));
+
+    home = getenv("HOME");
+    if (home == NULL) {
+        ret = 1;
+    } else {
+        snprintf(path, sizeof(path), "%s/.uoproxyrc", home);
+        ret = config_read_file(config, path);
+    }
+
+    if (ret != 0)
+        config_read_file(config, "/etc/uoproxy.conf");
+
+    parse_cmdline(config, argc, argv);
+}
+
 static void delete_all_connections(struct connection *head) {
     while (head != NULL) {
         struct connection *c = head;
@@ -160,9 +181,9 @@ int main(int argc, char **argv) {
         .relays = &relays,
     };
 
-    memset(&config, 0, sizeof(config));
+    /* configuration */
 
-    parse_cmdline(&config, argc, argv);
+    config_get(&config, argc, argv);
 
     /* set up */
 

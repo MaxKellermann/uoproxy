@@ -29,6 +29,8 @@ struct config {
 /** read configuration options from the command line */
 void parse_cmdline(struct config *config, int argc, char **argv);
 
+int config_read_file(struct config *config, const char *path);
+
 void config_dispose(struct config *config);
 
 #endif
