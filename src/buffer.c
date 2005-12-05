@@ -68,6 +68,14 @@ void buffer_append(struct buffer *b, const void *data,
     b->length += nbytes;
 }
 
+void *buffer_peek(struct buffer *b, size_t *lengthp) {
+    if (buffer_empty(b))
+        return NULL;
+
+    *lengthp = b->length - b->position;
+    return b->data + b->position;
+}
+
 void buffer_shift(struct buffer *b, size_t nbytes) {
     assert(b->position <= b->length);
     assert(nbytes <= b->length - b->position);
