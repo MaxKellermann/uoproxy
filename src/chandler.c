@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -161,7 +162,6 @@ static packet_action_t handle_game_login(struct connection *c,
     int ret;
     const struct relay *relay;
     struct connection *c2;
-    struct addrinfo server_address;
     struct sockaddr_in sin;
 
     assert(length == sizeof(*p));
@@ -204,16 +204,29 @@ static packet_action_t handle_game_login(struct connection *c,
         }
     }
 
+    c->server_address = calloc(1, sizeof(*c->server_address));
+    if (c->server_address == NULL) {
+        fprintf(stderr, "out of memory");
+        return PA_DISCONNECT;
+    }
+
     sin.sin_family = AF_INET;
     sin.sin_port = relay->server_port;
     sin.sin_addr.s_addr = relay->server_ip;
 
-    memset(&server_address, 0, sizeof(server_address));
-    server_address.ai_family = AF_INET;
-    server_address.ai_addrlen = sizeof(sin);
-    server_address.ai_addr = (struct sockaddr*)&sin;
+    c->server_address->ai_family = AF_INET;
+    c->server_address->ai_addrlen = sizeof(sin);
+    c->server_address->ai_addr = malloc(sizeof(sin));
 
-    ret = uo_client_create(&server_address,
+    if (c->server_address->ai_addr == NULL) {
+        free(c->server_address);
+        fprintf(stderr, "out of memory");
+        return PA_DISCONNECT;
+    }
+
+    memcpy(c->server_address->ai_addr, &sin, sizeof(sin));
+
+    ret = uo_client_create(c->server_address,
                            uo_server_seed(c->server),
                            &c->client);
     if (ret != 0) {

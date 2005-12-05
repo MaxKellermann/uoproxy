@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <netdb.h>
 
 #include "connection.h"
 #include "server.h"
@@ -58,13 +59,24 @@ int connection_new(struct instance *instance,
 }
 
 void connection_delete(struct connection *c) {
-    if (c->server != NULL)
+    if (c->server != NULL) {
         uo_server_dispose(c->server);
-    if (c->client != NULL)
+        c->server = NULL;
+    }
+
+    if (c->client != NULL) {
         uo_client_dispose(c->client);
+        c->client = NULL;
+    }
 
     connection_delete_items(c);
     connection_delete_mobiles(c);
+
+    if (c->server_address != NULL) {
+        if (c->server_address->ai_addr != NULL)
+            free(c->server_address->ai_addr);
+        free(c->server_address);
+    }
 
     free(c);
 }
@@ -89,7 +101,8 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     if (c->client != NULL &&
         !uo_client_alive(c->client)) {
-        if (c->autoreconnect && c->in_game) {
+        if (c->autoreconnect && c->in_game &&
+            c->server_address != NULL) {
             uo_client_dispose(c->client);
             c->client = NULL;
 
@@ -189,13 +202,36 @@ void connection_idle(struct connection *c) {
     if (c->invalid)
         return;
 
-    if (c->client != NULL) {
+    if (c->client == NULL) {
+        if (c->reconnecting) {
+            const u_int32_t seed = rand();
+            int ret;
+
+            assert(c->server_address != NULL);
+
+            ret = uo_client_create(c->server_address, seed, &c->client);
+            if (ret == 0) {
+                struct uo_packet_account_login p = {
+                    .cmd = PCK_AccountLogin,
+                };
+
+                printf("connected, doing AccountLogin\n");
+
+                memcpy(p.username, c->username, sizeof(p.username));
+                memcpy(p.password, c->password, sizeof(p.password));
+
+                uo_client_send(c->client, &p, sizeof(p));
+            } else {
+                fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
+            }
+        }
+    } else {
         struct uo_packet_ping ping;
 
         ping.cmd = PCK_Ping;
         ping.id = ++c->ping_request;
 
-        fprintf(stderr, "sending ping\n");
+        printf("sending ping\n");
         uo_client_send(c->client, &ping, sizeof(ping));
     }
 }

@@ -31,6 +31,7 @@
 #include "relay.h"
 #include "connection.h"
 #include "server.h"
+#include "client.h"
 
 static packet_action_t handle_ping(struct connection *c,
                                    void *data, size_t length) {
@@ -57,6 +58,17 @@ static packet_action_t handle_server_list(struct connection *c,
 
     if (length < 6 || p[3] != 0x5d)
         return PA_DISCONNECT;
+
+    if (c->reconnecting) {
+        struct uo_packet_play_server p2 = {
+            .cmd = PCK_PlayServer,
+            .index = 0, /* XXX */
+        };
+
+        uo_client_send(c->client, &p2, sizeof(p2));
+
+        return PA_DROP;
+    }
 
     count = ntohs(*(uint16_t*)(p + 4));
 #ifdef DUMP_LOGIN
@@ -93,6 +105,33 @@ static packet_action_t handle_relay(struct connection *c,
     socklen_t sin_len = sizeof(sin);
 
     assert(length == sizeof(*p));
+
+    if (c->reconnecting) {
+        struct uo_packet_game_login p2 = {
+            .cmd = PCK_GameLogin,
+            .auth_id = p->auth_id,
+        };
+
+        printf("changing to game connection\n");
+
+        uo_client_dispose(c->client);
+        c->client = NULL;
+
+        ret = uo_client_create(c->server_address, p->auth_id, &c->client);
+        if (ret != 0) {
+            fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
+            return PA_DROP;
+        }
+
+        printf("connected, doing GameLogin\n");
+
+        memcpy(p2.username, c->username, sizeof(p2.username));
+        memcpy(p2.password, c->password, sizeof(p2.password));
+
+        uo_client_send(c->client, &p2, sizeof(p2));
+
+        return PA_DROP;
+    }
 
     if (c->server == NULL)
         return PA_ACCEPT;
@@ -134,6 +173,28 @@ static packet_action_t handle_supported_features(struct connection *c,
     assert(length == sizeof(*p));
 
     c->supported_features_flags = p->flags;
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_char_list(struct connection *c,
+                                        void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (c->reconnecting) {
+        struct uo_packet_play_character p2 = {
+            .cmd = PCK_PlayCharacter,
+            .slot = 0, /* XXX */
+            .client_ip = 0xdeadbeef, /* XXX */
+        };
+
+        printf("sending PlayCharacter\n");
+
+        uo_client_send(c->client, &p2, sizeof(p2));
+
+        return PA_DROP;
+    }
 
     return PA_ACCEPT;
 }
@@ -361,6 +422,15 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_Start,
       .handler = handle_start,
+    },
+    { .cmd = PCK_CharList3,
+      .handler = handle_char_list,
+    },
+    { .cmd = PCK_CharList2,
+      .handler = handle_char_list,
+    },
+    { .cmd = PCK_CharList,
+      .handler = handle_char_list,
     },
     { .cmd = PCK_Delete,
       .handler = handle_delete,

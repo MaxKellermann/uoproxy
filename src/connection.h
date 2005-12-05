@@ -48,9 +48,12 @@ struct connection {
 
     /* flags */
     int invalid, background, attaching;
-    int autoreconnect, reconnecting;
 
     int in_game, welcome;
+
+    /* reconnect */
+    int autoreconnect, reconnecting;
+    struct addrinfo *server_address;
 
     /* state */
     char username[30], password[30];
