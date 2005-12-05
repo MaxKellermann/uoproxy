@@ -137,6 +137,7 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
 #ifdef DUMP_CLIENT_PEEK
     printf("peek from server, length=%zu:\n", length);
     fhexdump(stdout, "  ", p, length);
+    fflush(stdout);
 #endif
 
     assert(length > 0);
@@ -158,6 +159,7 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
         return NULL;
 #ifdef DUMP_CLIENT_RECEIVE
     fhexdump(stdout, "  ", p, packet_length);
+    fflush(stdout);
 #endif
 
     *lengthp = packet_length;
@@ -217,6 +219,7 @@ void uo_client_send(struct uo_client *client,
 #ifdef DUMP_CLIENT_SEND
     printf("sending to packet to server, length=%zu:\n", length);
     fhexdump(stdout, "  ", src, length);
+    fflush(stdout);
 #endif
 
     if (*(const unsigned char*)src == PCK_GameLogin)
