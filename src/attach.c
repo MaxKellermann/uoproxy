@@ -76,7 +76,7 @@ void attach_after_play_character(struct connection *c) {
 
     /* 0xbf 0x08 MapChange */
     if (ntohs(c->packet_map_change.length) > 0) {
-        assert(c->packet_map_change.cmd == PCK_ExtData);
+        assert(c->packet_map_change.cmd == PCK_Extended);
         assert(ntohs(c->packet_map_change.length) == sizeof(c->packet_map_change));
         assert(ntohs(c->packet_map_change.extended_cmd) == 0x0008);
         uo_server_send(c->server, &c->packet_map_change,
@@ -85,7 +85,7 @@ void attach_after_play_character(struct connection *c) {
 
     /* 0xbf 0x18 MapPatches */
     if (ntohs(c->packet_map_patches.length) > 0) {
-        assert(c->packet_map_patches.cmd == PCK_ExtData);
+        assert(c->packet_map_patches.cmd == PCK_Extended);
         assert(ntohs(c->packet_map_patches.length) == sizeof(c->packet_map_patches));
         assert(ntohs(c->packet_map_patches.extended_cmd) == 0x0018);
         uo_server_send(c->server, &c->packet_map_patches,
@@ -134,8 +134,8 @@ void attach_after_play_character(struct connection *c) {
 
     /* items */
     for (item = c->items_head; item != NULL; item = item->next) {
-        uo_server_send(c->server, &item->packet_put,
-                       ntohs(item->packet_put.length));
+        uo_server_send(c->server, &item->packet_world_item,
+                       ntohs(item->packet_world_item.length));
     }
 
     /* LoginComplete */

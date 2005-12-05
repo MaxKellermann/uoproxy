@@ -31,7 +31,7 @@ struct addrinfo;
 struct item {
     struct item *next;
     u_int32_t serial;
-    struct uo_packet_put packet_put;
+    struct uo_packet_world_item packet_world_item;
 };
 
 struct mobile {
@@ -97,8 +97,8 @@ void connection_idle(struct connection *c);
 
 /* state */
 
-void connection_add_item(struct connection *c,
-                         const struct uo_packet_put *p);
+void connection_world_item(struct connection *c,
+                           const struct uo_packet_world_item *p);
 
 void connection_remove_item(struct connection *c, u_int32_t serial);
 

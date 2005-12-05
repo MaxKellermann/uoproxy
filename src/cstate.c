@@ -41,12 +41,12 @@ static struct item **find_item(struct connection *c,
     return i;
 }
 
-void connection_add_item(struct connection *c,
-                         const struct uo_packet_put *p) {
+void connection_world_item(struct connection *c,
+                           const struct uo_packet_world_item *p) {
     u_int32_t serial = p->serial & 0x7fffffff;
     struct item **ip, *i;
 
-    assert(p->cmd == PCK_Put);
+    assert(p->cmd == PCK_WorldItem);
     assert(ntohs(p->length) <= sizeof(*p));
 
     ip = find_item(c, serial);
@@ -63,7 +63,7 @@ void connection_add_item(struct connection *c,
         i = *ip;
     }
 
-    i->packet_put = *p;
+    i->packet_world_item = *p;
 }
 
 void connection_remove_item(struct connection *c, u_int32_t serial) {

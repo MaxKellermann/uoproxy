@@ -25,7 +25,7 @@
 #include <netinet/in.h>
 
 enum uo_packet_type_t {
-    PCK_Create = 0x00,
+    PCK_CreateCharacter = 0x00,
     PCK_Disconnect = 0x01,
     PCK_Walk = 0x02,
     PCK_Talk = 0x03,
@@ -51,7 +51,7 @@ enum uo_packet_type_t {
     PCK_ScriptsExe = 0x17,
     PCK_ScriptsAdd = 0x18,
     PCK_UnkSpeakNPC = 0x19,
-    PCK_Put = 0x1a,
+    PCK_WorldItem = 0x1a,
     PCK_Start = 0x1b,
     PCK_SpeakAscii = 0x1c,
     PCK_Delete = 0x1d,
@@ -155,7 +155,7 @@ enum uo_packet_type_t {
     PCK_GodViewInfo = 0x7f,
     PCK_AccountLogin = 0x80,
     PCK_CharList3 = 0x81,
-    PCK_LogBad = 0x82,
+    PCK_AccountLoginReject = 0x82,
     PCK_CharDelete = 0x83,
     PCK_UnkPasswordChange = 0x84,
     PCK_DeleteBad = 0x85,
@@ -216,7 +216,7 @@ enum uo_packet_type_t {
     PCK_Season = 0xbc,
     PCK_ClientVersion = 0xbd,
     PCK_UnkVersionAssist = 0xbe,
-    PCK_ExtData = 0xbf,
+    PCK_Extended = 0xbf,
     PCK_UnkHuedEffect = 0xc0,
     PCK_SpeakTable = 0xc1,
     PCK_UnkSpeakTableU = 0xc2,
@@ -266,76 +266,7 @@ static inline size_t get_packet_length(const void *q, size_t max_length) {
     return length;
 }
 
-/* 0x02 Walk */
-struct uo_packet_walk {
-    unsigned char cmd;
-    u_int8_t direction, seq;
-    u_int32_t key;
-} __attribute__ ((packed));
-
-/* 0x07 LiftRequest */
-struct uo_packet_lift_request {
-    unsigned char cmd;
-    u_int32_t serial;
-    u_int16_t amount;
-} __attribute__ ((packed));
-
-/* 0x27 LiftReject */
-struct uo_packet_lift_reject {
-    unsigned char cmd;
-    u_int8_t reason;
-} __attribute__ ((packed));
-
-/* 0x73 Ping */
-struct uo_packet_ping {
-    unsigned char cmd;
-    unsigned char id;
-} __attribute__ ((packed));
-
-struct uo_packet_ping_ack {
-    unsigned char cmd;
-    unsigned char id;
-} __attribute__ ((packed));
-
-struct uo_packet_account_login {
-    unsigned char cmd;
-    char username[30];
-    char password[30];
-    unsigned char unknown1;
-} __attribute__ ((packed));
-
-struct uo_packet_login_bad {
-    unsigned char cmd;
-    unsigned char reason;
-} __attribute__ ((packed));
-
-struct uo_fragment_server_info {
-    u_int16_t index;
-    char name[32];
-    char full;
-    unsigned char timezone;
-    u_int32_t address;
-} __attribute__ ((packed));
-
-struct uo_packet_game_login {
-    unsigned char cmd;
-    u_int32_t auth_id;
-    char username[30];
-    char password[30];
-} __attribute__ ((packed));
-
-struct uo_packet_supported_features {
-    unsigned char cmd;
-    u_int16_t flags;
-} __attribute__ ((packed));
-
-struct uo_packet_relay {
-    unsigned char cmd;
-    u_int32_t ip;
-    u_int16_t port;
-    u_int32_t auth_id;
-} __attribute__ ((packed));
-
+/* 0x00 CreateCharacter */
 struct uo_packet_create_character {
     unsigned char cmd;
     u_int32_t unknown0, unknown1, unknown2;
@@ -357,175 +288,21 @@ struct uo_packet_create_character {
     u_int16_t shirt_hue, pants_hue;
 } __attribute__ ((packed));
 
-struct uo_fragment_character_info {
-    char name[30];
-    char password[30];
-} __attribute__ ((packed));
-
-struct uo_packet_simple_character_list {
+/* 0x02 Walk */
+struct uo_packet_walk {
     unsigned char cmd;
-    u_int16_t length;
-    u_int8_t character_count;
-    struct uo_fragment_character_info character_info[1];
-    u_int8_t city_count;
-    u_int32_t flags;
+    u_int8_t direction, seq;
+    u_int32_t key;
 } __attribute__ ((packed));
 
-struct uo_packet_play_character {
-    unsigned char cmd;
-    u_int32_t unknown0;
-    char name[30];
-    u_int16_t unknown1;
-    u_int32_t flags;
-    u_int8_t unknown2[24];
-    u_int32_t slot, client_ip;
-} __attribute__ ((packed));
-
-struct uo_packet_start {
+/* 0x07 LiftRequest */
+struct uo_packet_lift_request {
     unsigned char cmd;
     u_int32_t serial;
-    u_int32_t unknown0;
-    u_int16_t body;
-    int16_t x, y, z;
-    u_int8_t direction;
-    u_int8_t unknown1;
-    u_int32_t unknown2;
-    u_int16_t unknown3, unknown4;
-    u_int16_t map_width, map_height;
-    unsigned char unknown5[6];
-} __attribute__ ((packed));
-
-/* 0x1d Delete */
-struct uo_packet_delete {
-    unsigned char cmd;
-    u_int32_t serial;
-} __attribute__ ((packed));
-
-struct uo_packet_map_change {
-    unsigned char cmd;
-    u_int16_t length;
-    u_int16_t extended_cmd; /* 0x0008 */
-    u_int8_t map_id;
-} __attribute__ ((packed));
-
-struct uo_fragment_map_patch {
-    u_int32_t static_blocks;
-    u_int32_t land_blocks;
-};
-
-struct uo_packet_season {
-    unsigned char cmd;
-    u_int8_t season, play_sound;
-} __attribute__ ((packed));
-
-struct uo_packet_map_patches {
-    unsigned char cmd;
-    u_int16_t length;
-    u_int16_t extended_cmd; /* 0x0018 */
-    u_int32_t map_count;
-    struct uo_fragment_map_patch map_patches[4];
-} __attribute__ ((packed));
-
-struct uo_packet_zone_change {
-    unsigned char cmd;
-    int16_t x, y, z;
-    u_int8_t unknown0;
-    u_int16_t unknown1, unknown2;
-    u_int16_t map_width, map_height;
-} __attribute__ ((packed));
-
-struct uo_packet_global_light_level {
-    unsigned char cmd;
-    int8_t level;
-} __attribute__ ((packed));
-
-struct uo_packet_personal_light_level {
-    unsigned char cmd;
-    u_int32_t serial;
-    int8_t level;
-} __attribute__ ((packed));
-
-struct uo_packet_login_complete {
-    unsigned char cmd;
-} __attribute__ ((packed));
-
-struct uo_packet_mobile_update {
-    unsigned char cmd;
-    u_int32_t serial;
-    u_int16_t body;
-    u_int8_t unknown0;
-    u_int16_t hue;
-    u_int8_t packet_flags;
-    int16_t x, y;
-    u_int16_t unknown1;
-    u_int8_t direction;
-    int8_t z;
-} __attribute__ ((packed));
-
-/* 0x21 WalkCancel */
-struct uo_packet_walk_cancel {
-    unsigned char cmd;
-    u_int8_t seq;
-    int16_t x, y;
-    u_int8_t direction;
-    int8_t z;
-} __attribute__ ((packed));
-
-struct uo_packet_war_mode {
-    unsigned char cmd;
-    u_int8_t war_mode;
-    u_int8_t unknown0[3];
-} __attribute__ ((packed));
-
-struct uo_packet_put {
-    unsigned char cmd;
-    u_int16_t length;
-    u_int32_t serial;
-    u_int16_t item_id;
-    /* warning: the following properties may be optional */
     u_int16_t amount;
-    int16_t x, y;
-    u_int8_t direction;
-    int8_t z;
-    u_int16_t hue;
-    u_int8_t flags;
 } __attribute__ ((packed));
 
-struct uo_packet_fragment_mobile_item {
-    u_int32_t serial;
-    u_int16_t item_id;
-    u_int8_t layer;
-    u_int16_t hue; /* optional */
-} __attribute__ ((packed));
-
-/* 0x77 MobileMoving */
-struct uo_packet_mobile_moving {
-    unsigned char cmd;
-    u_int32_t serial;
-    u_int16_t body;
-    int16_t x, y;
-    int8_t z;
-    u_int8_t direction;
-    u_int16_t hue;
-    u_int8_t flags;
-    u_int8_t notoriety;
-} __attribute__ ((packed));
-
-struct uo_packet_mobile_incoming {
-    unsigned char cmd;
-    u_int16_t length;
-    u_int32_t serial;
-    u_int16_t body;
-    int16_t x, y;
-    int8_t z;
-    u_int8_t direction;
-    u_int16_t hue;
-    u_int8_t flags;
-    u_int8_t notoriety;
-    struct uo_packet_fragment_mobile_item items[];
-    /* u_int32_t zero; */
-} __attribute__ ((packed));
-
+/* 0x11 MobileStatus */
 struct uo_packet_mobile_status {
     unsigned char cmd;
     u_int16_t length;
@@ -551,6 +328,37 @@ struct uo_packet_mobile_status {
     u_int32_t tithing_points;
 } __attribute__ ((packed));
 
+/* 0x1a WorldItem */
+struct uo_packet_world_item {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int32_t serial;
+    u_int16_t item_id;
+    /* warning: the following properties may be optional */
+    u_int16_t amount;
+    int16_t x, y;
+    u_int8_t direction;
+    int8_t z;
+    u_int16_t hue;
+    u_int8_t flags;
+} __attribute__ ((packed));
+
+/* 0x1b Start */
+struct uo_packet_start {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int32_t unknown0;
+    u_int16_t body;
+    int16_t x, y, z;
+    u_int8_t direction;
+    u_int8_t unknown1;
+    u_int32_t unknown2;
+    u_int16_t unknown3, unknown4;
+    u_int16_t map_width, map_height;
+    unsigned char unknown5[6];
+} __attribute__ ((packed));
+
+/* 0x1c SpeakAscii */
 struct uo_packet_speak_ascii {
     unsigned char cmd;
     u_int16_t length;
@@ -563,6 +371,220 @@ struct uo_packet_speak_ascii {
     char text[1];
 } __attribute__ ((packed));
 
+/* 0x1d Delete */
+struct uo_packet_delete {
+    unsigned char cmd;
+    u_int32_t serial;
+} __attribute__ ((packed));
+
+/* 0x20 MobileUpdate */
+struct uo_packet_mobile_update {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t body;
+    u_int8_t unknown0;
+    u_int16_t hue;
+    u_int8_t packet_flags;
+    int16_t x, y;
+    u_int16_t unknown1;
+    u_int8_t direction;
+    int8_t z;
+} __attribute__ ((packed));
+
+/* 0x21 WalkCancel */
+struct uo_packet_walk_cancel {
+    unsigned char cmd;
+    u_int8_t seq;
+    int16_t x, y;
+    u_int8_t direction;
+    int8_t z;
+} __attribute__ ((packed));
+
+/* 0x27 LiftReject */
+struct uo_packet_lift_reject {
+    unsigned char cmd;
+    u_int8_t reason;
+} __attribute__ ((packed));
+
+/* 0x4f GlobalLightLevel */
+struct uo_packet_global_light_level {
+    unsigned char cmd;
+    int8_t level;
+} __attribute__ ((packed));
+
+/* 0x4e PersonalLightLevel */
+struct uo_packet_personal_light_level {
+    unsigned char cmd;
+    u_int32_t serial;
+    int8_t level;
+} __attribute__ ((packed));
+
+/* 0x55 ReDrawAll */
+struct uo_packet_login_complete {
+    unsigned char cmd;
+} __attribute__ ((packed));
+
+/* 0x5d PlayCharacter */
+struct uo_packet_play_character {
+    unsigned char cmd;
+    u_int32_t unknown0;
+    char name[30];
+    u_int16_t unknown1;
+    u_int32_t flags;
+    u_int8_t unknown2[24];
+    u_int32_t slot, client_ip;
+} __attribute__ ((packed));
+
+/* 0x72 WarMode */
+struct uo_packet_war_mode {
+    unsigned char cmd;
+    u_int8_t war_mode;
+    u_int8_t unknown0[3];
+} __attribute__ ((packed));
+
+/* 0x73 Ping */
+struct uo_packet_ping {
+    unsigned char cmd;
+    unsigned char id;
+} __attribute__ ((packed));
+
+/* 0x76 ZoneChange */
+struct uo_packet_zone_change {
+    unsigned char cmd;
+    int16_t x, y, z;
+    u_int8_t unknown0;
+    u_int16_t unknown1, unknown2;
+    u_int16_t map_width, map_height;
+} __attribute__ ((packed));
+
+/* 0x77 MobileMoving */
+struct uo_packet_mobile_moving {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t body;
+    int16_t x, y;
+    int8_t z;
+    u_int8_t direction;
+    u_int16_t hue;
+    u_int8_t flags;
+    u_int8_t notoriety;
+} __attribute__ ((packed));
+
+/* for 0x78 MobileIncoming */
+struct uo_packet_fragment_mobile_item {
+    u_int32_t serial;
+    u_int16_t item_id;
+    u_int8_t layer;
+    u_int16_t hue; /* optional */
+} __attribute__ ((packed));
+
+/* 0x78 MobileIncoming */
+struct uo_packet_mobile_incoming {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int32_t serial;
+    u_int16_t body;
+    int16_t x, y;
+    int8_t z;
+    u_int8_t direction;
+    u_int16_t hue;
+    u_int8_t flags;
+    u_int8_t notoriety;
+    struct uo_packet_fragment_mobile_item items[];
+    /* u_int32_t zero; */
+} __attribute__ ((packed));
+
+/* 0x80 AccountLogin */
+struct uo_packet_account_login {
+    unsigned char cmd;
+    char username[30];
+    char password[30];
+    unsigned char unknown1;
+} __attribute__ ((packed));
+
+/* 0x82 AccountLoginReject */
+struct uo_packet_account_login_reject {
+    unsigned char cmd;
+    unsigned char reason;
+} __attribute__ ((packed));
+
+/* 0x8c Relay */
+struct uo_packet_relay {
+    unsigned char cmd;
+    u_int32_t ip;
+    u_int16_t port;
+    u_int32_t auth_id;
+} __attribute__ ((packed));
+
+/* 0x91 GameLogin */
+struct uo_packet_game_login {
+    unsigned char cmd;
+    u_int32_t auth_id;
+    char username[30];
+    char password[30];
+} __attribute__ ((packed));
+
+/* for 0xa8 ServerList */
+struct uo_fragment_server_info {
+    u_int16_t index;
+    char name[32];
+    char full;
+    unsigned char timezone;
+    u_int32_t address;
+} __attribute__ ((packed));
+
+/* for 0xa9 CharList */
+struct uo_fragment_character_info {
+    char name[30];
+    char password[30];
+} __attribute__ ((packed));
+
+/* 0xa9 CharList */
+struct uo_packet_simple_character_list {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int8_t character_count;
+    struct uo_fragment_character_info character_info[1];
+    u_int8_t city_count;
+    u_int32_t flags;
+} __attribute__ ((packed));
+
+/* 0xb9 SupportedFeatures */
+struct uo_packet_supported_features {
+    unsigned char cmd;
+    u_int16_t flags;
+} __attribute__ ((packed));
+
+/* 0xbc Season */
+struct uo_packet_season {
+    unsigned char cmd;
+    u_int8_t season, play_sound;
+} __attribute__ ((packed));
+
+/* 0xbf 0x0008 MapChange */
+struct uo_packet_map_change {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t extended_cmd; /* 0x0008 */
+    u_int8_t map_id;
+} __attribute__ ((packed));
+
+/* for 0xbf 0x0018 MapPatch */
+struct uo_fragment_map_patch {
+    u_int32_t static_blocks;
+    u_int32_t land_blocks;
+};
+
+/* 0xbf 0x0018 MapPatch */
+struct uo_packet_map_patches {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t extended_cmd; /* 0x0018 */
+    u_int32_t map_count;
+    struct uo_fragment_map_patch map_patches[4];
+} __attribute__ ((packed));
+
+/* 0xbf Extended */
 struct uo_packet_extended {
     unsigned char cmd;
     u_int16_t length;

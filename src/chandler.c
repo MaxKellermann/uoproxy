@@ -108,12 +108,12 @@ static packet_action_t handle_account_login(struct connection *c,
                            uo_server_seed(c->server),
                            &c->client);
     if (ret != 0) {
-        struct uo_packet_login_bad response;
+        struct uo_packet_account_login_reject response;
 
         fprintf(stderr, "uo_client_create() failed: %s\n",
                 strerror(-ret));
 
-        response.cmd = PCK_LogBad;
+        response.cmd = PCK_AccountLoginReject;
         response.reason = 0x02; /* blocked */
 
         uo_server_send(c->server, &response,
@@ -255,7 +255,7 @@ struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_PlayCharacter,
       .handler = handle_play_character,
     },
-    { .cmd = PCK_ExtData,
+    { .cmd = PCK_Extended,
       .handler = handle_extended,
     },
     { .handler = NULL }

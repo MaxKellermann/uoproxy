@@ -247,13 +247,13 @@ static packet_action_t handle_war_mode(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_put(struct connection *c,
-                                  void *data, size_t length) {
-    const struct uo_packet_put *p = data;
+static packet_action_t handle_world_item(struct connection *c,
+                                         void *data, size_t length) {
+    const struct uo_packet_world_item *p = data;
 
     assert(length <= sizeof(*p));
 
-    connection_add_item(c, p);
+    connection_world_item(c, p);
 
     return PA_ACCEPT;
 }
@@ -383,8 +383,8 @@ struct packet_binding server_packet_bindings[] = {
     { .cmd = PCK_WarMode,
       .handler = handle_war_mode,
     },
-    { .cmd = PCK_Put,
-      .handler = handle_put,
+    { .cmd = PCK_WorldItem,
+      .handler = handle_world_item,
     },
     { .cmd = PCK_MobileMoving,
       .handler = handle_mobile_moving,
@@ -401,7 +401,7 @@ struct packet_binding server_packet_bindings[] = {
     { .cmd = PCK_SpeakUnicode,
       .handler = handle_speak_unicode,
     },
-    { .cmd = PCK_ExtData,
+    { .cmd = PCK_Extended,
       .handler = handle_extended,
     },
     { .handler = NULL }
