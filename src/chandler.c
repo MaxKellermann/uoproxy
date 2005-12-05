@@ -58,6 +58,20 @@ static packet_action_t handle_walk(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_use(struct connection *c,
+                                  void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (c->reconnecting) {
+        uo_server_speak_console(c->server,
+                                "please wait until uoproxy finishes reconnecting");
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_lift_request(struct connection *c,
                                            void *data, size_t length) {
     const struct uo_packet_lift_request *p = data;
@@ -236,6 +250,9 @@ static packet_action_t handle_extended(struct connection *c,
 struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Walk,
       .handler = handle_walk,
+    },
+    { .cmd = PCK_Use,
+      .handler = handle_use,
     },
     { .cmd = PCK_LiftRequest,
       .handler = handle_lift_request,
