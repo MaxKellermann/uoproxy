@@ -51,7 +51,7 @@ static packet_action_t handle_walk(struct connection *c,
             .z = c->packet_start.z,
         };
 
-        uo_server_send(c->server, &p2, sizeof(p2));
+        uo_server_send(c->current_server->server, &p2, sizeof(p2));
 
         return PA_DROP;
     }
@@ -65,7 +65,7 @@ static packet_action_t handle_use(struct connection *c,
     (void)length;
 
     if (c->reconnecting) {
-        uo_server_speak_console(c->server,
+        uo_server_speak_console(c->current_server->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
     }
@@ -79,7 +79,7 @@ static packet_action_t handle_action(struct connection *c,
     (void)length;
 
     if (c->reconnecting) {
-        uo_server_speak_console(c->server,
+        uo_server_speak_console(c->current_server->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
     }
@@ -100,7 +100,7 @@ static packet_action_t handle_lift_request(struct connection *c,
             .reason = 0x00, /* CannotLift */
         };
 
-        uo_server_send(c->server, &p2, sizeof(p2));
+        uo_server_send(c->current_server->server, &p2, sizeof(p2));
 
         return PA_DROP;
     }
@@ -110,7 +110,7 @@ static packet_action_t handle_lift_request(struct connection *c,
 
 static packet_action_t handle_ping(struct connection *c,
                                    void *data, size_t length) {
-    uo_server_send(c->server, data, length);
+    uo_server_send(c->current_server->server, data, length);
     return PA_DROP;
 }
 
@@ -123,6 +123,9 @@ static packet_action_t handle_account_login(struct connection *c,
     assert(sizeof(p->username) == sizeof(c->username));
     assert(sizeof(p->password) == sizeof(c->password));
 
+    if (c->in_game)
+        return PA_DISCONNECT;
+
 #ifdef DUMP_LOGIN
     printf("account_login: username=%s password=%s\n",
            p->username, p->password);
@@ -134,7 +137,7 @@ static packet_action_t handle_account_login(struct connection *c,
     }
 
     ret = uo_client_create(c->instance->login_address,
-                           uo_server_seed(c->server),
+                           uo_server_seed(c->current_server->server),
                            &c->client);
     if (ret != 0) {
         struct uo_packet_account_login_reject response;
@@ -145,7 +148,7 @@ static packet_action_t handle_account_login(struct connection *c,
         response.cmd = PCK_AccountLoginReject;
         response.reason = 0x02; /* blocked */
 
-        uo_server_send(c->server, &response,
+        uo_server_send(c->current_server->server, &response,
                        sizeof(response));
         return PA_DROP;
     }
@@ -168,6 +171,9 @@ static packet_action_t handle_game_login(struct connection *c,
     assert(sizeof(p->username) == sizeof(c->username));
     assert(sizeof(p->password) == sizeof(c->password));
 
+    if (c->in_game)
+        return PA_DISCONNECT;
+
 #ifdef DUMP_LOGIN
     printf("game_login: username=%s password=%s\n",
            p->username, p->password);
@@ -188,23 +194,21 @@ static packet_action_t handle_game_login(struct connection *c,
     for (c2 = c->instance->connections_head; c2 != NULL; c2 = c2->next) {
         if (c2 != c && c2->packet_start.serial != 0 &&
             memcmp(p->username, c2->username, sizeof(c2->username)) == 0 &&
-            memcmp(p->password, c2->password, sizeof(c2->password)) == 0) {
-            struct uo_server *server = c->server;
+            memcmp(p->password, c2->password, sizeof(c2->password)) == 0 &&
+            c2->in_game) {
+            struct uo_server *server = c->current_server->server;
 
             assert(server != NULL);
-
-            c->server = NULL;
-
-            if (c2->server != NULL) {
-                /* disconnect old client */
-                uo_server_dispose(c2->server);
-                c2->server = NULL;
-            }
 
 #ifdef DUMP_LOGIN
             printf("attaching connection\n");
 #endif
 
+            /* remove the object from the old connection */
+            c->current_server->invalid = 1;
+            c->current_server->server = NULL;
+
+            /* attach it to the new connection */
             attach_after_game_login(c2, server);
 
             return PA_DISCONNECT;
@@ -234,7 +238,7 @@ static packet_action_t handle_game_login(struct connection *c,
     memcpy(c->server_address->ai_addr, &sin, sizeof(sin));
 
     ret = uo_client_create(c->server_address,
-                           uo_server_seed(c->server),
+                           uo_server_seed(c->current_server->server),
                            &c->client);
     if (ret != 0) {
         fprintf(stderr, "uo_client_create() failed: %s\n",
@@ -254,9 +258,9 @@ static packet_action_t handle_play_character(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->attaching) {
+    if (c->current_server->attaching) {
         printf("attaching connection, stage II\n");
-        attach_after_play_character(c);
+        attach_after_play_character(c, c->current_server);
         return PA_DROP;
     }
 

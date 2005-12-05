@@ -41,15 +41,21 @@ struct mobile {
     struct uo_packet_mobile_status *packet_mobile_status;
 };
 
+struct linked_server {
+    struct linked_server *next;
+    struct uo_server *server;
+    int invalid, welcome, attaching;
+};
+
 struct connection {
     /* linked list and parent */
     struct connection *next;
     struct instance *instance;
 
     /* flags */
-    int invalid, background, attaching;
+    int invalid, background;
 
-    int in_game, welcome;
+    int in_game;
 
     /* reconnect */
     int autoreconnect, reconnecting;
@@ -72,7 +78,8 @@ struct connection {
 
     /* sub-objects */
     struct uo_client *client;
-    struct uo_server *server;
+    struct linked_server *servers_head;
+    struct linked_server *current_server;
 };
 
 struct instance {
@@ -91,6 +98,8 @@ int connection_new(struct instance *instance,
 void connection_delete(struct connection *c);
 
 void connection_invalidate(struct connection *c);
+
+struct linked_server *connection_add_server(struct connection *c, struct uo_server *server);
 
 void connection_pre_select(struct connection *c, struct selectx *sx);
 
@@ -128,6 +137,7 @@ void connection_delete_mobiles(struct connection *c);
 void attach_after_game_login(struct connection *c,
                              struct uo_server *server);
 
-void attach_after_play_character(struct connection *c);
+void attach_after_play_character(struct connection *c,
+                                 struct linked_server *ls);
 
 #endif

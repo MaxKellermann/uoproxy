@@ -81,14 +81,17 @@ void connection_remove_item(struct connection *c, u_int32_t serial) {
 
 void connection_delete_items(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
+    struct linked_server *ls;
 
     while (c->items_head != NULL) {
         struct item *i = c->items_head;
         c->items_head = i->next;
 
-        if (c->server != NULL) {
-            p.serial = i->serial;
-            uo_server_send(c->server, &p, sizeof(p));
+        p.serial = i->serial;
+
+        for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+            if (!ls->invalid && !ls->attaching)
+                uo_server_send(ls->server, &p, sizeof(p));
         }
 
         free(i);
@@ -235,14 +238,17 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial) {
 
 void connection_delete_mobiles(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
+    struct linked_server *ls;
 
     while (c->mobiles_head != NULL) {
         struct mobile *m = c->mobiles_head;
         c->mobiles_head = m->next;
 
-        if (c->server != NULL) {
-            p.serial = m->serial;
-            uo_server_send(c->server, &p, sizeof(p));
+        p.serial = m->serial;
+
+        for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+            if (!ls->invalid && !ls->attaching)
+                uo_server_send(ls->server, &p, sizeof(p));
         }
 
         if (m->packet_mobile_incoming != NULL)

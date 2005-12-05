@@ -103,6 +103,7 @@ static packet_action_t handle_relay(struct connection *c,
     int ret;
     struct sockaddr_in sin;
     socklen_t sin_len = sizeof(sin);
+    struct uo_server *server;
 
     assert(length == sizeof(*p));
 
@@ -133,8 +134,10 @@ static packet_action_t handle_relay(struct connection *c,
         return PA_DROP;
     }
 
-    if (c->server == NULL)
-        return PA_ACCEPT;
+    if (c->in_game)
+        return PA_DISCONNECT;
+
+    server = c->servers_head->server;
 
     /* remember the original IP/port */
     relay = (struct relay){
@@ -146,7 +149,7 @@ static packet_action_t handle_relay(struct connection *c,
     relay_add(c->instance->relays, &relay);
 
     /* get our local address */
-    ret = getsockname(uo_server_fileno(c->server),
+    ret = getsockname(uo_server_fileno(server),
                       (struct sockaddr*)&sin, &sin_len);
     if (ret < 0) {
         fprintf(stderr, "getsockname() failed: %s\n",
@@ -353,10 +356,15 @@ static packet_action_t handle_mobile_status(struct connection *c,
 }
 
 static void welcome(struct connection *c) {
-    uo_server_speak_console(c->server, "Welcome to uoproxy v0.1.0!  "
-                            "http://max.kellermann.name/projects/uoproxy/");
+    struct linked_server *ls;
 
-    c->welcome = 1;
+    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+        if (!ls->invalid && !ls->attaching && !ls->welcome) {
+            uo_server_speak_console(ls->server, "Welcome to uoproxy v0.1.0!  "
+                                    "http://max.kellermann.name/projects/uoproxy/");
+            ls->welcome = 1;
+        }
+    }
 }
 
 static packet_action_t handle_speak_ascii(struct connection *c,
@@ -364,8 +372,7 @@ static packet_action_t handle_speak_ascii(struct connection *c,
     (void)data;
     (void)length;
 
-    if (!c->welcome)
-        welcome(c);
+    welcome(c);
 
     return PA_ACCEPT;
 }
@@ -375,8 +382,7 @@ static packet_action_t handle_speak_unicode(struct connection *c,
     (void)data;
     (void)length;
 
-    if (!c->welcome)
-        welcome(c);
+    welcome(c);
 
     return PA_ACCEPT;
 }

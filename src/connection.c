@@ -32,10 +32,25 @@
 #include "client.h"
 #include "handler.h"
 
+/** broadcast a message to all clients */
+static void connection_speak_console(struct connection *c, const char *msg) {
+    struct linked_server *ls;
+
+    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+        if (!ls->invalid && !ls->attaching) {
+            assert(ls->server != NULL);
+
+            uo_server_speak_console(ls->server, msg);
+        }
+    }
+}
+
 int connection_new(struct instance *instance,
                    int server_socket,
                    struct connection **connectionp) {
     struct connection *c;
+    struct uo_server *server = NULL;
+    struct linked_server *ls;
     int ret;
 
     c = calloc(1, sizeof(*c));
@@ -44,10 +59,17 @@ int connection_new(struct instance *instance,
 
     c->instance = instance;
 
-    ret = uo_server_create(server_socket, &c->server);
+    ret = uo_server_create(server_socket, &server);
     if (ret != 0) {
         connection_delete(c);
         return ret;
+    }
+
+    ls = connection_add_server(c, server);
+    if (ls == NULL) {
+        uo_server_dispose(server);
+        connection_delete(c);
+        return -ENOMEM;
     }
 
     c->background = 1; /* XXX: testing this option */
@@ -59,9 +81,13 @@ int connection_new(struct instance *instance,
 }
 
 void connection_delete(struct connection *c) {
-    if (c->server != NULL) {
-        uo_server_dispose(c->server);
-        c->server = NULL;
+    while (c->servers_head != NULL) {
+        struct linked_server *ls = c->servers_head;
+        c->servers_head = ls->next;
+
+        if (ls->server != NULL)
+            uo_server_dispose(ls->server);
+        free(ls);
     }
 
     if (c->client != NULL) {
@@ -85,7 +111,36 @@ void connection_invalidate(struct connection *c) {
     c->invalid = 1;
 }
 
+struct linked_server *connection_add_server(struct connection *c, struct uo_server *server) {
+    struct linked_server *ls = calloc(1, sizeof(*ls));
+
+    if (ls == NULL)
+        return NULL;
+
+    ls->server = server;
+
+    ls->next = c->servers_head;
+    c->servers_head = ls;
+
+    return ls;
+}
+
+static void remove_server(struct linked_server **lsp) {
+    struct linked_server *ls = *lsp;
+
+    assert(ls != NULL);
+
+    *lsp = ls->next;
+
+    if (ls->server != NULL)
+        uo_server_dispose(ls->server);
+
+    free(ls);
+}
+
 void connection_pre_select(struct connection *c, struct selectx *sx) {
+    struct linked_server **lsp, *ls;
+
     if (c->invalid)
         return;
 
@@ -98,9 +153,7 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
             c->reconnecting = 1;
 
-            if (c->server != NULL)
-                uo_server_speak_console(c->server,
-                                        "uoproxy was disconnected, auto-reconnecting...");
+            connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
 
             connection_delete_items(c);
             connection_delete_mobiles(c);
@@ -110,29 +163,38 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
         }
     }
 
-    if (c->server != NULL &&
-        !uo_server_alive(c->server)) {
-        if (c->background && c->in_game) {
-            fprintf(stderr, "client disconnected, backgrounding\n");
-            uo_server_dispose(c->server);
-            c->server = NULL;
-        } else {
-            fprintf(stderr, "client disconnected\n");
-            connection_invalidate(c);
-        }
-    }
-
     if (c->client != NULL)
         uo_client_pre_select(c->client, sx);
 
-    if (c->server != NULL)
-        uo_server_pre_select(c->server, sx);
+    for (lsp = &c->servers_head; *lsp != NULL;) {
+        ls = *lsp;
+
+        assert(ls->invalid || ls->server != NULL);
+
+        if (ls->invalid) {
+            remove_server(lsp);
+        } else if (!uo_server_alive(ls->server)) {
+            if (c->background && c->in_game) {
+                fprintf(stderr, "client disconnected, backgrounding\n");
+                remove_server(lsp);
+            } else {
+                fprintf(stderr, "client disconnected\n");
+                remove_server(lsp);
+                connection_invalidate(c);
+            }
+        } else {
+            /* alive. */
+            uo_server_pre_select(ls->server, sx);
+            lsp = &ls->next;
+        }
+    }
 }
 
 int connection_post_select(struct connection *c, struct selectx *sx) {
     void *p;
     size_t length;
     packet_action_t action;
+    struct linked_server *ls;
 
     if (c->invalid)
         return 0;
@@ -141,14 +203,17 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
         uo_client_post_select(c->client, sx);
         while (c->client != NULL &&
                (p = uo_client_peek(c->client, &length)) != NULL) {
+
             uo_client_shift(c->client, length);
 
             action = handle_packet(server_packet_bindings,
                                    c, p, length);
             switch (action) {
             case PA_ACCEPT:
-                if (c->server != NULL && !c->attaching)
-                    uo_server_send(c->server, p, length);
+                for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+                    if (!ls->invalid && !ls->attaching)
+                        uo_server_send(ls->server, p, length);
+                }
                 break;
 
             case PA_DROP:
@@ -161,14 +226,21 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
         }
     }
 
-    if (c->server != NULL) {
-        uo_server_post_select(c->server, sx);
-        while (c->server != NULL &&
-               (p = uo_server_peek(c->server, &length)) != NULL) {
-            uo_server_shift(c->server, length);
+    assert(c->current_server == NULL);
 
+    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+        if (ls->invalid)
+            continue;
+
+        uo_server_post_select(ls->server, sx);
+        while (!ls->invalid &&
+               (p = uo_server_peek(ls->server, &length)) != NULL) {
+            uo_server_shift(ls->server, length);
+
+            c->current_server = ls;
             action = handle_packet(client_packet_bindings,
                                    c, p, length);
+            c->current_server = NULL;
             switch (action) {
             case PA_ACCEPT:
                 if (c->client != NULL && !c->reconnecting)
