@@ -60,12 +60,11 @@ static void instance_pre_select(struct instance *instance,
     while (*cp != NULL) {
         struct connection *c = *cp;
 
-        connection_pre_select(c, sx);
-
         if (c->invalid) {
             *cp = c->next;
             connection_delete(c);
         } else {
+            connection_pre_select(c, sx);
             cp = &c->next;
         }
     }
