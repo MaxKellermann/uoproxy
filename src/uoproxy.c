@@ -93,8 +93,7 @@ static void run_server(struct instance *instance) {
         .tv_usec = 0,
     };
 
-    sockfd = setup_server_socket(instance->bind_address);
-    freeaddrinfo(instance->bind_address);
+    sockfd = setup_server_socket(instance->config->bind_address);
 
     while (!should_exit) {
         selectx_clear(&sx);
@@ -153,13 +152,17 @@ static void setup_signal_handlers(void) {
 }
 
 int main(int argc, char **argv) {
+    struct config config;
     struct relay_list relays = { .next = 0, };
     struct instance instance = {
+        .config = &config,
         .connections_head = NULL,
         .relays = &relays,
     };
 
-    parse_cmdline(&instance, argc, argv);
+    memset(&config, 0, sizeof(config));
+
+    parse_cmdline(&config, argc, argv);
 
     /* set up */
 
@@ -173,7 +176,7 @@ int main(int argc, char **argv) {
 
     delete_all_connections(instance.connections_head);
 
-    freeaddrinfo(instance.login_address);
+    config_dispose(&config);
 
     return 0;
 }

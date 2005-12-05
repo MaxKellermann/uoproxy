@@ -84,7 +84,7 @@ struct connection {
 
 struct instance {
     /* configuration */
-    struct addrinfo *bind_address, *login_address;
+    struct config *config;
 
     /* state */
     struct connection *connections_head;

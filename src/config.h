@@ -22,9 +22,13 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-struct instance;
+struct config {
+    struct addrinfo *bind_address, *login_address;
+};
 
 /** read configuration options from the command line */
-void parse_cmdline(struct instance *instance, int argc, char **argv);
+void parse_cmdline(struct config *config, int argc, char **argv);
+
+void config_dispose(struct config *config);
 
 #endif

@@ -31,7 +31,6 @@
 
 #include "config.h"
 #include "netutil.h"
-#include "connection.h"
 
 static void usage(void) {
     printf("usage: uoproxy [options] server:port\n\n"
@@ -45,7 +44,7 @@ static void usage(void) {
 }
 
 /** read configuration options from the command line */
-void parse_cmdline(struct instance *instance, int argc, char **argv) {
+void parse_cmdline(struct config *config, int argc, char **argv) {
     int ret;
 #ifdef __GLIBC__
     static const struct option long_options[] = {
@@ -112,7 +111,7 @@ void parse_cmdline(struct instance *instance, int argc, char **argv) {
     hints.ai_socktype = SOCK_STREAM;
 
     ret = getaddrinfo_helper(login_address, 2593, &hints,
-                             &instance->login_address);
+                             &config->login_address);
     if (ret < 0) {
         fprintf(stderr, "failed to resolve '%s': %s\n",
                 login_address, gai_strerror(ret));
@@ -126,10 +125,22 @@ void parse_cmdline(struct instance *instance, int argc, char **argv) {
     hints.ai_socktype = SOCK_STREAM;
 
     ret = getaddrinfo_helper("*", bind_port, &hints,
-                             &instance->bind_address);
+                             &config->bind_address);
     if (ret < 0) {
         fprintf(stderr, "getaddrinfo_helper failed: %s\n",
                 gai_strerror(ret));
         exit(1);
+    }
+}
+
+void config_dispose(struct config *config) {
+    if (config->bind_address != NULL) {
+        freeaddrinfo(config->bind_address);
+        config->bind_address = NULL;
+    }
+
+    if (config->login_address != NULL) {
+        freeaddrinfo(config->login_address);
+        config->login_address = NULL;
     }
 }

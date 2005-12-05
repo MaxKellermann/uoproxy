@@ -33,6 +33,7 @@
 #include "client.h"
 #include "server.h"
 #include "relay.h"
+#include "config.h"
 
 static packet_action_t handle_walk(struct connection *c,
                                    void *data, size_t length) {
@@ -136,7 +137,7 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DISCONNECT;
     }
 
-    ret = uo_client_create(c->instance->login_address,
+    ret = uo_client_create(c->instance->config->login_address,
                            uo_server_seed(c->current_server->server),
                            &c->client);
     if (ret != 0) {
