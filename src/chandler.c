@@ -189,8 +189,6 @@ static packet_action_t handle_game_login(struct connection *c,
         if (c2 != c && c2->packet_start.serial != 0 &&
             memcmp(p->username, c2->username, sizeof(c2->username)) == 0 &&
             memcmp(p->password, c2->password, sizeof(c2->password)) == 0) {
-            uo_server_shift(c->server, length); /* XXX */
-
             if (c2->server != NULL) {
                 /* disconnect old client */
                 uo_server_dispose(c2->server);

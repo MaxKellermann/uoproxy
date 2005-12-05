@@ -23,7 +23,7 @@
 #define __BUFFER_H
 
 struct buffer {
-    size_t max_length, length;
+    size_t max_length, length, position;
     unsigned char data[1];
 };
 
@@ -35,7 +35,7 @@ static inline size_t buffer_free(const struct buffer *b) {
 }
 
 static inline int buffer_empty(const struct buffer *b) {
-    return b->length == 0;
+    return b->position == b->length;
 }
 
 static inline void *buffer_tail(struct buffer *b) {
@@ -53,11 +53,11 @@ void buffer_append(struct buffer *b, const void *data,
 
 static inline void *buffer_peek(struct buffer *b,
                                 size_t *lengthp) {
-    if (b->length == 0)
+    if (buffer_empty(b))
         return NULL;
 
-    *lengthp = b->length;
-    return b->data;
+    *lengthp = b->length - b->position;
+    return b->data + b->position;
 }
 
 void buffer_shift(struct buffer *b, size_t nbytes);

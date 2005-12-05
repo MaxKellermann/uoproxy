@@ -138,6 +138,8 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
         uo_client_post_select(c->client, sx);
         while (c->client != NULL &&
                (p = uo_client_peek(c->client, &length)) != NULL) {
+            uo_client_shift(c->client, length);
+
             action = handle_packet(server_packet_bindings,
                                    c, p, length);
             switch (action) {
@@ -153,9 +155,6 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                 connection_invalidate(c);
                 break;
             }
-
-            if (c->client != NULL)
-                uo_client_shift(c->client, length);
         }
     }
 
@@ -163,6 +162,8 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
         uo_server_post_select(c->server, sx);
         while (c->server != NULL &&
                (p = uo_server_peek(c->server, &length)) != NULL) {
+            uo_server_shift(c->server, length);
+
             action = handle_packet(client_packet_bindings,
                                    c, p, length);
             switch (action) {
@@ -178,9 +179,6 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                 connection_invalidate(c);
                 break;
             }
-
-            if (c->server != NULL)
-                uo_server_shift(c->server, length);
         }
     }
 

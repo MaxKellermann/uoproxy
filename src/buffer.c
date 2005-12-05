@@ -36,6 +36,7 @@ struct buffer *buffer_new(size_t max_length) {
 
     b->max_length = max_length;
     b->length = 0;
+    b->position = 0;
 
     return b;
 }
@@ -46,18 +47,32 @@ void buffer_delete(struct buffer *b) {
     free(b);
 }
 
+static inline void buffer_flush(struct buffer *b) {
+    assert(b->position <= b->length);
+
+    if (b->position == 0)
+        return;
+
+    b->length -= b->position;
+    if (b->length > 0)
+        memmove(b->data, b->data + b->position, b->length);
+
+    b->position = 0;
+}
+
 void buffer_append(struct buffer *b, const void *data,
                    size_t nbytes) {
     assert(nbytes <= buffer_free(b));
+
+    buffer_flush(b);
 
     memcpy(b->data + b->length, data, nbytes);
     b->length += nbytes;
 }
 
 void buffer_shift(struct buffer *b, size_t nbytes) {
-    assert(nbytes <= b->length);
+    assert(b->position <= b->length);
+    assert(nbytes <= b->length - b->position);
 
-    b->length -= nbytes;
-    if (b->length > 0)
-        memmove(b->data, b->data + nbytes, b->length);
+    b->position += nbytes;
 }
