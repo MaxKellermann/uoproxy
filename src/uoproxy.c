@@ -51,6 +51,7 @@ static void config_get(struct config *config, int argc, char **argv) {
     int ret;
 
     memset(config, 0, sizeof(*config));
+    config->autoreconnect = 1;
 
     home = getenv("HOME");
     if (home == NULL) {

@@ -182,6 +182,18 @@ static const char *next_word(char **pp) {
     return word;
 }
 
+static int parse_bool(const char *path, unsigned no, const char *val) {
+    if (strcmp(val, "yes") == 0) {
+        return 1;
+    } else if (strcmp(val, "no") == 0) {
+        return 0;
+    } else {
+        fprintf(stderr, "%s line %u: specify either 'yes' or 'no'\n",
+                path, no);
+        exit(2);
+    }
+}
+
 int config_read_file(struct config *config, const char *path) {
     FILE *file;
     char line[2048], *p;
@@ -247,6 +259,10 @@ int config_read_file(struct config *config, const char *path) {
                         value, gai_strerror(ret));
                 exit(1);
             }
+        } else if (strcmp(key, "background") == 0) {
+            config->background = parse_bool(path, no, value);
+        } else if (strcmp(key, "autoreconnect") == 0) {
+            config->autoreconnect = parse_bool(path, no, value);
         } else {
             fprintf(stderr, "%s line %u: invalid keyword '%s'\n",
                     path, no, key);

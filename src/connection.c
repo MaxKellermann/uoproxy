@@ -31,6 +31,7 @@
 #include "server.h"
 #include "client.h"
 #include "handler.h"
+#include "config.h"
 
 /** broadcast a message to all clients */
 static void connection_speak_console(struct connection *c, const char *msg) {
@@ -72,8 +73,8 @@ int connection_new(struct instance *instance,
         return -ENOMEM;
     }
 
-    c->background = 1; /* XXX: testing this option */
-    c->autoreconnect = 1; /* XXX: testing this option */
+    c->background = instance->config->background;
+    c->autoreconnect = instance->config->autoreconnect;
 
     connection_check(c);
 
