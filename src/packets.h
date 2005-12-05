@@ -43,7 +43,7 @@ enum uo_packet_type_t {
     PCK_EditPaperdoll = 0x0F,
     PCK_EditHues = 0x10,
     PCK_MobileStatus = 0x11,
-    PCK_DoAction = 0x12,
+    PCK_Action = 0x12,
     PCK_ItemEquipReq = 0x13,
     PCK_GodLevitate = 0x14,
     PCK_Follow = 0x15,
@@ -326,6 +326,14 @@ struct uo_packet_mobile_status {
     u_int16_t luck;
     u_int16_t damage_min, damage_max;
     u_int32_t tithing_points;
+} __attribute__ ((packed));
+
+/* 0x12 Action */
+struct uo_packet_action {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int8_t type;
+    char command[1];
 } __attribute__ ((packed));
 
 /* 0x1a WorldItem */
