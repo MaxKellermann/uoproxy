@@ -125,8 +125,8 @@ void connection_delete_mobiles(struct connection *c);
 
 /* attach */
 
-void attach_after_game_login(struct connection *old,
-                             struct connection *new);
+void attach_after_game_login(struct connection *c,
+                             struct uo_server *server);
 
 void attach_after_play_character(struct connection *c);
 

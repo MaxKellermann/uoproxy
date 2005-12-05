@@ -26,22 +26,21 @@
 #include "connection.h"
 #include "server.h"
 
-void attach_after_game_login(struct connection *old,
-                             struct connection *new) {
+void attach_after_game_login(struct connection *c,
+                             struct uo_server *server) {
     struct uo_packet_supported_features supported_features;
     struct uo_packet_simple_character_list character_list;
 
-    assert(old->server == NULL);
+    assert(c->server == NULL);
 
     printf("attaching connection\n");
-    old->server = new->server;
-    old->attaching = 1;
-    new->welcome = 0;
-    new->server = NULL;
+    c->server = server;
+    c->attaching = 1;
+    c->welcome = 0;
 
     supported_features.cmd = PCK_SupportedFeatures;
-    supported_features.flags = old->supported_features_flags;
-    uo_server_send(old->server, &supported_features,
+    supported_features.flags = c->supported_features_flags;
+    uo_server_send(c->server, &supported_features,
                    sizeof(supported_features));
 
     memset(&character_list, 0, sizeof(character_list));
@@ -51,7 +50,7 @@ void attach_after_game_login(struct connection *old,
     strcpy(character_list.character_info[0].name, "<attach>");
     character_list.city_count = 0;
     character_list.flags = htonl(0x14);
-    uo_server_send(old->server, &character_list,
+    uo_server_send(c->server, &character_list,
                    sizeof(character_list));
 
     /*
