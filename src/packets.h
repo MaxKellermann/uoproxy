@@ -185,7 +185,7 @@ enum uo_packet_type_t {
     PCK_GodSingle = 0x9d,
     PCK_VendOpenSell = 0x9e,
     PCK_VendorSell = 0x9f,
-    PCK_ServerSelect = 0xa0,
+    PCK_PlayServer = 0xa0,
     PCK_StatChngStr = 0xa1,
     PCK_StatChngInt = 0xa2,
     PCK_StatChngDex = 0xa3,
@@ -530,6 +530,12 @@ struct uo_packet_game_login {
     u_int32_t auth_id;
     char username[30];
     char password[30];
+} __attribute__ ((packed));
+
+/* for 0xa0 PlayServer */
+struct uo_packet_play_server {
+    unsigned char cmd;
+    u_int16_t index;
 } __attribute__ ((packed));
 
 /* for 0xa8 ServerList */
