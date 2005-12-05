@@ -164,7 +164,7 @@ static const char *next_word(char **pp) {
         return NULL;
 
     if (**pp == '"') {
-        word = (*pp)++;
+        word = ++(*pp);
         while (**pp != 0 && **pp != '"')
             ++(*pp);
     } else {
@@ -192,6 +192,13 @@ static int parse_bool(const char *path, unsigned no, const char *val) {
                 path, no);
         exit(2);
     }
+}
+
+static void assign_string(char **destp, const char *src) {
+    if (*destp != NULL)
+        free(*destp);
+
+    *destp = *src == 0 ? NULL : strdup(src);
 }
 
 int config_read_file(struct config *config, const char *path) {
@@ -263,6 +270,8 @@ int config_read_file(struct config *config, const char *path) {
             config->background = parse_bool(path, no, value);
         } else if (strcmp(key, "autoreconnect") == 0) {
             config->autoreconnect = parse_bool(path, no, value);
+        } else if (strcmp(key, "client_version") == 0) {
+            assign_string(&config->client_version, value);
         } else {
             fprintf(stderr, "%s line %u: invalid keyword '%s'\n",
                     path, no, key);
@@ -284,5 +293,10 @@ void config_dispose(struct config *config) {
     if (config->login_address != NULL) {
         freeaddrinfo(config->login_address);
         config->login_address = NULL;
+    }
+
+    if (config->client_version != NULL) {
+        free(config->client_version);
+        config->client_version = NULL;
     }
 }

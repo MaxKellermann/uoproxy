@@ -268,6 +268,40 @@ static packet_action_t handle_play_character(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_client_version(struct connection *c,
+                                             void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (c->instance->config->client_version != NULL) {
+        struct uo_packet_client_version *p;
+        size_t version_length;
+
+        if (c->client == NULL || c->reconnecting)
+            return PA_DROP;
+
+        version_length = strlen(c->instance->config->client_version);
+
+        p = malloc(sizeof(*p) + version_length);
+        if (p == NULL)
+            return PA_DROP;
+
+        p->cmd = PCK_ClientVersion;
+        p->length = htons(sizeof(*p) + version_length);
+        memcpy(p->version, c->instance->config->client_version,
+               version_length + 1);
+
+        uo_client_send(c->client, p,
+                       sizeof(*p) + version_length);
+
+        free(p);
+
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_extended(struct connection *c,
                                        void *data, size_t length) {
     const struct uo_packet_extended *p = data;
@@ -311,6 +345,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_PlayCharacter,
       .handler = handle_play_character,
+    },
+    { .cmd = PCK_ClientVersion,
+      .handler = handle_client_version,
     },
     { .cmd = PCK_Extended,
       .handler = handle_extended,

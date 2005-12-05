@@ -25,6 +25,7 @@
 struct config {
     struct addrinfo *bind_address, *login_address;
     int background, autoreconnect;
+    char *client_version;
 };
 
 /** read configuration options from the command line */

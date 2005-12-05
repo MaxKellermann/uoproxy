@@ -575,6 +575,13 @@ struct uo_packet_season {
     u_int8_t season, play_sound;
 } __attribute__ ((packed));
 
+/* 0xbd ClientVersion */
+struct uo_packet_client_version {
+    unsigned char cmd;
+    u_int16_t length;
+    char version[1];
+} __attribute__ ((packed));
+
 /* 0xbf 0x0008 MapChange */
 struct uo_packet_map_change {
     unsigned char cmd;
