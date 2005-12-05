@@ -109,8 +109,6 @@ void connection_delete(struct connection *c) {
     }
 
     free(c);
-
-    connection_check(c);
 }
 
 #ifndef NDEBUG
