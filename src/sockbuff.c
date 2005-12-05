@@ -67,12 +67,14 @@ void sock_buff_dispose(struct sock_buff *sb) {
 
 int sock_buff_flush(struct sock_buff *sb) {
     const unsigned char *p;
-    size_t length;
+    size_t length = 0;
     ssize_t nbytes;
 
     p = buffer_peek(sb->output, &length);
     if (p == NULL)
         return 0;
+
+    assert(length > 0);
 
     nbytes = write(sb->fd, p, length);
     if (nbytes < 0) {
