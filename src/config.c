@@ -33,7 +33,7 @@
 #include "netutil.h"
 
 static void usage(void) {
-    printf("usage: uoproxy [options] server:port\n\n"
+    printf("usage: uoproxy [options] [server:port]\n\n"
            "valid options:\n"
            " -h             help (this text)\n"
 #ifdef __GLIBC__
@@ -108,7 +108,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 
     /* check non-option arguments */
 
-    if (optind >= argc) {
+    if (optind >= argc && config->login_address == NULL) {
         fprintf(stderr, "uoproxy: login server missing\n");
         fprintf(stderr, "Try 'uoproxy -h' for more information\n");
         exit(1);
@@ -125,16 +125,21 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 
     /* resolve login_address */
 
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = PF_INET;
-    hints.ai_socktype = SOCK_STREAM;
+    if (optind < argc) {
+        if (config->login_address != NULL)
+            freeaddrinfo(config->login_address);
 
-    ret = getaddrinfo_helper(login_address, 2593, &hints,
-                             &config->login_address);
-    if (ret < 0) {
-        fprintf(stderr, "failed to resolve '%s': %s\n",
-                login_address, gai_strerror(ret));
-        exit(1);
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = PF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+
+        ret = getaddrinfo_helper(login_address, 2593, &hints,
+                                 &config->login_address);
+        if (ret < 0) {
+            fprintf(stderr, "failed to resolve '%s': %s\n",
+                    login_address, gai_strerror(ret));
+            exit(1);
+        }
     }
 
     /* resolve bind_address */
@@ -180,6 +185,7 @@ int config_read_file(struct config *config, const char *path) {
     char line[2048], *p;
     const char *key, *value;
     unsigned no = 0;
+    int ret;
 
     file = fopen(path, "r");
     if (file == NULL)
@@ -222,6 +228,23 @@ int config_read_file(struct config *config, const char *path) {
                 freeaddrinfo(config->bind_address);
 
             config->bind_address = port_to_addrinfo((unsigned)port);
+        } else if (strcmp(key, "server") == 0) {
+            struct addrinfo hints;
+
+            if (config->login_address != NULL)
+                freeaddrinfo(config->login_address);
+
+            memset(&hints, 0, sizeof(hints));
+            hints.ai_family = PF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+
+            ret = getaddrinfo_helper(value, 2593, &hints,
+                                     &config->login_address);
+            if (ret < 0) {
+                fprintf(stderr, "failed to resolve '%s': %s\n",
+                        value, gai_strerror(ret));
+                exit(1);
+            }
         } else {
             fprintf(stderr, "%s line %u: invalid keyword '%s'\n",
                     path, no, key);
