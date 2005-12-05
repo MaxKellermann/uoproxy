@@ -33,6 +33,7 @@ void attach_after_game_login(struct connection *c,
     struct uo_packet_simple_character_list character_list;
 
     assert(c->in_game);
+    connection_check(c);
 
     printf("attaching connection\n");
 
@@ -72,6 +73,8 @@ void attach_after_play_character(struct connection *c,
     struct uo_packet_login_complete login_complete;
     struct mobile *mobile;
     struct item *item;
+
+    connection_check(c);
 
     if (ls->invalid)
         return;

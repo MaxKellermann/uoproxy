@@ -97,6 +97,12 @@ int connection_new(struct instance *instance,
 
 void connection_delete(struct connection *c);
 
+#ifdef NDEBUG
+#define connection_check(c) do { (void)(c); } while (0)
+#else
+void connection_check(const struct connection *c);
+#endif
+
 void connection_invalidate(struct connection *c);
 
 struct linked_server *connection_add_server(struct connection *c, struct uo_server *server);

@@ -75,12 +75,16 @@ int connection_new(struct instance *instance,
     c->background = 1; /* XXX: testing this option */
     c->autoreconnect = 1; /* XXX: testing this option */
 
+    connection_check(c);
+
     *connectionp = c;
 
     return 0;
 }
 
 void connection_delete(struct connection *c) {
+    connection_check(c);
+
     while (c->servers_head != NULL) {
         struct linked_server *ls = c->servers_head;
         c->servers_head = ls->next;
@@ -105,14 +109,33 @@ void connection_delete(struct connection *c) {
     }
 
     free(c);
+
+    connection_check(c);
 }
 
+#ifndef NDEBUG
+void connection_check(const struct connection *c) {
+    assert(c != NULL);
+    assert(c->instance != NULL);
+
+    if (!c->in_game) {
+        /* when not yet in-game, there can only be one connection */
+        assert(c->servers_head == NULL ||
+               c->servers_head->next == NULL);
+    }
+}
+#endif
+
 void connection_invalidate(struct connection *c) {
+    connection_check(c);
+
     c->invalid = 1;
 }
 
 struct linked_server *connection_add_server(struct connection *c, struct uo_server *server) {
     struct linked_server *ls = calloc(1, sizeof(*ls));
+
+    connection_check(c);
 
     if (ls == NULL)
         return NULL;
@@ -140,6 +163,8 @@ static void remove_server(struct linked_server **lsp) {
 
 void connection_pre_select(struct connection *c, struct selectx *sx) {
     struct linked_server **lsp, *ls;
+
+    connection_check(c);
 
     if (c->invalid)
         return;
@@ -195,6 +220,8 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
     size_t length;
     packet_action_t action;
     struct linked_server *ls;
+
+    connection_check(c);
 
     if (c->invalid)
         return 0;
@@ -261,6 +288,8 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
 }
 
 void connection_idle(struct connection *c) {
+    connection_check(c);
+
     if (c->invalid)
         return;
 
