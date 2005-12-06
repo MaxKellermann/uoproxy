@@ -58,7 +58,18 @@ static packet_action_t handle_command(struct connection *c,
                                       const char *command) {
     if (*command == 0) {
         uo_server_speak_console(c->current_server->server,
-                                "uoproxy commands: %");
+                                "uoproxy commands: % %reconnect");
+    } else if (strcmp(command, "reconnect") == 0) {
+        if (c->client == NULL) {
+            uo_server_speak_console(c->current_server->server,
+                                    "uoproxy: not connected");
+        } else {
+            uo_server_speak_console(c->current_server->server,
+                                    "uoproxy: reconnecting");
+            uo_client_dispose(c->client);
+            c->client = NULL;
+            c->reconnecting = 1;
+        }
     } else {
         uo_server_speak_console(c->current_server->server,
                                 "unknown uoproxy command");
