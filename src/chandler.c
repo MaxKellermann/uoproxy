@@ -54,23 +54,25 @@ static char *simple_unicode_to_ascii(char *dest, const u_int16_t *src,
     return dest;
 }
 
+static packet_action_t handle_command(struct connection *c,
+                                      const char *command) {
+    if (*command == 0) {
+        uo_server_speak_console(c->current_server->server,
+                                "uoproxy commands: %");
+    } else {
+        uo_server_speak_console(c->current_server->server,
+                                "unknown uoproxy command");
+    }
+
+    return PA_DROP;
+}
+
 static packet_action_t handle_talk(struct connection *c,
                                    const char *text) {
     /* the percent sign introduces an uoproxy command */
     if (text[0] == '%' && c->current_server != NULL &&
-        c->current_server->server != NULL) {
-        ++text;
-
-        if (*text == 0) {
-            uo_server_speak_console(c->current_server->server,
-                                    "uoproxy commands: %");
-        } else {
-            uo_server_speak_console(c->current_server->server,
-                                    "unknown uoproxy command");
-        }
-
-        return PA_DROP;
-    }
+        c->current_server->server != NULL)
+        return handle_command(c, text + 1);
 
     return PA_ACCEPT;
 }
