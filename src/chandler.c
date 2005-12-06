@@ -56,6 +56,10 @@ static char *simple_unicode_to_ascii(char *dest, const u_int16_t *src,
 
 static packet_action_t handle_command(struct connection *c,
                                       const char *command) {
+    if (!c->in_game || c->current_server == NULL ||
+        c->current_server->server == NULL)
+        return PA_DROP;
+
     if (*command == 0) {
         uo_server_speak_console(c->current_server->server,
                                 "uoproxy commands: % %reconnect");
@@ -81,8 +85,7 @@ static packet_action_t handle_command(struct connection *c,
 static packet_action_t handle_talk(struct connection *c,
                                    const char *text) {
     /* the percent sign introduces an uoproxy command */
-    if (text[0] == '%' && c->current_server != NULL &&
-        c->current_server->server != NULL)
+    if (text[0] == '%')
         return handle_command(c, text + 1);
 
     return PA_ACCEPT;
