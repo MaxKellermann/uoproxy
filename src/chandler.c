@@ -72,7 +72,7 @@ static packet_action_t handle_command(struct connection *c,
         }
     } else {
         uo_server_speak_console(c->current_server->server,
-                                "unknown uoproxy command");
+                                "unknown uoproxy command, type '%' for help");
     }
 
     return PA_DROP;
