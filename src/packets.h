@@ -28,7 +28,7 @@ enum uo_packet_type_t {
     PCK_CreateCharacter = 0x00,
     PCK_Disconnect = 0x01,
     PCK_Walk = 0x02,
-    PCK_Talk = 0x03,
+    PCK_TalkAscii = 0x03,
     PCK_GodMode = 0x04,
     PCK_Attack = 0x05,
     PCK_Use = 0x06,
@@ -198,7 +198,7 @@ enum uo_packet_type_t {
     PCK_AttackOK = 0xaa,
     PCK_GumpInpVal = 0xab,
     PCK_GumpInpValRet = 0xac,
-    PCK_TalkUNICODE = 0xad,
+    PCK_TalkUnicode = 0xad,
     PCK_SpeakUnicode = 0xae,
     PCK_CharDeath = 0xaf,
     PCK_GumpDialog = 0xb0,
@@ -293,6 +293,15 @@ struct uo_packet_walk {
     unsigned char cmd;
     u_int8_t direction, seq;
     u_int32_t key;
+} __attribute__ ((packed));
+
+/* 0x03 TalkAscii */
+struct uo_packet_talk_ascii {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int8_t type;
+    u_int16_t hue, font;
+    char text[1];
 } __attribute__ ((packed));
 
 /* 0x07 LiftRequest */
@@ -567,6 +576,16 @@ struct uo_packet_simple_character_list {
 struct uo_packet_supported_features {
     unsigned char cmd;
     u_int16_t flags;
+} __attribute__ ((packed));
+
+/* 0xas TalkUnicode */
+struct uo_packet_talk_unicode {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int8_t type;
+    u_int16_t hue, font;
+    char lang[4];
+    u_int16_t text[1];
 } __attribute__ ((packed));
 
 /* 0xbc Season */

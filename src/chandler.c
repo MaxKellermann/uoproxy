@@ -35,6 +35,46 @@
 #include "relay.h"
 #include "config.h"
 
+#define TALK_MAX 128
+
+static char *simple_unicode_to_ascii(char *dest, const u_int16_t *src,
+                                     size_t length) {
+    size_t position;
+
+    for (position = 0; position < length && src[position] != 0; position++) {
+        u_int16_t ch = ntohs(src[position]);
+        if (ch & 0xff00)
+            return NULL;
+
+        dest[position] = (char)ch;
+    }
+
+    dest[position] = 0;
+
+    return dest;
+}
+
+static packet_action_t handle_talk(struct connection *c,
+                                   const char *text) {
+    /* the percent sign introduces an uoproxy command */
+    if (text[0] == '%' && c->current_server != NULL &&
+        c->current_server->server != NULL) {
+        ++text;
+
+        if (*text == 0) {
+            uo_server_speak_console(c->current_server->server,
+                                    "uoproxy commands: %");
+        } else {
+            uo_server_speak_console(c->current_server->server,
+                                    "unknown uoproxy command");
+        }
+
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_walk(struct connection *c,
                                    void *data, size_t length) {
     const struct uo_packet_walk *p = data;
@@ -58,6 +98,26 @@ static packet_action_t handle_walk(struct connection *c,
     }
 
     return PA_ACCEPT;
+}
+
+static packet_action_t handle_talk_ascii(struct connection *c,
+                                         void *data, size_t length) {
+    const struct uo_packet_talk_ascii *p = data;
+    size_t text_length;
+
+    (void)c;
+    (void)data;
+    (void)length;
+
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    text_length = length - sizeof(*p);
+
+    if (p->text[text_length] != 0)
+        return PA_DISCONNECT;
+
+    return handle_talk(c, p->text);
 }
 
 static packet_action_t handle_use(struct connection *c,
@@ -268,6 +328,29 @@ static packet_action_t handle_play_character(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_talk_unicode(struct connection *c,
+                                           void *data, size_t length) {
+    const struct uo_packet_talk_unicode *p = data;
+    size_t text_length;
+
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    text_length = (length - sizeof(*p)) / 2;
+
+    if (p->type == 0x00 && text_length < TALK_MAX) { /* Regular */
+        /* XXX this ignores MessageType.Encoded */
+        char msg[TALK_MAX], *t;
+
+        fflush(stdout);
+        t = simple_unicode_to_ascii(msg, p->text, text_length);
+        if (t != NULL)
+            return handle_talk(c, t);
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_client_version(struct connection *c,
                                              void *data, size_t length) {
     (void)data;
@@ -322,6 +405,9 @@ struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Walk,
       .handler = handle_walk,
     },
+    { .cmd = PCK_TalkAscii,
+      .handler = handle_talk_ascii,
+    },
     { .cmd = PCK_Use,
       .handler = handle_use,
     },
@@ -345,6 +431,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_PlayCharacter,
       .handler = handle_play_character,
+    },
+    { .cmd = PCK_TalkUnicode,
+      .handler = handle_talk_unicode,
     },
     { .cmd = PCK_ClientVersion,
       .handler = handle_client_version,
