@@ -111,7 +111,8 @@ static void instance_idle(struct instance *instance, time_t now) {
 static void run_server(struct instance *instance) {
     int sockfd, ret;
     struct selectx sx;
-    struct timeval tv = {
+
+    instance->tv = (struct timeval){
         .tv_sec = 30,
         .tv_usec = 0,
     };
@@ -123,10 +124,14 @@ static void run_server(struct instance *instance) {
         selectx_add_read(&sx, sockfd);
         instance_pre_select(instance, &sx);
 
-        ret = selectx(&sx, &tv);
+        ret = selectx(&sx, &instance->tv);
         if (ret == 0) {
+            instance->tv = (struct timeval){
+                .tv_sec = 30,
+                .tv_usec = 0,
+            };
+
             instance_idle(instance, time(NULL));
-            tv.tv_sec = 30;
         } else if (ret > 0) {
             if (FD_ISSET(sockfd, &sx.readfds)) {
                 int sockfd2;

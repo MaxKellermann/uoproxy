@@ -97,6 +97,8 @@ struct instance {
     /* state */
     struct connection *connections_head;
     struct relay_list *relays;
+
+    struct timeval tv;
 };
 
 int connection_new(struct instance *instance,
