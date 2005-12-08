@@ -208,6 +208,45 @@ static packet_action_t handle_account_login(struct connection *c,
            p->username, p->password);
 #endif
 
+    if (c->instance->config->login_address == NULL &&
+        c->instance->config->game_servers != NULL &&
+        c->instance->config->num_game_servers > 0) {
+        unsigned i, num_game_servers = c->instance->config->num_game_servers;
+        struct game_server_config *game_servers = c->instance->config->game_servers;
+        struct uo_packet_server_list *p2;
+        struct sockaddr_in *sin;
+
+        length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
+
+        p2 = calloc(1, length);
+        if (p2 == NULL) {
+            fprintf(stderr, "out of memory\n");
+            return PA_DISCONNECT;
+        }
+
+        p2->cmd = PCK_ServerList;
+        p2->length = htons(length);
+        p2->unknown_0x5d = 0x5d;
+        p2->num_game_servers = htons(num_game_servers);
+
+        for (i = 0; i < num_game_servers; i++) {
+            p2->game_servers[i].index = htons(i);
+            snprintf(p2->game_servers[i].name, sizeof(p2->game_servers[i].name),
+                     "%s", game_servers[i].name);
+
+            if (game_servers[i].address->ai_family != AF_INET)
+                continue;
+
+            sin = (struct sockaddr_in*)game_servers[i].address->ai_addr;
+            p2->game_servers[i].address = sin->sin_addr.s_addr;
+        }
+
+        uo_server_send(c->current_server->server, p2, length);
+        free(p2);
+
+        return PA_DROP;
+    }
+
     if (c->client != NULL) {
         fprintf(stderr, "already logged in\n");
         return PA_DISCONNECT;
@@ -344,6 +383,49 @@ static packet_action_t handle_play_character(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_play_server(struct connection *c,
+                                          void *data, size_t length) {
+    const struct uo_packet_play_server *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->current_server->attaching) {
+        printf("attaching connection, stage II\n");
+        attach_after_play_character(c, c->current_server);
+        return PA_DROP;
+    }
+
+    if (c->instance->config->login_address == NULL &&
+        c->instance->config->game_servers != NULL &&
+        c->instance->config->num_game_servers > 0) {
+        unsigned i, num_game_servers = c->instance->config->num_game_servers;
+        struct game_server_config *config;
+        struct sockaddr_in *sin;
+        struct uo_packet_relay relay;
+
+        i = ntohs(p->index);
+        if (i >= num_game_servers)
+            return PA_DISCONNECT;
+
+        config = c->instance->config->game_servers + i;
+        if (config->address->ai_family != AF_INET)
+            return PA_DISCONNECT;
+
+        sin = (struct sockaddr_in*)config->address->ai_addr;
+
+        relay.cmd = PCK_Relay;
+        relay.ip = sin->sin_addr.s_addr;
+        relay.port = sin->sin_port;
+        relay.auth_id = 0xdeadbeef; /* XXX */
+
+        uo_server_send(c->current_server->server, &relay, sizeof(relay));
+
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_talk_unicode(struct connection *c,
                                            void *data, size_t length) {
     const struct uo_packet_talk_unicode *p = data;
@@ -447,6 +529,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_PlayCharacter,
       .handler = handle_play_character,
+    },
+    { .cmd = PCK_PlayServer,
+      .handler = handle_play_server,
     },
     { .cmd = PCK_TalkUnicode,
       .handler = handle_talk_unicode,

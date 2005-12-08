@@ -119,7 +119,8 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         exit(1);
     }
 
-    if (login_address == NULL && config->login_address == NULL) {
+    if (login_address == NULL && config->login_address == NULL &&
+        config->num_game_servers == 0) {
         fprintf(stderr, "uoproxy: login server missing\n");
         fprintf(stderr, "Try 'uoproxy -h' for more information\n");
         exit(1);
@@ -154,8 +155,8 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
     }
 }
 
-static const char *next_word(char **pp) {
-    const char *word;
+static char *next_word(char **pp) {
+    char *word;
 
     while (**pp > 0 && **pp <= 0x20)
         ++(*pp);
@@ -201,10 +202,42 @@ static void assign_string(char **destp, const char *src) {
     *destp = *src == 0 ? NULL : strdup(src);
 }
 
+static int parse_game_server(const char *path, unsigned no,
+                             struct game_server_config *config, char *string) {
+    char *eq = strchr(string, '=');
+    struct addrinfo hints;
+    int ret;
+
+    if (eq == NULL) {
+        fprintf(stderr, "%s line %u: no address for server ('=' missing)\n",
+                path, no);
+        exit(2);
+    }
+
+    *eq = 0;
+
+    config->name = strdup(string);
+    if (config->name == NULL)
+        return -ENOMEM;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    ret = getaddrinfo_helper(eq + 1, 2593, &hints, &config->address);
+    if (ret < 0) {
+        fprintf(stderr, "failed to resolve '%s': %s\n",
+                eq + 1, gai_strerror(ret));
+        exit(1);
+    }
+
+    return 0;
+}
+
 int config_read_file(struct config *config, const char *path) {
     FILE *file;
     char line[2048], *p;
-    const char *key, *value;
+    char *key, *value;
     unsigned no = 0;
     int ret;
 
@@ -266,6 +299,53 @@ int config_read_file(struct config *config, const char *path) {
                         value, gai_strerror(ret));
                 exit(1);
             }
+        } else if (strcmp(key, "server_list") == 0) {
+            unsigned i;
+
+            if (config->game_servers != NULL) {
+                for (i = 0; i < config->num_game_servers; i++) {
+                    if (config->game_servers[i].name != NULL)
+                        free(config->game_servers[i].name);
+                    if (config->game_servers[i].address != NULL)
+                        freeaddrinfo(config->game_servers[i].address);
+                }
+
+                config->game_servers = NULL;
+            }
+
+            config->num_game_servers = 0;
+
+            if (*value == 0)
+                continue;
+
+            ++config->num_game_servers;
+
+            for (p = value; (p = strchr(p, ',')) != NULL; ++p)
+                ++config->num_game_servers;
+
+            config->game_servers = calloc(config->num_game_servers,
+                                          sizeof(*config->game_servers));
+            if (config->game_servers == NULL)
+                return -ENOMEM;
+
+            for (p = value, i = 0; i < config->num_game_servers; ++i) {
+                char *o = p;
+
+                p = strchr(o, ',');
+                if (p == NULL) {
+                    ret = parse_game_server(path, no,
+                                            config->game_servers + i, o);
+                    if (ret < 0)
+                        return ret;
+                    break;
+                } else {
+                    *p++ = 0;
+                    ret = parse_game_server(path, no,
+                                            config->game_servers + i, o);
+                    if (ret < 0)
+                        return ret;
+                }
+            }
         } else if (strcmp(key, "background") == 0) {
             config->background = parse_bool(path, no, value);
         } else if (strcmp(key, "autoreconnect") == 0) {
@@ -293,6 +373,17 @@ void config_dispose(struct config *config) {
     if (config->login_address != NULL) {
         freeaddrinfo(config->login_address);
         config->login_address = NULL;
+    }
+
+    if (config->game_servers != NULL) {
+        unsigned i;
+        for (i = 0; i < config->num_game_servers; i++) {
+            if (config->game_servers[i].name != NULL)
+                free(config->game_servers[i].name);
+            if (config->game_servers[i].address != NULL)
+                freeaddrinfo(config->game_servers[i].address);
+        }
+        free(config->game_servers);
     }
 
     if (config->client_version != NULL) {

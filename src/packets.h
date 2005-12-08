@@ -556,6 +556,15 @@ struct uo_fragment_server_info {
     u_int32_t address;
 } __attribute__ ((packed));
 
+/* 0xa8 ServerList */
+struct uo_packet_server_list {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int8_t unknown_0x5d;
+    u_int16_t num_game_servers;
+    struct uo_fragment_server_info game_servers[1];
+} __attribute__ ((packed));
+
 /* for 0xa9 CharList */
 struct uo_fragment_character_info {
     char name[30];

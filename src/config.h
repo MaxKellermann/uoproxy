@@ -22,8 +22,15 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+struct game_server_config {
+    char *name;
+    struct addrinfo *address;
+};
+
 struct config {
     struct addrinfo *bind_address, *login_address;
+    unsigned num_game_servers;
+    struct game_server_config *game_servers;
     int background, autoreconnect;
     char *client_version;
 };
