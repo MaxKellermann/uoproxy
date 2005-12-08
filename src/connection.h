@@ -82,7 +82,7 @@ struct connection {
     struct item *items_head;
     struct mobile *mobiles_head;
 
-    time_t next_ping;
+    time_t next_ping, next_reconnect;
 
     /* sub-objects */
     struct uo_client *client;
@@ -136,6 +136,12 @@ void connection_mobile_moving(struct connection *c,
 void connection_remove_mobile(struct connection *c, u_int32_t serial);
 
 void connection_delete_mobiles(struct connection *c);
+
+/* reconnect */
+
+void connection_disconnect(struct connection *c);
+
+void connection_reconnect(struct connection *c);
 
 /* attach */
 

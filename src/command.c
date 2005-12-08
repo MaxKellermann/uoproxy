@@ -45,8 +45,8 @@ static void change_character(struct connection *c,
     c->character_index = idx;
     uo_server_speak_console(server->server,
                             "uoproxy: changing character");
-    uo_client_dispose(c->client);
-    c->client = NULL;
+
+    connection_reconnect(c);
     c->reconnecting = 1;
 }
 

@@ -173,15 +173,8 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
         !uo_client_alive(c->client)) {
         if (c->autoreconnect && c->in_game &&
             c->server_address != NULL) {
-            uo_client_dispose(c->client);
-            c->client = NULL;
-
-            c->reconnecting = 1;
-
             connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
-
-            connection_delete_items(c);
-            connection_delete_mobiles(c);
+            connection_reconnect(c);
         } else {
             printf("server disconnected\n");
             connection_invalidate(c);
@@ -294,7 +287,7 @@ void connection_idle(struct connection *c, time_t now) {
         return;
 
     if (c->client == NULL) {
-        if (c->reconnecting) {
+        if (c->reconnecting && now >= c->next_reconnect) {
             const u_int32_t seed = rand();
             int ret;
 
@@ -314,6 +307,7 @@ void connection_idle(struct connection *c, time_t now) {
                 uo_client_send(c->client, &p, sizeof(p));
             } else {
                 fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
+                connection_reconnect(c);
             }
         }
     } else if (now >= c->next_ping) {
@@ -326,5 +320,6 @@ void connection_idle(struct connection *c, time_t now) {
         uo_client_send(c->client, &ping, sizeof(ping));
 
         c->next_ping = now + 30;
+        instance_schedule(c->instance, 29);
     }
 }
