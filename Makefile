@@ -22,7 +22,7 @@ else
 WARNING_CFLAGS += -std=gnu99
 endif
 
-SOURCES = src/uoproxy.c src/config.c src/buffer.c src/sockbuff.c src/server.c src/client.c src/packets.c src/compression.c src/netutil.c src/connection.c src/cstate.c src/handler.c src/shandler.c src/chandler.c src/attach.c src/dump.c src/sutil.c src/command.c
+SOURCES = src/uoproxy.c src/config.c src/buffer.c src/sockbuff.c src/server.c src/client.c src/packets.c src/compression.c src/netutil.c src/instance.c src/connection.c src/cstate.c src/handler.c src/shandler.c src/chandler.c src/attach.c src/dump.c src/sutil.c src/command.c
 HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))

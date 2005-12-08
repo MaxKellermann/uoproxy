@@ -19,28 +19,41 @@
  *
  */
 
-#ifndef __INSTANCE_H
-#define __INSTANCE_H
+#include <sys/types.h>
 
-struct selectx;
-
-struct instance {
-    /* configuration */
-    struct config *config;
-
-    /* state */
-    struct connection *connections_head;
-    struct relay_list *relays;
-
-    struct timeval tv;
-};
+#include "instance.h"
+#include "connection.h"
+#include "ioutil.h"
 
 void instance_pre_select(struct instance *instance,
-                         struct selectx *sx);
+                         struct selectx *sx) {
+    struct connection **cp = &instance->connections_head;
+
+    while (*cp != NULL) {
+        struct connection *c = *cp;
+
+        if (c->invalid) {
+            *cp = c->next;
+            connection_delete(c);
+        } else {
+            connection_pre_select(c, sx);
+            cp = &c->next;
+        }
+    }
+}
 
 void instance_post_select(struct instance *instance,
-                          struct selectx *sx);
+                          struct selectx *sx) {
+    struct connection *c;
 
-void instance_idle(struct instance *instance, time_t now);
+    for (c = instance->connections_head; c != NULL; c = c->next)
+        connection_post_select(c, sx);
+}
 
-#endif
+void instance_idle(struct instance *instance, time_t now) {
+    struct connection *c;
+
+    for (c = instance->connections_head; c != NULL; c = c->next)
+        connection_idle(c, now);
+}
+

@@ -77,38 +77,6 @@ static void delete_all_connections(struct connection *head) {
     }
 }
 
-static void instance_pre_select(struct instance *instance,
-                                struct selectx *sx) {
-    struct connection **cp = &instance->connections_head;
-
-    while (*cp != NULL) {
-        struct connection *c = *cp;
-
-        if (c->invalid) {
-            *cp = c->next;
-            connection_delete(c);
-        } else {
-            connection_pre_select(c, sx);
-            cp = &c->next;
-        }
-    }
-}
-
-static void instance_post_select(struct instance *instance,
-                                 struct selectx *sx) {
-    struct connection *c;
-
-    for (c = instance->connections_head; c != NULL; c = c->next)
-        connection_post_select(c, sx);
-}
-
-static void instance_idle(struct instance *instance, time_t now) {
-    struct connection *c;
-
-    for (c = instance->connections_head; c != NULL; c = c->next)
-        connection_idle(c, now);
-}
-
 static void run_server(struct instance *instance) {
     int sockfd, ret;
     struct selectx sx;
