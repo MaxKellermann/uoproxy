@@ -108,7 +108,7 @@ enum uo_packet_type_t {
     PCK_UnkBBHeader = 0x50,
     PCK_UnkBBMessage = 0x51,
     PCK_UnkPostMsg = 0x52,
-    PCK_ClientState = 0x53,
+    PCK_PopupMessage = 0x53,
     PCK_Sound = 0x54,
     PCK_ReDrawAll = 0x55,
     PCK_MapEdit = 0x56,
@@ -435,6 +435,12 @@ struct uo_packet_personal_light_level {
     u_int32_t serial;
     int8_t level;
 } __attribute__ ((packed));
+
+/* 0x53 PopupMessage */
+struct uo_packet_popup_message {
+    unsigned char cmd;
+    u_int8_t msg;
+};
 
 /* 0x55 ReDrawAll */
 struct uo_packet_login_complete {

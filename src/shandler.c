@@ -325,6 +325,26 @@ static packet_action_t handle_season(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_popup_message(struct connection *c,
+                                            void *data, size_t length) {
+    const struct uo_packet_popup_message *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->reconnecting) {
+        if (p->msg == 0x05) {
+            connection_speak_console(c, "previous character is still online, trying again");
+        } else {
+            connection_speak_console(c, "character change failed, trying again");
+        }
+
+        connection_reconnect(c);
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_war_mode(struct connection *c,
                                        void *data, size_t length) {
     const struct uo_packet_war_mode *p = data;
@@ -484,6 +504,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_MobileUpdate,
       .handler = handle_mobile_update,
+    },
+    { .cmd = PCK_PopupMessage,
+      .handler = handle_popup_message,
     },
     { .cmd = PCK_WarMode,
       .handler = handle_war_mode,
