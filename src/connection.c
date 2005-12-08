@@ -230,9 +230,11 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                                    c, p, length);
             switch (action) {
             case PA_ACCEPT:
-                for (ls = c->servers_head; ls != NULL; ls = ls->next) {
-                    if (!ls->invalid && !ls->attaching)
-                        uo_server_send(ls->server, p, length);
+                if (!c->reconnecting) {
+                    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+                        if (!ls->invalid && !ls->attaching)
+                            uo_server_send(ls->server, p, length);
+                    }
                 }
                 break;
 
