@@ -354,6 +354,8 @@ static packet_action_t handle_play_character(struct connection *c,
         return PA_DROP;
     }
 
+    c->character_index = ntohl(p->slot);
+
     return PA_ACCEPT;
 }
 

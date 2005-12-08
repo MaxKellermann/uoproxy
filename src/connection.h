@@ -67,7 +67,7 @@ struct connection {
     char username[30], password[30];
 
     struct uo_fragment_character_info characters[MAX_CHARACTERS];
-    unsigned num_characters;
+    unsigned num_characters, character_index;
 
     u_int16_t supported_features_flags;
     struct uo_packet_start packet_start;
