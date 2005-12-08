@@ -112,6 +112,8 @@ int connection_post_select(struct connection *c, struct selectx *sx);
 
 void connection_idle(struct connection *c, time_t now);
 
+void connection_speak_console(struct connection *c, const char *msg);
+
 /* state */
 
 void connection_world_item(struct connection *c,

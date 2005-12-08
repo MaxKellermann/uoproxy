@@ -35,7 +35,7 @@
 #include "config.h"
 
 /** broadcast a message to all clients */
-static void connection_speak_console(struct connection *c, const char *msg) {
+void connection_speak_console(struct connection *c, const char *msg) {
     struct linked_server *ls;
 
     for (ls = c->servers_head; ls != NULL; ls = ls->next) {
