@@ -36,7 +36,7 @@ packet_action_t handle_command(struct connection *c,
 
     if (*command == 0) {
         uo_server_speak_console(c->current_server->server,
-                                "uoproxy commands: % %reconnect");
+                                "uoproxy commands: % %reconnect %char");
     } else if (strcmp(command, "reconnect") == 0) {
         if (c->client == NULL) {
             uo_server_speak_console(c->current_server->server,
