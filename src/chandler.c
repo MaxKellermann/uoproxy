@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#include "instance.h"
 #include "packets.h"
 #include "handler.h"
 #include "connection.h"

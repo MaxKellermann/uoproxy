@@ -90,17 +90,6 @@ struct connection {
     struct linked_server *current_server;
 };
 
-struct instance {
-    /* configuration */
-    struct config *config;
-
-    /* state */
-    struct connection *connections_head;
-    struct relay_list *relays;
-
-    struct timeval tv;
-};
-
 int connection_new(struct instance *instance,
                    int server_socket,
                    struct connection **connectionp);

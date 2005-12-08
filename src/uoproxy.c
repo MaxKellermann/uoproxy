@@ -38,6 +38,7 @@
 #include "relay.h"
 #include "connection.h"
 #include "config.h"
+#include "instance.h"
 
 static int should_exit = 0;
 

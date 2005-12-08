@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "instance.h"
 #include "packets.h"
 #include "handler.h"
 #include "relay.h"
