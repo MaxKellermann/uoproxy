@@ -57,8 +57,10 @@ static char *simple_unicode_to_ascii(char *dest, const u_int16_t *src,
 static packet_action_t handle_talk(struct connection *c,
                                    const char *text) {
     /* the percent sign introduces an uoproxy command */
-    if (text[0] == '%')
-        return handle_command(c, text + 1);
+    if (text[0] == '%') {
+        connection_handle_command(c, text + 1);
+        return PA_DROP;
+    }
 
     return PA_ACCEPT;
 }

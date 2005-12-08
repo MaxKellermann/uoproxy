@@ -45,7 +45,4 @@ packet_action_t handle_packet(struct packet_binding *bindings,
                               struct connection *c,
                               void *data, size_t length);
 
-packet_action_t handle_command(struct connection *c,
-                               const char *command);
-
 #endif

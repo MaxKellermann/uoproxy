@@ -24,15 +24,13 @@
 #include <stdio.h>
 
 #include "connection.h"
-#include "handler.h"
 #include "server.h"
 #include "client.h"
 
-packet_action_t handle_command(struct connection *c,
-                               const char *command) {
+void connection_handle_command(struct connection *c, const char *command) {
     if (!c->in_game || c->current_server == NULL ||
         c->current_server->server == NULL)
-        return PA_DROP;
+        return;
 
     if (*command == 0) {
         uo_server_speak_console(c->current_server->server,
@@ -67,7 +65,7 @@ packet_action_t handle_command(struct connection *c,
 
             if (num > 0) {
                 uo_server_speak_console(c->current_server->server, msg);
-                return PA_DROP;
+                return;
             }
         }
 
@@ -77,6 +75,4 @@ packet_action_t handle_command(struct connection *c,
         uo_server_speak_console(c->current_server->server,
                                 "unknown uoproxy command, type '%' for help");
     }
-
-    return PA_DROP;
 }
