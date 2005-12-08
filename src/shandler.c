@@ -426,6 +426,10 @@ static packet_action_t handle_extended(struct connection *c,
     case 0x0008:
         if (length <= sizeof(c->packet_map_change))
             memcpy(&c->packet_map_change, data, length);
+
+        connection_delete_items(c);
+        connection_delete_mobiles(c);
+
         break;
 
     case 0x0018:
