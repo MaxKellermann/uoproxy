@@ -74,6 +74,31 @@ static packet_action_t handle_command(struct connection *c,
             c->client = NULL;
             c->reconnecting = 1;
         }
+    } else if (strcmp(command, "char") == 0) {
+        if (c->client == NULL) {
+            uo_server_speak_console(c->current_server->server,
+                                    "uoproxy: not connected");
+        } else if (c->num_characters > 0) {
+            char msg[256] = "uoproxy:";
+            unsigned i, num;
+
+            for (i = 0, num = 0; i < c->num_characters; i++) {
+                if (c->characters[i].name[0]) {
+                    sprintf(msg + strlen(msg), " %u=", i);
+                    strncat(msg, c->characters[i].name,
+                            sizeof(c->characters[i].name));
+                    ++num;
+                }
+            }
+
+            if (num > 0) {
+                uo_server_speak_console(c->current_server->server, msg);
+                return PA_DROP;
+            }
+        }
+
+        uo_server_speak_console(c->current_server->server,
+                                "uoproxy: no characters in list");
     } else {
         uo_server_speak_console(c->current_server->server,
                                 "unknown uoproxy command, type '%' for help");

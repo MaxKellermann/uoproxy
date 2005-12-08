@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
@@ -182,9 +183,34 @@ static packet_action_t handle_supported_features(struct connection *c,
 
 static packet_action_t handle_char_list(struct connection *c,
                                         void *data, size_t length) {
+    const struct uo_packet_simple_character_list *p = data;
+    const void *data_end = ((const char*)data) + length;
+
     (void)data;
     (void)length;
 
+    /* save character list */
+    if (p->character_count > 0 && length >= sizeof(*p)) {
+        if (c->characters != NULL) {
+            free(c->characters);
+            c->characters = NULL;
+        }
+
+        c->num_characters = 0;
+
+        while (c->num_characters < p->character_count &&
+               (const void*)&p->character_info[c->num_characters + 1] <= data_end)
+            ++c->num_characters;
+
+        if (c->num_characters > 0) {
+            c->characters = malloc(c->num_characters * sizeof(*c->characters));
+            if (c->characters != NULL)
+                memcpy(c->characters, p->character_info,
+                       c->num_characters * sizeof(*c->characters));
+        }
+    }
+
+    /* respond directly during reconnect */
     if (c->reconnecting) {
         struct uo_packet_play_character p2 = {
             .cmd = PCK_PlayCharacter,

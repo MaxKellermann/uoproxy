@@ -63,6 +63,10 @@ struct connection {
 
     /* state */
     char username[30], password[30];
+
+    struct uo_fragment_character_info *characters;
+    unsigned num_characters;
+
     u_int16_t supported_features_flags;
     struct uo_packet_start packet_start;
     struct uo_packet_map_change packet_map_change;
