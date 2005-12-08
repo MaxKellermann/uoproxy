@@ -43,4 +43,6 @@ void instance_post_select(struct instance *instance,
 
 void instance_idle(struct instance *instance, time_t now);
 
+void instance_schedule(struct instance *instance, time_t secs);
+
 #endif

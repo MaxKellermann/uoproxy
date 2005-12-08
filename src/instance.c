@@ -57,3 +57,11 @@ void instance_idle(struct instance *instance, time_t now) {
         connection_idle(c, now);
 }
 
+void instance_schedule(struct instance *instance, time_t secs) {
+    if (instance->tv.tv_sec >= secs)
+        instance->tv = (struct timeval){
+            .tv_sec = secs,
+            .tv_usec = 0,
+        };
+}
+
