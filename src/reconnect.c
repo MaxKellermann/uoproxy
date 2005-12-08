@@ -46,6 +46,6 @@ void connection_reconnect(struct connection *c) {
         return;
 
     c->reconnecting = 1;
-    c->next_reconnect = time(NULL) + 19;
-    instance_schedule(c->instance, 20);
+    c->next_reconnect = time(NULL) + 4;
+    instance_schedule(c->instance, 5);
 }
