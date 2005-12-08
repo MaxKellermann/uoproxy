@@ -51,13 +51,13 @@ void connection_handle_command(struct connection *c,
         char msg[256] = "uoproxy:";
         unsigned i;
 
-        if (c->num_characters > 0) {
+        if (c->num_characters == 0) {
             uo_server_speak_console(server->server,
                                     "uoproxy: no characters in list");
             return;
         }
 
-        for (i = 0; i < c->num_characters; i++) {
+        for (i = 0; i < MAX_CHARACTERS; i++) {
             if (c->characters[i].name[0]) {
                 sprintf(msg + strlen(msg), " %u=", i);
                 strncat(msg, c->characters[i].name,

@@ -109,9 +109,6 @@ void connection_delete(struct connection *c) {
         free(c->server_address);
     }
 
-    if (c->characters != NULL)
-        free(c->characters);
-
     free(c);
 }
 

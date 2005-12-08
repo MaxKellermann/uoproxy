@@ -191,23 +191,21 @@ static packet_action_t handle_char_list(struct connection *c,
 
     /* save character list */
     if (p->character_count > 0 && length >= sizeof(*p)) {
-        if (c->characters != NULL) {
-            free(c->characters);
-            c->characters = NULL;
+        unsigned idx;
+
+        memset(c->characters, 0, sizeof(c->characters));
+
+        for (idx = 0, c->num_characters = 0;
+             idx < p->character_count &&
+             idx < MAX_CHARACTERS &&
+                 (const void*)&p->character_info[idx + 1] <= data_end;
+             ++idx) {
+            if (p->character_info[idx].name[0] != 0)
+                ++c->num_characters;
         }
 
-        c->num_characters = 0;
-
-        while (c->num_characters < p->character_count &&
-               (const void*)&p->character_info[c->num_characters + 1] <= data_end)
-            ++c->num_characters;
-
-        if (c->num_characters > 0) {
-            c->characters = malloc(c->num_characters * sizeof(*c->characters));
-            if (c->characters != NULL)
-                memcpy(c->characters, p->character_info,
-                       c->num_characters * sizeof(*c->characters));
-        }
+        memcpy(c->characters, p->character_info,
+               idx * sizeof(c->characters[0]));
     }
 
     /* respond directly during reconnect */

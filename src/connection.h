@@ -24,6 +24,8 @@
 
 #include "packets.h"
 
+#define MAX_CHARACTERS 16
+
 struct selectx;
 struct instance;
 struct addrinfo;
@@ -64,7 +66,7 @@ struct connection {
     /* state */
     char username[30], password[30];
 
-    struct uo_fragment_character_info *characters;
+    struct uo_fragment_character_info characters[MAX_CHARACTERS];
     unsigned num_characters;
 
     u_int16_t supported_features_flags;
