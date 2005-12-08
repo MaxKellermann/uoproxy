@@ -286,7 +286,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
     return 0;
 }
 
-void connection_idle(struct connection *c) {
+void connection_idle(struct connection *c, time_t now) {
     connection_check(c);
 
     if (c->invalid)
@@ -315,7 +315,7 @@ void connection_idle(struct connection *c) {
                 fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
             }
         }
-    } else {
+    } else if (now >= c->next_ping) {
         struct uo_packet_ping ping;
 
         ping.cmd = PCK_Ping;
@@ -323,5 +323,7 @@ void connection_idle(struct connection *c) {
 
         printf("sending ping\n");
         uo_client_send(c->client, &ping, sizeof(ping));
+
+        c->next_ping = now + 30;
     }
 }

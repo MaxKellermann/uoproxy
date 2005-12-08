@@ -31,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
+#include <time.h>
 
 #include "netutil.h"
 #include "ioutil.h"
@@ -100,11 +101,11 @@ static void instance_post_select(struct instance *instance,
         connection_post_select(c, sx);
 }
 
-static void instance_idle(struct instance *instance) {
+static void instance_idle(struct instance *instance, time_t now) {
     struct connection *c;
 
     for (c = instance->connections_head; c != NULL; c = c->next)
-        connection_idle(c);
+        connection_idle(c, now);
 }
 
 static void run_server(struct instance *instance) {
@@ -124,7 +125,7 @@ static void run_server(struct instance *instance) {
 
         ret = selectx(&sx, &tv);
         if (ret == 0) {
-            instance_idle(instance);
+            instance_idle(instance, time(NULL));
             tv.tv_sec = 30;
         } else if (ret > 0) {
             if (FD_ISSET(sockfd, &sx.readfds)) {

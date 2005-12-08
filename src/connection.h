@@ -82,6 +82,8 @@ struct connection {
     struct item *items_head;
     struct mobile *mobiles_head;
 
+    time_t next_ping;
+
     /* sub-objects */
     struct uo_client *client;
     struct linked_server *servers_head;
@@ -117,7 +119,7 @@ void connection_pre_select(struct connection *c, struct selectx *sx);
 
 int connection_post_select(struct connection *c, struct selectx *sx);
 
-void connection_idle(struct connection *c);
+void connection_idle(struct connection *c, time_t now);
 
 /* state */
 
