@@ -27,6 +27,29 @@
 #include "server.h"
 #include "client.h"
 
+static void change_character(struct connection *c,
+                             struct linked_server *server,
+                             unsigned idx) {
+    if (c->client == NULL) {
+        uo_server_speak_console(server->server,
+                                "uoproxy: not connected");
+        return;
+    }
+
+    if (idx >= MAX_CHARACTERS || c->characters[idx].name[0] == 0) {
+        uo_server_speak_console(server->server,
+                                "uoproxy: no character in slot");
+        return;
+    }
+
+    c->character_index = idx;
+    uo_server_speak_console(server->server,
+                            "uoproxy: changing character");
+    uo_client_dispose(c->client);
+    c->client = NULL;
+    c->reconnecting = 1;
+}
+
 void connection_handle_command(struct connection *c,
                                struct linked_server *server,
                                const char *command) {
@@ -66,6 +89,13 @@ void connection_handle_command(struct connection *c,
         }
 
         uo_server_speak_console(server->server, msg);
+    } else if (strncmp(command, "char ", 5) == 0) {
+        if (command[5] >= '0' && command[5] <= '9' && command[6] == 0) {
+            change_character(c, server, command[5] - '0');
+        } else {
+            uo_server_speak_console(server->server,
+                                    "uoproxy: invalid %char syntax");
+        }
     } else {
         uo_server_speak_console(server->server,
                                 "unknown uoproxy command, type '%' for help");

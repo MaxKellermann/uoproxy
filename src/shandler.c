@@ -212,7 +212,7 @@ static packet_action_t handle_char_list(struct connection *c,
     if (c->reconnecting) {
         struct uo_packet_play_character p2 = {
             .cmd = PCK_PlayCharacter,
-            .slot = 0, /* XXX */
+            .slot = htonl(c->character_index),
             .client_ip = 0xdeadbeef, /* XXX */
         };
 
