@@ -219,6 +219,13 @@ void connection_mobile_moving(struct connection *c,
         c->packet_start.y = p->y;
         c->packet_start.z = p->z;
         c->packet_start.direction = p->direction;
+
+        c->packet_mobile_update.body = p->body;
+        c->packet_mobile_update.hue = p->hue;
+        c->packet_mobile_update.x = p->x;
+        c->packet_mobile_update.y = p->y;
+        c->packet_mobile_update.direction = p->direction;
+        c->packet_mobile_update.z = p->z;
     }
 
     m = *find_mobile(c, p->serial);
