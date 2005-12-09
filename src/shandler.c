@@ -261,11 +261,7 @@ static packet_action_t handle_zone_change(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->packet_start.x = p->x;
-    c->packet_start.y = p->y;
-    c->packet_start.z = p->z;
-    c->packet_start.map_width = p->map_width;
-    c->packet_start.map_height = p->map_height;
+    connection_mobile_zone(c, p);
 
     return PA_ACCEPT;
 }

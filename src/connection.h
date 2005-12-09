@@ -135,6 +135,9 @@ void connection_mobile_update(struct connection *c,
 void connection_mobile_moving(struct connection *c,
                               const struct uo_packet_mobile_moving *p);
 
+void connection_mobile_zone(struct connection *c,
+                            const struct uo_packet_zone_change *p);
+
 void connection_remove_mobile(struct connection *c, u_int32_t serial);
 
 void connection_delete_mobiles(struct connection *c);

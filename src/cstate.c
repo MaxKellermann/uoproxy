@@ -248,6 +248,17 @@ void connection_mobile_moving(struct connection *c,
     }
 }
 
+void connection_mobile_zone(struct connection *c,
+                            const struct uo_packet_zone_change *p) {
+    c->packet_start.x = p->x;
+    c->packet_start.y = p->y;
+    c->packet_start.z = p->z;
+
+    c->packet_mobile_update.x = p->x;
+    c->packet_mobile_update.y = p->y;
+    c->packet_mobile_update.z = p->z;
+}
+
 void connection_remove_mobile(struct connection *c, u_int32_t serial) {
     struct mobile **mp, *m;
 
