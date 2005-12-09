@@ -181,6 +181,16 @@ void connection_mobile_update(struct connection *c,
                               const struct uo_packet_mobile_update *p) {
     struct mobile *m;
 
+    if (c->packet_start.serial == p->serial) {
+        c->packet_mobile_update = *p;
+
+        c->packet_start.body = p->body;
+        c->packet_start.x = p->x;
+        c->packet_start.y = p->y;
+        c->packet_start.z = p->z;
+        c->packet_start.direction = p->direction;
+    }
+
     m = *find_mobile(c, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
@@ -202,6 +212,14 @@ void connection_mobile_update(struct connection *c,
 void connection_mobile_moving(struct connection *c,
                               const struct uo_packet_mobile_moving *p) {
     struct mobile *m;
+
+    if (c->packet_start.serial == p->serial) {
+        c->packet_start.body = p->body;
+        c->packet_start.x = p->x;
+        c->packet_start.y = p->y;
+        c->packet_start.z = p->z;
+        c->packet_start.direction = p->direction;
+    }
 
     m = *find_mobile(c, p->serial);
     if (m == NULL) {

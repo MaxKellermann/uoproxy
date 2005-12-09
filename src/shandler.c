@@ -299,16 +299,6 @@ static packet_action_t handle_mobile_update(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->packet_start.serial == p->serial) {
-        c->packet_mobile_update = *p;
-
-        c->packet_start.body = p->body;
-        c->packet_start.x = p->x;
-        c->packet_start.y = p->y;
-        c->packet_start.z = p->z;
-        c->packet_start.direction = p->direction;
-    }
-
     connection_mobile_update(c, p);
 
     return PA_ACCEPT;
