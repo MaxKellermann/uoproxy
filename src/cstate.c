@@ -152,6 +152,22 @@ void connection_mobile_incoming(struct connection *c,
 
     assert(p->cmd == PCK_MobileIncoming);
 
+    if (p->serial == c->packet_start.serial) {
+        /* update player's mobile */
+        c->packet_start.body = p->body;
+        c->packet_start.x = p->x;
+        c->packet_start.y = p->y;
+        c->packet_start.z = p->z;
+        c->packet_start.direction = p->direction;
+
+        c->packet_mobile_update.body = p->body;
+        c->packet_mobile_update.hue = p->hue;
+        c->packet_mobile_update.x = p->x;
+        c->packet_mobile_update.y = p->y;
+        c->packet_mobile_update.direction = p->direction;
+        c->packet_mobile_update.z = p->z;
+    }
+
     m = add_mobile(c, p->serial);
     if (m == NULL)
         return;
@@ -182,6 +198,7 @@ void connection_mobile_update(struct connection *c,
     struct mobile *m;
 
     if (c->packet_start.serial == p->serial) {
+        /* update player's mobile */
         c->packet_mobile_update = *p;
 
         c->packet_start.body = p->body;
@@ -214,6 +231,7 @@ void connection_mobile_moving(struct connection *c,
     struct mobile *m;
 
     if (c->packet_start.serial == p->serial) {
+        /* update player's mobile */
         c->packet_start.body = p->body;
         c->packet_start.x = p->x;
         c->packet_start.y = p->y;
