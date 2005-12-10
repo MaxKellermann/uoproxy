@@ -312,3 +312,11 @@ void connection_delete_mobiles(struct connection *c) {
         free(m);
     }
 }
+
+void connection_remove_serial(struct connection *c, u_int32_t serial) {
+    if (serial < 0x40000000)
+        connection_remove_mobile(c, serial);
+    else if (serial < 0x80000000)
+        connection_remove_item(c, serial);
+}
+

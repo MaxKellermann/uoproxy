@@ -249,8 +249,7 @@ static packet_action_t handle_delete(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_remove_item(c, p->serial);
-    connection_remove_mobile(c, p->serial);
+    connection_remove_serial(c, p->serial);
 
     return PA_ACCEPT;
 }

@@ -142,6 +142,8 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial);
 
 void connection_delete_mobiles(struct connection *c);
 
+void connection_remove_serial(struct connection *c, u_int32_t serial);
+
 /* reconnect */
 
 void connection_disconnect(struct connection *c);
