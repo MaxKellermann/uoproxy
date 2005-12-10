@@ -30,12 +30,6 @@
 static void change_character(struct connection *c,
                              struct linked_server *server,
                              unsigned idx) {
-    if (c->client == NULL) {
-        uo_server_speak_console(server->server,
-                                "uoproxy: not connected");
-        return;
-    }
-
     if (idx >= MAX_CHARACTERS || c->characters[idx].name[0] == 0) {
         uo_server_speak_console(server->server,
                                 "uoproxy: no character in slot");
