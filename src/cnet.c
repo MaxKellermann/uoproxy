@@ -24,6 +24,19 @@
 #include "connection.h"
 #include "server.h"
 
+/** broadcast a message to all clients */
+void connection_speak_console(struct connection *c, const char *msg) {
+    struct linked_server *ls;
+
+    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+        if (!ls->invalid && !ls->attaching) {
+            assert(ls->server != NULL);
+
+            uo_server_speak_console(ls->server, msg);
+        }
+    }
+}
+
 void connection_broadcast_servers_except(struct connection *c,
                                          const void *data, size_t length,
                                          struct uo_server *except) {
