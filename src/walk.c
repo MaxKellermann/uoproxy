@@ -227,19 +227,8 @@ void connection_walk_ack(struct connection *c,
 
     /* send MobileMoving to all other clients */
     if (c->servers_head != NULL && c->servers_head->next != NULL) {
-        struct uo_packet_mobile_update update = {
-            .cmd = PCK_MobileUpdate,
-            .serial = c->packet_start.serial,
-            .body = c->packet_start.body,
-            .hue = c->packet_mobile_update.hue,
-            .packet_flags = 0, /* XXX */
-            .x = c->packet_start.x,
-            .y = c->packet_start.y,
-            .direction = c->packet_start.direction,
-            .z = ntohs(c->packet_start.z),
-        };
-
-        connection_broadcast_servers_except(c, &update, sizeof(update),
+        connection_broadcast_servers_except(c, &c->packet_mobile_update,
+                                            sizeof(c->packet_mobile_update),
                                             state->server->server);
     }
 
