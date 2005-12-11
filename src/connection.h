@@ -114,6 +114,10 @@ void connection_idle(struct connection *c, time_t now);
 
 void connection_speak_console(struct connection *c, const char *msg);
 
+void connection_broadcast_servers_except(struct connection *c,
+                                         const void *data, size_t length,
+                                         struct uo_server *except);
+
 /* state */
 
 void connection_world_item(struct connection *c,
