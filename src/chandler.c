@@ -68,9 +68,13 @@ static packet_action_t handle_talk(struct connection *c,
 
 static packet_action_t handle_walk(struct connection *c,
                                    void *data, size_t length) {
-    const struct uo_packet_walk *p = data;
+    struct uo_packet_walk *p = data;
+    int ret;
 
     assert(length == sizeof(*p));
+
+    if (!c->in_game)
+        return PA_DISCONNECT;
 
     if (c->reconnecting) {
         /* while reconnecting, reject all walk requests */
@@ -88,7 +92,9 @@ static packet_action_t handle_walk(struct connection *c,
         return PA_DROP;
     }
 
-    return PA_ACCEPT;
+    ret = connection_walk_request(c, c->current_server, p);
+
+    return ret ? PA_ACCEPT : PA_DROP;
 }
 
 static packet_action_t handle_talk_ascii(struct connection *c,
@@ -156,6 +162,19 @@ static packet_action_t handle_lift_request(struct connection *c,
 
         return PA_DROP;
     }
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_resynchronize(struct connection *c,
+                                            void *data, size_t length) {
+    (void)c;
+    (void)data;
+    (void)length;
+
+    printf("Resync!\n");
+
+    c->walk.seq_next = 0;
 
     return PA_ACCEPT;
 }
@@ -491,6 +510,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_LiftRequest,
       .handler = handle_lift_request,
+    },
+    { .cmd = PCK_Resynchronize,
+      .handler = handle_resynchronize,
     },
     { .cmd = PCK_Ping,
       .handler = handle_ping,

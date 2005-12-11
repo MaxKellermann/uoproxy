@@ -177,8 +177,11 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
         assert(ls->invalid || ls->server != NULL);
 
         if (ls->invalid) {
+            connection_walk_server_removed(&c->walk, ls);
             remove_server(lsp);
         } else if (!uo_server_alive(ls->server)) {
+            connection_walk_server_removed(&c->walk, ls);
+
             if (c->background && c->in_game) {
                 fprintf(stderr, "client disconnected, backgrounding\n");
                 remove_server(lsp);

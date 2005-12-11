@@ -240,6 +240,8 @@ static packet_action_t handle_start(struct connection *c,
        succeeded */
     c->reconnecting = 0;
 
+    c->walk.seq_next = 0;
+
     return PA_ACCEPT;
 }
 
@@ -297,6 +299,35 @@ static packet_action_t handle_mobile_update(struct connection *c,
     connection_mobile_update(c, p);
 
     return PA_ACCEPT;
+}
+
+static packet_action_t handle_walk_cancel(struct connection *c,
+                                          void *data, size_t length) {
+    struct uo_packet_walk_cancel *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (!c->in_game)
+        return PA_DISCONNECT;
+
+    /* XXX: grab p->x/y/z etc. */
+
+    connection_walk_cancel(c, p);
+
+    return PA_DROP;
+}
+
+static packet_action_t handle_walk_ack(struct connection *c,
+                                       void *data, size_t length) {
+    struct uo_packet_walk_ack *p = data;
+
+    assert(length == sizeof(*p));
+
+    connection_walk_ack(c, p);
+
+    /* XXX: x/y/z etc. */
+
+    return PA_DROP;
 }
 
 static packet_action_t handle_season(struct connection *c,
@@ -486,6 +517,12 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_MobileUpdate,
       .handler = handle_mobile_update,
+    },
+    { .cmd = PCK_WalkCancel,
+      .handler = handle_walk_cancel,
+    },
+    { .cmd = PCK_WalkAck,
+      .handler = handle_walk_ack,
     },
     { .cmd = PCK_PopupMessage,
       .handler = handle_popup_message,

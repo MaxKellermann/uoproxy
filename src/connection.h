@@ -25,6 +25,7 @@
 #include "packets.h"
 
 #define MAX_CHARACTERS 16
+#define MAX_WALK_QUEUE 4
 
 struct selectx;
 struct instance;
@@ -47,6 +48,18 @@ struct linked_server {
     struct linked_server *next;
     struct uo_server *server;
     int invalid, welcome, attaching;
+};
+
+struct connection_walk_item {
+    struct uo_packet_walk packet;
+    u_int8_t seq;
+};
+
+struct connection_walk_state {
+    struct linked_server *server;
+    struct connection_walk_item queue[MAX_WALK_QUEUE];
+    unsigned queue_size;
+    u_int8_t seq_next;
 };
 
 struct connection {
@@ -81,6 +94,8 @@ struct connection {
     unsigned char ping_request, ping_ack;
     struct item *items_head;
     struct mobile *mobiles_head;
+
+    struct connection_walk_state walk;
 
     time_t next_ping, next_reconnect;
 
@@ -147,6 +162,24 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial);
 void connection_delete_mobiles(struct connection *c);
 
 void connection_remove_serial(struct connection *c, u_int32_t serial);
+
+void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
+                       u_int8_t notoriety);
+
+/* walk */
+
+void connection_walk_server_removed(struct connection_walk_state *state,
+                                    struct linked_server *server);
+
+int connection_walk_request(struct connection *c,
+                            struct linked_server *server,
+                            struct uo_packet_walk *p);
+
+void connection_walk_cancel(struct connection *c,
+                            struct uo_packet_walk_cancel *p);
+
+void connection_walk_ack(struct connection *c,
+                         struct uo_packet_walk_ack *p);
 
 /* reconnect */
 

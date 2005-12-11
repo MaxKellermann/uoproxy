@@ -320,3 +320,20 @@ void connection_remove_serial(struct connection *c, u_int32_t serial) {
         connection_remove_item(c, serial);
 }
 
+void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
+                       u_int8_t notoriety) {
+    struct mobile *m;
+
+    c->packet_start.x = x;
+    c->packet_start.y = y;
+
+    c->packet_mobile_update.x = x;
+    c->packet_mobile_update.y = y;
+
+    m = *find_mobile(c, c->packet_start.serial);
+    if (m != NULL && m->packet_mobile_incoming != NULL) {
+        m->packet_mobile_incoming->x = x;
+        m->packet_mobile_incoming->y = y;
+        m->packet_mobile_incoming->notoriety = notoriety;
+    }
+}
