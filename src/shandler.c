@@ -291,6 +291,26 @@ static packet_action_t handle_char_list(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_account_login_reject(struct connection *c,
+                                                   void *data, size_t length) {
+    struct uo_packet_account_login_reject *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->in_game)
+        return PA_DISCONNECT;
+
+    if (c->reconnecting) {
+        fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
+                p->reason);
+
+        connection_reconnect(c);
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_relay(struct connection *c,
                                     void *data, size_t length) {
     /* this packet tells the UO client where to connect; what
@@ -526,6 +546,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_CharList3, /* 0x81 */
       .handler = handle_char_list,
+    },
+    { .cmd = PCK_AccountLoginReject, /* 0x82 */
+      .handler = handle_account_login_reject,
     },
     { .cmd = PCK_CharList2, /* 0x86 */
       .handler = handle_char_list,
