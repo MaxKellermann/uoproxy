@@ -226,11 +226,10 @@ void connection_walk_ack(struct connection *c,
     }
 
     /* send MobileMoving to all other clients */
-    if (c->servers_head != NULL && c->servers_head->next != NULL) {
+    if (c->servers_head != NULL && c->servers_head->next != NULL)
         connection_broadcast_servers_except(c, &c->packet_mobile_update,
                                             sizeof(c->packet_mobile_update),
                                             state->server->server);
-    }
 
     remove_item(state, i);
 }
