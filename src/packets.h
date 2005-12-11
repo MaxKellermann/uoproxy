@@ -60,6 +60,7 @@ enum uo_packet_type_t {
     PCK_MobileUpdate = 0x20,
     PCK_WalkCancel = 0x21,
     PCK_WalkAck = 0x22,
+    PCK_Resynchronize = 0x22,
     PCK_DragAnim = 0x23,
     PCK_ContOpen = 0x24,
     PCK_ContAdd = 0x25,
@@ -415,6 +416,12 @@ struct uo_packet_walk_cancel {
     int16_t x, y;
     u_int8_t direction;
     int8_t z;
+} __attribute__ ((packed));
+
+/* 0x22 WalkAck */
+struct uo_packet_walk_ack {
+    unsigned char cmd;
+    u_int8_t seq, notoriety;
 } __attribute__ ((packed));
 
 /* 0x27 LiftReject */
