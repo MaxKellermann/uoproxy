@@ -185,39 +185,41 @@ void connection_walk_ack(struct connection *c,
     x = ntohs(c->packet_start.x);
     y = ntohs(c->packet_start.y);
 
-    switch (i->packet.direction & 0x07) {
-    case 0: /* north */
-        --y;
-        break;
-    case 1: /* north east */
-        ++x;
-        --y;
-        break;
-    case 2: /* east */
-        ++x;
-        break;
-    case 3: /* south east */
-        ++x;
-        ++y;
-        break;
-    case 4: /* south */
-        ++y;
-        break;
-    case 5: /* south west */
-        --x;
-        ++y;
-        break;
-    case 6: /* west */
-        --x;
-        break;
-    case 7: /* north west */
-        --x;
-        --y;
-        break;
+    if ((c->packet_start.direction & 0x07) == (i->packet.direction & 0x07)) {
+        switch (i->packet.direction & 0x07) {
+        case 0: /* north */
+            --y;
+            break;
+        case 1: /* north east */
+            ++x;
+            --y;
+            break;
+        case 2: /* east */
+            ++x;
+            break;
+        case 3: /* south east */
+            ++x;
+            ++y;
+            break;
+        case 4: /* south */
+            ++y;
+            break;
+        case 5: /* south west */
+            --x;
+            ++y;
+            break;
+        case 6: /* west */
+            --x;
+            break;
+        case 7: /* north west */
+            --x;
+            --y;
+            break;
+        }
     }
 
     connection_walked(c, htons(x), htons(y),
-                      p->notoriety);
+                      i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */
     if (!state->server->invalid) {
