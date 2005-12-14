@@ -72,7 +72,7 @@ Type
 
 Now point your Ultima Online client (encryption disabled) at the
 machine running uoproxy.  UOGateway can be used to remove encryption
-and to add the uoproxy server.
+and to add the uoproxy server to your Login.cfg.
 
 
 Credits
