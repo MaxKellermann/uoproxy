@@ -39,11 +39,17 @@ static void usage(void) {
     printf("usage: uoproxy [options] [server:port]\n\n"
            "valid options:\n"
            " -h             help (this text)\n"
+#ifdef __GLIBC__
            " --version\n"
+#endif
            " -V             show uoproxy version\n"
+#ifdef __GLIBC__
            " --verbose\n"
+#endif
            " -v             be more verbose\n"
+#ifdef __GLIBC__
            " --quiet\n"
+#endif
            " -q             be quiet\n"
 #ifdef __GLIBC__
            " --port port\n"
