@@ -1,0 +1,2 @@
+src/uoproxy usr/bin
+conf/uoproxy.conf etc

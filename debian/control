@@ -1,0 +1,15 @@
+Source: uoproxy
+Section: games
+Priority: extra
+Maintainer: Max Kellermann <max@duempel.org>
+Build-Depends: cdbs, debhelper, gcc (>= 3.4)
+Standards-Version: 3.6.1
+
+Package: uoproxy
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: proxy server for Ultima Online
+ uoproxy is a proxy server designed for Ultima Online.  It acts as an
+ Ultima Online server, and forwards the connection to a 'real' server.
+ .
+ Home page: http://max.kellermann.name/projects/uoproxy/
