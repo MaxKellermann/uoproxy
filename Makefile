@@ -4,7 +4,7 @@
 
 CC := $(shell which gcc-4.0 gcc-3.4 gcc-3.3 gcc cc |grep -v '^no' |head -1 )
 
-DEBUG = yes
+DEBUG = no
 
 # change the comments to enable the non-debugging version
 ifeq ($(DEBUG),yes)
