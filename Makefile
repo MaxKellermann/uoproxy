@@ -45,3 +45,14 @@ src/uoproxy: $(OBJECTS)
 
 strip: src/uoproxy
 	strip --strip-all $^
+
+release: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' debian/changelog |head -1)
+release:
+	rm -rf /tmp/uoproxy
+	mkdir -p /tmp/uoproxy
+	svn export . /tmp/uoproxy/uoproxy-$(VERSION)
+	cd /tmp/uoproxy && fakeroot tar cjf uoproxy-$(VERSION).tar.bz2 uoproxy-$(VERSION)
+
+upload:
+	scp README debian/changelog max@swift:/var/www/gzipped/download/uoproxy/doc/
+	ssh max@swift chmod a+rX -R /var/www/gzipped/download/uoproxy/doc/
