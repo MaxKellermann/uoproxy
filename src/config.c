@@ -415,6 +415,30 @@ int config_read_file(struct config *config, const char *path) {
                         value, gai_strerror(ret));
                 exit(1);
             }
+        } else if (strcmp(key, "pidfile") == 0) {
+            assign_string(&config->pidfile, value);
+        } else if (strcmp(key, "logger") == 0) {
+            assign_string(&config->logger, value);
+        } else if (strcmp(key, "chroot") == 0) {
+            assign_string(&config->chroot_dir, value);
+        } else if (strcmp(key, "user") == 0) {
+            struct passwd *pw;
+
+            pw = getpwnam(optarg);
+            if (pw == NULL) {
+                fprintf(stderr, "%s line %u: user '%s' not found\n",
+                        path, no, optarg);
+                exit(2);
+            }
+
+            if (pw->pw_uid == 0) {
+                fprintf(stderr, "%s line %u: setuid root is not allowed\n",
+                        path, no);
+                exit(1);
+            }
+
+            config->uid = pw->pw_uid;
+            config->gid = pw->pw_gid;
         } else if (strcmp(key, "server_list") == 0) {
             unsigned i;
 
