@@ -36,26 +36,27 @@
 int verbose = 1;
 
 static void usage(void) {
-    printf("usage: uoproxy [options] [server:port]\n\n"
-           "valid options:\n"
-           " -h             help (this text)\n"
+    puts("usage: uoproxy [options] [server:port]\n\n"
+         "valid options:\n"
+         " -h             help (this text)\n"
 #ifdef __GLIBC__
-           " --version\n"
+         " --version\n"
 #endif
-           " -V             show uoproxy version\n"
+         " -V             show uoproxy version\n"
 #ifdef __GLIBC__
-           " --verbose\n"
+         " --verbose\n"
 #endif
-           " -v             be more verbose\n"
+         " -v             be more verbose\n"
 #ifdef __GLIBC__
-           " --quiet\n"
+         " --quiet\n"
 #endif
-           " -q             be quiet\n"
+         " -q             be quiet\n"
 #ifdef __GLIBC__
-           " --port port\n"
+         " --port port\n"
 #endif
-           " -p port        listen on this port (default 2593)\n"
-           );
+         " -p port        listen on this port (default 2593)\n"
+         "\n"
+         );
 }
 
 static struct addrinfo *port_to_addrinfo(unsigned port) {
