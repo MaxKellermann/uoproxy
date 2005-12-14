@@ -424,7 +424,7 @@ int config_read_file(struct config *config, const char *path) {
         } else if (strcmp(key, "user") == 0) {
             struct passwd *pw;
 
-            pw = getpwnam(optarg);
+            pw = getpwnam(value);
             if (pw == NULL) {
                 fprintf(stderr, "%s line %u: user '%s' not found\n",
                         path, no, optarg);
