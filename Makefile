@@ -1,4 +1,8 @@
-CC := gcc-4.0
+# uoamhub Makefile
+# (c) 2005 Max Kellermann <max@duempel.org>
+# $Id$
+
+CC := $(shell which gcc-4.0 gcc-3.4 gcc-3.3 gcc cc |grep -v '^no' |head -1 )
 
 DEBUG = yes
 
