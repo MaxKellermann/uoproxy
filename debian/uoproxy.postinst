@@ -1,0 +1,8 @@
+#!/bin/sh -e
+
+if [ "$1" = "configure" ]; then
+    # add users
+    getent passwd uoproxy >/dev/null || useradd -g nogroup -d /usr/share/uoproxy -s /bin/false -c 'Ultima Online proxy' uoproxy
+fi
+
+#DEBHELPER#
