@@ -31,11 +31,14 @@
 
 #include "config.h"
 #include "netutil.h"
+#include "version.h"
 
 static void usage(void) {
     printf("usage: uoproxy [options] [server:port]\n\n"
            "valid options:\n"
            " -h             help (this text)\n"
+           " --version\n"
+           " -V             show uoproxy version\n"
 #ifdef __GLIBC__
            " --port port\n"
 #endif
@@ -68,6 +71,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 #ifdef __GLIBC__
     static const struct option long_options[] = {
         {"help", 0, 0, 'h'},
+        {"version", 0, 0, 'V'},
         {"port", 1, 0, 'p'},
         {0,0,0,0}
     };
@@ -80,10 +84,10 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hp:",
+        ret = getopt_long(argc, argv, "hVp:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hp:");
+        ret = getopt(argc, argv, "hVp:");
 #endif
         if (ret == -1)
             break;
@@ -91,6 +95,11 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         switch (ret) {
         case 'h':
             usage();
+            exit(0);
+
+        case 'V':
+            printf("uoproxy v" VERSION
+                   ", http://max.kellermann.name/projects/uoproxy/\n");
             exit(0);
 
         case 'p':
