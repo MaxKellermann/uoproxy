@@ -163,7 +163,8 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
             connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
             connection_reconnect(c);
         } else {
-            printf("server disconnected\n");
+            if (verbose >= 1)
+                printf("server disconnected\n");
             connection_invalidate(c);
         }
     }
@@ -183,10 +184,12 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
             connection_walk_server_removed(&c->walk, ls);
 
             if (c->background && c->in_game) {
-                fprintf(stderr, "client disconnected, backgrounding\n");
+                if (verbose >= 1)
+                    printf("client disconnected, backgrounding\n");
                 remove_server(lsp);
             } else {
-                fprintf(stderr, "client disconnected\n");
+                if (verbose >= 1)
+                    printf("client disconnected\n");
                 remove_server(lsp);
                 connection_invalidate(c);
             }
@@ -291,14 +294,16 @@ void connection_idle(struct connection *c, time_t now) {
                     .cmd = PCK_AccountLogin,
                 };
 
-                printf("connected, doing AccountLogin\n");
+                if (verbose >= 2)
+                    printf("connected, doing AccountLogin\n");
 
                 memcpy(p.username, c->username, sizeof(p.username));
                 memcpy(p.password, c->password, sizeof(p.password));
 
                 uo_client_send(c->client, &p, sizeof(p));
             } else {
-                fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
+                if (verbose >= 1)
+                    fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
                 connection_reconnect(c);
             }
         }
@@ -308,7 +313,8 @@ void connection_idle(struct connection *c, time_t now) {
         ping.cmd = PCK_Ping;
         ping.id = ++c->ping_request;
 
-        printf("sending ping\n");
+        if (verbose >= 2)
+            printf("sending ping\n");
         uo_client_send(c->client, &ping, sizeof(ping));
 
         c->next_ping = now + 30;

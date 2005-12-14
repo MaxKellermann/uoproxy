@@ -35,6 +35,8 @@ struct config {
     char *client_version;
 };
 
+extern int verbose;
+
 /** read configuration options from the command line */
 void parse_cmdline(struct config *config, int argc, char **argv);
 

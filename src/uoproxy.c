@@ -39,6 +39,7 @@
 #include "connection.h"
 #include "config.h"
 #include "instance.h"
+#include "version.h"
 
 static int should_exit = 0;
 
@@ -160,6 +161,10 @@ int main(int argc, char **argv) {
     /* configuration */
 
     config_get(&config, argc, argv);
+
+    if (verbose >= 1)
+        printf("uoproxy v" VERSION
+               ", http://max.kellermann.name/projects/uoproxy/\n");
 
     /* set up */
 

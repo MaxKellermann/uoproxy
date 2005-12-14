@@ -34,6 +34,7 @@
 #include "connection.h"
 #include "server.h"
 #include "client.h"
+#include "config.h"
 
 static void welcome(struct connection *c) {
     struct linked_server *ls;
@@ -281,7 +282,8 @@ static packet_action_t handle_char_list(struct connection *c,
             .client_ip = 0xdeadbeef, /* XXX */
         };
 
-        printf("sending PlayCharacter\n");
+        if (verbose >= 2)
+            printf("sending PlayCharacter\n");
 
         uo_client_send(c->client, &p2, sizeof(p2));
 
@@ -301,8 +303,9 @@ static packet_action_t handle_account_login_reject(struct connection *c,
         return PA_DISCONNECT;
 
     if (c->reconnecting) {
-        fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
-                p->reason);
+        if (verbose >= 1)
+            fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
+                    p->reason);
 
         connection_reconnect(c);
         return PA_DROP;
@@ -330,18 +333,21 @@ static packet_action_t handle_relay(struct connection *c,
             .auth_id = p->auth_id,
         };
 
-        printf("changing to game connection\n");
+        if (verbose >= 2)
+            printf("changing to game connection\n");
 
         uo_client_dispose(c->client);
         c->client = NULL;
 
         ret = uo_client_create(c->server_address, p->auth_id, &c->client);
         if (ret != 0) {
-            fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
+            if (verbose >= 1)
+                fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
             return PA_DROP;
         }
 
-        printf("connected, doing GameLogin\n");
+        if (verbose >= 2)
+            printf("connected, doing GameLogin\n");
 
         memcpy(p2.username, c->username, sizeof(p2.username));
         memcpy(p2.password, c->password, sizeof(p2.password));

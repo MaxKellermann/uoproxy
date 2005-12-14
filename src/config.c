@@ -33,12 +33,18 @@
 #include "netutil.h"
 #include "version.h"
 
+int verbose = 1;
+
 static void usage(void) {
     printf("usage: uoproxy [options] [server:port]\n\n"
            "valid options:\n"
            " -h             help (this text)\n"
            " --version\n"
            " -V             show uoproxy version\n"
+           " --verbose\n"
+           " -v             be more verbose\n"
+           " --quiet\n"
+           " -q             be quiet\n"
 #ifdef __GLIBC__
            " --port port\n"
 #endif
@@ -72,6 +78,8 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
     static const struct option long_options[] = {
         {"help", 0, 0, 'h'},
         {"version", 0, 0, 'V'},
+        {"verbose", 0, 0, 'v'},
+        {"quiet", 1, 0, 'q'},
         {"port", 1, 0, 'p'},
         {0,0,0,0}
     };
@@ -84,10 +92,10 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVp:",
+        ret = getopt_long(argc, argv, "hVvqp:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVp:");
+        ret = getopt(argc, argv, "hVvqp:");
 #endif
         if (ret == -1)
             break;
@@ -101,6 +109,14 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
             printf("uoproxy v" VERSION
                    ", http://max.kellermann.name/projects/uoproxy/\n");
             exit(0);
+
+        case 'v':
+            ++verbose;
+            break;
+
+        case 'q':
+            verbose = 0;
+            break;
 
         case 'p':
             bind_port = (unsigned)strtoul(optarg, NULL, 10);

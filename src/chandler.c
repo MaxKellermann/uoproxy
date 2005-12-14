@@ -172,7 +172,8 @@ static packet_action_t handle_resynchronize(struct connection *c,
     (void)data;
     (void)length;
 
-    printf("Resync!\n");
+    if (verbose >= 3)
+        printf("Resync!\n");
 
     c->walk.seq_next = 0;
 
@@ -242,7 +243,8 @@ static packet_action_t handle_account_login(struct connection *c,
     }
 
     if (c->client != NULL) {
-        fprintf(stderr, "already logged in\n");
+        if (verbose >= 2)
+            fprintf(stderr, "already logged in\n");
         return PA_DISCONNECT;
     }
 
@@ -290,14 +292,16 @@ static packet_action_t handle_game_login(struct connection *c,
 #endif
 
     if (c->client != NULL) {
-        fprintf(stderr, "already logged in\n");
+        if (verbose >= 2)
+            fprintf(stderr, "already logged in\n");
         return PA_DISCONNECT;
     }
 
     relay = relay_find(c->instance->relays, p->auth_id);
     if (relay == NULL) {
-        fprintf(stderr, "invalid or expired auth_id: 0x%08x\n",
-                p->auth_id);
+        if (verbose >= 2)
+            fprintf(stderr, "invalid or expired auth_id: 0x%08x\n",
+                    p->auth_id);
         return PA_DISCONNECT;
     }
 
@@ -369,7 +373,8 @@ static packet_action_t handle_play_character(struct connection *c,
     assert(length == sizeof(*p));
 
     if (c->current_server->attaching) {
-        printf("attaching connection, stage II\n");
+        if (verbose >= 2)
+            printf("attaching connection, stage II\n");
         attach_after_play_character(c, c->current_server);
         return PA_DROP;
     }
@@ -386,7 +391,8 @@ static packet_action_t handle_play_server(struct connection *c,
     assert(length == sizeof(*p));
 
     if (c->current_server->attaching) {
-        printf("attaching connection, stage II\n");
+        if (verbose >= 2)
+            printf("attaching connection, stage II\n");
         attach_after_play_character(c, c->current_server);
         return PA_DROP;
     }
