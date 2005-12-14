@@ -15,11 +15,11 @@ CFLAGS = -O3 -DNDEBUG=1
 LDFLAGS = -O3
 endif
 
-#CFLAGS += -DDUMP_HEADERS -DDUMP_LOGIN
-#CFLAGS += -DDUMP_SERVER_SEND -DDUMP_CLIENT_SEND
-#CFLAGS += -DDUMP_SERVER_RECEIVE -DDUMP_CLIENT_RECEIVE
-#CFLAGS += -DDUMP_SERVER_PEEK -DDUMP_CLIENT_PEEK
-#CFLAGS += -DDUMP_WALK
+#FEATURE_CFLAGS += -DDUMP_HEADERS -DDUMP_LOGIN
+#FEATURE_CFLAGS += -DDUMP_SERVER_SEND -DDUMP_CLIENT_SEND
+#FEATURE_CFLAGS += -DDUMP_SERVER_RECEIVE -DDUMP_CLIENT_RECEIVE
+#FEATURE_CFLAGS += -DDUMP_SERVER_PEEK -DDUMP_CLIENT_PEEK
+#FEATURE_CFLAGS += -DDUMP_WALK
 
 ifeq ($(DEBUG),yes)
 WARNING_CFLAGS += -W -Wall -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef -pedantic-errors -Werror
@@ -38,7 +38,7 @@ clean:
 	rm -f src/uoproxy src/*.o
 
 $(OBJECTS): %.o: %.c $(HEADERS)
-	$(CC) -c $(CFLAGS) $(WARNING_CFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) $(WARNING_CFLAGS) $(FEATURE_CFLAGS) -o $@ $<
 
 src/uoproxy: $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^
