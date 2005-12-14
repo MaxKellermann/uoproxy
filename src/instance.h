@@ -29,6 +29,8 @@ struct instance {
     struct config *config;
 
     /* state */
+    int server_socket;
+
     struct connection *connections_head;
     struct relay_list *relays;
 
@@ -44,5 +46,11 @@ void instance_post_select(struct instance *instance,
 void instance_idle(struct instance *instance, time_t now);
 
 void instance_schedule(struct instance *instance, time_t secs);
+
+#ifdef DISABLE_DAEMON_CODE
+#define instance_daemonize(foo) do { (void)(foo); } while (0)
+#else
+void instance_daemonize(struct instance *instance);
+#endif
 
 #endif

@@ -33,6 +33,13 @@ struct config {
     struct game_server_config *game_servers;
     int background, autoreconnect;
     char *client_version;
+    /* daemon config */
+#ifndef DISABLE_DAEMON_CODE
+    int no_daemon;
+    char *pidfile, *logger, *chroot_dir;
+    uid_t uid;
+    gid_t gid;
+#endif
 };
 
 extern int verbose;

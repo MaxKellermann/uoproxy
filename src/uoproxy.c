@@ -79,7 +79,7 @@ static void delete_all_connections(struct connection *head) {
 }
 
 static void run_server(struct instance *instance) {
-    int sockfd, ret;
+    int ret;
     struct selectx sx;
 
     instance->tv = (struct timeval){
@@ -87,11 +87,9 @@ static void run_server(struct instance *instance) {
         .tv_usec = 0,
     };
 
-    sockfd = setup_server_socket(instance->config->bind_address);
-
     while (!should_exit) {
         selectx_clear(&sx);
-        selectx_add_read(&sx, sockfd);
+        selectx_add_read(&sx, instance->server_socket);
         instance_pre_select(instance, &sx);
 
         ret = selectx(&sx, &instance->tv);
@@ -103,12 +101,12 @@ static void run_server(struct instance *instance) {
 
             instance_idle(instance, time(NULL));
         } else if (ret > 0) {
-            if (FD_ISSET(sockfd, &sx.readfds)) {
+            if (FD_ISSET(instance->server_socket, &sx.readfds)) {
                 int sockfd2;
                 struct sockaddr addr;
                 socklen_t addrlen = sizeof(addr);
 
-                sockfd2 = accept(sockfd, &addr, &addrlen);
+                sockfd2 = accept(instance->server_socket, &addr, &addrlen);
                 if (sockfd2 >= 0) {
                     struct connection *c;
 
@@ -169,6 +167,10 @@ int main(int argc, char **argv) {
     /* set up */
 
     setup_signal_handlers();
+
+    instance.server_socket = setup_server_socket(instance.config->bind_address);
+
+    instance_daemonize(&instance);
 
     /* call main loop */
 
