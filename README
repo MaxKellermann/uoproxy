@@ -23,6 +23,8 @@ Some of the interesting features:
 
 - traversing firewalls
 
+- transparent proxying
+
 - faking your client IP - install uoproxy on 10 different servers, and
   have 10 different IP addresses although all clients run on your
   local computer
