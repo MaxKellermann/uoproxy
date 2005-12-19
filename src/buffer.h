@@ -22,6 +22,8 @@
 #ifndef __BUFFER_H
 #define __BUFFER_H
 
+#include <assert.h>
+
 struct buffer {
     size_t max_length, length, position;
     unsigned char data[1];
