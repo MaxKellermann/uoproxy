@@ -139,8 +139,8 @@ void connection_broadcast_servers_except(struct connection *c,
 void connection_world_item(struct connection *c,
                            const struct uo_packet_world_item *p);
 
-void connection_equip_item(struct connection *c,
-                           const struct uo_packet_equip *p);
+void connection_equip(struct connection *c,
+                      const struct uo_packet_equip *p);
 
 void connection_remove_item(struct connection *c, u_int32_t serial);
 
