@@ -251,7 +251,8 @@ static packet_action_t handle_mobile_incoming(struct connection *c,
                                               void *data, size_t length) {
     const struct uo_packet_mobile_incoming *p = data;
 
-    (void)length;
+    if (length < sizeof(*p) - sizeof(p->items))
+        return PA_DISCONNECT;
 
     connection_mobile_incoming(c, p);
 

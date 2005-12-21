@@ -540,7 +540,7 @@ struct uo_packet_mobile_incoming {
     u_int16_t hue;
     u_int8_t flags;
     u_int8_t notoriety;
-    struct uo_packet_fragment_mobile_item items[];
+    struct uo_packet_fragment_mobile_item items[1];
     /* u_int32_t zero; */
 } __attribute__ ((packed));
 
