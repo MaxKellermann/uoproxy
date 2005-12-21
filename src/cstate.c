@@ -41,26 +41,34 @@ static struct item **find_item(struct connection *c,
     return i;
 }
 
+static struct item *make_item(struct connection *c, u_int32_t serial) {
+    struct item **ip, *i;
+
+    ip = find_item(c, serial);
+    if (*ip != NULL)
+        return *ip;
+
+    i = calloc(1, sizeof(*i));
+    if (i == NULL)
+        return NULL;
+
+    *ip = i;
+    i->serial = serial;
+
+    return i;
+}
+
 void connection_world_item(struct connection *c,
                            const struct uo_packet_world_item *p) {
-    u_int32_t serial = p->serial & 0x7fffffff;
-    struct item **ip, *i;
+    struct item *i;
 
     assert(p->cmd == PCK_WorldItem);
     assert(ntohs(p->length) <= sizeof(*p));
 
-    ip = find_item(c, serial);
-    if (*ip == NULL) {
-        i = calloc(1, sizeof(*i));
-        if (i == NULL) {
-            fprintf(stderr, "out of memory\n");
-            return;
-        }
-
-        *ip = i;
-        i->serial = serial;
-    } else {
-        i = *ip;
+    i = make_item(c, p->serial & 0x7fffffff);
+    if (i == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return;
     }
 
     i->packet_world_item = *p;
@@ -68,22 +76,14 @@ void connection_world_item(struct connection *c,
 
 void connection_equip(struct connection *c,
                       const struct uo_packet_equip *p) {
-    struct item **ip, *i;
+    struct item *i;
 
     assert(p->cmd == PCK_Equip);
 
-    ip = find_item(c, p->serial);
-    if (*ip == NULL) {
-        i = calloc(1, sizeof(*i));
-        if (i == NULL) {
-            fprintf(stderr, "out of memory\n");
-            return;
-        }
-
-        *ip = i;
-        i->serial = p->serial;
-    } else {
-        i = *ip;
+    i = make_item(c, p->serial);
+    if (i == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return;
     }
 
     i->packet_equip = *p;
