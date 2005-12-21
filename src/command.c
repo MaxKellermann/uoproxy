@@ -52,7 +52,7 @@ void connection_handle_command(struct connection *c,
 
     if (*command == 0) {
         uo_server_speak_console(server->server,
-                                "uoproxy commands: % %reconnect %char");
+                                "uoproxy commands: % %reconnect %char %drop");
     } else if (strcmp(command, "reconnect") == 0) {
         if (c->client == NULL) {
             uo_server_speak_console(server->server,
@@ -89,6 +89,22 @@ void connection_handle_command(struct connection *c,
         } else {
             uo_server_speak_console(server->server,
                                     "uoproxy: invalid %char syntax");
+        }
+    } else if (strcmp(command, "drop") == 0) {
+        if (c->client == NULL) {
+            uo_server_speak_console(server->server,
+                                    "uoproxy: not connected");
+        } else {
+            struct uo_packet_drop p = {
+                .cmd = PCK_Drop,
+                .serial = 0,
+                .x = c->packet_start.x,
+                .y = c->packet_start.y,
+                .z = ntohs(c->packet_start.x),
+                .dest_serial = 0,
+            };
+
+            uo_client_send(c->client, &p, sizeof(p));
         }
     } else {
         uo_server_speak_console(server->server,
