@@ -442,7 +442,6 @@ static packet_action_t handle_talk_unicode(struct connection *c,
         /* XXX this ignores MessageType.Encoded */
         char msg[TALK_MAX], *t;
 
-        fflush(stdout);
         t = simple_unicode_to_ascii(msg, p->text, text_length);
         if (t != NULL)
             return handle_talk(c, t);
