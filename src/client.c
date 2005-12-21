@@ -28,7 +28,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "netutil.h"
 #include "ioutil.h"
 #include "client.h"
 #include "sockbuff.h"
