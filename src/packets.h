@@ -33,7 +33,7 @@ enum uo_packet_type_t {
     PCK_Attack = 0x05,
     PCK_Use = 0x06,
     PCK_LiftRequest = 0x07,
-    PCK_ItemDropReq = 0x08,
+    PCK_Drop = 0x08,
     PCK_Click = 0x09,
     PCK_EditItem = 0x0A,
     PCK_EditArea = 0x0B,
@@ -310,6 +310,15 @@ struct uo_packet_lift_request {
     unsigned char cmd;
     u_int32_t serial;
     u_int16_t amount;
+} __attribute__ ((packed));
+
+/* 0x08 Drop */
+struct uo_packet_drop {
+    unsigned char cmd;
+    u_int32_t serial;
+    int16_t x, y;
+    int8_t z;
+    u_int32_t dest_serial;
 } __attribute__ ((packed));
 
 /* 0x11 MobileStatus */
