@@ -66,6 +66,29 @@ void connection_world_item(struct connection *c,
     i->packet_world_item = *p;
 }
 
+void connection_equip(struct connection *c,
+                      const struct uo_packet_equip *p) {
+    struct item **ip, *i;
+
+    assert(p->cmd == PCK_Equip);
+
+    ip = find_item(c, p->serial);
+    if (*ip == NULL) {
+        i = calloc(1, sizeof(*i));
+        if (i == NULL) {
+            fprintf(stderr, "out of memory\n");
+            return;
+        }
+
+        *ip = i;
+        i->serial = p->serial;
+    } else {
+        i = *ip;
+    }
+
+    i->packet_equip = *p;
+}
+
 void connection_remove_item(struct connection *c, u_int32_t serial) {
     struct item **ip, *i;
 

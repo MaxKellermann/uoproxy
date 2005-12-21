@@ -147,8 +147,12 @@ void attach_after_play_character(struct connection *c,
 
     /* items */
     for (item = c->items_head; item != NULL; item = item->next) {
-        uo_server_send(ls->server, &item->packet_world_item,
-                       ntohs(item->packet_world_item.length));
+        if (item->packet_world_item.cmd == PCK_WorldItem)
+            uo_server_send(ls->server, &item->packet_world_item,
+                           ntohs(item->packet_world_item.length));
+        if (item->packet_equip.cmd == PCK_Equip)
+            uo_server_send(ls->server, &item->packet_equip,
+                           sizeof(item->packet_equip));
     }
 
     /* LoginComplete */

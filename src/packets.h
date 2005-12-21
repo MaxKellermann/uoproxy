@@ -72,7 +72,7 @@ enum uo_packet_type_t {
     PCK_GodModeOK = 0x2B,
     PCK_DeathMenu = 0x2C,
     PCK_UnkHealth = 0x2D,
-    PCK_ItemEquip = 0x2e,
+    PCK_Equip = 0x2e,
     PCK_Fight = 0x2f,
     PCK_UnkAttackOK = 0x30,
     PCK_UnkPeace = 0x31,
@@ -428,6 +428,17 @@ struct uo_packet_walk_ack {
 struct uo_packet_lift_reject {
     unsigned char cmd;
     u_int8_t reason;
+} __attribute__ ((packed));
+
+/* 0x2e Equip */
+struct uo_packet_equip {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t item_id;
+    u_int8_t unknown0;
+    u_int8_t layer;
+    u_int32_t parent_serial;
+    u_int16_t hue;
 } __attribute__ ((packed));
 
 /* 0x4f GlobalLightLevel */
