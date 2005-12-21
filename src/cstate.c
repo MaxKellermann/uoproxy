@@ -169,6 +169,40 @@ static void replace_packet(void **destp, const void *src,
     memcpy(*destp, src, length);
 }
 
+static void read_equipped(struct connection *c,
+                          const struct uo_packet_mobile_incoming *p) {
+    const char *p0, *i, *end;
+    const struct uo_packet_fragment_mobile_item *item;
+    struct uo_packet_equip equip = {
+        .cmd = PCK_Equip,
+        .parent_serial = p->serial,
+    };
+
+    p0 = (const char*)(const void*)p;
+    end = p0 + ntohs(p->length);
+    item = p->items;
+    i = (const char*)(const void*)item;
+
+    while ((const char*)(const void*)(item + 1) <= end) {
+        if (item->serial == 0)
+            break;
+        equip.serial = item->serial;
+        equip.item_id = item->item_id & htons(0x3fff);
+        equip.layer = item->layer;
+        if (item->item_id & htons(0x8000)) {
+            equip.hue = item->hue;
+            item++;
+            i = (const char*)(const void*)item;
+        } else {
+            equip.hue = 0;
+            i += sizeof(*item) - sizeof(item->hue);
+            item = (const struct uo_packet_fragment_mobile_item*)i;
+        }
+
+        connection_equip(c, &equip);
+    }
+}
+
 void connection_mobile_incoming(struct connection *c,
                                 const struct uo_packet_mobile_incoming *p) {
     struct mobile *m;
@@ -197,6 +231,8 @@ void connection_mobile_incoming(struct connection *c,
 
     replace_packet((void**)&m->packet_mobile_incoming,
                    p, ntohs(p->length));
+
+    read_equipped(c, p);
 }
 
 void connection_mobile_status(struct connection *c,
