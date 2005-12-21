@@ -4,6 +4,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * remember equip packets
   * parse encoded speech
   * new command "%drop" which drops the item currently held
+  * bugfix: serials are in network byte order
 
  --
 

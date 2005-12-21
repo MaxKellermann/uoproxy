@@ -65,7 +65,7 @@ void connection_world_item(struct connection *c,
     assert(p->cmd == PCK_WorldItem);
     assert(ntohs(p->length) <= sizeof(*p));
 
-    i = make_item(c, p->serial & 0x7fffffff);
+    i = make_item(c, p->serial & htonl(0x7fffffff));
     if (i == NULL) {
         fprintf(stderr, "out of memory\n");
         return;
@@ -337,9 +337,11 @@ void connection_delete_mobiles(struct connection *c) {
 }
 
 void connection_remove_serial(struct connection *c, u_int32_t serial) {
-    if (serial < 0x40000000)
+    u_int32_t host_serial = ntohl(serial);
+
+    if (host_serial < 0x40000000)
         connection_remove_mobile(c, serial);
-    else if (serial < 0x80000000)
+    else if (host_serial < 0x80000000)
         connection_remove_item(c, serial);
 }
 
