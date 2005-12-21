@@ -431,20 +431,37 @@ static packet_action_t handle_play_server(struct connection *c,
 static packet_action_t handle_talk_unicode(struct connection *c,
                                            void *data, size_t length) {
     const struct uo_packet_talk_unicode *p = data;
-    size_t text_length;
 
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
-    text_length = (length - sizeof(*p)) / 2;
+    if (p->type == 0xc0) {
+        u_int16_t value = ntohs(p->text[0]);
+        unsigned num_keywords = (value & 0xfff0) >> 4;
+        unsigned skip_bits = (num_keywords + 1) * 12;
+        unsigned skip_bytes = 12 + (skip_bits + 7) / 8;
+        u_int8_t *start = data;
+        u_int8_t *p = start + skip_bytes;
+        size_t text_length = length - skip_bytes - 1;
 
-    if (p->type == 0x00 && text_length < TALK_MAX) { /* Regular */
-        /* XXX this ignores MessageType.Encoded */
-        char msg[TALK_MAX], *t;
+        if (skip_bytes >= length)
+            return PA_DISCONNECT;
 
-        t = simple_unicode_to_ascii(msg, p->text, text_length);
-        if (t != NULL)
-            return handle_talk(c, t);
+        if (memchr(p, 0, text_length) != NULL || p[text_length] != 0)
+            return PA_DISCONNECT;
+
+        /* the text may be UTF-8, but we ignore that for now */
+        return handle_talk(c, p);
+    } else {
+        size_t text_length = (length - sizeof(*p)) / 2;
+
+        if (text_length < TALK_MAX) { /* Regular */
+            char msg[TALK_MAX], *t;
+
+            t = simple_unicode_to_ascii(msg, p->text, text_length);
+            if (t != NULL)
+                return handle_talk(c, t);
+        }
     }
 
     return PA_ACCEPT;

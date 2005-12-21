@@ -2,6 +2,7 @@ uoproxy (0.1.1) unstable; urgency=low
 
   * corrected the getopt string
   * remember equip packets
+  * parse encoded speech
 
  --
 
