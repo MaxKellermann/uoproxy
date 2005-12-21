@@ -440,18 +440,18 @@ static packet_action_t handle_talk_unicode(struct connection *c,
         unsigned num_keywords = (value & 0xfff0) >> 4;
         unsigned skip_bits = (num_keywords + 1) * 12;
         unsigned skip_bytes = 12 + (skip_bits + 7) / 8;
-        u_int8_t *start = data;
-        u_int8_t *p = start + skip_bytes;
+        char *start = data;
+        char *t = start + skip_bytes;
         size_t text_length = length - skip_bytes - 1;
 
         if (skip_bytes >= length)
             return PA_DISCONNECT;
 
-        if (memchr(p, 0, text_length) != NULL || p[text_length] != 0)
+        if (memchr(t, 0, text_length) != NULL || t[text_length] != 0)
             return PA_DISCONNECT;
 
         /* the text may be UTF-8, but we ignore that for now */
-        return handle_talk(c, p);
+        return handle_talk(c, t);
     } else {
         size_t text_length = (length - sizeof(*p)) / 2;
 
