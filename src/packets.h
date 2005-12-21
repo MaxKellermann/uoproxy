@@ -620,7 +620,7 @@ struct uo_packet_supported_features {
     u_int16_t flags;
 } __attribute__ ((packed));
 
-/* 0xas TalkUnicode */
+/* 0xad TalkUnicode */
 struct uo_packet_talk_unicode {
     unsigned char cmd;
     u_int16_t length;
