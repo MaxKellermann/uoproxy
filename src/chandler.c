@@ -345,6 +345,7 @@ static packet_action_t handle_game_login(struct connection *c,
 
     if (c->server_address->ai_addr == NULL) {
         free(c->server_address);
+        c->server_address = NULL;
         fprintf(stderr, "out of memory");
         return PA_DISCONNECT;
     }
