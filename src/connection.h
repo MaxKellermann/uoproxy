@@ -83,6 +83,8 @@ struct connection {
     /* state */
     char username[30], password[30];
 
+    unsigned server_index;
+
     struct uo_fragment_character_info characters[MAX_CHARACTERS];
     unsigned num_characters, character_index;
 
@@ -209,8 +211,10 @@ void connection_reconnect(struct connection *c);
 
 /* attach */
 
-void attach_after_game_login(struct connection *c,
-                             struct uo_server *server);
+struct connection *find_attach_connection(struct connection *c);
+
+void attach_after_play_server(struct connection *c,
+                              struct uo_server *server);
 
 void attach_after_play_character(struct connection *c,
                                  struct linked_server *ls);

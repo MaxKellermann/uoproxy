@@ -35,7 +35,6 @@
 
 #include "netutil.h"
 #include "ioutil.h"
-#include "relay.h"
 #include "connection.h"
 #include "config.h"
 #include "instance.h"
@@ -149,11 +148,9 @@ static void setup_signal_handlers(void) {
 
 int main(int argc, char **argv) {
     struct config config;
-    struct relay_list relays = { .next = 0, };
     struct instance instance = {
         .config = &config,
         .connections_head = NULL,
-        .relays = &relays,
     };
 
     /* configuration */

@@ -26,11 +26,11 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <netdb.h>
 
 #include "instance.h"
 #include "packets.h"
 #include "handler.h"
-#include "relay.h"
 #include "connection.h"
 #include "server.h"
 #include "client.h"
@@ -363,80 +363,72 @@ static packet_action_t handle_account_login_reject(struct connection *c,
 
 static packet_action_t handle_relay(struct connection *c,
                                     void *data, size_t length) {
-    /* this packet tells the UO client where to connect; what
-       we do here is replace the server IP with our own one */
+    /* this packet tells the UO client where to connect; uoproxy hides
+       this packet from the client, and only internally connects to
+       the new server */
     struct uo_packet_relay *p = data;
-    struct relay relay;
     int ret;
     struct sockaddr_in sin;
-    socklen_t sin_len = sizeof(sin);
-    struct uo_server *server;
+    struct uo_packet_game_login login;
 
     assert(length == sizeof(*p));
 
-    if (c->reconnecting) {
-        struct uo_packet_game_login p2 = {
-            .cmd = PCK_GameLogin,
-            .auth_id = p->auth_id,
-        };
+    if (c->in_game && !c->reconnecting)
+        return PA_DISCONNECT;
 
-        if (verbose >= 2)
-            printf("changing to game connection\n");
+    if (verbose >= 2)
+        printf("changing to game connection\n");
 
-        uo_client_dispose(c->client);
-        c->client = NULL;
+    /* close old connection */
+    uo_client_dispose(c->client);
+    c->client = NULL;
 
-        ret = uo_client_create(c->server_address, p->auth_id, &c->client);
-        if (ret != 0) {
-            if (verbose >= 1)
-                fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
-            return PA_DROP;
-        }
+    /* extract new server's address */
+    c->server_address = calloc(1, sizeof(*c->server_address));
+    if (c->server_address == NULL) {
+        fprintf(stderr, "out of memory");
+        return PA_DISCONNECT;
+    }
 
-        if (verbose >= 2)
-            printf("connected, doing GameLogin\n");
+    sin.sin_family = AF_INET;
+    sin.sin_port = p->port;
+    sin.sin_addr.s_addr = p->ip;
 
-        memcpy(p2.username, c->username, sizeof(p2.username));
-        memcpy(p2.password, c->password, sizeof(p2.password));
+    c->server_address->ai_family = AF_INET;
+    c->server_address->ai_addrlen = sizeof(sin);
+    c->server_address->ai_addr = malloc(sizeof(sin));
 
-        uo_client_send(c->client, &p2, sizeof(p2));
+    if (c->server_address->ai_addr == NULL) {
+        free(c->server_address);
+        c->server_address = NULL;
+        fprintf(stderr, "out of memory");
+        return PA_DISCONNECT;
+    }
 
+    memcpy(c->server_address->ai_addr, &sin, sizeof(sin));
+
+    /* connect to new server */
+    ret = uo_client_create(c->server_address, p->auth_id, &c->client);
+    if (ret != 0) {
+        if (verbose >= 1)
+            fprintf(stderr, "connect to game server failed: %s\n",
+                    strerror(-ret));
         return PA_DROP;
     }
 
-    if (c->in_game)
-        return PA_DISCONNECT;
+    /* send game login to new server */
+    if (verbose >= 2)
+        printf("connected, doing GameLogin\n");
 
-    server = c->servers_head->server;
+    login.cmd = PCK_GameLogin;
+    login.auth_id = p->auth_id;
 
-    /* remember the original IP/port */
-    relay = (struct relay){
-        .auth_id = p->auth_id,
-        .server_ip = p->ip,
-        .server_port = p->port,
-    };
+    memcpy(login.username, c->username, sizeof(login.username));
+    memcpy(login.password, c->password, sizeof(login.password));
 
-    relay_add(c->instance->relays, &relay);
+    uo_client_send(c->client, &login, sizeof(login));
 
-    /* get our local address */
-    ret = getsockname(uo_server_fileno(server),
-                      (struct sockaddr*)&sin, &sin_len);
-    if (ret < 0) {
-        fprintf(stderr, "getsockname() failed: %s\n",
-                strerror(errno));
-        return PA_DISCONNECT;
-    }
-
-    if (sin.sin_family != AF_INET) {
-        fprintf(stderr, "not AF_INET\n");
-        return PA_DISCONNECT;
-    }
-
-    /* now overwrite the packet */
-    p->ip = sin.sin_addr.s_addr;
-    p->port = sin.sin_port;
-
-    return PA_ACCEPT;
+    return PA_DROP;
 }
 
 static packet_action_t handle_server_list(struct connection *c,

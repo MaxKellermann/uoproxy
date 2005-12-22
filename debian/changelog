@@ -9,6 +9,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * handle container packets: open, update, content
   * delete all child objects when an entity is deleted
   * bugfix: check c->reconnecting before c->in_game
+  * don't forward relay packet, connect to game server internally
 
  --
 

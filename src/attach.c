@@ -24,10 +24,24 @@
 #include <string.h>
 
 #include "connection.h"
+#include "instance.h"
 #include "server.h"
 
-void attach_after_game_login(struct connection *c,
-                             struct uo_server *server) {
+struct connection *find_attach_connection(struct connection *c) {
+    struct connection *c2;
+
+    for (c2 = c->instance->connections_head; c2 != NULL; c2 = c2->next)
+        if (c2 != c && c2->in_game && c2->packet_start.serial != 0 &&
+            memcmp(c->username, c2->username, sizeof(c->username)) == 0 &&
+            memcmp(c->password, c2->password, sizeof(c->password)) == 0 &&
+            c->server_index == c2->server_index)
+            return c2;
+
+    return NULL;
+}
+
+void attach_after_play_server(struct connection *c,
+                              struct uo_server *server) {
     struct linked_server *ls;
     struct uo_packet_supported_features supported_features;
     struct uo_packet_simple_character_list character_list;

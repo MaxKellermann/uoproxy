@@ -33,7 +33,6 @@
 #include "connection.h"
 #include "client.h"
 #include "server.h"
-#include "relay.h"
 #include "config.h"
 
 #define TALK_MAX 128
@@ -274,97 +273,14 @@ static packet_action_t handle_account_login(struct connection *c,
 static packet_action_t handle_game_login(struct connection *c,
                                          void *data, size_t length) {
     const struct uo_packet_game_login *p = data;
-    int ret;
-    const struct relay *relay;
-    struct connection *c2;
-    struct sockaddr_in sin;
 
     assert(length == sizeof(*p));
     assert(sizeof(p->username) == sizeof(c->username));
     assert(sizeof(p->password) == sizeof(c->password));
 
-    if (c->in_game)
-        return PA_DISCONNECT;
-
-#ifdef DUMP_LOGIN
-    printf("game_login: username=%s password=%s\n",
-           p->username, p->password);
-#endif
-
-    if (c->client != NULL) {
-        if (verbose >= 2)
-            fprintf(stderr, "already logged in\n");
-        return PA_DISCONNECT;
-    }
-
-    relay = relay_find(c->instance->relays, p->auth_id);
-    if (relay == NULL) {
-        if (verbose >= 2)
-            fprintf(stderr, "invalid or expired auth_id: 0x%08x\n",
-                    p->auth_id);
-        return PA_DISCONNECT;
-    }
-
-    for (c2 = c->instance->connections_head; c2 != NULL; c2 = c2->next) {
-        if (c2 != c && c2->packet_start.serial != 0 &&
-            memcmp(p->username, c2->username, sizeof(c2->username)) == 0 &&
-            memcmp(p->password, c2->password, sizeof(c2->password)) == 0 &&
-            c2->in_game) {
-            struct uo_server *server = c->current_server->server;
-
-            assert(server != NULL);
-
-#ifdef DUMP_LOGIN
-            printf("attaching connection\n");
-#endif
-
-            /* remove the object from the old connection */
-            c->current_server->invalid = 1;
-            c->current_server->server = NULL;
-
-            /* attach it to the new connection */
-            attach_after_game_login(c2, server);
-
-            return PA_DISCONNECT;
-        }
-    }
-
-    c->server_address = calloc(1, sizeof(*c->server_address));
-    if (c->server_address == NULL) {
-        fprintf(stderr, "out of memory");
-        return PA_DISCONNECT;
-    }
-
-    sin.sin_family = AF_INET;
-    sin.sin_port = relay->server_port;
-    sin.sin_addr.s_addr = relay->server_ip;
-
-    c->server_address->ai_family = AF_INET;
-    c->server_address->ai_addrlen = sizeof(sin);
-    c->server_address->ai_addr = malloc(sizeof(sin));
-
-    if (c->server_address->ai_addr == NULL) {
-        free(c->server_address);
-        c->server_address = NULL;
-        fprintf(stderr, "out of memory");
-        return PA_DISCONNECT;
-    }
-
-    memcpy(c->server_address->ai_addr, &sin, sizeof(sin));
-
-    ret = uo_client_create(c->server_address,
-                           uo_server_seed(c->current_server->server),
-                           &c->client);
-    if (ret != 0) {
-        fprintf(stderr, "uo_client_create() failed: %s\n",
-                strerror(-ret));
-        return PA_DISCONNECT;
-    }
-
-    memcpy(c->username, p->username, sizeof(c->username));
-    memcpy(c->password, p->password, sizeof(c->password));
-
-    return PA_ACCEPT;
+    /* valid uoproxy clients will never send this packet, as we're
+       hiding the Relay packets from them */
+    return PA_DISCONNECT;
 }
 
 static packet_action_t handle_play_character(struct connection *c,
@@ -388,14 +304,31 @@ static packet_action_t handle_play_character(struct connection *c,
 static packet_action_t handle_play_server(struct connection *c,
                                           void *data, size_t length) {
     const struct uo_packet_play_server *p = data;
+    struct connection *c2;
 
     assert(length == sizeof(*p));
 
-    if (c->current_server->attaching) {
-        if (verbose >= 2)
-            printf("attaching connection, stage II\n");
-        attach_after_play_character(c, c->current_server);
-        return PA_DROP;
+    if (c->in_game)
+        return PA_DISCONNECT;
+
+    assert(c->current_server->next == NULL);
+
+    c->server_index = ntohs(p->index);
+
+    c2 = find_attach_connection(c);
+    if (c2 != NULL) {
+        struct uo_server *server = c->current_server->server;
+
+        assert(server != NULL);
+
+        /* remove the object from the old connection */
+        c->current_server->invalid = 1;
+        c->current_server->server = NULL;
+
+        /* attach it to the new connection */
+        attach_after_play_server(c2, server);
+
+        return PA_DISCONNECT;
     }
 
     if (c->instance->config->login_address == NULL &&
@@ -403,25 +336,35 @@ static packet_action_t handle_play_server(struct connection *c,
         c->instance->config->num_game_servers > 0) {
         unsigned i, num_game_servers = c->instance->config->num_game_servers;
         struct game_server_config *config;
-        struct sockaddr_in *sin;
-        struct uo_packet_relay relay;
+        int ret;
+        struct uo_packet_game_login login;
 
+        assert(c->client == NULL);
+
+        /* locate the selected game server */
         i = ntohs(p->index);
         if (i >= num_game_servers)
             return PA_DISCONNECT;
 
         config = c->instance->config->game_servers + i;
-        if (config->address->ai_family != AF_INET)
+
+        /* connect to new server */
+        ret = uo_client_create(config->address, 0xdeadbeef, &c->client);
+        if (ret != 0) {
+            if (verbose >= 1)
+                fprintf(stderr, "connect to game server failed: %s\n",
+                        strerror(-ret));
             return PA_DISCONNECT;
+        }
 
-        sin = (struct sockaddr_in*)config->address->ai_addr;
+        /* send game login to new server */
+        login.cmd = PCK_GameLogin;
+        login.auth_id = 0xdeadbeef;
 
-        relay.cmd = PCK_Relay;
-        relay.ip = sin->sin_addr.s_addr;
-        relay.port = sin->sin_port;
-        relay.auth_id = 0xdeadbeef; /* XXX */
+        memcpy(login.username, c->username, sizeof(login.username));
+        memcpy(login.password, c->password, sizeof(login.password));
 
-        uo_server_send(c->current_server->server, &relay, sizeof(relay));
+        uo_client_send(c->client, &login, sizeof(login));
 
         return PA_DROP;
     }
