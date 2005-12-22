@@ -367,6 +367,7 @@ static packet_action_t handle_relay(struct connection *c,
        this packet from the client, and only internally connects to
        the new server */
     struct uo_packet_relay *p = data;
+    struct uo_packet_relay relay;
     int ret;
     struct sockaddr_in sin;
     struct uo_packet_game_login login;
@@ -378,6 +379,9 @@ static packet_action_t handle_relay(struct connection *c,
 
     if (verbose >= 2)
         printf("changing to game connection\n");
+
+    /* save the relay packet - its buffer will be freed soon */
+    relay = *p;
 
     /* close old connection */
     uo_client_dispose(c->client);
@@ -391,8 +395,8 @@ static packet_action_t handle_relay(struct connection *c,
     }
 
     sin.sin_family = AF_INET;
-    sin.sin_port = p->port;
-    sin.sin_addr.s_addr = p->ip;
+    sin.sin_port = relay.port;
+    sin.sin_addr.s_addr = relay.ip;
 
     c->server_address->ai_family = AF_INET;
     c->server_address->ai_addrlen = sizeof(sin);
@@ -408,7 +412,7 @@ static packet_action_t handle_relay(struct connection *c,
     memcpy(c->server_address->ai_addr, &sin, sizeof(sin));
 
     /* connect to new server */
-    ret = uo_client_create(c->server_address, p->auth_id, &c->client);
+    ret = uo_client_create(c->server_address, relay.auth_id, &c->client);
     if (ret != 0) {
         if (verbose >= 1)
             fprintf(stderr, "connect to game server failed: %s\n",
@@ -421,7 +425,7 @@ static packet_action_t handle_relay(struct connection *c,
         printf("connected, doing GameLogin\n");
 
     login.cmd = PCK_GameLogin;
-    login.auth_id = p->auth_id;
+    login.auth_id = relay.auth_id;
 
     memcpy(login.username, c->username, sizeof(login.username));
     memcpy(login.password, c->password, sizeof(login.password));
