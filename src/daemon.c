@@ -21,7 +21,7 @@
 
 void instance_daemonize(struct instance *instance) {
     struct config *config = instance->config;
-    int ret, parentfd, loggerfd;
+    int ret, parentfd = -1, loggerfd = -1;
     pid_t logger_pid;
 
     /* daemonize */
