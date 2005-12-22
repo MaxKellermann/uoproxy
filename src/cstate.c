@@ -41,6 +41,11 @@ static struct item **find_item(struct connection *c,
     return i;
 }
 
+struct item *container_find_item(struct connection *c,
+                                 u_int32_t serial) {
+    return *find_item(c, serial);
+}
+
 static struct item *make_item(struct connection *c, u_int32_t serial) {
     struct item **ip, *i;
 
@@ -87,6 +92,55 @@ void connection_equip(struct connection *c,
     }
 
     i->packet_equip = *p;
+}
+
+void connection_container_open(struct connection *c,
+                               const struct uo_packet_container_open *p) {
+    struct item *i;
+
+    assert(p->cmd == PCK_ContainerOpen);
+
+    i = make_item(c, p->serial);
+    if (i == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return;
+    }
+
+    i->packet_container_open = *p;
+}
+
+void connection_container_update(struct connection *c,
+                                 const struct uo_packet_container_update *p) {
+    struct item *i;
+
+    assert(p->cmd == PCK_ContainerUpdate);
+
+    i = make_item(c, p->item.serial);
+    if (i == NULL) {
+        fprintf(stderr, "out of memory\n");
+        return;
+    }
+
+    i->packet_container_update = *p;
+}
+
+void connection_container_content(struct connection *c,
+                                  const struct uo_packet_container_content *p) {
+    struct item *i;
+    unsigned t;
+
+    assert(p->cmd == PCK_ContainerContent);
+
+    for (t = 0; t < ntohs(p->num); t++) {
+        i = make_item(c, p->items[t].serial);
+        if (i == NULL) {
+            fprintf(stderr, "out of memory\n");
+            return;
+        }
+
+        i->packet_container_update.cmd = PCK_ContainerUpdate;
+        i->packet_container_update.item = p->items[t];
+    }
 }
 
 void connection_remove_item(struct connection *c, u_int32_t serial) {

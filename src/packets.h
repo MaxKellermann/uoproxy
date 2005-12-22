@@ -62,8 +62,8 @@ enum uo_packet_type_t {
     PCK_WalkAck = 0x22,
     PCK_Resynchronize = 0x22,
     PCK_DragAnim = 0x23,
-    PCK_ContOpen = 0x24,
-    PCK_ContAdd = 0x25,
+    PCK_ContainerOpen = 0x24,
+    PCK_ContainerUpdate = 0x25,
     PCK_Kick = 0x26,
     PCK_LiftReject = 0x27,
     PCK_ClearSquare = 0x28,
@@ -86,7 +86,7 @@ enum uo_packet_type_t {
     PCK_ChangeGroup = 0x39,
     PCK_Skill = 0x3a,
     PCK_VendorBuy = 0x3b,
-    PCK_Content = 0x3c,
+    PCK_ContainerContent = 0x3c,
     PCK_UnkShip = 0x3d,
     PCK_UnkVersions = 0x3e,
     PCK_EditUpdateObj = 0x3f,
@@ -433,6 +433,30 @@ struct uo_packet_walk_ack {
     u_int8_t seq, notoriety;
 } __attribute__ ((packed));
 
+/* 0x24 ContainerOpen */
+struct uo_packet_container_open {
+    unsigned char cmd;
+    u_int32_t serial;
+    u_int16_t gump_id;
+} __attribute__ ((packed));
+
+/* for 0x25 ContainerUpdate */
+struct uo_packet_fragment_container_item {
+    u_int32_t serial;
+    u_int16_t item_id;
+    u_int8_t unknown0;
+    u_int16_t amount;
+    int16_t x, y;
+    u_int32_t parent_serial;
+    u_int16_t hue;
+} __attribute__ ((packed));
+
+/* 0x25 ContainerUpdate */
+struct uo_packet_container_update {
+    unsigned char cmd;
+    struct uo_packet_fragment_container_item item;
+} __attribute__ ((packed));
+
 /* 0x27 LiftReject */
 struct uo_packet_lift_reject {
     unsigned char cmd;
@@ -448,6 +472,14 @@ struct uo_packet_equip {
     u_int8_t layer;
     u_int32_t parent_serial;
     u_int16_t hue;
+} __attribute__ ((packed));
+
+/* 0x3c ContainerContent */
+struct uo_packet_container_content {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t num;
+    struct uo_packet_fragment_container_item items[1];
 } __attribute__ ((packed));
 
 /* 0x4f GlobalLightLevel */

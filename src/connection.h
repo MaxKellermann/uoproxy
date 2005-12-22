@@ -36,6 +36,9 @@ struct item {
     u_int32_t serial;
     struct uo_packet_world_item packet_world_item;
     struct uo_packet_equip packet_equip;
+    struct uo_packet_container_open packet_container_open;
+    struct uo_packet_container_update packet_container_update;
+    unsigned attach_sequence;
 };
 
 struct mobile {
@@ -94,6 +97,7 @@ struct connection {
     struct uo_packet_war_mode packet_war_mode;
     unsigned char ping_request, ping_ack;
     struct item *items_head;
+    unsigned item_attach_sequence;
     struct mobile *mobiles_head;
 
     struct connection_walk_state walk;
@@ -136,11 +140,23 @@ void connection_broadcast_servers_except(struct connection *c,
 
 /* state */
 
+struct item *container_find_item(struct connection *c,
+                                 u_int32_t serial);
+
 void connection_world_item(struct connection *c,
                            const struct uo_packet_world_item *p);
 
 void connection_equip(struct connection *c,
                       const struct uo_packet_equip *p);
+
+void connection_container_open(struct connection *c,
+                               const struct uo_packet_container_open *p);
+
+void connection_container_update(struct connection *c,
+                                 const struct uo_packet_container_update *p);
+
+void connection_container_content(struct connection *c,
+                                  const struct uo_packet_container_content *p);
 
 void connection_remove_item(struct connection *c, u_int32_t serial);
 

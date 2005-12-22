@@ -67,6 +67,37 @@ void attach_after_game_login(struct connection *c,
     */
 }
 
+static void attach_item(struct connection *c,
+                        struct linked_server *ls,
+                        struct item *item) {
+    item->attach_sequence = c->item_attach_sequence;
+
+    if (item->packet_container_update.cmd == PCK_ContainerUpdate) {
+        /* attach parent first */
+        u_int32_t parent_serial
+            = item->packet_container_update.item.parent_serial;
+        struct item *parent = container_find_item(c, parent_serial);
+        if (parent != NULL &&
+            parent->attach_sequence != c->item_attach_sequence)
+            attach_item(c, ls, parent);
+
+        /* then this item as container content */
+        uo_server_send(ls->server, &item->packet_container_update,
+                       sizeof(item->packet_container_update));
+    }
+
+    if (item->packet_container_open.cmd == PCK_ContainerOpen)
+        uo_server_send(ls->server, &item->packet_container_open,
+                       sizeof(item->packet_container_open));
+
+    if (item->packet_world_item.cmd == PCK_WorldItem)
+        uo_server_send(ls->server, &item->packet_world_item,
+                       ntohs(item->packet_world_item.length));
+    if (item->packet_equip.cmd == PCK_Equip)
+        uo_server_send(ls->server, &item->packet_equip,
+                       sizeof(item->packet_equip));
+}
+
 void attach_after_play_character(struct connection *c,
                                  struct linked_server *ls) {
     struct uo_packet_supported_features supported_features;
@@ -146,13 +177,10 @@ void attach_after_play_character(struct connection *c,
     }
 
     /* items */
+    ++c->item_attach_sequence;
     for (item = c->items_head; item != NULL; item = item->next) {
-        if (item->packet_world_item.cmd == PCK_WorldItem)
-            uo_server_send(ls->server, &item->packet_world_item,
-                           ntohs(item->packet_world_item.length));
-        if (item->packet_equip.cmd == PCK_Equip)
-            uo_server_send(ls->server, &item->packet_equip,
-                           sizeof(item->packet_equip));
+        if (item->attach_sequence != c->item_attach_sequence)
+            attach_item(c, ls, item);
     }
 
     /* LoginComplete */

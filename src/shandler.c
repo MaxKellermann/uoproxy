@@ -149,6 +149,28 @@ static packet_action_t handle_walk_ack(struct connection *c,
     return PA_DROP;
 }
 
+static packet_action_t handle_container_open(struct connection *c,
+                                             void *data, size_t length) {
+    struct uo_packet_container_open *p = data;
+
+    assert(length == sizeof(*p));
+
+    connection_container_open(c, p);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_container_update(struct connection *c,
+                                               void *data, size_t length) {
+    struct uo_packet_container_update *p = data;
+
+    assert(length == sizeof(*p));
+
+    connection_container_update(c, p);
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_equip(struct connection *c,
                                     void *data, size_t length) {
     struct uo_packet_equip *p = data;
@@ -156,6 +178,19 @@ static packet_action_t handle_equip(struct connection *c,
     assert(length == sizeof(*p));
 
     connection_equip(c, p);
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_container_content(struct connection *c,
+                                                void *data, size_t length) {
+    struct uo_packet_container_content *p = data;
+
+    if (length < sizeof(*p) - sizeof(p->items) ||
+        length != sizeof(*p) - sizeof(p->items) + ntohs(p->num) * sizeof(p->items[0]))
+        return PA_DISCONNECT;
+
+    connection_container_content(c, p);
 
     return PA_ACCEPT;
 }
@@ -538,8 +573,17 @@ struct packet_binding server_packet_bindings[] = {
     { .cmd = PCK_WalkAck, /* 0x22 */
       .handler = handle_walk_ack,
     },
+    { .cmd = PCK_ContainerOpen, /* 0x24 */
+      .handler = handle_container_open,
+    },
+    { .cmd = PCK_ContainerUpdate, /* 0x25 */
+      .handler = handle_container_update,
+    },
     { .cmd = PCK_Equip, /* 0x2e */
       .handler = handle_equip,
+    },
+    { .cmd = PCK_ContainerContent, /* 0x3c */
+      .handler = handle_container_content,
     },
     { .cmd = PCK_PersonalLightLevel, /* 0x4e */
       .handler = handle_personal_light_level,
