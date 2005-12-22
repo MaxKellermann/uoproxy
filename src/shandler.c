@@ -346,9 +346,6 @@ static packet_action_t handle_account_login_reject(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->in_game)
-        return PA_DISCONNECT;
-
     if (c->reconnecting) {
         if (verbose >= 1)
             fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
@@ -357,6 +354,9 @@ static packet_action_t handle_account_login_reject(struct connection *c,
         connection_reconnect(c);
         return PA_DROP;
     }
+
+    if (c->in_game)
+        return PA_DISCONNECT;
 
     return PA_ACCEPT;
 }

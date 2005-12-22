@@ -8,6 +8,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * read equipment list from mobile_incoming packet
   * handle container packets: open, update, content
   * delete all child objects when an entity is deleted
+  * bugfix: check c->reconnecting before c->in_game
 
  --
 
