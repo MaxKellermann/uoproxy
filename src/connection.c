@@ -235,6 +235,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                 break;
 
             case PA_DISCONNECT:
+                fprintf(stderr, "aborting connection to server\n");
                 connection_invalidate(c);
                 break;
             }
@@ -266,6 +267,8 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                 break;
 
             case PA_DISCONNECT:
+                /* XXX: only disconnect this server */
+                fprintf(stderr, "aborting connection to client\n");
                 connection_invalidate(c);
                 break;
             }
