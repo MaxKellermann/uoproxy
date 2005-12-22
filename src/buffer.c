@@ -45,7 +45,6 @@ struct buffer *buffer_new(size_t max_length) {
 #define buffer_check(b) do {} while (0)
 #else
 static void buffer_check(const struct buffer *b) {
-    assert(b->data[b->max_length] == b->magic);
     assert(b->max_length > 0);
     assert(b->length <= b->max_length);
     assert(b->position <= b->length);
