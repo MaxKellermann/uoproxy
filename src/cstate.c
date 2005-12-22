@@ -143,6 +143,17 @@ void connection_container_content(struct connection *c,
     }
 }
 
+static void free_item(struct item *i) {
+    assert(i != NULL);
+    assert(i->serial != 0);
+
+#ifndef NDEBUG
+    memset(i, 0, sizeof(*i));
+#endif
+
+    free(i);
+}
+
 /** deep-delete all items contained in the specified serial */
 static void remove_item_tree(struct connection *c,
                              u_int32_t parent_serial) {
@@ -170,7 +181,7 @@ static void remove_item_tree(struct connection *c,
 
         remove_item_tree(c, i->serial);
 
-        free(i);
+        free_item(i);
     }
 }
 
@@ -182,7 +193,7 @@ void connection_remove_item(struct connection *c, u_int32_t serial) {
     i = *ip;
     if (i != NULL) {
         *ip = i->next;
-        free(i);
+        free_item(i);
     }
 
     /* remove equipped items */
@@ -423,6 +434,22 @@ void connection_mobile_zone(struct connection *c,
     c->packet_mobile_update.z = ntohs(p->z);
 }
 
+static void free_mobile(struct mobile *m) {
+    assert(m != NULL);
+    assert(m->serial != 0);
+
+    if (m->packet_mobile_incoming != NULL)
+        free(m->packet_mobile_incoming);
+    if (m->packet_mobile_status != NULL)
+        free(m->packet_mobile_status);
+
+#ifndef NDEBUG
+    memset(m, 0, sizeof(*m));
+#endif
+
+    free(m);
+}
+
 void connection_remove_mobile(struct connection *c, u_int32_t serial) {
     struct mobile **mp, *m;
 
@@ -431,7 +458,7 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial) {
     m = *mp;
     if (m != NULL) {
         *mp = m->next;
-        free(m);
+        free_mobile(m);
     }
 
     /* remove equipped items */
@@ -453,11 +480,7 @@ void connection_delete_mobiles(struct connection *c) {
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
-        if (m->packet_mobile_incoming != NULL)
-            free(m->packet_mobile_incoming);
-        if (m->packet_mobile_status != NULL)
-            free(m->packet_mobile_status);
-        free(m);
+        free_mobile(m);
     }
 }
 
