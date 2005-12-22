@@ -143,17 +143,50 @@ void connection_container_content(struct connection *c,
     }
 }
 
+/** deep-delete all items contained in the specified serial */
+static void remove_item_tree(struct connection *c,
+                             u_int32_t parent_serial) {
+    struct item **ip = &c->items_head, *i, *head = NULL;
+
+    /* move all direct children to the temporary list */
+    while (*ip != NULL) {
+        i = *ip;
+
+        if (i->packet_container_update.item.parent_serial == parent_serial ||
+            i->packet_equip.parent_serial == parent_serial) {
+            /* move to temp list */
+            *ip = i->next;
+            i->next = head;
+            head = i;
+        } else {
+            ip = &i->next;
+        }
+    }
+
+    /* delete these, and recursively delete their children */
+    while (head != NULL) {
+        i = head;
+        head = i->next;
+
+        remove_item_tree(c, i->serial);
+
+        free(i);
+    }
+}
+
 void connection_remove_item(struct connection *c, u_int32_t serial) {
     struct item **ip, *i;
 
+    /* remove this entity */
     ip = find_item(c, serial);
     i = *ip;
-    if (i == NULL)
-        return;
+    if (i != NULL) {
+        *ip = i->next;
+        free(i);
+    }
 
-    *ip = i->next;
-
-    free(i);
+    /* remove equipped items */
+    remove_item_tree(c, serial);
 }
 
 void connection_delete_items(struct connection *c) {
@@ -393,14 +426,16 @@ void connection_mobile_zone(struct connection *c,
 void connection_remove_mobile(struct connection *c, u_int32_t serial) {
     struct mobile **mp, *m;
 
+    /* remove this entity */
     mp = find_mobile(c, serial);
     m = *mp;
-    if (m == NULL)
-        return;
+    if (m != NULL) {
+        *mp = m->next;
+        free(m);
+    }
 
-    *mp = m->next;
-
-    free(m);
+    /* remove equipped items */
+    remove_item_tree(c, serial);
 }
 
 void connection_delete_mobiles(struct connection *c) {
