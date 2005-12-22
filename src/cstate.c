@@ -41,8 +41,8 @@ static struct item **find_item(struct connection *c,
     return i;
 }
 
-struct item *container_find_item(struct connection *c,
-                                 u_int32_t serial) {
+struct item *connection_find_item(struct connection *c,
+                                  u_int32_t serial) {
     return *find_item(c, serial);
 }
 

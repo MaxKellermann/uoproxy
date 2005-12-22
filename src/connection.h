@@ -140,8 +140,8 @@ void connection_broadcast_servers_except(struct connection *c,
 
 /* state */
 
-struct item *container_find_item(struct connection *c,
-                                 u_int32_t serial);
+struct item *connection_find_item(struct connection *c,
+                                  u_int32_t serial);
 
 void connection_world_item(struct connection *c,
                            const struct uo_packet_world_item *p);

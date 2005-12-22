@@ -76,7 +76,7 @@ static void attach_item(struct connection *c,
         /* attach parent first */
         u_int32_t parent_serial
             = item->packet_container_update.item.parent_serial;
-        struct item *parent = container_find_item(c, parent_serial);
+        struct item *parent = connection_find_item(c, parent_serial);
         if (parent != NULL &&
             parent->attach_sequence != c->item_attach_sequence)
             attach_item(c, ls, parent);
