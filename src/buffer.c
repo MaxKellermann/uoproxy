@@ -41,14 +41,27 @@ struct buffer *buffer_new(size_t max_length) {
     return b;
 }
 
+#ifdef NDEBUG
+#define buffer_check(b) do {} while (0)
+#else
+static void buffer_check(const struct buffer *b) {
+    assert(b->data[b->max_length] == b->magic);
+    assert(b->max_length > 0);
+    assert(b->length <= b->max_length);
+    assert(b->position <= b->length);
+}
+#endif
+
 void buffer_delete(struct buffer *b) {
+    buffer_check(b);
+
     b->max_length = 0;
     b->length = 0;
     free(b);
 }
 
 void buffer_commit(struct buffer *b) {
-    assert(b->position <= b->length);
+    buffer_check(b);
 
     if (b->position == 0)
         return;
@@ -62,6 +75,7 @@ void buffer_commit(struct buffer *b) {
 
 void buffer_append(struct buffer *b, const void *data,
                    size_t nbytes) {
+    buffer_check(b);
     assert(nbytes <= buffer_free(b));
 
     memcpy(b->data + b->length, data, nbytes);
@@ -69,6 +83,8 @@ void buffer_append(struct buffer *b, const void *data,
 }
 
 void *buffer_peek(struct buffer *b, size_t *lengthp) {
+    buffer_check(b);
+
     if (buffer_empty(b))
         return NULL;
 
@@ -77,7 +93,7 @@ void *buffer_peek(struct buffer *b, size_t *lengthp) {
 }
 
 void buffer_shift(struct buffer *b, size_t nbytes) {
-    assert(b->position <= b->length);
+    buffer_check(b);
     assert(nbytes <= b->length - b->position);
 
     b->position += nbytes;
