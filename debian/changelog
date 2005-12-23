@@ -11,6 +11,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * bugfix: check c->reconnecting before c->in_game
   * don't forward relay packet, connect to game server internally
   * show real character name while attaching
+  * borrowed packet length table from wolfpack
 
  --
 
