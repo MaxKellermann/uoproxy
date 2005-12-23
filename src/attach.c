@@ -34,7 +34,8 @@ struct connection *find_attach_connection(struct connection *c) {
         if (c2 != c && c2->in_game && c2->packet_start.serial != 0 &&
             memcmp(c->username, c2->username, sizeof(c->username)) == 0 &&
             memcmp(c->password, c2->password, sizeof(c->password)) == 0 &&
-            c->server_index == c2->server_index)
+            c->server_index == c2->server_index &&
+            c2->num_characters > 0)
             return c2;
 
     return NULL;
@@ -69,7 +70,7 @@ void attach_after_play_server(struct connection *c,
     character_list.cmd = PCK_CharList;
     character_list.length = htons(sizeof(character_list));
     character_list.character_count = 1;
-    strcpy(character_list.character_info[0].name, "<attach>");
+    character_list.character_info[0] = c->characters[c->character_index];
     character_list.city_count = 0;
     character_list.flags = htonl(0x14);
     uo_server_send(ls->server, &character_list,
