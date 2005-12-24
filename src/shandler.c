@@ -388,6 +388,9 @@ static packet_action_t handle_relay(struct connection *c,
     c->client = NULL;
 
     /* extract new server's address */
+    if (c->server_address != NULL)
+        freeaddrinfo(c->server_address);
+
     c->server_address = calloc(1, sizeof(*c->server_address));
     if (c->server_address == NULL) {
         fprintf(stderr, "out of memory");
