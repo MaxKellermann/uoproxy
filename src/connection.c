@@ -158,8 +158,7 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     if (c->client != NULL &&
         !uo_client_alive(c->client)) {
-        if (c->autoreconnect && c->in_game &&
-            c->server_address != NULL) {
+        if (c->autoreconnect && c->in_game) {
             connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
             connection_reconnect(c);
         } else {
@@ -289,25 +288,51 @@ void connection_idle(struct connection *c, time_t now) {
             const u_int32_t seed = rand();
             int ret;
 
-            assert(c->server_address != NULL);
+            if (c->instance->config->login_address == NULL) {
+                /* connect to game server */
+                assert(c->server_address != NULL);
 
-            ret = uo_client_create(c->server_address, seed, &c->client);
-            if (ret == 0) {
-                struct uo_packet_account_login p = {
-                    .cmd = PCK_AccountLogin,
-                };
+                ret = uo_client_create(c->server_address, seed, &c->client);
+                if (ret == 0) {
+                    struct uo_packet_game_login p = {
+                        .cmd = PCK_GameLogin,
+                    };
 
-                if (verbose >= 2)
-                    printf("connected, doing AccountLogin\n");
+                    if (verbose >= 2)
+                        printf("connected, doing GameLogin\n");
 
-                memcpy(p.username, c->username, sizeof(p.username));
-                memcpy(p.password, c->password, sizeof(p.password));
+                    memcpy(p.username, c->username, sizeof(p.username));
+                    memcpy(p.password, c->password, sizeof(p.password));
 
-                uo_client_send(c->client, &p, sizeof(p));
+                    uo_client_send(c->client, &p, sizeof(p));
+                } else {
+                    if (verbose >= 1)
+                        fprintf(stderr, "reconnect failed: %s\n",
+                                strerror(-ret));
+                    connection_reconnect(c);
+                }
             } else {
-                if (verbose >= 1)
-                    fprintf(stderr, "reconnect failed: %s\n", strerror(-ret));
-                connection_reconnect(c);
+                /* connect to login server */
+                ret = uo_client_create(c->instance->config->login_address,
+                                       seed, &c->client);
+                if (ret == 0) {
+                    struct uo_packet_account_login p = {
+                        .cmd = PCK_AccountLogin,
+                    };
+
+                    if (verbose >= 2)
+                        printf("connected, doing AccountLogin\n");
+
+                    memcpy(p.username, c->username, sizeof(p.username));
+                    memcpy(p.password, c->password, sizeof(p.password));
+
+                    uo_client_send(c->client, &p, sizeof(p));
+                } else {
+                    if (verbose >= 1)
+                        fprintf(stderr, "reconnect failed: %s\n",
+                                strerror(-ret));
+                    connection_reconnect(c);
+                }
             }
         }
     } else if (now >= c->next_ping) {
