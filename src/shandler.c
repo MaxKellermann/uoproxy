@@ -388,8 +388,11 @@ static packet_action_t handle_relay(struct connection *c,
     c->client = NULL;
 
     /* extract new server's address */
-    if (c->server_address != NULL)
-        freeaddrinfo(c->server_address);
+    if (c->server_address != NULL) {
+        if (c->server_address->ai_addr != NULL)
+            free(c->server_address->ai_addr);
+        free(c->server_address);
+    }
 
     c->server_address = calloc(1, sizeof(*c->server_address));
     if (c->server_address == NULL) {
