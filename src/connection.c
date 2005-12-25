@@ -182,13 +182,17 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
         } else if (!uo_server_alive(ls->server)) {
             connection_walk_server_removed(&c->walk, ls);
 
-            if (c->background && c->in_game) {
+            if (ls->next != NULL || c->servers_head != ls) {
+                if (verbose >= 2)
+                    printf("client disconnected, server connection still in use\n");
+                remove_server(lsp);
+            } else if (c->background && c->in_game) {
                 if (verbose >= 1)
                     printf("client disconnected, backgrounding\n");
                 remove_server(lsp);
             } else {
                 if (verbose >= 1)
-                    printf("client disconnected\n");
+                    printf("last client disconnected, removing connection\n");
                 remove_server(lsp);
                 connection_invalidate(c);
             }

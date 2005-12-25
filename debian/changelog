@@ -13,6 +13,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * show real character name while attaching
   * borrowed packet length table from wolfpack
   * when reconnecting, connect to the login server
+  * don't delete connection when other clients are online
 
  --
 
