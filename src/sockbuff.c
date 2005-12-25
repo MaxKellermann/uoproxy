@@ -95,6 +95,7 @@ void sock_buff_pre_select(struct sock_buff *sb,
     if (sb->fd < 0)
         return;
 
+    buffer_commit(sb->input);
     if (buffer_free(sb->input) > 0)
         selectx_add_read(sx, sb->fd);
 
@@ -111,8 +112,6 @@ int sock_buff_post_select(struct sock_buff *sb,
 
     if (FD_ISSET(sb->fd, &sx->readfds)) {
         FD_CLR(sb->fd, &sx->readfds);
-
-        buffer_commit(sb->input);
 
         nbytes = read(sb->fd, buffer_tail(sb->input),
                       buffer_free(sb->input));

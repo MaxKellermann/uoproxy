@@ -14,6 +14,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * borrowed packet length table from wolfpack
   * when reconnecting, connect to the login server
   * don't delete connection when other clients are online
+  * flush input buffer before select()
 
  --
 
