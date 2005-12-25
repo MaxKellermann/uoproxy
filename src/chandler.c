@@ -391,7 +391,7 @@ static packet_action_t handle_talk_unicode(struct connection *c,
         if (skip_bytes >= length)
             return PA_DISCONNECT;
 
-        if (memchr(t, 0, text_length) != NULL || t[text_length] != 0)
+        if (t[0] == 0 || t[text_length] != 0)
             return PA_DISCONNECT;
 
         /* the text may be UTF-8, but we ignore that for now */
