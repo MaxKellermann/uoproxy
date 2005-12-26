@@ -20,6 +20,7 @@ endif
 #FEATURE_CFLAGS += -DDUMP_SERVER_RECEIVE -DDUMP_CLIENT_RECEIVE
 #FEATURE_CFLAGS += -DDUMP_SERVER_PEEK -DDUMP_CLIENT_PEEK
 #FEATURE_CFLAGS += -DDUMP_WALK
+#FEATURE_CFLAGS += -DDUMP_USE
 
 ifeq ($(DEBUG),yes)
 WARNING_CFLAGS += -W -Wall -std=gnu99 -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Winline -Wdisabled-optimization -Wno-long-long -Wstrict-prototypes -Wundef -pedantic-errors -Werror

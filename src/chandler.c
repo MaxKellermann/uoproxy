@@ -118,14 +118,39 @@ static packet_action_t handle_talk_ascii(struct connection *c,
 
 static packet_action_t handle_use(struct connection *c,
                                   void *data, size_t length) {
-    (void)data;
-    (void)length;
+    const struct uo_packet_use *p = data;
+
+    assert(length == sizeof(*p));
 
     if (c->reconnecting) {
         uo_server_speak_console(c->current_server->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
     }
+
+#ifdef DUMP_USE
+    do {
+        struct item *i = connection_find_item(c, p->serial);
+        if (i == NULL) {
+            printf("Use 0x%x\n", ntohl(p->serial));
+        } else {
+            u_int16_t item_id;
+
+            if (i->packet_world_item.cmd == PCK_WorldItem)
+                item_id = i->packet_world_item.item_id;
+            else if (i->packet_equip.cmd == PCK_Equip)
+                item_id = i->packet_equip.item_id;
+            else if (i->packet_container_update.cmd == PCK_ContainerUpdate)
+                item_id = i->packet_container_update.item.item_id;
+            else
+                item_id = 0xffff;
+
+            printf("Use 0x%x item_id=0x%x\n",
+                   ntohl(p->serial), ntohs(item_id));
+        }
+        fflush(stdout);
+    } while (0);
+#endif
 
     return PA_ACCEPT;
 }

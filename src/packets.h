@@ -305,6 +305,12 @@ struct uo_packet_talk_ascii {
     char text[1];
 } __attribute__ ((packed));
 
+/* 0x06 Use */
+struct uo_packet_use {
+    unsigned char cmd;
+    u_int32_t serial;
+} __attribute__ ((packed));
+
 /* 0x07 LiftRequest */
 struct uo_packet_lift_request {
     unsigned char cmd;
