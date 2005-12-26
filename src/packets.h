@@ -523,6 +523,17 @@ struct uo_packet_play_character {
     u_int32_t slot, client_ip;
 } __attribute__ ((packed));
 
+/* 0x6c Target */
+struct uo_packet_target {
+    unsigned char cmd;
+    u_int8_t allow_ground;
+    u_int32_t target_id;
+    u_int8_t flags;
+    u_int32_t serial;
+    u_int16_t x, y, z;
+    u_int16_t graphic;
+} __attribute__ ((packed));
+
 /* 0x72 WarMode */
 struct uo_packet_war_mode {
     unsigned char cmd;

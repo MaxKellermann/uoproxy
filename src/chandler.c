@@ -204,6 +204,27 @@ static packet_action_t handle_resynchronize(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_target(struct connection *c,
+                                     void *data, size_t length) {
+    const struct uo_packet_target *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (c->packet_target.cmd == PCK_Target &&
+        c->packet_target.target_id != 0) {
+        /* cancel this target for all other clients */
+        memset(&c->packet_target, 0, sizeof(c->packet_target));
+        c->packet_target.cmd = PCK_Target;
+        c->packet_target.flags = 3;
+
+        connection_broadcast_servers_except(c, &c->packet_target,
+                                            sizeof(c->packet_target),
+                                            c->current_server->server);
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_ping(struct connection *c,
                                    void *data, size_t length) {
     uo_server_send(c->current_server->server, data, length);
@@ -504,6 +525,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_Resynchronize,
       .handler = handle_resynchronize,
+    },
+    { .cmd = PCK_Target, /* 0x6c */
+      .handler = handle_target,
     },
     { .cmd = PCK_Ping,
       .handler = handle_ping,

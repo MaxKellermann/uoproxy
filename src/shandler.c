@@ -238,6 +238,17 @@ static packet_action_t handle_popup_message(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_target(struct connection *c,
+                                     void *data, size_t length) {
+    const struct uo_packet_target *p = data;
+
+    assert(length == sizeof(*p));
+
+    c->packet_target = *p;
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_war_mode(struct connection *c,
                                        void *data, size_t length) {
     const struct uo_packet_war_mode *p = data;
@@ -595,6 +606,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_PopupMessage, /* 0x53 */
       .handler = handle_popup_message,
+    },
+    { .cmd = PCK_Target, /* 0x6c */
+      .handler = handle_target,
     },
     { .cmd = PCK_WarMode, /* 0x72 */
       .handler = handle_war_mode,

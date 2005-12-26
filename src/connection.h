@@ -97,6 +97,7 @@ struct connection {
     struct uo_packet_global_light_level packet_global_light_level;
     struct uo_packet_personal_light_level packet_personal_light_level;
     struct uo_packet_war_mode packet_war_mode;
+    struct uo_packet_target packet_target;
     unsigned char ping_request, ping_ack;
     struct item *items_head;
     unsigned item_attach_sequence;

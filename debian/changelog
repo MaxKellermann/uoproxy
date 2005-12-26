@@ -17,6 +17,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * flush input buffer before select()
   * added DUMP_USE option
   * check for full output buffers
+  * auto-cancel target cursor in multi client mode
 
  --
 
