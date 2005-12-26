@@ -21,6 +21,10 @@ Some of the interesting features:
 - backgrounding the connection, i.e. quit your client and the proxy
   will stay online, for macroing off kill counters
 
+- multi-headed (playing a character with multiple clients)
+
+- character change without logout
+
 - traversing firewalls
 
 - transparent proxying
@@ -29,7 +33,11 @@ Some of the interesting features:
   have 10 different IP addresses although all clients run on your
   local computer
 
-- faking client version
+- faking client version and hardware info
+
+- hide multi client operation
+
+- block spy packets
 
 - circumventing a shard's login server (most freeshards are insecure!)
 
