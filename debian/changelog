@@ -20,7 +20,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * auto-cancel target cursor in multi client mode
   * added antispy option
 
- --
+ -- Max Kellermann <max@duempel.org>  Tue, 27 Dec 2005 00:21:14 +0100
 
 uoproxy (0.1.0) unstable; urgency=low
 
