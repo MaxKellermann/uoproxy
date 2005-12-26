@@ -48,6 +48,47 @@ static void welcome(struct connection *c) {
     }
 }
 
+/** send a HardwareInfo packet to the server, containing inane
+    information, to overwrite its old database entry */
+static void send_antispy(struct uo_client *client) {
+    struct uo_packet_hardware p;
+
+    memset(&p, 0, sizeof(p));
+
+    p = (struct uo_packet_hardware){
+        .cmd = PCK_Hardware,
+        .unknown0 = 2,
+        .instance_id = htonl(0xdeadbeef),
+        .os_major = htonl(5),
+        .os_minor = 0,
+        .os_revision = 0,
+        .cpu_manufacturer = 3,
+        .cpu_family = htonl(6),
+        .cpu_model = htonl(8),
+        .cpu_clock = htonl(997),
+        .cpu_quantity = 8,
+        .physical_memory = htonl(256),
+        .screen_width = htonl(1600),
+        .screen_height = htonl(1200),
+        .screen_depth = htonl(32),
+        .dx_major = htons(9),
+        .dx_minor = htons(0),
+        .vc_description = {
+            'S', 0, '3', 0, ' ', 0, 'T', 0, 'r', 0, 'i', 0, 'o',
+        },
+        .vc_vendor_id = 0,
+        .vc_device_id = 0,
+        .vc_memory = htonl(4),
+        .distribution = 2,
+        .clients_running = 1,
+        .clients_installed = 1,
+        .partial_installed = 0,
+        .language = { 'e', 0, 'n', 0, 'u', 0 },
+    };
+
+    uo_client_send(client, &p, sizeof(p));
+}
+
 static packet_action_t handle_mobile_status(struct connection *c,
                                             void *data, size_t length) {
     const struct uo_packet_mobile_status *p = data;
@@ -234,6 +275,17 @@ static packet_action_t handle_popup_message(struct connection *c,
         connection_reconnect(c);
         return PA_DROP;
     }
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t handle_login_complete(struct connection *c,
+                                             void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (c->instance->config->antispy)
+        send_antispy(c->client);
 
     return PA_ACCEPT;
 }
@@ -466,6 +518,9 @@ static packet_action_t handle_server_list(struct connection *c,
     if (length < 6 || p[3] != 0x5d)
         return PA_DISCONNECT;
 
+    if (c->instance->config->antispy)
+        send_antispy(c->client);
+
     if (c->reconnecting) {
         struct uo_packet_play_server p2 = {
             .cmd = PCK_PlayServer,
@@ -605,6 +660,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_PopupMessage, /* 0x53 */
       .handler = handle_popup_message,
+    },
+    { .cmd = PCK_ReDrawAll, /* 0x55 */
+      .handler = handle_login_complete,
     },
     { .cmd = PCK_Target, /* 0x6c */
       .handler = handle_target,

@@ -418,6 +418,17 @@ static packet_action_t handle_play_server(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_spy(struct connection *c,
+                                  void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (c->instance->config->antispy)
+        return PA_DROP;
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_talk_unicode(struct connection *c,
                                            void *data, size_t length) {
     const struct uo_packet_talk_unicode *p = data;
@@ -507,6 +518,17 @@ static packet_action_t handle_extended(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_hardware(struct connection *c,
+                                       void *data, size_t length) {
+    (void)data;
+    (void)length;
+
+    if (c->instance->config->antispy)
+        return PA_DROP;
+
+    return PA_ACCEPT;
+}
+
 struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Walk,
       .handler = handle_walk,
@@ -547,6 +569,9 @@ struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_PlayServer,
       .handler = handle_play_server,
     },
+    { .cmd = PCK_Spy, /* 0xa4 */
+      .handler = handle_spy,
+    },
     { .cmd = PCK_TalkUnicode,
       .handler = handle_talk_unicode,
     },
@@ -555,6 +580,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_Extended,
       .handler = handle_extended,
+    },
+    { .cmd = PCK_Hardware, /* 0xd9 */
+      .handler = handle_hardware,
     },
     { .handler = NULL }
 };

@@ -490,6 +490,8 @@ int config_read_file(struct config *config, const char *path) {
             config->background = parse_bool(path, no, value);
         } else if (strcmp(key, "autoreconnect") == 0) {
             config->autoreconnect = parse_bool(path, no, value);
+        } else if (strcmp(key, "antispy") == 0) {
+            config->antispy = parse_bool(path, no, value);
         } else if (strcmp(key, "client_version") == 0) {
             assign_string(&config->client_version, value);
         } else {

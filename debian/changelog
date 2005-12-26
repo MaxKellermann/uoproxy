@@ -18,6 +18,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * added DUMP_USE option
   * check for full output buffers
   * auto-cancel target cursor in multi client mode
+  * added antispy option
 
  --
 

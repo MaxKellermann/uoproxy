@@ -31,7 +31,7 @@ struct config {
     struct addrinfo *bind_address, *login_address;
     unsigned num_game_servers;
     struct game_server_config *game_servers;
-    int background, autoreconnect;
+    int background, autoreconnect, antispy;
     char *client_version;
     /* daemon config */
 #ifndef DISABLE_DAEMON_CODE
