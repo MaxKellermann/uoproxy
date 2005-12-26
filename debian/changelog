@@ -16,6 +16,7 @@ uoproxy (0.1.1) unstable; urgency=low
   * don't delete connection when other clients are online
   * flush input buffer before select()
   * added DUMP_USE option
+  * check for full output buffers
 
  --
 

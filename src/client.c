@@ -226,5 +226,12 @@ void uo_client_send(struct uo_client *client,
     if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = 1;
 
+    if (length > buffer_free(client->sock->output)) {
+        fprintf(stderr, "output buffer full in uo_client_send()\n");
+        sock_buff_dispose(client->sock);
+        client->sock = NULL;
+        return;
+    }
+
     buffer_append(client->sock->output, src, length);
 }

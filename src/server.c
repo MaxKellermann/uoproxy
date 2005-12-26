@@ -195,6 +195,13 @@ void uo_server_send(struct uo_server *server,
 
         buffer_expand(server->sock->output, (size_t)nbytes);
     } else {
+        if (length > buffer_free(server->sock->output)) {
+            fprintf(stderr, "output buffer full in uo_server_send()\n");
+            sock_buff_dispose(server->sock);
+            server->sock = NULL;
+            return;
+        }
+
         buffer_append(server->sock->output, src, length);
     }
 }
