@@ -40,10 +40,8 @@ void connection_disconnect(struct connection *c) {
 void connection_reconnect(struct connection *c) {
     connection_disconnect(c);
 
+    assert(c->in_game);
     assert(c->client == NULL);
-
-    if (c->server_address == NULL || !c->in_game)
-        return;
 
     c->reconnecting = 1;
     c->next_reconnect = time(NULL) + 4;

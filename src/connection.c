@@ -91,12 +91,6 @@ void connection_delete(struct connection *c) {
     connection_delete_items(c);
     connection_delete_mobiles(c);
 
-    if (c->server_address != NULL) {
-        if (c->server_address->ai_addr != NULL)
-            free(c->server_address->ai_addr);
-        free(c->server_address);
-    }
-
     free(c);
 }
 
@@ -289,14 +283,21 @@ void connection_idle(struct connection *c, time_t now) {
 
     if (c->client == NULL) {
         if (c->reconnecting && now >= c->next_reconnect) {
+            struct config *config = c->instance->config;
             const u_int32_t seed = rand();
             int ret;
 
-            if (c->instance->config->login_address == NULL) {
-                /* connect to game server */
-                assert(c->server_address != NULL);
+            assert(c->in_game);
 
-                ret = uo_client_create(c->server_address, seed, &c->client);
+            if (config->login_address == NULL) {
+                /* connect to game server */
+                struct addrinfo *server_address
+                    = config->game_servers[c->server_index].address;
+
+                assert(config->game_servers != NULL);
+                assert(c->server_index < config->num_game_servers);
+
+                ret = uo_client_create(server_address, seed, &c->client);
                 if (ret == 0) {
                     struct uo_packet_game_login p = {
                         .cmd = PCK_GameLogin,

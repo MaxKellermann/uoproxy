@@ -78,7 +78,6 @@ struct connection {
 
     /* reconnect */
     int autoreconnect, reconnecting;
-    struct addrinfo *server_address;
 
     /* state */
     char username[30], password[30];

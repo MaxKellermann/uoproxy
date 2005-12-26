@@ -372,6 +372,25 @@ static packet_action_t handle_account_login_reject(struct connection *c,
     return PA_ACCEPT;
 }
 
+static struct addrinfo *make_addrinfo(u_int32_t ip, u_int16_t port) {
+    struct sockaddr_in sin;
+    struct addrinfo *ai = calloc(1, sizeof(*ai) + sizeof(sin));
+
+    if (ai == NULL)
+        return NULL;
+
+    sin.sin_family = AF_INET;
+    sin.sin_port = port;
+    sin.sin_addr.s_addr = ip;
+
+    ai->ai_family = AF_INET;
+    ai->ai_addrlen = sizeof(sin);
+    ai->ai_addr = (struct sockaddr*)(ai + 1);
+    memcpy(ai->ai_addr, &sin, sizeof(sin));
+
+    return ai;
+}
+
 static packet_action_t handle_relay(struct connection *c,
                                     void *data, size_t length) {
     /* this packet tells the UO client where to connect; uoproxy hides
@@ -379,8 +398,8 @@ static packet_action_t handle_relay(struct connection *c,
        the new server */
     struct uo_packet_relay *p = data;
     struct uo_packet_relay relay;
+    struct addrinfo *server_address;
     int ret;
-    struct sockaddr_in sin;
     struct uo_packet_game_login login;
 
     assert(length == sizeof(*p));
@@ -399,43 +418,23 @@ static packet_action_t handle_relay(struct connection *c,
     c->client = NULL;
 
     /* extract new server's address */
-    if (c->server_address != NULL) {
-        if (c->server_address->ai_addr != NULL)
-            free(c->server_address->ai_addr);
-        free(c->server_address);
-    }
-
-    c->server_address = calloc(1, sizeof(*c->server_address));
-    if (c->server_address == NULL) {
+    server_address = make_addrinfo(relay.ip, relay.port);
+    if (server_address == NULL) {
         fprintf(stderr, "out of memory");
         return PA_DISCONNECT;
     }
-
-    sin.sin_family = AF_INET;
-    sin.sin_port = relay.port;
-    sin.sin_addr.s_addr = relay.ip;
-
-    c->server_address->ai_family = AF_INET;
-    c->server_address->ai_addrlen = sizeof(sin);
-    c->server_address->ai_addr = malloc(sizeof(sin));
-
-    if (c->server_address->ai_addr == NULL) {
-        free(c->server_address);
-        c->server_address = NULL;
-        fprintf(stderr, "out of memory");
-        return PA_DISCONNECT;
-    }
-
-    memcpy(c->server_address->ai_addr, &sin, sizeof(sin));
 
     /* connect to new server */
-    ret = uo_client_create(c->server_address, relay.auth_id, &c->client);
+    ret = uo_client_create(server_address, relay.auth_id, &c->client);
     if (ret != 0) {
         if (verbose >= 1)
             fprintf(stderr, "connect to game server failed: %s\n",
                     strerror(-ret));
+        freeaddrinfo(server_address);
         return PA_DROP;
     }
+
+    freeaddrinfo(server_address);
 
     /* send game login to new server */
     if (verbose >= 2)
