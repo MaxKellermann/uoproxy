@@ -233,6 +233,7 @@ enum uo_packet_type_t {
     PCK_UnkTextIDandStr = 0xcc,
     PCK_AccountLogin2 = 0xcf,
     PCK_AOSTooltip = 0xd6,
+    PCK_Hardware = 0xd9,
     PCK_AOSObjProp = 0xdc,
 };
 
@@ -720,6 +721,26 @@ struct uo_packet_extended {
     unsigned char cmd;
     u_int16_t length;
     u_int16_t extended_cmd;
+} __attribute__ ((packed));
+
+/* 0xd9 Hardware */
+struct uo_packet_hardware {
+    unsigned char cmd;
+    u_int8_t unknown0;
+    u_int32_t instance_id;
+    u_int32_t os_major, os_minor, os_revision;
+    u_int8_t cpu_manufacturer;
+    u_int32_t cpu_family, cpu_model, cpu_clock;
+    u_int8_t cpu_quantity;
+    u_int32_t physical_memory;
+    u_int32_t screen_width, screen_height, screen_depth;
+    u_int16_t dx_major, dx_minor;
+    char vc_description[128];
+    u_int32_t vc_vendor_id, vc_device_id, vc_memory;
+    u_int8_t distribution;
+    u_int8_t clients_running, clients_installed, partial_installed;
+    char language[8];
+    u_int8_t unknown1[64];
 } __attribute__ ((packed));
 
 #endif
