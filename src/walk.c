@@ -227,11 +227,16 @@ void connection_walk_ack(struct connection *c,
         uo_server_send(state->server->server, p, sizeof(*p));
     }
 
-    /* send MobileMoving to all other clients */
-    if (c->servers_head != NULL && c->servers_head->next != NULL)
-        connection_broadcast_servers_except(c, &c->packet_mobile_update,
-                                            sizeof(c->packet_mobile_update),
+    /* send WalkForce to all other clients */
+    if (c->servers_head != NULL && c->servers_head->next != NULL) {
+        struct uo_packet_walk_force force = {
+            .cmd = PCK_WalkForce,
+            .direction = i->packet.direction & 0x7,
+        };
+
+        connection_broadcast_servers_except(c, &force, sizeof(force),
                                             state->server->server);
+    }
 
     remove_item(state, i);
 }

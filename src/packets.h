@@ -624,6 +624,12 @@ struct uo_packet_game_login {
     char password[30];
 } __attribute__ ((packed));
 
+/* 0x97 WalkForce */
+struct uo_packet_walk_force {
+    unsigned char cmd;
+    u_int8_t direction;
+} __attribute__ ((packed));
+
 /* for 0xa0 PlayServer */
 struct uo_packet_play_server {
     unsigned char cmd;
