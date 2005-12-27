@@ -153,6 +153,8 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
     if (c->client != NULL &&
         !uo_client_alive(c->client)) {
         if (c->autoreconnect && c->in_game) {
+            if (verbose >= 2)
+                printf("server disconnected, auto-reconnecting\n");
             connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
             connection_reconnect(c);
         } else {
