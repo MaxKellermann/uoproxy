@@ -248,6 +248,12 @@ static packet_action_t handle_account_login(struct connection *c,
            p->username, p->password);
 #endif
 
+    if (c->client != NULL) {
+        if (verbose >= 2)
+            fprintf(stderr, "already logged in\n");
+        return PA_DISCONNECT;
+    }
+
     if (c->instance->config->login_address == NULL &&
         c->instance->config->game_servers != NULL &&
         c->instance->config->num_game_servers > 0) {
@@ -285,12 +291,6 @@ static packet_action_t handle_account_login(struct connection *c,
         free(p2);
 
         return PA_DROP;
-    }
-
-    if (c->client != NULL) {
-        if (verbose >= 2)
-            fprintf(stderr, "already logged in\n");
-        return PA_DISCONNECT;
     }
 
     ret = uo_client_create(c->instance->config->login_address,
