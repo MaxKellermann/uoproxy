@@ -203,7 +203,7 @@ enum uo_packet_type_t {
     PCK_SpeakUnicode = 0xae,
     PCK_CharDeath = 0xaf,
     PCK_GumpDialog = 0xb0,
-    PCK_GumpDialogRet = 0xb1,
+    PCK_GumpResponse = 0xb1,
     PCK_ChatReq = 0xb2,
     PCK_ChatText = 0xb3,
     PCK_TargetItems = 0xb4,
@@ -680,6 +680,14 @@ struct uo_packet_talk_unicode {
     u_int16_t text[1];
 } __attribute__ ((packed));
 
+/* 0xb1 GumpResponse */
+struct uo_packet_gump_response {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int32_t serial, type_id, button_id;
+    u_int8_t rest[];
+} __attribute__ ((packed));
+
 /* 0xbc Season */
 struct uo_packet_season {
     unsigned char cmd;
@@ -691,6 +699,14 @@ struct uo_packet_client_version {
     unsigned char cmd;
     u_int16_t length;
     char version[1];
+} __attribute__ ((packed));
+
+/* 0xbf 0x0004 CloseGump */
+struct uo_packet_close_gump {
+    unsigned char cmd;
+    u_int16_t length;
+    u_int16_t extended_cmd; /* 0x0004 */
+    u_int32_t type_id, button_id;
 } __attribute__ ((packed));
 
 /* 0xbf 0x0008 MapChange */
