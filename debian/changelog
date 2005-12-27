@@ -3,6 +3,7 @@ uoproxy (0.1.2) unstable; urgency=low
   * auto-close gumps in multi client mode
   * sync walking with walk_force instead of mobile_update; this fixes the
     z-walk bug
+  * copy username and password before sending internal server list
 
  --
 

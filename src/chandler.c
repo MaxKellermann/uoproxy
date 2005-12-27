@@ -254,6 +254,9 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DISCONNECT;
     }
 
+    memcpy(c->username, p->username, sizeof(c->username));
+    memcpy(c->password, p->password, sizeof(c->password));
+
     if (c->instance->config->login_address == NULL &&
         c->instance->config->game_servers != NULL &&
         c->instance->config->num_game_servers > 0) {
@@ -309,9 +312,6 @@ static packet_action_t handle_account_login(struct connection *c,
                        sizeof(response));
         return PA_DROP;
     }
-
-    memcpy(c->username, p->username, sizeof(c->username));
-    memcpy(c->password, p->password, sizeof(c->password));
 
     return PA_ACCEPT;
 }
