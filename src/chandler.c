@@ -468,6 +468,26 @@ static packet_action_t handle_talk_unicode(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t handle_gump_response(struct connection *c,
+                                            void *data, size_t length) {
+    const struct uo_packet_gump_response *p = data;
+    struct uo_packet_close_gump close = {
+        .cmd = PCK_Extended,
+        .length = htons(sizeof(close)),
+        .extended_cmd = htons(0x0004),
+        .button_id = 0,
+    };
+
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    /* close the gump on all other clients */
+    connection_broadcast_servers_except(c, &close, sizeof(close),
+                                        c->current_server->server);
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_client_version(struct connection *c,
                                              void *data, size_t length) {
     (void)data;
@@ -574,6 +594,9 @@ struct packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_TalkUnicode,
       .handler = handle_talk_unicode,
+    },
+    { .cmd = PCK_GumpResponse,
+      .handler = handle_gump_response,
     },
     { .cmd = PCK_ClientVersion,
       .handler = handle_client_version,
