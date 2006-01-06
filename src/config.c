@@ -230,7 +230,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 
     if (optind < argc) {
         fprintf(stderr, "uoproxy: unrecognized argument: %s\n",
-                argv[optind + 1]);
+                argv[optind]);
         fprintf(stderr, "Try 'uoproxy -h' for more information\n");
         exit(1);
     }
