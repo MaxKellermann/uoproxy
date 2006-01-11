@@ -19,6 +19,7 @@
  *
  */
 
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -64,6 +65,8 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 
 int setup_server_socket(const struct addrinfo *bind_address) {
     int sockfd, ret, param;
+
+    assert(bind_address != NULL);
 
     sockfd = socket(bind_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0) {
