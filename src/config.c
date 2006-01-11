@@ -121,7 +121,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         {0,0,0,0}
     };
 #endif
-    u_int16_t bind_port = 0;
+    u_int16_t bind_port = 2593;
     const char *login_address = NULL;
     struct addrinfo hints;
 #ifndef DISABLE_DAEMON_CODE
@@ -263,12 +263,10 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
 
     /* resolve bind_address */
 
-    if (bind_port != 0) {
-        if (config->bind_address != NULL)
-            freeaddrinfo(config->bind_address);
+    if (config->bind_address != NULL)
+        freeaddrinfo(config->bind_address);
 
-        config->bind_address = port_to_addrinfo(bind_port);
-    }
+    config->bind_address = port_to_addrinfo(bind_port);
 }
 
 static char *next_word(char **pp) {

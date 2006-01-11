@@ -4,6 +4,7 @@ uoproxy (0.1.2) unstable; urgency=low
   * sync walking with walk_force instead of mobile_update; this fixes the
     z-walk bug
   * copy username and password before sending internal server list
+  * local port defaults to 2593
 
  --
 
