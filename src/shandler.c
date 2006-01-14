@@ -20,6 +20,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <assert.h>
 #include <netinet/in.h>
 #include <stdio.h>

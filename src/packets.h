@@ -23,6 +23,7 @@
 #define __PACKETS_H
 
 #include <netinet/in.h>
+#include <sys/types.h>
 
 enum uo_packet_type_t {
     PCK_CreateCharacter = 0x00,

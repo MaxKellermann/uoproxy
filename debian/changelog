@@ -5,6 +5,7 @@ uoproxy (0.1.2) unstable; urgency=low
     z-walk bug
   * copy username and password before sending internal server list
   * local port defaults to 2593
+  * added #includes required on FreeBSD
 
  --
 
