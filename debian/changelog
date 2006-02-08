@@ -7,7 +7,7 @@ uoproxy (0.1.2) unstable; urgency=low
   * local port defaults to 2593
   * added #includes required on FreeBSD
 
- --
+ -- Max Kellermann <max@duempel.org>  Wed,  8 Feb 2006 23:42:42 +0100
 
 uoproxy (0.1.1) unstable; urgency=low
 
