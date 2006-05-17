@@ -263,7 +263,7 @@ static inline size_t get_packet_length(const void *q, size_t max_length) {
         return 0;
 
     length = ntohs(*(const u_int16_t*)(p + 1));
-    if (length < 3 || length > 8192)
+    if (length < 3 || length >= 0x8000)
         return PACKET_LENGTH_INVALID;
 
     return length;
