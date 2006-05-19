@@ -1,6 +1,7 @@
 uoproxy (0.1.3) unstable; urgency=low
 
   * increased maximum packet size from 8 kB to 32 kB
+  * registered packet 0xDC
 
  --
 
