@@ -256,6 +256,9 @@ static inline size_t get_packet_length(const void *q, size_t max_length) {
         return 0;
 
     length = packet_lengths[p[0]];
+    if (length == 0xffff)
+        return PACKET_LENGTH_INVALID;
+
     if (length > 0)
         return length;
 
