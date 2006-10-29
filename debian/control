@@ -7,7 +7,7 @@ Standards-Version: 3.6.1
 
 Package: uoproxy
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, lsb-base (>= 3.0-6)
 Description: proxy server for Ultima Online
  uoproxy is a proxy server designed for Ultima Online.  It acts as an
  Ultima Online server, and forwards the connection to a 'real' server.

@@ -1,15 +1,23 @@
-#! /bin/sh
+#!/bin/sh
 #
 # uoproxy       Start the uoproxy server
 #
 # Author:	Max Kellermann <max@duempel.org>
 #
-# $Id$
-#
+# Version:      $Revision$
+### BEGIN INIT INFO
+# Provides:          uoproxy
+# Required-Start:    $network $syslog
+# Required-Stop:     
+# Default-Start:     2 3 5 
+# Default-Stop:	     0 6 
+# Description: Ultima Online proxy server
+# short-description: UO proxy
+### END INIT INFO
 
-set -e
+#includes lsb functions 
+source /lib/lsb/init-functions
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DESC="Ultima Online proxy"
 NAME=uoproxy
 DAEMON=/usr/bin/$NAME
@@ -19,48 +27,26 @@ SCRIPTNAME=/etc/init.d/$NAME
 # Gracefully exit if the package has been removed.
 test -x $DAEMON || exit 0
 
-#
-#	Function that starts the daemon/service.
-#
-d_start() {
-    start-stop-daemon --start --quiet --pidfile $PIDFILE \
-        --exec $DAEMON
-}
-
-#
-#	Function that stops the daemon/service.
-#
-d_stop() {
-    start-stop-daemon --stop --quiet --pidfile $PIDFILE \
-        --name $NAME --oknodo
-}
-
 case "$1" in
-  start)
-	echo -n "Starting $DESC: $NAME"
-	d_start
-	echo "."
+    start)
+        log_begin_msg "Starting $DESC..."
+        start_daemon -p "$PIDFILE" -- $DAEMON
+        log_end_msg $?
 	;;
-  stop)
-	echo -n "Stopping $DESC: $NAME"
-	d_stop
-	echo "."
+    stop)
+        log_begin_msg "Stopping $DESC..."
+        killproc -p "$PIDFILE" $DAEMON
+        log_end_msg $?
 	;;
-  restart|force-reload)
-	#
-	#	If the "reload" option is implemented, move the "force-reload"
-	#	option to the "reload" entry above. If not, "force-reload" is
-	#	just the same as "restart".
-	#
-	echo -n "Restarting $DESC: $NAME"
-	d_stop
-	sleep 2
-	d_start
-	echo "."
-	;;
-  *)
-	# echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-	echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+    force-reload)
+        $0 restart
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+	log-action-msg "Usage: $SCRIPTNAME {start|stop|restart|force-reload}"
 	exit 1
 	;;
 esac
