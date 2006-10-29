@@ -14,25 +14,25 @@ else
   CFLAGS += -O2 -fno-strict-aliasing
 endif
 
-build: build-stamp
-build-stamp:
+build: debian/stamp-build
+debian/stamp-build:
 	dh_testdir
 
 	$(MAKE) CC=/usr/bin/gcc CFLAGS="$(CFLAGS)"
 
-	touch build-stamp
+	touch debian/stamp-build
 
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp install*-stamp
+	rm -f debian/stamp-*
 
 	-$(MAKE) distclean
 
 	dh_clean
 
-install: install-stamp
-install-stamp: build-stamp
+install: debian/stamp-install
+debian/stamp-install: debian/stamp-build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
@@ -40,7 +40,7 @@ install-stamp: build-stamp
 
 	#$(MAKE) DESTDIR=`pwd`/debian/tmp install
 
-	touch install-stamp
+	touch debian/stamp-install
 
 # Build architecture-independent files here.
 binary-indep: build install
