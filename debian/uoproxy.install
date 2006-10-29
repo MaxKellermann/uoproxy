@@ -1,2 +1,2 @@
-src/uoproxy usr/bin
+src/uoproxy usr/sbin
 debian/uoproxy.conf etc

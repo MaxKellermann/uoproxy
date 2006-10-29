@@ -6,6 +6,7 @@ uoproxy (0.1.3) unstable; urgency=low
   * LSB init script
   * don't use cdbs
   * added debian/copyright
+  * moved uoproxy binary to /usr/sbin
 
  --
 

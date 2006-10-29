@@ -20,7 +20,7 @@ source /lib/lsb/init-functions
 
 DESC="Ultima Online proxy"
 NAME=uoproxy
-DAEMON=/usr/bin/$NAME
+DAEMON=/usr/sbin/$NAME
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
