@@ -4,9 +4,9 @@
 
 CC := $(shell which gcc-4.1 gcc-4.0 gcc-3.4 gcc-3.3 gcc cc |grep -v '^no' |head -1 )
 
+# change this value to 'yes' to enable the debugging version
 DEBUG = no
 
-# change the comments to enable the non-debugging version
 ifeq ($(DEBUG),yes)
 CFLAGS += -g -O0
 LDFLAGS = -g -O0
