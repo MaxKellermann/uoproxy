@@ -2,7 +2,7 @@
 # (c) 2005-2006 Max Kellermann <max@duempel.org>
 # $Id$
 
-CC := $(shell which gcc-4.1 gcc-4.0 gcc-3.4 gcc-3.3 gcc cc |grep -v '^no' |head -1 )
+CC := gcc
 
 # change this value to 'yes' to enable the debugging version
 DEBUG = no
