@@ -275,7 +275,8 @@ static inline size_t get_packet_length(const void *q, size_t max_length) {
 /* 0x00 CreateCharacter */
 struct uo_packet_create_character {
     unsigned char cmd;
-    u_int32_t unknown0, unknown1, unknown2;
+    u_int32_t unknown0, unknown1;
+    u_int8_t unknown2;
     char name[30];
     u_int8_t unknown3[2];
     u_int32_t flags;
