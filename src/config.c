@@ -431,7 +431,7 @@ int config_read_file(struct config *config, const char *path) {
             pw = getpwnam(value);
             if (pw == NULL) {
                 fprintf(stderr, "%s line %u: user '%s' not found\n",
-                        path, no, optarg);
+                        path, no, value);
                 exit(2);
             }
 
