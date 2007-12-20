@@ -65,7 +65,7 @@ void connection_handle_command(struct connection *c,
             c->reconnecting = 1;
         }
     } else if (strcmp(command, "char") == 0) {
-        char msg[256] = "uoproxy:";
+        char msg[1024] = "uoproxy:";
         unsigned i;
 
         if (c->num_characters == 0) {
