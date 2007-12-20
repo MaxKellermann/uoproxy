@@ -25,10 +25,8 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdio.h>
 
-#include "netutil.h"
 #include "ioutil.h"
 #include "server.h"
 #include "sockbuff.h"

@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <netdb.h>
 
 #include "instance.h"
 #include "connection.h"
