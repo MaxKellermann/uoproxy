@@ -181,7 +181,7 @@ void attach_after_play_character(struct connection *c,
                        sizeof(c->packet_war_mode));
 
     /* mobiles */
-    for (mobile = c->mobiles_head; mobile != NULL; mobile = mobile->next) {
+    list_for_each_entry(mobile, &c->mobiles, siblings) {
         if (mobile->packet_mobile_incoming != NULL)
             uo_server_send(ls->server, mobile->packet_mobile_incoming,
                            ntohs(mobile->packet_mobile_incoming->length));
@@ -192,7 +192,7 @@ void attach_after_play_character(struct connection *c,
 
     /* items */
     ++c->item_attach_sequence;
-    for (item = c->items_head; item != NULL; item = item->next) {
+    list_for_each_entry(item, &c->items, siblings) {
         if (item->attach_sequence != c->item_attach_sequence)
             attach_item(c, ls, item);
     }

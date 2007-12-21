@@ -32,7 +32,8 @@ struct instance;
 struct addrinfo;
 
 struct item {
-    struct item *next;
+    struct list_head siblings;
+
     u_int32_t serial;
     struct uo_packet_world_item packet_world_item;
     struct uo_packet_equip packet_equip;
@@ -42,7 +43,8 @@ struct item {
 };
 
 struct mobile {
-    struct mobile *next;
+    struct list_head siblings;
+
     u_int32_t serial;
     struct uo_packet_mobile_incoming *packet_mobile_incoming;
     struct uo_packet_mobile_status *packet_mobile_status;
@@ -100,9 +102,10 @@ struct connection {
     struct uo_packet_war_mode packet_war_mode;
     struct uo_packet_target packet_target;
     unsigned char ping_request, ping_ack;
-    struct item *items_head;
+    struct list_head items;
     unsigned item_attach_sequence;
-    struct mobile *mobiles_head;
+
+    struct list_head mobiles;
 
     struct connection_walk_state walk;
 

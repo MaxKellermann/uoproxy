@@ -27,37 +27,32 @@
 #include "connection.h"
 #include "server.h"
 
-static struct item **find_item(struct connection *c,
-                               u_int32_t serial) {
-    struct item **i = &c->items_head;
-
-    while (*i != NULL) {
-        if ((*i)->serial == serial)
-            return i;
-        i = &(*i)->next;
-    }
-
-    return i;
-}
-
 struct item *connection_find_item(struct connection *c,
                                   u_int32_t serial) {
-    return *find_item(c, serial);
+    struct item *item;
+
+    list_for_each_entry(item, &c->items, siblings) {
+        if (item->serial == serial)
+            return item;
+    }
+
+    return NULL;
 }
 
 static struct item *make_item(struct connection *c, u_int32_t serial) {
-    struct item **ip, *i;
+    struct item *i;
 
-    ip = find_item(c, serial);
-    if (*ip != NULL)
-        return *ip;
+    i = connection_find_item(c, serial);
+    if (i != NULL)
+        return i;
 
     i = calloc(1, sizeof(*i));
     if (i == NULL)
         return NULL;
 
-    *ip = i;
     i->serial = serial;
+
+    list_add(&i->siblings, &c->items);
 
     return i;
 }
@@ -156,28 +151,23 @@ static void free_item(struct item *i) {
 /** deep-delete all items contained in the specified serial */
 static void remove_item_tree(struct connection *c,
                              u_int32_t parent_serial) {
-    struct item **ip = &c->items_head, *i, *head = NULL;
+    struct item *i, *n;
+    struct list_head temp;
+
+    INIT_LIST_HEAD(&temp);
 
     /* move all direct children to the temporary list */
-    while (*ip != NULL) {
-        i = *ip;
-
+    list_for_each_entry_safe(i, n, &c->items, siblings) {
         if (i->packet_container_update.item.parent_serial == parent_serial ||
             i->packet_equip.parent_serial == parent_serial) {
             /* move to temp list */
-            *ip = i->next;
-            i->next = head;
-            head = i;
-        } else {
-            ip = &i->next;
+            list_del(&i->siblings);
+            list_add(&i->siblings, &temp);
         }
     }
 
     /* delete these, and recursively delete their children */
-    while (head != NULL) {
-        i = head;
-        head = i->next;
-
+    list_for_each_entry(i, &temp, siblings) {
         remove_item_tree(c, i->serial);
 
         free_item(i);
@@ -185,13 +175,12 @@ static void remove_item_tree(struct connection *c,
 }
 
 void connection_remove_item(struct connection *c, u_int32_t serial) {
-    struct item **ip, *i;
+    struct item *i;
 
     /* remove this entity */
-    ip = find_item(c, serial);
-    i = *ip;
+    i = connection_find_item(c, serial);
     if (i != NULL) {
-        *ip = i->next;
+        list_del(&i->siblings);
         free_item(i);
     }
 
@@ -201,12 +190,10 @@ void connection_remove_item(struct connection *c, u_int32_t serial) {
 
 void connection_delete_items(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
+    struct item *i;
     struct linked_server *ls;
 
-    while (c->items_head != NULL) {
-        struct item *i = c->items_head;
-        c->items_head = i->next;
-
+    list_for_each_entry(i, &c->items, siblings) {
         p.serial = i->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -216,36 +203,40 @@ void connection_delete_items(struct connection *c) {
 
         free(i);
     }
+
+    INIT_LIST_HEAD(&c->items);
 }
 
-static struct mobile **find_mobile(struct connection *c,
-                                   u_int32_t serial) {
-    struct mobile **m = &c->mobiles_head;
+static struct mobile *
+find_mobile(struct connection *c, u_int32_t serial)
+{
+    struct mobile *mobile;
 
-    while (*m != NULL) {
-        if ((*m)->serial == serial)
-            return m;
-        m = &(*m)->next;
+    list_for_each_entry(mobile, &c->mobiles, siblings) {
+        if (mobile->serial == serial)
+            return mobile;
     }
 
-    return m;
+    return NULL;
 }
 
 static struct mobile *add_mobile(struct connection *c,
                                  u_int32_t serial) {
-    struct mobile **mp, *m;
+    struct mobile *m;
 
-    mp = find_mobile(c, serial);
-    if (*mp != NULL)
-        return *mp;
+    m = find_mobile(c, serial);
+    if (m != NULL)
+        return m;
 
-    *mp = m = calloc(1, sizeof(*m));
+    m = calloc(1, sizeof(*m));
     if (m == NULL) {
         fprintf(stderr, "out of memory\n");
         return NULL;
     }
 
     m->serial = serial;
+
+    list_add(&m->siblings, &c->mobiles);
 
     return m;
 }
@@ -364,7 +355,7 @@ void connection_mobile_update(struct connection *c,
         c->packet_start.direction = p->direction;
     }
 
-    m = *find_mobile(c, p->serial);
+    m = find_mobile(c, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
                 ntohl(p->serial));
@@ -402,7 +393,7 @@ void connection_mobile_moving(struct connection *c,
         c->packet_mobile_update.z = p->z;
     }
 
-    m = *find_mobile(c, p->serial);
+    m = find_mobile(c, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_moving: no such mobile 0x%x\n",
                 ntohl(p->serial));
@@ -450,13 +441,12 @@ static void free_mobile(struct mobile *m) {
 }
 
 void connection_remove_mobile(struct connection *c, u_int32_t serial) {
-    struct mobile **mp, *m;
+    struct mobile *m;
 
     /* remove this entity */
-    mp = find_mobile(c, serial);
-    m = *mp;
+    m = find_mobile(c, serial);
     if (m != NULL) {
-        *mp = m->next;
+        list_del(&m->siblings);
         free_mobile(m);
     }
 
@@ -466,12 +456,10 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial) {
 
 void connection_delete_mobiles(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
+    struct mobile *m;
     struct linked_server *ls;
 
-    while (c->mobiles_head != NULL) {
-        struct mobile *m = c->mobiles_head;
-        c->mobiles_head = m->next;
-
+    list_for_each_entry(m, &c->mobiles, siblings) {
         p.serial = m->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -481,6 +469,8 @@ void connection_delete_mobiles(struct connection *c) {
 
         free_mobile(m);
     }
+
+    INIT_LIST_HEAD(&c->mobiles);
 }
 
 void connection_remove_serial(struct connection *c, u_int32_t serial) {
@@ -504,7 +494,7 @@ void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
     c->packet_mobile_update.y = y;
     c->packet_mobile_update.direction = direction;
 
-    m = *find_mobile(c, c->packet_start.serial);
+    m = find_mobile(c, c->packet_start.serial);
     if (m != NULL && m->packet_mobile_incoming != NULL) {
         m->packet_mobile_incoming->x = x;
         m->packet_mobile_incoming->y = y;
