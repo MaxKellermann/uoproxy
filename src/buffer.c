@@ -20,6 +20,7 @@
  */
 
 #include "compiler.h"
+#include "poison.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -53,8 +54,7 @@ buffer_check(const struct buffer *b __attr_unused) {
 void buffer_delete(struct buffer *b) {
     buffer_check(b);
 
-    b->max_length = 0;
-    b->length = 0;
+    poison(b, sizeof(*b));
     free(b);
 }
 
