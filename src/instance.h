@@ -21,6 +21,8 @@
 #ifndef __INSTANCE_H
 #define __INSTANCE_H
 
+#include "list.h"
+
 struct selectx;
 
 struct instance {
@@ -30,7 +32,7 @@ struct instance {
     /* state */
     int server_socket;
 
-    struct connection *connections_head;
+    struct list_head connections;
     struct relay_list *relays;
 
     struct timeval tv;

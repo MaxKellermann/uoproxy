@@ -39,7 +39,7 @@
 static void welcome(struct connection *c) {
     struct linked_server *ls;
 
-    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+    list_for_each_entry(ls, &c->servers, siblings) {
         if (!ls->invalid && !ls->attaching && !ls->welcome) {
             uo_server_speak_console(ls->server, "Welcome to uoproxy v0.1.0!  "
                                     "http://max.kellermann.name/projects/uoproxy/");

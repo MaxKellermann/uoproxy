@@ -27,7 +27,7 @@
 void connection_speak_console(struct connection *c, const char *msg) {
     struct linked_server *ls;
 
-    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+    list_for_each_entry(ls, &c->servers, siblings) {
         if (!ls->invalid && !ls->attaching) {
             assert(ls->server != NULL);
 
@@ -43,7 +43,7 @@ void connection_broadcast_servers_except(struct connection *c,
 
     assert(except != NULL);
 
-    for (ls = c->servers_head; ls != NULL; ls = ls->next)
+    list_for_each_entry(ls, &c->servers, siblings)
         if (!ls->invalid && !ls->attaching && ls->server != except)
             uo_server_send(ls->server, data, length);
 }

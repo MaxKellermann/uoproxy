@@ -357,7 +357,7 @@ static packet_action_t handle_play_server(struct connection *c,
     if (c->in_game)
         return PA_DISCONNECT;
 
-    assert(c->current_server->next == NULL);
+    assert(c->current_server->siblings.next == &c->servers);
 
     c->server_index = ntohs(p->index);
 

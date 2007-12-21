@@ -66,12 +66,11 @@ static void config_get(struct config *config, int argc, char **argv) {
     parse_cmdline(config, argc, argv);
 }
 
-static void delete_all_connections(struct connection *head) {
-    while (head != NULL) {
-        struct connection *c = head;
-        head = head->next;
+static void delete_all_connections(struct list_head *head) {
+    struct connection *c, *n;
+
+    list_for_each_entry_safe(c, n, head, siblings)
         connection_delete(c);
-    }
 }
 
 static void run_server(struct instance *instance) {
@@ -110,8 +109,7 @@ static void run_server(struct instance *instance) {
                                          sockfd2,
                                          &c);
                     if (ret == 0) {
-                        c->next = instance->connections_head;
-                        instance->connections_head = c;
+                        list_add(&c->siblings, &instance->connections);
                     } else {
                         fprintf(stderr, "connection_new() failed: %s\n",
                                 strerror(-ret));
@@ -147,8 +145,9 @@ int main(int argc, char **argv) {
     struct config config;
     struct instance instance = {
         .config = &config,
-        .connections_head = NULL,
     };
+
+    INIT_LIST_HEAD(&instance.connections);
 
     /* configuration */
 
@@ -172,7 +171,7 @@ int main(int argc, char **argv) {
 
     /* cleanup */
 
-    delete_all_connections(instance.connections_head);
+    delete_all_connections(&instance.connections);
 
     config_dispose(&config);
 

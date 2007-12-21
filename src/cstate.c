@@ -209,7 +209,7 @@ void connection_delete_items(struct connection *c) {
 
         p.serial = i->serial;
 
-        for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+        list_for_each_entry(ls, &c->servers, siblings) {
             if (!ls->invalid && !ls->attaching)
                 uo_server_send(ls->server, &p, sizeof(p));
         }
@@ -474,7 +474,7 @@ void connection_delete_mobiles(struct connection *c) {
 
         p.serial = m->serial;
 
-        for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+        list_for_each_entry(ls, &c->servers, siblings) {
             if (!ls->invalid && !ls->attaching)
                 uo_server_send(ls->server, &p, sizeof(p));
         }

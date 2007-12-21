@@ -70,11 +70,12 @@ int connection_new(struct instance *instance,
 }
 
 void connection_delete(struct connection *c) {
+    struct linked_server *ls, *n;
+
     connection_check(c);
 
-    while (c->servers_head != NULL) {
-        struct linked_server *ls = c->servers_head;
-        c->servers_head = ls->next;
+    list_for_each_entry_safe(ls, n, &c->servers, siblings) {
+        list_del(&ls->siblings);
 
         if (ls->server != NULL)
             uo_server_dispose(ls->server);
@@ -99,8 +100,8 @@ void connection_check(const struct connection *c) {
 
     if (!c->in_game) {
         /* when not yet in-game, there can only be one connection */
-        assert(c->servers_head == NULL ||
-               c->servers_head->next == NULL);
+        assert(list_empty(&c->servers) ||
+               c->servers.next->next == &c->servers);
     }
 }
 #endif
@@ -121,18 +122,15 @@ struct linked_server *connection_add_server(struct connection *c, struct uo_serv
 
     ls->server = server;
 
-    ls->next = c->servers_head;
-    c->servers_head = ls;
+    list_add(&ls->siblings, &c->servers);
 
     return ls;
 }
 
-static void remove_server(struct linked_server **lsp) {
-    struct linked_server *ls = *lsp;
-
+static void remove_server(struct linked_server *ls) {
     assert(ls != NULL);
 
-    *lsp = ls->next;
+    list_del(&ls->siblings);
 
     if (ls->server != NULL)
         uo_server_dispose(ls->server);
@@ -141,7 +139,7 @@ static void remove_server(struct linked_server **lsp) {
 }
 
 void connection_pre_select(struct connection *c, struct selectx *sx) {
-    struct linked_server **lsp, *ls;
+    struct linked_server *ls, *n;
 
     connection_check(c);
 
@@ -165,35 +163,32 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
     if (c->client != NULL)
         uo_client_pre_select(c->client, sx);
 
-    for (lsp = &c->servers_head; *lsp != NULL;) {
-        ls = *lsp;
-
+    list_for_each_entry_safe(ls, n, &c->servers, siblings) {
         assert(ls->invalid || ls->server != NULL);
 
         if (ls->invalid) {
             connection_walk_server_removed(&c->walk, ls);
-            remove_server(lsp);
+            remove_server(ls);
         } else if (!uo_server_alive(ls->server)) {
             connection_walk_server_removed(&c->walk, ls);
 
-            if (ls->next != NULL || c->servers_head != ls) {
+            if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
                 if (verbose >= 2)
                     printf("client disconnected, server connection still in use\n");
-                remove_server(lsp);
+                remove_server(ls);
             } else if (c->background && c->in_game) {
                 if (verbose >= 1)
                     printf("client disconnected, backgrounding\n");
-                remove_server(lsp);
+                remove_server(ls);
             } else {
                 if (verbose >= 1)
                     printf("last client disconnected, removing connection\n");
-                remove_server(lsp);
+                remove_server(ls);
                 connection_invalidate(c);
             }
         } else {
             /* alive. */
             uo_server_pre_select(ls->server, sx);
-            lsp = &ls->next;
         }
     }
 }
@@ -221,7 +216,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
             switch (action) {
             case PA_ACCEPT:
                 if (!c->reconnecting) {
-                    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+                    list_for_each_entry(ls, &c->servers, siblings) {
                         if (!ls->invalid && !ls->attaching)
                             uo_server_send(ls->server, p, length);
                     }
@@ -241,7 +236,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
 
     assert(c->current_server == NULL);
 
-    for (ls = c->servers_head; ls != NULL; ls = ls->next) {
+    list_for_each_entry(ls, &c->servers, siblings) {
         if (ls->invalid)
             continue;
 

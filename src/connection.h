@@ -22,6 +22,7 @@
 #define __CONNECTION_H
 
 #include "packets.h"
+#include "list.h"
 
 #define MAX_CHARACTERS 16
 #define MAX_WALK_QUEUE 4
@@ -48,7 +49,8 @@ struct mobile {
 };
 
 struct linked_server {
-    struct linked_server *next;
+    struct list_head siblings;
+
     struct uo_server *server;
     int invalid, welcome, attaching;
 };
@@ -67,7 +69,8 @@ struct connection_walk_state {
 
 struct connection {
     /* linked list and parent */
-    struct connection *next;
+    struct list_head siblings;
+
     struct instance *instance;
 
     /* flags */
@@ -107,7 +110,7 @@ struct connection {
 
     /* sub-objects */
     struct uo_client *client;
-    struct linked_server *servers_head;
+    struct list_head servers;
     struct linked_server *current_server;
 };
 

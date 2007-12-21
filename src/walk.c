@@ -227,7 +227,8 @@ void connection_walk_ack(struct connection *c,
     }
 
     /* send WalkForce to all other clients */
-    if (c->servers_head != NULL && c->servers_head->next != NULL) {
+    if (!list_empty(&c->servers) &&
+        c->servers.next->next != &c->servers) {
         struct uo_packet_walk_force force = {
             .cmd = PCK_WalkForce,
             .direction = i->packet.direction & 0x7,

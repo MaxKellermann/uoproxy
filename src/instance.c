@@ -26,17 +26,13 @@
 
 void instance_pre_select(struct instance *instance,
                          struct selectx *sx) {
-    struct connection **cp = &instance->connections_head;
+    struct connection *c, *n;
 
-    while (*cp != NULL) {
-        struct connection *c = *cp;
-
+    list_for_each_entry_safe(c, n, &instance->connections, siblings) {
         if (c->invalid) {
-            *cp = c->next;
-            connection_delete(c);
+            list_del(&c->siblings);
         } else {
             connection_pre_select(c, sx);
-            cp = &c->next;
         }
     }
 }
@@ -45,14 +41,14 @@ void instance_post_select(struct instance *instance,
                           struct selectx *sx) {
     struct connection *c;
 
-    for (c = instance->connections_head; c != NULL; c = c->next)
+    list_for_each_entry(c, &instance->connections, siblings)
         connection_post_select(c, sx);
 }
 
 void instance_idle(struct instance *instance, time_t now) {
     struct connection *c;
 
-    for (c = instance->connections_head; c != NULL; c = c->next)
+    list_for_each_entry(c, &instance->connections, siblings)
         connection_idle(c, now);
 }
 
