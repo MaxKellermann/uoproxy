@@ -337,7 +337,7 @@ ssize_t uo_decompress(struct uo_decompression *de,
                 /* Buffer full */
                 return -1;
 
-            *dest++ = -de->treepos;   /* data is negative value */
+            *dest++ = (unsigned char)-de->treepos; /* data is negative value */
             dest_index++;
             de->treepos = 0; /* start on tree top again */
         }
