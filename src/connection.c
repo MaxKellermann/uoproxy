@@ -62,6 +62,8 @@ int connection_new(struct instance *instance,
     c->background = instance->config->background;
     c->autoreconnect = instance->config->autoreconnect;
 
+    INIT_LIST_HEAD(&c->servers);
+
     connection_check(c);
 
     *connectionp = c;
