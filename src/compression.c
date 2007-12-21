@@ -1,5 +1,6 @@
 /*
  * uoproxy
+ *
  * (c) 2005 Max Kellermann <max@duempel.org>
  *
  * based on code from "Ultimate Melange"
