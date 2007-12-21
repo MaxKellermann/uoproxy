@@ -2,7 +2,7 @@
  * uoproxy
  * $Id$
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,9 +47,10 @@ void uo_server_speak_ascii(struct uo_server *server,
                            const char *name,
                            const char *text) {
     struct uo_packet_speak_ascii *p;
-    size_t length;
+    size_t text_length, length;
 
-    length = sizeof(*p) + strlen(text);
+    text_length = strlen(text);
+    length = sizeof(*p) + text_length;
 
     p = malloc(length);
     if (p == NULL)
@@ -63,7 +64,7 @@ void uo_server_speak_ascii(struct uo_server *server,
     p->hue = hue;
     p->font = font;
     write_fixed_string(p->name, sizeof(p->name), name);
-    strcpy(p->text, text);
+    memcpy(p->text, text, text_length + 1);
 
     uo_server_send(server, p, length);
 
