@@ -1,6 +1,5 @@
 /*
  * uoproxy
- * $Id$
  *
  * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *

@@ -1,6 +1,6 @@
 /*
  * uoproxy
- * $Id$
+ * $Id: shandler.c 254 2006-01-14 10:29:43Z make $
  *
  * (c) 2005 Max Kellermann <max@duempel.org>
  *

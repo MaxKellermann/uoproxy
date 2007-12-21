@@ -1,6 +1,6 @@
 /*
  * uoproxy
- * $Id$
+ * $Id: packets.c 260 2006-05-19 06:45:31Z make $
  *
  * (c) 2005 Max Kellermann <max@duempel.org>
  *
