@@ -118,7 +118,11 @@ int connection_new(struct instance *instance,
 void connection_delete(struct connection *c);
 
 #ifdef NDEBUG
-#define connection_check(c) do { (void)(c); } while (0)
+static inline void
+connection_check(const struct connection *c)
+{
+    (void)c;
+}
 #else
 void connection_check(const struct connection *c);
 #endif
