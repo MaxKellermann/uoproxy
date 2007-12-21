@@ -21,8 +21,11 @@
 #ifndef __UOPROXY_POISON_H
 #define __UOPROXY_POISON_H
 
-#include <string.h>
 #include <stddef.h>
+
+#ifndef NDEBUG
+#include <string.h>
+#endif
 
 static inline void
 poison(void *p, size_t length)

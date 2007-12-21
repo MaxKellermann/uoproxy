@@ -18,20 +18,16 @@
  *
  */
 
-#include <assert.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
-#include <sys/wait.h>
 #include <sys/signal.h>
 #include <signal.h>
-#include <netinet/in.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <netdb.h>
 #include <time.h>
 
 #include "netutil.h"

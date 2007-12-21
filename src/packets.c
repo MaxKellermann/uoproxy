@@ -19,8 +19,6 @@
  *
  */
 
-#include <sys/types.h>
-
 #include "packets.h"
 
 /* packet length table borrowed from wolfpack */

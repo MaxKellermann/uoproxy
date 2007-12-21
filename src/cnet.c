@@ -19,7 +19,6 @@
  */
 
 #include <assert.h>
-#include <string.h>
 
 #include "connection.h"
 #include "server.h"

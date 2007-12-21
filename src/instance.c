@@ -19,7 +19,6 @@
  */
 
 #include <sys/types.h>
-#include <string.h>
 
 #include "instance.h"
 #include "connection.h"

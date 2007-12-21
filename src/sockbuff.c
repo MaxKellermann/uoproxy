@@ -22,7 +22,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <string.h>
 
 #include "ioutil.h"
 #include "sockbuff.h"

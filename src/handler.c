@@ -18,9 +18,6 @@
  *
  */
 
-#include <sys/types.h>
-#include <stdlib.h>
-
 #include "handler.h"
 
 packet_action_t handle_packet(struct packet_binding *bindings,
