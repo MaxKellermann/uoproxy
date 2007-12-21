@@ -47,7 +47,11 @@ void instance_idle(struct instance *instance, time_t now);
 void instance_schedule(struct instance *instance, time_t secs);
 
 #ifdef DISABLE_DAEMON_CODE
-#define instance_daemonize(foo) do { (void)(foo); } while (0)
+static inline void
+instance_daemonize(struct instance *instance)
+{
+    (void)instance;
+}
 #else
 void instance_daemonize(struct instance *instance);
 #endif
