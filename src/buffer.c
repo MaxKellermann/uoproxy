@@ -19,6 +19,8 @@
  *
  */
 
+#include "compiler.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,15 +43,12 @@ struct buffer *buffer_new(size_t max_length) {
     return b;
 }
 
-#ifdef NDEBUG
-#define buffer_check(b) do {} while (0)
-#else
-static void buffer_check(const struct buffer *b) {
+static inline void
+buffer_check(const struct buffer *b __attr_unused) {
     assert(b->max_length > 0);
     assert(b->length <= b->max_length);
     assert(b->position <= b->length);
 }
-#endif
 
 void buffer_delete(struct buffer *b) {
     buffer_check(b);
