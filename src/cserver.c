@@ -25,27 +25,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static struct linked_server *
-connection_add_server(struct connection *c, struct uo_server *server)
-{
-    struct linked_server *ls;
-
-    assert(c != NULL);
-    assert(server != NULL);
-
-    connection_check(c);
-
-    ls = calloc(1, sizeof(*ls));
-    if (ls == NULL)
-        return NULL;
-
-    ls->server = server;
-
-    connection_server_add(c, ls);
-
-    return ls;
-}
-
 void
 connection_server_add(struct connection *c, struct linked_server *ls)
 {
@@ -72,14 +51,20 @@ connection_server_remove(struct connection *c, struct linked_server *ls)
 struct linked_server *
 connection_server_new(struct connection *c, int fd)
 {
-    struct uo_server *server;
+    struct linked_server *ls;
     int ret;
 
-    ret = uo_server_create(fd, &server);
+    ls = calloc(1, sizeof(*ls));
+    if (ls == NULL)
+        return NULL;
+
+    ret = uo_server_create(fd, &ls->server);
     if (ret != 0) {
+        free(ls);
         errno = ret;
         return NULL;
     }
 
-    return connection_add_server(c, server);
+    connection_server_add(c, ls);
+    return ls;
 }
