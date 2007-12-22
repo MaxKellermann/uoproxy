@@ -25,9 +25,15 @@
 
 struct connection;
 
+/** what to do with the packet? */
 typedef enum {
+    /** forward the packet to the other communication partner */
     PA_ACCEPT = 0,
+
+    /** drop the packet */
     PA_DROP,
+
+    /** disconnect the endpoint from which this packet was received */
     PA_DISCONNECT,
 } packet_action_t;
 
