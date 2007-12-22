@@ -25,6 +25,7 @@
 #include "packets.h"
 #include "connection.h"
 #include "server.h"
+#include "client.h"
 
 static void walk_shift(struct connection_walk_state *state) {
     assert(state->queue_size > 0);
@@ -126,7 +127,7 @@ connection_walk_request(struct connection *c,
 
     walk = *p;
     walk.seq = i->seq = state->seq_next++;
-    uo_server_send(server->server, &walk, sizeof(walk));
+    uo_client_send(c->client, &walk, sizeof(walk));
 
     if (state->seq_next == 0)
         state->seq_next = 1;
