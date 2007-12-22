@@ -24,7 +24,19 @@
 struct uo_server;
 
 struct uo_server_handler {
+    /**
+     * A packet has been received.
+     *
+     * @return 0, or -1 if this object has been closed within the
+     * function
+     */
     int (*packet)(const void *data, size_t length, void *ctx);
+
+    /**
+     * The connection has been closed due to an error or because the
+     * peer closed his side.  uo_server_dispose() does not trigger
+     * this callback, and the callee has to invoke this function.
+     */
     void (*free)(void *ctx);
 };
 
