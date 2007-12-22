@@ -23,8 +23,6 @@
 
 #include "buffer.h"
 
-struct select_params;
-
 struct sock_buff {
     int fd;
     struct buffer *input, *output;
