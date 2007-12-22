@@ -44,6 +44,6 @@ extern struct packet_binding client_packet_bindings[];
 
 packet_action_t handle_packet(struct packet_binding *bindings,
                               struct connection *c,
-                              void *data, size_t length);
+                              const void *data, size_t length);
 
 #endif
