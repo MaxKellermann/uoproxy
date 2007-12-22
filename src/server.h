@@ -25,7 +25,14 @@ struct selectx;
 
 struct uo_server;
 
-int uo_server_create(int sockfd, struct uo_server **serverp);
+struct uo_server_handler {
+    int (*packet)(void *data, size_t length, void *ctx);
+};
+
+int uo_server_create(int sockfd,
+                     const struct uo_server_handler *handler,
+                     void *handler_ctx,
+                     struct uo_server **serverp);
 void uo_server_dispose(struct uo_server *server);
 
 int uo_server_alive(const struct uo_server *server);
@@ -38,10 +45,6 @@ void uo_server_pre_select(struct uo_server *server,
                           struct selectx *sx);
 int uo_server_post_select(struct uo_server *server,
                           struct selectx *sx);
-
-void *uo_server_peek(struct uo_server *server, size_t *lengthp);
-
-void uo_server_shift(struct uo_server *server, size_t nbytes);
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);

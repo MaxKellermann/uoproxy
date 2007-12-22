@@ -38,11 +38,20 @@ struct uo_server {
     struct sock_buff *sock;
     uint32_t seed;
     int compression_enabled;
+
+    const struct uo_server_handler *handler;
+    void *handler_ctx;
 };
 
-int uo_server_create(int sockfd, struct uo_server **serverp) {
+int uo_server_create(int sockfd,
+                     const struct uo_server_handler *handler,
+                     void *handler_ctx,
+                     struct uo_server **serverp) {
     int ret;
     struct uo_server *server;
+
+    assert(handler != NULL);
+    assert(handler->packet != NULL);
 
     server = (struct uo_server*)calloc(1, sizeof(*server));
     if (server == NULL)
@@ -53,6 +62,9 @@ int uo_server_create(int sockfd, struct uo_server **serverp) {
         free(server);
         return -ENOMEM;
     }
+
+    server->handler = handler;
+    server->handler_ctx = handler_ctx;
 
     *serverp = server;
 
@@ -83,15 +95,26 @@ void uo_server_pre_select(struct uo_server *server,
         sock_buff_pre_select(server->sock, sx);
 }
 
+static int
+uo_server_handle_packets(struct uo_server *server);
+
 int uo_server_post_select(struct uo_server *server,
                           struct selectx *sx) {
+    int ret;
+
     if (server->sock == NULL)
         return 0;
 
-    return sock_buff_post_select(server->sock, sx);
+    ret = sock_buff_post_select(server->sock, sx);
+    if (ret < 0)
+        return ret;
+
+    return uo_server_handle_packets(server);
 }
 
-void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
+static void *
+uo_server_peek(struct uo_server *server, size_t *lengthp)
+{
     unsigned char *p;
     size_t length, packet_length;
 
@@ -156,11 +179,31 @@ void *uo_server_peek(struct uo_server *server, size_t *lengthp) {
     return p;
 }
 
-void uo_server_shift(struct uo_server *server, size_t nbytes) {
+static void
+uo_server_shift(struct uo_server *server, size_t nbytes)
+{
     if (server->sock == NULL)
         return;
 
     buffer_shift(server->sock->input, nbytes);
+}
+
+static int
+uo_server_handle_packets(struct uo_server *server)
+{
+    void *data;
+    size_t length;
+    int ret;
+
+    while ((data = uo_server_peek(server, &length)) != NULL) {
+        uo_server_shift(server, length);
+
+        ret = server->handler->packet(data, length, server->handler_ctx);
+        if (ret <= 0)
+            return ret;
+    }
+
+    return 0;
 }
 
 void uo_server_send(struct uo_server *server,

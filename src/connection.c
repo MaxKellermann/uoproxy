@@ -177,9 +177,6 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
 int connection_post_select(struct connection *c, struct selectx *sx) {
     struct linked_server *ls, *n;
-    void *p;
-    size_t length;
-    packet_action_t action;
 
     connection_check(c);
 
@@ -193,30 +190,6 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
             continue;
 
         uo_server_post_select(ls->server, sx);
-        while (!ls->invalid &&
-               (p = uo_server_peek(ls->server, &length)) != NULL) {
-            uo_server_shift(ls->server, length);
-
-            c->current_server = ls;
-            action = handle_packet(client_packet_bindings,
-                                   c, p, length);
-            c->current_server = NULL;
-            switch (action) {
-            case PA_ACCEPT:
-                if (c->client != NULL && !c->reconnecting)
-                    uo_client_send(c->client, p, length);
-                break;
-
-            case PA_DROP:
-                break;
-
-            case PA_DISCONNECT:
-                /* XXX: only disconnect this server */
-                fprintf(stderr, "aborting connection to client\n");
-                connection_invalidate(c);
-                return -1;
-            }
-        }
     }
 
     return 0;
