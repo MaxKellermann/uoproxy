@@ -19,6 +19,7 @@
  */
 
 #include "log.h"
+#include "compiler.h"
 
 #include <sys/types.h>
 #include <assert.h>
@@ -35,6 +36,8 @@
 #include "packets.h"
 #include "dump.h"
 
+#include <event.h>
+
 struct uo_server {
     struct sock_buff *sock;
     uint32_t seed;
@@ -42,6 +45,8 @@ struct uo_server {
 
     const struct uo_server_handler *handler;
     void *handler_ctx;
+
+    struct event abort_event;
 };
 
 static void
@@ -49,12 +54,44 @@ uo_server_invoke_free(struct uo_server *server)
 {
     const struct uo_server_handler *handler;
 
+    assert(server->sock != NULL);
     assert(server->handler != NULL);
 
     handler = server->handler;
     server->handler = NULL;
 
     handler->free(server->handler_ctx);
+}
+
+static void
+uo_server_abort_event_callback(int fd __attr_unused,
+                               short event __attr_unused,
+                               void *ctx)
+{
+    struct uo_server *server = ctx;
+
+    uo_server_invoke_free(server);
+}
+
+static void
+uo_server_abort(struct uo_server *server)
+{
+    struct timeval tv = {
+        .tv_sec = 0,
+        .tv_usec = 0,
+    };
+
+    /* this is a trick to delay the destruction of this object until
+       everything is done */
+    evtimer_set(&server->abort_event,
+                uo_server_abort_event_callback, server);
+    evtimer_add(&server->abort_event, &tv);
+}
+
+static int
+uo_server_is_aborted(struct uo_server *server)
+{
+    return server->abort_event.ev_events != 0;
 }
 
 static const void *
@@ -137,6 +174,10 @@ int uo_server_create(int sockfd,
 void uo_server_dispose(struct uo_server *server) {
     if (server->sock != NULL)
         sock_buff_dispose(server->sock);
+
+    if (uo_server_is_aborted(server))
+        evtimer_del(&server->abort_event);
+
     free(server);
 }
 
@@ -175,7 +216,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
         server->seed = *(const uint32_t*)p;
         if (server->seed == 0) {
             fprintf(stderr, "zero seed from client\n");
-            uo_server_invoke_free(server);
+            uo_server_abort(server);
             return NULL;
         }
 
@@ -192,7 +233,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
         fprintf(stderr, "malformed packet from client:\n");
         fhexdump(stderr, "  ", p, length);
         fflush(stderr);
-        uo_server_invoke_free(server);
+        uo_server_abort(server);
         return NULL;
     }
 
@@ -224,9 +265,12 @@ uo_server_shift(struct uo_server *server, size_t nbytes)
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length) {
-    assert(server->sock != NULL);
+    assert(server->sock != NULL || uo_server_is_aborted(server));
     assert(length > 0);
     assert(get_packet_length(src, length) == length);
+
+    if (uo_server_is_aborted(server))
+        return;
 
 #ifdef DUMP_SERVER_SEND
     printf("sending to packet to client, length=%zu:\n", length);
@@ -242,7 +286,7 @@ void uo_server_send(struct uo_server *server,
                              src, length);
         if (nbytes < 0) {
             fprintf(stderr, "uo_compress() failed\n");
-            uo_server_invoke_free(server);
+            uo_server_abort(server);
             return;
         }
 
@@ -250,7 +294,7 @@ void uo_server_send(struct uo_server *server,
     } else {
         if (length > buffer_free(server->sock->output)) {
             fprintf(stderr, "output buffer full in uo_server_send()\n");
-            uo_server_invoke_free(server);
+            uo_server_abort(server);
             return;
         }
 

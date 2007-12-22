@@ -19,6 +19,7 @@
  */
 
 #include "log.h"
+#include "compiler.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -36,6 +37,8 @@
 #include "packets.h"
 #include "dump.h"
 
+#include <event.h>
+
 struct uo_client {
     struct sock_buff *sock;
     int compression_enabled;
@@ -44,6 +47,8 @@ struct uo_client {
 
     const struct uo_client_handler *handler;
     void *handler_ctx;
+
+    struct event abort_event;
 };
 
 static void
@@ -57,6 +62,37 @@ uo_client_invoke_free(struct uo_client *client)
     client->handler = NULL;
 
     handler->free(client->handler_ctx);
+}
+
+static void
+uo_client_abort_event_callback(int fd __attr_unused,
+                               short event __attr_unused,
+                               void *ctx)
+{
+    struct uo_client *client = ctx;
+
+    uo_client_invoke_free(client);
+}
+
+static void
+uo_client_abort(struct uo_client *client)
+{
+    struct timeval tv = {
+        .tv_sec = 0,
+        .tv_usec = 0,
+    };
+
+    /* this is a trick to delay the destruction of this object until
+       everything is done */
+    evtimer_set(&client->abort_event,
+                uo_client_abort_event_callback, client);
+    evtimer_add(&client->abort_event, &tv);
+}
+
+static int
+uo_client_is_aborted(struct uo_client *client)
+{
+    return client->abort_event.ev_events != 0;
 }
 
 static const void *
@@ -169,8 +205,13 @@ int uo_client_create(const struct addrinfo *server_address,
 
 void uo_client_dispose(struct uo_client *client) {
     buffer_delete(client->decompressed_buffer);
+
     if (client->sock != NULL)
         sock_buff_dispose(client->sock);
+
+    if (uo_client_is_aborted(client))
+        evtimer_del(&client->abort_event);
+
     free(client);
 }
 
@@ -201,7 +242,7 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
         fprintf(stderr, "malformed packet from server:\n");
         fhexdump(stderr, "  ", p, length);
         fflush(stderr);
-        uo_client_invoke_free(client);
+        uo_client_abort(client);
         return NULL;
     }
 
@@ -240,7 +281,7 @@ uo_client_peek(struct uo_client *client, size_t *lengthp)
                                    p, length);
             if (nbytes < 0) {
                 fprintf(stderr, "decompression failed\n");
-                uo_client_invoke_free(client);
+                uo_client_abort(client);
                 return NULL;
             }
 
@@ -269,8 +310,11 @@ uo_client_shift(struct uo_client *client, size_t nbytes)
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length) {
-    assert(client->sock != NULL);
+    assert(client->sock != NULL || uo_client_is_aborted(client));
     assert(length > 0);
+
+    if (uo_client_is_aborted(client))
+        return;
 
 #ifdef DUMP_CLIENT_SEND
     printf("sending to packet to server, length=%zu:\n", length);
@@ -283,7 +327,7 @@ void uo_client_send(struct uo_client *client,
 
     if (length > buffer_free(client->sock->output)) {
         fprintf(stderr, "output buffer full in uo_client_send()\n");
-        uo_client_invoke_free(client);
+        uo_client_abort(client);
         return;
     }
 
