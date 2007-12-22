@@ -48,7 +48,8 @@ client_packet(const void *data, size_t length, void *ctx)
         break;
 
     case PA_DISCONNECT:
-        log(2, "aborting connection to server\n");
+        log(2, "aborting connection to server after packet 0x%x\n",
+            *(const unsigned char*)data);
         connection_invalidate(c);
         return -1;
     }

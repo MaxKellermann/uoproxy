@@ -53,7 +53,8 @@ server_packet(const void *data, size_t length, void *ctx)
 
     case PA_DISCONNECT:
         /* XXX: only disconnect this server */
-        fprintf(stderr, "aborting connection to client\n");
+        log(2, "aborting connection to client after packet 0x%x\n",
+            *(const unsigned char*)data);
         connection_invalidate(c);
         return -1;
     }
