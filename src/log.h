@@ -22,13 +22,33 @@
 #define __UOPROXY_LOG_H
 
 #include <stdio.h>
+#include <string.h>
 
 extern int verbose;
 
 #ifdef DISABLE_LOGGING
 #define log(level, ...)
+#define log_oom()
+#define log_error(msg, error)
 #else
+
 #define log(level, ...) do { if (verbose >= (level)) { printf(__VA_ARGS__); fflush(stdout); } } while (0)
+
+static inline void
+log_oom(void)
+{
+    log(1, "Out of memory\n");
+}
+
+static inline void
+log_error(const char *msg, int error)
+{
+    if (error > 0)
+        log(1, "%s: %d\n", msg, error);
+    else
+        log(1, "%s: %s\n", msg, strerror(-error));
+}
+
 #endif
 
 #endif
