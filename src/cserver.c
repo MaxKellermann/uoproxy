@@ -73,13 +73,13 @@ server_free(void *ctx)
 
     if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
         log(2, "client disconnected, server connection still in use\n");
-        connection_server_remove(c, ls);
+        connection_server_dispose(c, ls);
     } else if (c->background && c->in_game) {
         log(1, "client disconnected, backgrounding\n");
-        connection_server_remove(c, ls);
+        connection_server_dispose(c, ls);
     } else {
         log(1, "last client disconnected, removing connection\n");
-        connection_server_remove(c, ls);
+        connection_server_dispose(c, ls);
         connection_invalidate(c);
     }
 }
