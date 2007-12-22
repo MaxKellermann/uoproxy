@@ -40,6 +40,8 @@ server_packet(const void *data, size_t length, void *ctx)
     c->current_server = ls;
     action = handle_packet(client_packet_bindings,
                            c, data, length);
+    assert(c->current_server == ls ||
+           (c->current_server == NULL && action == PA_DROP));
     c->current_server = NULL;
 
     switch (action) {
