@@ -138,11 +138,8 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
         assert(ls->invalid || ls->server != NULL);
 
         if (ls->invalid) {
-            connection_walk_server_removed(&c->walk, ls);
             connection_server_dispose(c, ls);
         } else if (!uo_server_alive(ls->server)) {
-            connection_walk_server_removed(&c->walk, ls);
-
             if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
                 if (verbose >= 2)
                     printf("client disconnected, server connection still in use\n");
