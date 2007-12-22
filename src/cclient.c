@@ -20,8 +20,44 @@
 
 #include "connection.h"
 #include "client.h"
+#include "server.h"
+#include "handler.h"
+#include "log.h"
 
 #include <assert.h>
+
+static int
+client_packet(void *data, size_t length, void *ctx)
+{
+    struct connection *c = ctx;
+    packet_action_t action;
+    struct linked_server *ls;
+
+    action = handle_packet(server_packet_bindings,
+                           c, data, length);
+    switch (action) {
+    case PA_ACCEPT:
+        if (!c->reconnecting)
+            list_for_each_entry(ls, &c->servers, siblings)
+                if (!ls->invalid && !ls->attaching)
+                    uo_server_send(ls->server, data, length);
+        break;
+
+    case PA_DROP:
+        break;
+
+    case PA_DISCONNECT:
+        log(2, "aborting connection to server\n");
+        connection_invalidate(c);
+        return -1;
+    }
+
+    return 0;
+}
+
+static const struct uo_client_handler client_handler = {
+    .packet = client_packet,
+};
 
 int
 connection_client_connect(struct connection *c,
@@ -30,5 +66,7 @@ connection_client_connect(struct connection *c,
 {
     assert(c->client == NULL);
 
-    return uo_client_create(server_address, seed, &c->client);
+    return uo_client_create(server_address, seed,
+                            &client_handler, c,
+                            &c->client);
 }

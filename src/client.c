@@ -40,13 +40,21 @@ struct uo_client {
     int compression_enabled;
     struct uo_decompression decompression;
     struct buffer *decompressed_buffer;
+
+    const struct uo_client_handler *handler;
+    void *handler_ctx;
 };
 
 int uo_client_create(const struct addrinfo *server_address,
                      uint32_t seed,
+                     const struct uo_client_handler *handler,
+                     void *handler_ctx,
                      struct uo_client **clientp) {
     int sockfd, ret;
     struct uo_client *client;
+
+    assert(handler != NULL);
+    assert(handler->packet != NULL);
 
     sockfd = socket(server_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0)
@@ -79,6 +87,9 @@ int uo_client_create(const struct addrinfo *server_address,
         uo_client_dispose(client);
         return -ENOMEM;
     }
+
+    client->handler = handler;
+    client->handler_ctx = handler_ctx;
 
     /* seed must be the first 4 bytes, and it must be flushed */
     uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
@@ -114,12 +125,21 @@ void uo_client_pre_select(struct uo_client *client,
         sock_buff_pre_select(client->sock, sx);
 }
 
+static int
+uo_client_handle_packets(struct uo_client *client);
+
 int uo_client_post_select(struct uo_client *client,
                           struct selectx *sx) {
+    int ret;
+
     if (client->sock == NULL)
         return 0;
 
-    return sock_buff_post_select(client->sock, sx);
+    ret = sock_buff_post_select(client->sock, sx);
+    if (ret < 0)
+        return ret;
+
+    return uo_client_handle_packets(client);
 }
 
 static unsigned char *peek_from_buffer(struct uo_client *client,
@@ -164,7 +184,9 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
     return p;
 }
 
-void *uo_client_peek(struct uo_client *client, size_t *lengthp) {
+static void *
+uo_client_peek(struct uo_client *client, size_t *lengthp)
+{
     if (client->sock == NULL)
         return NULL;
 
@@ -199,7 +221,9 @@ void *uo_client_peek(struct uo_client *client, size_t *lengthp) {
     }
 }
 
-void uo_client_shift(struct uo_client *client, size_t nbytes) {
+static void
+uo_client_shift(struct uo_client *client, size_t nbytes)
+{
     if (client->sock == NULL)
         return;
 
@@ -207,6 +231,24 @@ void uo_client_shift(struct uo_client *client, size_t nbytes) {
                  ? client->decompressed_buffer
                  : client->sock->input,
                  nbytes);
+}
+
+static int
+uo_client_handle_packets(struct uo_client *client)
+{
+    void *data;
+    size_t length;
+    int ret;
+
+    while ((data = uo_client_peek(client, &length)) != NULL) {
+        uo_client_shift(client, length);
+
+        ret = client->handler->packet(data, length, client->handler_ctx);
+        if (ret <= 0)
+            return ret;
+    }
+
+    return 0;
 }
 
 void uo_client_send(struct uo_client *client,

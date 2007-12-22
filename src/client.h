@@ -25,8 +25,14 @@ struct addrinfo;
 struct selectx;
 struct uo_client;
 
+struct uo_client_handler {
+    int (*packet)(void *data, size_t length, void *ctx);
+};
+
 int uo_client_create(const struct addrinfo *server_address,
                      u_int32_t seed,
+                     const struct uo_client_handler *handler,
+                     void *handler_ctx,
                      struct uo_client **clientp);
 void uo_client_dispose(struct uo_client *client);
 
@@ -38,10 +44,6 @@ void uo_client_pre_select(struct uo_client *client,
                           struct selectx *sx);
 int uo_client_post_select(struct uo_client *client,
                           struct selectx *sx);
-
-void *uo_client_peek(struct uo_client *client, size_t *lengthp);
-
-void uo_client_shift(struct uo_client *client, size_t nbytes);
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length);
