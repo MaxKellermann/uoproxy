@@ -146,65 +146,8 @@ void connection_idle(struct connection *c, time_t now) {
     connection_check(c);
 
     if (c->client == NULL) {
-        if (c->reconnecting && now >= c->next_reconnect) {
-            struct config *config = c->instance->config;
-            const u_int32_t seed = rand();
-            int ret;
-
-            assert(c->in_game);
-
-            if (config->login_address == NULL) {
-                /* connect to game server */
-                struct addrinfo *server_address
-                    = config->game_servers[c->server_index].address;
-
-                assert(config->game_servers != NULL);
-                assert(c->server_index < config->num_game_servers);
-
-                ret = connection_client_connect(c, server_address, seed);
-                if (ret == 0) {
-                    struct uo_packet_game_login p = {
-                        .cmd = PCK_GameLogin,
-                    };
-
-                    if (verbose >= 2)
-                        printf("connected, doing GameLogin\n");
-
-                    memcpy(p.username, c->username, sizeof(p.username));
-                    memcpy(p.password, c->password, sizeof(p.password));
-
-                    uo_client_send(c->client, &p, sizeof(p));
-                } else {
-                    if (verbose >= 1)
-                        fprintf(stderr, "reconnect failed: %s\n",
-                                strerror(-ret));
-                    connection_reconnect(c);
-                }
-            } else {
-                /* connect to login server */
-                ret = connection_client_connect(c,
-                                                c->instance->config->login_address,
-                                                seed);
-                if (ret == 0) {
-                    struct uo_packet_account_login p = {
-                        .cmd = PCK_AccountLogin,
-                    };
-
-                    if (verbose >= 2)
-                        printf("connected, doing AccountLogin\n");
-
-                    memcpy(p.username, c->username, sizeof(p.username));
-                    memcpy(p.password, c->password, sizeof(p.password));
-
-                    uo_client_send(c->client, &p, sizeof(p));
-                } else {
-                    if (verbose >= 1)
-                        fprintf(stderr, "reconnect failed: %s\n",
-                                strerror(-ret));
-                    connection_reconnect(c);
-                }
-            }
-        }
+        if (c->reconnecting && now >= c->next_reconnect)
+            connection_try_reconnect(c);
     } else if (now >= c->next_ping) {
         struct uo_packet_ping ping;
 

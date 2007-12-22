@@ -237,6 +237,9 @@ connection_client_connect(struct connection *c,
 
 void connection_disconnect(struct connection *c);
 
+void
+connection_try_reconnect(struct connection *c);
+
 void connection_reconnect(struct connection *c);
 
 /* attach */

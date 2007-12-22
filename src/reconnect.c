@@ -24,6 +24,10 @@
 #include "connection.h"
 #include "instance.h"
 #include "client.h"
+#include "config.h"
+#include "log.h"
+
+#include <stdlib.h>
 
 void connection_disconnect(struct connection *c) {
     if (c->client == NULL)
@@ -34,6 +38,62 @@ void connection_disconnect(struct connection *c) {
 
     uo_client_dispose(c->client);
     c->client = NULL;
+}
+
+void
+connection_try_reconnect(struct connection *c)
+{
+    struct config *config = c->instance->config;
+    const u_int32_t seed = rand();
+    int ret;
+
+    assert(c->in_game);
+
+    if (config->login_address == NULL) {
+        /* connect to game server */
+        struct addrinfo *server_address
+            = config->game_servers[c->server_index].address;
+
+        assert(config->game_servers != NULL);
+        assert(c->server_index < config->num_game_servers);
+
+        ret = connection_client_connect(c, server_address, seed);
+        if (ret == 0) {
+            struct uo_packet_game_login p = {
+                .cmd = PCK_GameLogin,
+            };
+
+            log(2, "connected, doing GameLogin\n");
+
+            memcpy(p.username, c->username, sizeof(p.username));
+            memcpy(p.password, c->password, sizeof(p.password));
+
+            uo_client_send(c->client, &p, sizeof(p));
+        } else {
+            log_error("reconnect failed", ret);
+            connection_reconnect(c);
+        }
+    } else {
+        /* connect to login server */
+        ret = connection_client_connect(c,
+                                        c->instance->config->login_address,
+                                        seed);
+        if (ret == 0) {
+            struct uo_packet_account_login p = {
+                .cmd = PCK_AccountLogin,
+            };
+
+            log(2, "connected, doing AccountLogin\n");
+
+            memcpy(p.username, c->username, sizeof(p.username));
+            memcpy(p.password, c->password, sizeof(p.password));
+
+            uo_client_send(c->client, &p, sizeof(p));
+        } else {
+            log_error("reconnect failed", ret);
+            connection_reconnect(c);
+        }
+    }
 }
 
 void connection_reconnect(struct connection *c) {
