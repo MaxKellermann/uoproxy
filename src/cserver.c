@@ -112,3 +112,18 @@ connection_server_new(struct connection *c, int fd)
     connection_server_add(c, ls);
     return ls;
 }
+
+void
+connection_server_dispose(struct connection *c, struct linked_server *ls)
+{
+    assert(ls != NULL);
+
+    (void)c;
+
+    list_del(&ls->siblings);
+
+    if (ls->server != NULL)
+        uo_server_dispose(ls->server);
+
+    free(ls);
+}

@@ -111,17 +111,6 @@ void connection_invalidate(struct connection *c) {
     connection_delete(c);
 }
 
-static void remove_server(struct linked_server *ls) {
-    assert(ls != NULL);
-
-    list_del(&ls->siblings);
-
-    if (ls->server != NULL)
-        uo_server_dispose(ls->server);
-
-    free(ls);
-}
-
 void connection_pre_select(struct connection *c, struct selectx *sx) {
     struct linked_server *ls, *n;
 
@@ -150,22 +139,22 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
         if (ls->invalid) {
             connection_walk_server_removed(&c->walk, ls);
-            remove_server(ls);
+            connection_server_dispose(c, ls);
         } else if (!uo_server_alive(ls->server)) {
             connection_walk_server_removed(&c->walk, ls);
 
             if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
                 if (verbose >= 2)
                     printf("client disconnected, server connection still in use\n");
-                remove_server(ls);
+                connection_server_dispose(c, ls);
             } else if (c->background && c->in_game) {
                 if (verbose >= 1)
                     printf("client disconnected, backgrounding\n");
-                remove_server(ls);
+                connection_server_dispose(c, ls);
             } else {
                 if (verbose >= 1)
                     printf("last client disconnected, removing connection\n");
-                remove_server(ls);
+                connection_server_dispose(c, ls);
                 connection_invalidate(c);
             }
         } else {

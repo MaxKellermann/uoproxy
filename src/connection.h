@@ -161,6 +161,9 @@ connection_server_remove(struct connection *c, struct linked_server *ls);
 struct linked_server *
 connection_server_new(struct connection *c, int fd);
 
+void
+connection_server_dispose(struct connection *c, struct linked_server *ls);
+
 
 /* state */
 
