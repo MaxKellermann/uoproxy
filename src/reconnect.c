@@ -35,6 +35,9 @@ void connection_disconnect(struct connection *c) {
     if (c->client == NULL)
         return;
 
+    if (c->reconnecting)
+        event_del(&c->reconnect_event);
+
     connection_delete_items(c);
     connection_delete_mobiles(c);
 

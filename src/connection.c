@@ -72,9 +72,6 @@ void connection_delete(struct connection *c) {
 
     connection_check(c);
 
-    if (c->reconnecting)
-        event_del(&c->reconnect_event);
-
     list_for_each_entry_safe(ls, n, &c->servers, siblings) {
         list_del(&ls->siblings);
 
