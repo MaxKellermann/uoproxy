@@ -34,6 +34,7 @@ int sock_buff_create(int fd, size_t input_max,
                      void *handler_ctx,
                      struct sock_buff **sbp) {
     struct sock_buff *sb;
+    int ret;
 
     assert(handler != NULL);
     assert(handler->data != NULL);
@@ -46,15 +47,15 @@ int sock_buff_create(int fd, size_t input_max,
     sb->fd = fd;
     sb->event.ev_events = 0;
 
-    sb->input = buffer_new(input_max);
-    if (sb->input == NULL) {
+    ret = fifo_buffer_new(input_max, &sb->input);
+    if (ret < 0) {
         free(sb);
         return -ENOMEM;
     }
 
-    sb->output = buffer_new(output_max);
-    if (sb->output == NULL) {
-        buffer_delete(sb->input);
+    ret = fifo_buffer_new(output_max, &sb->output);
+    if (ret < 0) {
+        fifo_buffer_delete(&sb->input);
         free(sb);
         return -ENOMEM;
     }
@@ -89,8 +90,8 @@ void sock_buff_dispose(struct sock_buff *sb) {
     event_del(&sb->event);
     close(sb->fd);
 
-    buffer_delete(sb->input);
-    buffer_delete(sb->output);
+    fifo_buffer_delete(&sb->input);
+    fifo_buffer_delete(&sb->output);
     free(sb);
 }
 
@@ -99,7 +100,7 @@ int sock_buff_flush(struct sock_buff *sb) {
     size_t length = 0;
     ssize_t nbytes;
 
-    p = buffer_peek(sb->output, &length);
+    p = fifo_buffer_read(sb->output, &length);
     if (p == NULL)
         return 0;
 
@@ -112,9 +113,7 @@ int sock_buff_flush(struct sock_buff *sb) {
         return -save_errno;
     }
 
-    buffer_shift(sb->output, (size_t)nbytes);
-    buffer_commit(sb->output);
-
+    fifo_buffer_consume(sb->output, (size_t)nbytes);
     return 0;
 }
 
@@ -127,10 +126,14 @@ sock_buff_event_callback(int fd, short event, void *ctx)
     assert(fd == sb->fd);
 
     if (event & EV_READ) {
+        void *p;
+        size_t max_length;
         ssize_t nbytes;
 
-        nbytes = read(sb->fd, buffer_tail(sb->input),
-                      buffer_free(sb->input));
+        p = fifo_buffer_write(sb->input, &max_length);
+        assert(p != NULL);
+
+        nbytes = read(sb->fd, p, max_length);
         if (nbytes < 0) {
             perror("failed to read");
             sock_buff_invoke_free(sb, errno);
@@ -142,7 +145,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
             return;
         }
 
-        buffer_expand(sb->input, (size_t)nbytes);
+        fifo_buffer_append(sb->input, (size_t)nbytes);
 
         ret = sb->handler->data(sb->handler_ctx);
         if (ret < 0)
@@ -163,11 +166,10 @@ sock_buff_event_setup(struct sock_buff *sb)
 {
     short event = EV_PERSIST;
 
-    buffer_commit(sb->input);
-    if (buffer_free(sb->input) > 0)
+    if (!fifo_buffer_full(sb->input))
         event |= EV_READ;
 
-    if (!buffer_empty(sb->output))
+    if (!fifo_buffer_empty(sb->output))
         event |= EV_WRITE;
 
     if (sb->event.ev_events == event)

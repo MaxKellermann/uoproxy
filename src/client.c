@@ -18,6 +18,7 @@
  *
  */
 
+#include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"
 
@@ -32,7 +33,6 @@
 
 #include "client.h"
 #include "sockbuff.h"
-#include "buffer.h"
 #include "compression.h"
 #include "packets.h"
 #include "dump.h"
@@ -43,7 +43,7 @@ struct uo_client {
     struct sock_buff *sock;
     int compression_enabled;
     struct uo_decompression decompression;
-    struct buffer *decompressed_buffer;
+    fifo_buffer_t decompressed_buffer;
 
     const struct uo_client_handler *handler;
     void *handler_ctx;
@@ -181,8 +181,8 @@ int uo_client_create(const struct addrinfo *server_address,
     }
 
     uo_decompression_init(&client->decompression);
-    client->decompressed_buffer = buffer_new(65536);
-    if (client->decompressed_buffer == NULL) {
+    ret = fifo_buffer_new(65536, &client->decompressed_buffer);
+    if (ret < 0) {
         uo_client_dispose(client);
         return -ENOMEM;
     }
@@ -204,7 +204,7 @@ int uo_client_create(const struct addrinfo *server_address,
 }
 
 void uo_client_dispose(struct uo_client *client) {
-    buffer_delete(client->decompressed_buffer);
+    fifo_buffer_delete(&client->decompressed_buffer);
 
     if (client->sock != NULL)
         sock_buff_dispose(client->sock);
@@ -221,11 +221,11 @@ int uo_client_fileno(const struct uo_client *client) {
 
 static const unsigned char *
 peek_from_buffer(struct uo_client *client,
-                 struct buffer *buffer, size_t *lengthp) {
-    unsigned char *p;
+                 fifo_buffer_t buffer, size_t *lengthp) {
+    const unsigned char *p;
     size_t length, packet_length;
 
-    p = buffer_peek(buffer, &length);
+    p = fifo_buffer_read(buffer, &length);
     if (p == NULL)
         return NULL;
 
@@ -269,15 +269,21 @@ uo_client_peek(struct uo_client *client, size_t *lengthp)
         const unsigned char *p;
         size_t length;
 
-        p = buffer_peek(client->sock->input, &length);
+        p = fifo_buffer_read(client->sock->input, &length);
         if (p != NULL) {
+            unsigned char *dest;
+            size_t max_length;
             ssize_t nbytes;
 
-            buffer_commit(client->decompressed_buffer),
+            dest = fifo_buffer_write(client->decompressed_buffer, &max_length);
+            if (dest == NULL) {
+                log(1, "decompression buffer full\n");
+                uo_client_abort(client);
+                return NULL;
+            }
 
             nbytes = uo_decompress(&client->decompression,
-                                   buffer_tail(client->decompressed_buffer),
-                                   buffer_free(client->decompressed_buffer),
+                                   dest, max_length,
                                    p, length);
             if (nbytes < 0) {
                 fprintf(stderr, "decompression failed\n");
@@ -285,9 +291,9 @@ uo_client_peek(struct uo_client *client, size_t *lengthp)
                 return NULL;
             }
 
-            buffer_shift(client->sock->input, length);
+            fifo_buffer_consume(client->sock->input, length);
             sock_buff_event_setup(client->sock);
-            buffer_expand(client->decompressed_buffer, (size_t)nbytes);
+            fifo_buffer_append(client->decompressed_buffer, (size_t)nbytes);
         }
 
         return peek_from_buffer(client, client->decompressed_buffer, lengthp);
@@ -301,15 +307,18 @@ uo_client_shift(struct uo_client *client, size_t nbytes)
 {
     assert(client->sock != NULL);
 
-    buffer_shift(client->compression_enabled
-                 ? client->decompressed_buffer
-                 : client->sock->input,
+    fifo_buffer_consume(client->compression_enabled
+                        ? client->decompressed_buffer
+                        : client->sock->input,
                  nbytes);
     sock_buff_event_setup(client->sock);
 }
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length) {
+    void *dest;
+    size_t max_length;
+
     assert(client->sock != NULL || uo_client_is_aborted(client));
     assert(length > 0);
 
@@ -325,12 +334,14 @@ void uo_client_send(struct uo_client *client,
     if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = 1;
 
-    if (length > buffer_free(client->sock->output)) {
+    dest = fifo_buffer_write(client->sock->output, &max_length);
+    if (dest == NULL || length > max_length) {
         fprintf(stderr, "output buffer full in uo_client_send()\n");
         uo_client_abort(client);
         return;
     }
 
-    buffer_append(client->sock->output, src, length);
+    memcpy(dest, src, length);
+    fifo_buffer_append(client->sock->output, length);
     sock_buff_event_setup(client->sock);
 }

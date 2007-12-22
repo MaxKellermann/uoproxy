@@ -21,7 +21,7 @@
 #ifndef __SOCKBUFF_H
 #define __SOCKBUFF_H
 
-#include "buffer.h"
+#include "fifo-buffer.h"
 
 #include <event.h>
 
@@ -46,7 +46,7 @@ struct sock_buff {
     int fd;
     struct event event;
 
-    struct buffer *input, *output;
+    fifo_buffer_t input, output;
 
     const struct sock_buff_handler *handler;
     void *handler_ctx;
