@@ -72,6 +72,9 @@ void connection_delete(struct connection *c) {
 
     connection_check(c);
 
+    if (c->reconnecting)
+        event_del(&c->reconnect_event);
+
     list_for_each_entry_safe(ls, n, &c->servers, siblings) {
         list_del(&ls->siblings);
 
@@ -81,6 +84,7 @@ void connection_delete(struct connection *c) {
     }
 
     if (c->client != NULL) {
+        event_del(&c->ping_event);
         uo_client_dispose(c->client);
         c->client = NULL;
     }
@@ -107,56 +111,4 @@ void connection_check(const struct connection *c) {
 void connection_invalidate(struct connection *c) {
     list_del(&c->siblings);
     connection_delete(c);
-}
-
-void connection_pre_select(struct connection *c, struct selectx *sx) {
-    struct linked_server *ls, *n;
-
-    connection_check(c);
-
-    if (c->client != NULL)
-        uo_client_pre_select(c->client, sx);
-
-    list_for_each_entry_safe(ls, n, &c->servers, siblings) {
-        assert(ls->server != NULL);
-
-        uo_server_pre_select(ls->server, sx);
-    }
-}
-
-int connection_post_select(struct connection *c, struct selectx *sx) {
-    struct linked_server *ls, *n;
-
-    connection_check(c);
-
-    if (c->client != NULL)
-        uo_client_post_select(c->client, sx);
-
-    assert(c->current_server == NULL);
-
-    list_for_each_entry_safe(ls, n, &c->servers, siblings)
-        uo_server_post_select(ls->server, sx);
-
-    return 0;
-}
-
-void connection_idle(struct connection *c, time_t now) {
-    connection_check(c);
-
-    if (c->client == NULL) {
-        if (c->reconnecting && now >= c->next_reconnect)
-            connection_try_reconnect(c);
-    } else if (now >= c->next_ping) {
-        struct uo_packet_ping ping;
-
-        ping.cmd = PCK_Ping;
-        ping.id = ++c->ping_request;
-
-        if (verbose >= 2)
-            printf("sending ping\n");
-        uo_client_send(c->client, &ping, sizeof(ping));
-
-        c->next_ping = now + 30;
-        instance_schedule(c->instance, 29);
-    }
 }

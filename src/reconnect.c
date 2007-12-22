@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
+
+#include "compiler.h"
 
 #include <assert.h>
 #include <time.h>
@@ -36,11 +38,13 @@ void connection_disconnect(struct connection *c) {
     connection_delete_items(c);
     connection_delete_mobiles(c);
 
+    event_del(&c->ping_event);
+
     uo_client_dispose(c->client);
     c->client = NULL;
 }
 
-void
+static void
 connection_try_reconnect(struct connection *c)
 {
     struct config *config = c->instance->config;
@@ -48,6 +52,8 @@ connection_try_reconnect(struct connection *c)
     int ret;
 
     assert(c->in_game);
+    assert(c->reconnecting);
+    assert(c->client == NULL);
 
     if (config->login_address == NULL) {
         /* connect to game server */
@@ -71,6 +77,7 @@ connection_try_reconnect(struct connection *c)
             uo_client_send(c->client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
+            c->reconnecting = 0;
             connection_reconnect(c);
         }
     } else {
@@ -91,18 +98,36 @@ connection_try_reconnect(struct connection *c)
             uo_client_send(c->client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
+            c->reconnecting = 0;
             connection_reconnect(c);
         }
     }
 }
 
+static void
+connection_reconnect_event_callback(int fd __attr_unused,
+                                    short event __attr_unused, void *ctx)
+{
+    struct connection *c = ctx;
+
+    connection_try_reconnect(c);
+}
+
 void connection_reconnect(struct connection *c) {
+    struct timeval tv;
+
+    if (c->reconnecting)
+        return;
+
     connection_disconnect(c);
 
     assert(c->in_game);
     assert(c->client == NULL);
 
     c->reconnecting = 1;
-    c->next_reconnect = time(NULL) + 4;
-    instance_schedule(c->instance, 5);
+
+    tv.tv_sec = 5;
+    tv.tv_usec = 0;
+    evtimer_set(&c->reconnect_event, connection_reconnect_event_callback, c);
+    evtimer_add(&c->reconnect_event, &tv);
 }

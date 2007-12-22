@@ -22,7 +22,6 @@
 #define __CLIENT_H
 
 struct addrinfo;
-struct selectx;
 struct uo_client;
 
 struct uo_client_handler {
@@ -38,11 +37,6 @@ int uo_client_create(const struct addrinfo *server_address,
 void uo_client_dispose(struct uo_client *client);
 
 int uo_client_fileno(const struct uo_client *client);
-
-void uo_client_pre_select(struct uo_client *client,
-                          struct selectx *sx);
-int uo_client_post_select(struct uo_client *client,
-                          struct selectx *sx);
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length);

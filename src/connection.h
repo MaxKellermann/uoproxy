@@ -24,6 +24,8 @@
 #include "packets.h"
 #include "list.h"
 
+#include <event.h>
+
 #define MAX_CHARACTERS 16
 #define MAX_WALK_QUEUE 4
 
@@ -84,6 +86,7 @@ struct connection {
 
     /* reconnect */
     int autoreconnect, reconnecting;
+    struct event reconnect_event;
 
     /* state */
     char username[30], password[30];
@@ -111,10 +114,10 @@ struct connection {
 
     struct connection_walk_state walk;
 
-    time_t next_ping, next_reconnect;
-
     /* sub-objects */
     struct uo_client *client;
+    struct event ping_event;
+
     struct list_head servers;
     struct linked_server *current_server;
 };
@@ -136,12 +139,6 @@ void connection_check(const struct connection *c);
 #endif
 
 void connection_invalidate(struct connection *c);
-
-void connection_pre_select(struct connection *c, struct selectx *sx);
-
-int connection_post_select(struct connection *c, struct selectx *sx);
-
-void connection_idle(struct connection *c, time_t now);
 
 void connection_speak_console(struct connection *c, const char *msg);
 
@@ -236,9 +233,6 @@ connection_client_connect(struct connection *c,
                           u_int32_t seed);
 
 void connection_disconnect(struct connection *c);
-
-void
-connection_try_reconnect(struct connection *c);
 
 void connection_reconnect(struct connection *c);
 

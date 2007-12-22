@@ -18,6 +18,7 @@
  *
  */
 
+#include "compiler.h"
 #include "log.h"
 
 #include <sys/types.h>
@@ -32,18 +33,47 @@
 #include <errno.h>
 #include <time.h>
 
-#include "netutil.h"
-#include "ioutil.h"
 #include "connection.h"
 #include "config.h"
 #include "instance.h"
 #include "version.h"
 
-static int should_exit = 0;
+static void
+deinit_signals(struct instance *instance)
+{
+    event_del(&instance->sigterm_event);
+    event_del(&instance->sigint_event);
+    event_del(&instance->sigquit_event);
+}
 
-static void exit_signal_handler(int sig) {
-    (void)sig;
-    should_exit = 1;
+static void
+delete_all_connections(struct list_head *head)
+{
+    struct connection *c, *n;
+
+    list_for_each_entry_safe(c, n, head, siblings)
+        connection_delete(c);
+}
+
+static void
+exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
+{
+    struct instance *instance = (struct instance*)ctx;
+
+    if (instance->should_exit)
+        return;
+
+    instance->should_exit = 1;
+
+    deinit_signals(instance);
+
+    if (instance->server_socket >= 0) {
+        event_del(&instance->server_socket_event);
+        close(instance->server_socket);
+        instance->server_socket = -1;
+    }
+
+    delete_all_connections(&instance->connections);
 }
 
 static void config_get(struct config *config, int argc, char **argv) {
@@ -68,79 +98,22 @@ static void config_get(struct config *config, int argc, char **argv) {
     parse_cmdline(config, argc, argv);
 }
 
-static void delete_all_connections(struct list_head *head) {
-    struct connection *c, *n;
+static void
+setup_signal_handlers(struct instance *instance)
+{
+    signal(SIGPIPE, SIG_IGN);
 
-    list_for_each_entry_safe(c, n, head, siblings)
-        connection_delete(c);
-}
+    event_set(&instance->sigterm_event, SIGTERM, EV_SIGNAL|EV_PERSIST,
+              exit_event_callback, instance);
+    event_add(&instance->sigterm_event, NULL);
 
-static void run_server(struct instance *instance) {
-    int ret;
-    struct selectx sx;
+    event_set(&instance->sigint_event, SIGINT, EV_SIGNAL|EV_PERSIST,
+              exit_event_callback, instance);
+    event_add(&instance->sigint_event, NULL);
 
-    instance->tv = (struct timeval){
-        .tv_sec = 30,
-        .tv_usec = 0,
-    };
-
-    while (!should_exit) {
-        selectx_clear(&sx);
-        selectx_add_read(&sx, instance->server_socket);
-        instance_pre_select(instance, &sx);
-
-        ret = selectx(&sx, &instance->tv);
-        if (ret == 0) {
-            instance->tv = (struct timeval){
-                .tv_sec = 30,
-                .tv_usec = 0,
-            };
-
-            instance_idle(instance, time(NULL));
-        } else if (ret > 0) {
-            if (FD_ISSET(instance->server_socket, &sx.readfds)) {
-                int sockfd2;
-                struct sockaddr addr;
-                socklen_t addrlen = sizeof(addr);
-
-                sockfd2 = accept(instance->server_socket, &addr, &addrlen);
-                if (sockfd2 >= 0) {
-                    struct connection *c;
-
-                    ret = connection_new(instance,
-                                         sockfd2,
-                                         &c);
-                    if (ret == 0) {
-                        list_add(&c->siblings, &instance->connections);
-                    } else {
-                        fprintf(stderr, "connection_new() failed: %s\n",
-                                strerror(-ret));
-                        close(sockfd2);
-                    }
-                } else if (errno != EINTR) {
-                    fprintf(stderr, "accept failed: %s\n",
-                            strerror(errno));
-                    exit(1);
-                }
-            }
-
-            instance_post_select(instance, &sx);
-        } else if (errno != EINTR) {
-            fprintf(stderr, "select failed: %s\n",
-                    strerror(errno));
-            exit(1);
-        }
-    }
-}
-
-static void setup_signal_handlers(void) {
-    struct sigaction sa;
-
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = exit_signal_handler;
-
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGINT, &sa, NULL);
+    event_set(&instance->sigquit_event, SIGQUIT, EV_SIGNAL|EV_PERSIST,
+              exit_event_callback, instance);
+    event_add(&instance->sigquit_event, NULL);
 }
 
 int main(int argc, char **argv) {
@@ -161,19 +134,19 @@ int main(int argc, char **argv) {
 
     /* set up */
 
-    setup_signal_handlers();
+    event_init();
 
-    instance.server_socket = setup_server_socket(instance.config->bind_address);
+    setup_signal_handlers(&instance);
+
+    instance_setup_server_socket(&instance);
 
     instance_daemonize(&instance);
 
-    /* call main loop */
+    /* main loop */
 
-    run_server(&instance);
+    event_dispatch();
 
     /* cleanup */
-
-    delete_all_connections(&instance.connections);
 
     config_dispose(&config);
 

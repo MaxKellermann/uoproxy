@@ -21,8 +21,6 @@
 #ifndef __SERVER_H
 #define __SERVER_H
 
-struct selectx;
-
 struct uo_server;
 
 struct uo_server_handler {
@@ -39,11 +37,6 @@ void uo_server_dispose(struct uo_server *server);
 int uo_server_fileno(const struct uo_server *server);
 
 u_int32_t uo_server_seed(const struct uo_server *server);
-
-void uo_server_pre_select(struct uo_server *server,
-                          struct selectx *sx);
-int uo_server_post_select(struct uo_server *server,
-                          struct selectx *sx);
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);

@@ -23,6 +23,8 @@
 
 #include "buffer.h"
 
+#include <event.h>
+
 struct sock_buff_handler {
     /**
      * Data is available.
@@ -42,6 +44,8 @@ struct sock_buff_handler {
 
 struct sock_buff {
     int fd;
+    struct event event;
+
     struct buffer *input, *output;
 
     const struct sock_buff_handler *handler;
@@ -55,11 +59,9 @@ int sock_buff_create(int fd, size_t input_max,
                      struct sock_buff **sbp);
 void sock_buff_dispose(struct sock_buff *sb);
 
-int sock_buff_flush(struct sock_buff *sb);
+void
+sock_buff_event_setup(struct sock_buff *sb);
 
-void sock_buff_pre_select(struct sock_buff *sb,
-                          struct selectx *sx);
-int sock_buff_post_select(struct sock_buff *sb,
-                          struct selectx *sx);
+int sock_buff_flush(struct sock_buff *sb);
 
 #endif

@@ -23,14 +23,20 @@
 
 #include "list.h"
 
-struct selectx;
+#include <sys/types.h>
+#include <event.h>
 
 struct instance {
     /* configuration */
     struct config *config;
 
     /* state */
+
+    struct event sigterm_event, sigint_event, sigquit_event;
+    int should_exit;
+
     int server_socket;
+    struct event server_socket_event;
 
     struct list_head connections;
     struct relay_list *relays;
@@ -38,15 +44,8 @@ struct instance {
     struct timeval tv;
 };
 
-void instance_pre_select(struct instance *instance,
-                         struct selectx *sx);
-
-void instance_post_select(struct instance *instance,
-                          struct selectx *sx);
-
-void instance_idle(struct instance *instance, time_t now);
-
-void instance_schedule(struct instance *instance, time_t secs);
+void
+instance_setup_server_socket(struct instance *instance);
 
 #ifdef DISABLE_DAEMON_CODE
 static inline void

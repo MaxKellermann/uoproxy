@@ -18,12 +18,14 @@
  *
  */
 
+#include "compiler.h"
+
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
 
-#include "ioutil.h"
 #include "sockbuff.h"
 
 int sock_buff_create(int fd, size_t input_max,
@@ -42,6 +44,8 @@ int sock_buff_create(int fd, size_t input_max,
         return -ENOMEM;
 
     sb->fd = fd;
+    sb->event.ev_events = 0;
+
     sb->input = buffer_new(input_max);
     if (sb->input == NULL) {
         free(sb);
@@ -57,6 +61,8 @@ int sock_buff_create(int fd, size_t input_max,
 
     sb->handler = handler;
     sb->handler_ctx = handler_ctx;
+
+    sock_buff_event_setup(sb);
 
     *sbp = sb;
 
@@ -80,6 +86,7 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
 void sock_buff_dispose(struct sock_buff *sb) {
     assert(sb->fd >= 0);
 
+    event_del(&sb->event);
     close(sb->fd);
 
     buffer_delete(sb->input);
@@ -111,54 +118,66 @@ int sock_buff_flush(struct sock_buff *sb) {
     return 0;
 }
 
-void sock_buff_pre_select(struct sock_buff *sb,
-                          struct selectx *sx) {
-    if (sb->fd < 0)
-        return;
-
-    buffer_commit(sb->input);
-    if (buffer_free(sb->input) > 0)
-        selectx_add_read(sx, sb->fd);
-
-    if (!buffer_empty(sb->output))
-        selectx_add_write(sx, sb->fd);
-}
-
-int sock_buff_post_select(struct sock_buff *sb,
-                          struct selectx *sx) {
-    ssize_t nbytes;
+static void
+sock_buff_event_callback(int fd, short event, void *ctx)
+{
+    struct sock_buff *sb = ctx;
     int ret;
 
-    if (sb->fd < 0)
-        return 0;
+    assert(fd == sb->fd);
 
-    if (FD_ISSET(sb->fd, &sx->readfds)) {
-        FD_CLR(sb->fd, &sx->readfds);
+    if (event & EV_READ) {
+        ssize_t nbytes;
 
         nbytes = read(sb->fd, buffer_tail(sb->input),
                       buffer_free(sb->input));
         if (nbytes < 0) {
-            int save_errno = errno;
+            perror("failed to read");
             sock_buff_invoke_free(sb, errno);
-            return -save_errno;
+            return;
         }
 
         if (nbytes == 0) {
             sock_buff_invoke_free(sb, 0);
-            return 0;
+            return;
         }
 
         buffer_expand(sb->input, (size_t)nbytes);
 
         ret = sb->handler->data(sb->handler_ctx);
         if (ret < 0)
-            return ret;
+            return;
     }
 
-    if (FD_ISSET(sb->fd, &sx->writefds)) {
-        FD_CLR(sb->fd, &sx->writefds);
-        return sock_buff_flush(sb);
+    if (event & EV_WRITE) {
+        ret = sock_buff_flush(sb);
+        if (ret < 0)
+            perror("failed to write");
     }
 
-    return 0;
+    sock_buff_event_setup(sb);
+}
+
+void
+sock_buff_event_setup(struct sock_buff *sb)
+{
+    short event = EV_PERSIST;
+
+    buffer_commit(sb->input);
+    if (buffer_free(sb->input) > 0)
+        event |= EV_READ;
+
+    if (!buffer_empty(sb->output))
+        event |= EV_WRITE;
+
+    if (sb->event.ev_events == event)
+        return;
+
+    if (sb->event.ev_events != 0)
+        event_del(&sb->event);
+
+    if (event != 0) {
+        event_set(&sb->event, sb->fd, event, sock_buff_event_callback, sb);
+        event_add(&sb->event, NULL);
+    }
 }

@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "ioutil.h"
 #include "client.h"
 #include "sockbuff.h"
 #include "buffer.h"
@@ -179,20 +178,6 @@ int uo_client_fileno(const struct uo_client *client) {
     return client->sock->fd;
 }
 
-void uo_client_pre_select(struct uo_client *client,
-                          struct selectx *sx) {
-    if (client->sock != NULL)
-        sock_buff_pre_select(client->sock, sx);
-}
-
-int uo_client_post_select(struct uo_client *client,
-                          struct selectx *sx) {
-    if (client->sock == NULL)
-        return 0;
-
-    return sock_buff_post_select(client->sock, sx);
-}
-
 static unsigned char *peek_from_buffer(struct uo_client *client,
                                        struct buffer *buffer,
                                        size_t *lengthp) {
@@ -263,6 +248,7 @@ uo_client_peek(struct uo_client *client, size_t *lengthp)
             }
 
             buffer_shift(client->sock->input, length);
+            sock_buff_event_setup(client->sock);
             buffer_expand(client->decompressed_buffer, (size_t)nbytes);
         }
 
@@ -282,6 +268,7 @@ uo_client_shift(struct uo_client *client, size_t nbytes)
                  ? client->decompressed_buffer
                  : client->sock->input,
                  nbytes);
+    sock_buff_event_setup(client->sock);
 }
 
 void uo_client_send(struct uo_client *client,
@@ -308,4 +295,5 @@ void uo_client_send(struct uo_client *client,
     }
 
     buffer_append(client->sock->output, src, length);
+    sock_buff_event_setup(client->sock);
 }

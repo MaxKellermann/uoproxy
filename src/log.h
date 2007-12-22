@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 extern int verbose;
 
@@ -30,6 +31,7 @@ extern int verbose;
 #define log(level, ...)
 #define log_oom()
 #define log_error(msg, error)
+#define log_errno(msg)
 #else
 
 #define log(level, ...) do { if (verbose >= (level)) { printf(__VA_ARGS__); fflush(stdout); } } while (0)
@@ -47,6 +49,12 @@ log_error(const char *msg, int error)
         log(1, "%s: %d\n", msg, error);
     else
         log(1, "%s: %s\n", msg, strerror(-error));
+}
+
+static inline void
+log_errno(const char *msg)
+{
+    log(1, "%s: %s\n", msg, strerror(errno));
 }
 
 #endif

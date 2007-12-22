@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "ioutil.h"
 #include "server.h"
 #include "sockbuff.h"
 #include "buffer.h"
@@ -149,20 +148,6 @@ u_int32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
 }
 
-void uo_server_pre_select(struct uo_server *server,
-                          struct selectx *sx) {
-    if (server->sock != NULL)
-        sock_buff_pre_select(server->sock, sx);
-}
-
-int uo_server_post_select(struct uo_server *server,
-                          struct selectx *sx) {
-    if (server->sock == NULL)
-        return 0;
-
-    return sock_buff_post_select(server->sock, sx);
-}
-
 static void *
 uo_server_peek(struct uo_server *server, size_t *lengthp)
 {
@@ -197,6 +182,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
         }
 
         buffer_shift(server->sock->input, 4);
+        sock_buff_event_setup(server->sock);
 
         p = buffer_peek(server->sock->input, &length);
         if (p == NULL)
@@ -237,6 +223,7 @@ uo_server_shift(struct uo_server *server, size_t nbytes)
         return;
 
     buffer_shift(server->sock->input, nbytes);
+    sock_buff_event_setup(server->sock);
 }
 
 void uo_server_send(struct uo_server *server,
@@ -277,4 +264,6 @@ void uo_server_send(struct uo_server *server,
 
         buffer_append(server->sock->output, src, length);
     }
+
+    sock_buff_event_setup(server->sock);
 }

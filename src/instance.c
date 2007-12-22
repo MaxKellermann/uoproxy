@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,40 +18,52 @@
  *
  */
 
-#include <sys/types.h>
-
 #include "instance.h"
 #include "connection.h"
-#include "ioutil.h"
+#include "compiler.h"
+#include "log.h"
+#include "netutil.h"
+#include "config.h"
 
-void instance_pre_select(struct instance *instance,
-                         struct selectx *sx) {
-    struct connection *c, *n;
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <errno.h>
 
-    list_for_each_entry_safe(c, n, &instance->connections, siblings)
-        connection_pre_select(c, sx);
+static void
+listener_event_callback(int fd, short event __attr_unused, void *ctx)
+{
+    struct instance *instance = ctx;
+    struct sockaddr_storage sa;
+    socklen_t sa_len;
+    int remote_fd, ret;
+    struct connection *c;
+
+    sa_len = sizeof(sa);
+    remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
+    if (remote_fd < 0) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+            log_errno("accept() failed");
+        return;
+    }
+
+    ret = connection_new(instance, remote_fd, &c);
+    if (ret != 0) {
+        log_error("connection_new() failed", ret);
+        close(remote_fd);
+        return;
+    }
+
+    list_add(&c->siblings, &instance->connections);
 }
 
-void instance_post_select(struct instance *instance,
-                          struct selectx *sx) {
-    struct connection *c, *n;
+void
+instance_setup_server_socket(struct instance *instance)
+{
+    instance->server_socket = setup_server_socket(instance->config->bind_address);
 
-    list_for_each_entry_safe(c, n, &instance->connections, siblings)
-        connection_post_select(c, sx);
+    event_set(&instance->server_socket_event, instance->server_socket,
+              EV_READ|EV_PERSIST,
+              listener_event_callback, instance);
+    event_add(&instance->server_socket_event, NULL);
 }
-
-void instance_idle(struct instance *instance, time_t now) {
-    struct connection *c, *n;
-
-    list_for_each_entry_safe(c, n, &instance->connections, siblings)
-        connection_idle(c, now);
-}
-
-void instance_schedule(struct instance *instance, time_t secs) {
-    if (instance->tv.tv_sec >= secs)
-        instance->tv = (struct timeval){
-            .tv_sec = secs,
-            .tv_usec = 0,
-        };
-}
-
