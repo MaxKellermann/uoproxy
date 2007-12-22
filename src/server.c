@@ -226,11 +226,9 @@ uo_server_shift(struct uo_server *server, size_t nbytes)
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length) {
+    assert(server->sock != NULL);
     assert(length > 0);
     assert(get_packet_length(src, length) == length);
-
-    if (server->sock == NULL)
-        return;
 
 #ifdef DUMP_SERVER_SEND
     printf("sending to packet to client, length=%zu:\n", length);
