@@ -45,6 +45,35 @@ struct uo_client {
     void *handler_ctx;
 };
 
+static void *
+uo_client_peek(struct uo_client *client, size_t *lengthp);
+
+static void
+uo_client_shift(struct uo_client *client, size_t nbytes);
+
+static int
+client_sock_buff_data(void *ctx)
+{
+    struct uo_client *client = ctx;
+    void *data;
+    size_t length;
+    int ret;
+
+    while ((data = uo_client_peek(client, &length)) != NULL) {
+        uo_client_shift(client, length);
+
+        ret = client->handler->packet(data, length, client->handler_ctx);
+        if (ret <= 0)
+            return ret;
+    }
+
+    return 0;
+}
+
+struct sock_buff_handler client_sock_buff_handler = {
+    .data = client_sock_buff_data,
+};
+
 int uo_client_create(const struct addrinfo *server_address,
                      uint32_t seed,
                      const struct uo_client_handler *handler,
@@ -74,7 +103,9 @@ int uo_client_create(const struct addrinfo *server_address,
         return -ENOMEM;
     }
 
-    ret = sock_buff_create(sockfd, 8192, 65536, &client->sock);
+    ret = sock_buff_create(sockfd, 8192, 65536,
+                           &client_sock_buff_handler, client,
+                           &client->sock);
     if (ret < 0) {
         free(client);
         close(sockfd);
@@ -125,21 +156,12 @@ void uo_client_pre_select(struct uo_client *client,
         sock_buff_pre_select(client->sock, sx);
 }
 
-static int
-uo_client_handle_packets(struct uo_client *client);
-
 int uo_client_post_select(struct uo_client *client,
                           struct selectx *sx) {
-    int ret;
-
     if (client->sock == NULL)
         return 0;
 
-    ret = sock_buff_post_select(client->sock, sx);
-    if (ret < 0)
-        return ret;
-
-    return uo_client_handle_packets(client);
+    return sock_buff_post_select(client->sock, sx);
 }
 
 static unsigned char *peek_from_buffer(struct uo_client *client,
@@ -231,24 +253,6 @@ uo_client_shift(struct uo_client *client, size_t nbytes)
                  ? client->decompressed_buffer
                  : client->sock->input,
                  nbytes);
-}
-
-static int
-uo_client_handle_packets(struct uo_client *client)
-{
-    void *data;
-    size_t length;
-    int ret;
-
-    while ((data = uo_client_peek(client, &length)) != NULL) {
-        uo_client_shift(client, length);
-
-        ret = client->handler->packet(data, length, client->handler_ctx);
-        if (ret <= 0)
-            return ret;
-    }
-
-    return 0;
 }
 
 void uo_client_send(struct uo_client *client,

@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,13 +23,26 @@
 
 #include "buffer.h"
 
+struct sock_buff_handler {
+    /**
+     * Data is available.
+     * @return 0, or -1 if the sock_buff has been closed within the function
+     */
+    int (*data)(void *ctx);
+};
+
 struct sock_buff {
     int fd;
     struct buffer *input, *output;
+
+    const struct sock_buff_handler *handler;
+    void *handler_ctx;
 };
 
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,
+                     const struct sock_buff_handler *handler,
+                     void *handler_ctx,
                      struct sock_buff **sbp);
 void sock_buff_dispose(struct sock_buff *sb);
 

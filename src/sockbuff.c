@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,8 +28,13 @@
 
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,
+                     const struct sock_buff_handler *handler,
+                     void *handler_ctx,
                      struct sock_buff **sbp) {
     struct sock_buff *sb;
+
+    assert(handler != NULL);
+    assert(handler->data != NULL);
 
     sb = (struct sock_buff*)malloc(sizeof(*sb));
     if (sb == NULL)
@@ -48,6 +53,9 @@ int sock_buff_create(int fd, size_t input_max,
         free(sb);
         return -ENOMEM;
     }
+
+    sb->handler = handler;
+    sb->handler_ctx = handler_ctx;
 
     *sbp = sb;
 
@@ -104,6 +112,7 @@ void sock_buff_pre_select(struct sock_buff *sb,
 int sock_buff_post_select(struct sock_buff *sb,
                           struct selectx *sx) {
     ssize_t nbytes;
+    int ret;
 
     if (sb->fd < 0)
         return 0;
@@ -127,6 +136,10 @@ int sock_buff_post_select(struct sock_buff *sb,
         }
 
         buffer_expand(sb->input, (size_t)nbytes);
+
+        ret = sb->handler->data(sb->handler_ctx);
+        if (ret < 0)
+            return ret;
     }
 
     if (FD_ISSET(sb->fd, &sx->writefds)) {
