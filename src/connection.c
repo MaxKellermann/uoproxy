@@ -176,7 +176,7 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 }
 
 int connection_post_select(struct connection *c, struct selectx *sx) {
-    struct linked_server *ls;
+    struct linked_server *ls, *n;
     void *p;
     size_t length;
     packet_action_t action;
@@ -188,7 +188,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
 
     assert(c->current_server == NULL);
 
-    list_for_each_entry(ls, &c->servers, siblings) {
+    list_for_each_entry_safe(ls, n, &c->servers, siblings) {
         if (ls->invalid)
             continue;
 
