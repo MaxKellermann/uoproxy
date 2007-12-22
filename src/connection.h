@@ -153,6 +153,9 @@ void connection_broadcast_servers_except(struct connection *c,
 struct linked_server *
 connection_add_server(struct connection *c, struct uo_server *server);
 
+struct linked_server *
+connection_server_new(struct connection *c, int fd);
+
 
 /* state */
 

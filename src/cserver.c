@@ -19,9 +19,11 @@
  */
 
 #include "connection.h"
+#include "server.h"
 
 #include <assert.h>
 #include <stdlib.h>
+#include <errno.h>
 
 struct linked_server *
 connection_add_server(struct connection *c, struct uo_server *server)
@@ -42,4 +44,19 @@ connection_add_server(struct connection *c, struct uo_server *server)
     list_add(&ls->siblings, &c->servers);
 
     return ls;
+}
+
+struct linked_server *
+connection_server_new(struct connection *c, int fd)
+{
+    struct uo_server *server;
+    int ret;
+
+    ret = uo_server_create(fd, &server);
+    if (ret != 0) {
+        errno = ret;
+        return NULL;
+    }
+
+    return connection_add_server(c, server);
 }

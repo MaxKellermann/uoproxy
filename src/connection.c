@@ -54,17 +54,12 @@ int connection_new(struct instance *instance,
     INIT_LIST_HEAD(&c->mobiles);
     INIT_LIST_HEAD(&c->servers);
 
-    ret = uo_server_create(server_socket, &server);
-    if (ret != 0) {
-        connection_delete(c);
-        return ret;
-    }
-
-    ls = connection_add_server(c, server);
+    ls = connection_server_new(c, server_socket);
     if (ls == NULL) {
+        ret = -errno;
         uo_server_dispose(server);
         connection_delete(c);
-        return -ENOMEM;
+        return ret;
     }
 
     connection_check(c);
