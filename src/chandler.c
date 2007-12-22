@@ -371,7 +371,7 @@ static packet_action_t handle_play_server(struct connection *c,
         /* attach it to the new connection */
         attach_after_play_server(c2, ls);
 
-        return PA_DISCONNECT;
+        return PA_DROP;
     }
 
     if (c->instance->config->login_address == NULL &&
