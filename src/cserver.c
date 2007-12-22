@@ -61,8 +61,32 @@ server_packet(void *data, size_t length, void *ctx)
     return 0;
 }
 
+static void
+server_free(void *ctx)
+{
+    struct linked_server *ls = ctx;
+    struct connection *c = ls->connection;
+
+    assert(c != NULL);
+
+    connection_walk_server_removed(&c->walk, ls);
+
+    if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
+        log(2, "client disconnected, server connection still in use\n");
+        connection_server_remove(c, ls);
+    } else if (c->background && c->in_game) {
+        log(1, "client disconnected, backgrounding\n");
+        connection_server_remove(c, ls);
+    } else {
+        log(1, "last client disconnected, removing connection\n");
+        connection_server_remove(c, ls);
+        connection_invalidate(c);
+    }
+}
+
 static const struct uo_server_handler server_handler = {
     .packet = server_packet,
+    .free = server_free,
 };
 
 void

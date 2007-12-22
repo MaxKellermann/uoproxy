@@ -55,8 +55,24 @@ client_packet(void *data, size_t length, void *ctx)
     return 0;
 }
 
+static void
+client_free(void *ctx)
+{
+    struct connection *c = ctx;
+
+    if (c->autoreconnect && c->in_game) {
+        log(2, "server disconnected, auto-reconnecting\n");
+        connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
+        connection_reconnect(c);
+    } else {
+        log(1, "server disconnected\n");
+        connection_invalidate(c);
+    }
+}
+
 static const struct uo_client_handler client_handler = {
     .packet = client_packet,
+    .free = client_free,
 };
 
 int

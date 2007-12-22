@@ -27,6 +27,7 @@ struct uo_server;
 
 struct uo_server_handler {
     int (*packet)(void *data, size_t length, void *ctx);
+    void (*free)(void *ctx);
 };
 
 int uo_server_create(int sockfd,
@@ -34,8 +35,6 @@ int uo_server_create(int sockfd,
                      void *handler_ctx,
                      struct uo_server **serverp);
 void uo_server_dispose(struct uo_server *server);
-
-int uo_server_alive(const struct uo_server *server);
 
 int uo_server_fileno(const struct uo_server *server);
 

@@ -29,6 +29,15 @@ struct sock_buff_handler {
      * @return 0, or -1 if the sock_buff has been closed within the function
      */
     int (*data)(void *ctx);
+
+    /**
+     * The socket has been closed due to an error or because the peer
+     * closed his side.  sock_buff_dispose() does not trigger this
+     * callback, and the callee has to invoke this function.
+     *
+     * @param error 0 on end of file, errno on read/write error
+     */
+    void (*free)(int error, void *ctx);
 };
 
 struct sock_buff {
@@ -45,10 +54,6 @@ int sock_buff_create(int fd, size_t input_max,
                      void *handler_ctx,
                      struct sock_buff **sbp);
 void sock_buff_dispose(struct sock_buff *sb);
-
-static inline int sock_buff_alive(const struct sock_buff *sb) {
-    return sb->fd >= 0;
-}
 
 int sock_buff_flush(struct sock_buff *sb);
 

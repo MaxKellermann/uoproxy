@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
+
+#include "log.h"
 
 #include <sys/types.h>
 #include <assert.h>
@@ -43,6 +45,19 @@ struct uo_server {
     void *handler_ctx;
 };
 
+static void
+uo_server_invoke_free(struct uo_server *server)
+{
+    const struct uo_server_handler *handler;
+
+    assert(server->handler != NULL);
+
+    handler = server->handler;
+    server->handler = NULL;
+
+    handler->free(server->handler_ctx);
+}
+
 static void *
 uo_server_peek(struct uo_server *server, size_t *lengthp);
 
@@ -68,8 +83,24 @@ server_sock_buff_data(void *ctx)
     return 0;
 }
 
+static void
+server_sock_buff_free(int error, void *ctx)
+{
+    struct uo_server *server = ctx;
+
+    if (error == 0)
+        log(2, "client closed the connection\n");
+    else
+        log_error("error during communication with client", error);
+
+    server->sock = NULL;
+
+    uo_server_invoke_free(server);
+}
+
 struct sock_buff_handler server_sock_buff_handler = {
     .data = server_sock_buff_data,
+    .free = server_sock_buff_free,
 };
 
 int uo_server_create(int sockfd,
@@ -81,6 +112,7 @@ int uo_server_create(int sockfd,
 
     assert(handler != NULL);
     assert(handler->packet != NULL);
+    assert(handler->free != NULL);
 
     server = (struct uo_server*)calloc(1, sizeof(*server));
     if (server == NULL)
@@ -106,10 +138,6 @@ void uo_server_dispose(struct uo_server *server) {
     if (server->sock != NULL)
         sock_buff_dispose(server->sock);
     free(server);
-}
-
-int uo_server_alive(const struct uo_server *server) {
-    return server->sock != NULL && sock_buff_alive(server->sock);
 }
 
 int uo_server_fileno(const struct uo_server *server) {

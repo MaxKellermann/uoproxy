@@ -27,6 +27,7 @@ struct uo_client;
 
 struct uo_client_handler {
     int (*packet)(void *data, size_t length, void *ctx);
+    void (*free)(void *ctx);
 };
 
 int uo_client_create(const struct addrinfo *server_address,
@@ -35,8 +36,6 @@ int uo_client_create(const struct addrinfo *server_address,
                      void *handler_ctx,
                      struct uo_client **clientp);
 void uo_client_dispose(struct uo_client *client);
-
-int uo_client_alive(const struct uo_client *client);
 
 int uo_client_fileno(const struct uo_client *client);
 

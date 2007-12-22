@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  */
+
+#include "log.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -45,6 +47,19 @@ struct uo_client {
     void *handler_ctx;
 };
 
+static void
+uo_client_invoke_free(struct uo_client *client)
+{
+    const struct uo_client_handler *handler;
+
+    assert(client->handler != NULL);
+
+    handler = client->handler;
+    client->handler = NULL;
+
+    handler->free(client->handler_ctx);
+}
+
 static void *
 uo_client_peek(struct uo_client *client, size_t *lengthp);
 
@@ -70,8 +85,24 @@ client_sock_buff_data(void *ctx)
     return 0;
 }
 
+static void
+client_sock_buff_free(int error, void *ctx)
+{
+    struct uo_client *client = ctx;
+
+    if (error == 0)
+        log(2, "server closed the connection\n");
+    else
+        log_error("error during communication with server", error);
+
+    client->sock = NULL;
+
+    uo_client_invoke_free(client);
+}
+
 struct sock_buff_handler client_sock_buff_handler = {
     .data = client_sock_buff_data,
+    .free = client_sock_buff_free,
 };
 
 int uo_client_create(const struct addrinfo *server_address,
@@ -84,6 +115,7 @@ int uo_client_create(const struct addrinfo *server_address,
 
     assert(handler != NULL);
     assert(handler->packet != NULL);
+    assert(handler->free != NULL);
 
     sockfd = socket(server_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0)
@@ -140,10 +172,6 @@ void uo_client_dispose(struct uo_client *client) {
     if (client->sock != NULL)
         sock_buff_dispose(client->sock);
     free(client);
-}
-
-int uo_client_alive(const struct uo_client *client) {
-    return client->sock != NULL && sock_buff_alive(client->sock);
 }
 
 int uo_client_fileno(const struct uo_client *client) {

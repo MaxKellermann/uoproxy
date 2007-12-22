@@ -35,6 +35,7 @@ int sock_buff_create(int fd, size_t input_max,
 
     assert(handler != NULL);
     assert(handler->data != NULL);
+    assert(handler->free != NULL);
 
     sb = (struct sock_buff*)malloc(sizeof(*sb));
     if (sb == NULL)
@@ -62,9 +63,24 @@ int sock_buff_create(int fd, size_t input_max,
     return 0;
 }
 
+static void
+sock_buff_invoke_free(struct sock_buff *sb, int error)
+{
+    const struct sock_buff_handler *handler;
+
+    assert(sb->handler != NULL);
+    assert(sb->fd >= 0);
+
+    handler = sb->handler;
+    sb->handler = NULL;
+
+    handler->free(error, sb->handler_ctx);
+}
+
 void sock_buff_dispose(struct sock_buff *sb) {
-    if (sb->fd >= 0)
-        close(sb->fd);
+    assert(sb->fd >= 0);
+
+    close(sb->fd);
 
     buffer_delete(sb->input);
     buffer_delete(sb->output);
@@ -85,8 +101,7 @@ int sock_buff_flush(struct sock_buff *sb) {
     nbytes = write(sb->fd, p, length);
     if (nbytes < 0) {
         int save_errno = errno;
-        close(sb->fd);
-        sb->fd = -1;
+        sock_buff_invoke_free(sb, errno);
         return -save_errno;
     }
 
@@ -124,14 +139,12 @@ int sock_buff_post_select(struct sock_buff *sb,
                       buffer_free(sb->input));
         if (nbytes < 0) {
             int save_errno = errno;
-            close(sb->fd);
-            sb->fd = -1;
+            sock_buff_invoke_free(sb, errno);
             return -save_errno;
         }
 
         if (nbytes == 0) {
-            close(sb->fd);
-            sb->fd = -1;
+            sock_buff_invoke_free(sb, 0);
             return 0;
         }
 

@@ -116,46 +116,13 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     connection_check(c);
 
-    if (c->client != NULL &&
-        !uo_client_alive(c->client)) {
-        if (c->autoreconnect && c->in_game) {
-            if (verbose >= 2)
-                printf("server disconnected, auto-reconnecting\n");
-            connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
-            connection_reconnect(c);
-        } else {
-            if (verbose >= 1)
-                printf("server disconnected\n");
-            connection_invalidate(c);
-            return;
-        }
-    }
-
     if (c->client != NULL)
         uo_client_pre_select(c->client, sx);
 
     list_for_each_entry_safe(ls, n, &c->servers, siblings) {
         assert(ls->server != NULL);
 
-        if (!uo_server_alive(ls->server)) {
-            if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
-                if (verbose >= 2)
-                    printf("client disconnected, server connection still in use\n");
-                connection_server_dispose(c, ls);
-            } else if (c->background && c->in_game) {
-                if (verbose >= 1)
-                    printf("client disconnected, backgrounding\n");
-                connection_server_dispose(c, ls);
-            } else {
-                if (verbose >= 1)
-                    printf("last client disconnected, removing connection\n");
-                connection_server_dispose(c, ls);
-                connection_invalidate(c);
-            }
-        } else {
-            /* alive. */
-            uo_server_pre_select(ls->server, sx);
-        }
+        uo_server_pre_select(ls->server, sx);
     }
 }
 
