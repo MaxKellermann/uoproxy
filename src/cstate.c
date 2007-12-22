@@ -167,9 +167,10 @@ static void remove_item_tree(struct connection *c,
     }
 
     /* delete these, and recursively delete their children */
-    list_for_each_entry(i, &temp, siblings) {
+    list_for_each_entry_safe(i, n, &temp, siblings) {
         remove_item_tree(c, i->serial);
 
+        list_del(&i->siblings);
         free_item(i);
     }
 }
