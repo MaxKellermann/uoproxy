@@ -109,9 +109,8 @@ void connection_check(const struct connection *c) {
 #endif
 
 void connection_invalidate(struct connection *c) {
-    connection_check(c);
-
-    c->invalid = 1;
+    list_del(&c->siblings);
+    connection_delete(c);
 }
 
 struct linked_server *connection_add_server(struct connection *c, struct uo_server *server) {
@@ -145,9 +144,6 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
 
     connection_check(c);
 
-    if (c->invalid)
-        return;
-
     if (c->client != NULL &&
         !uo_client_alive(c->client)) {
         if (c->autoreconnect && c->in_game) {
@@ -159,6 +155,7 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
             if (verbose >= 1)
                 printf("server disconnected\n");
             connection_invalidate(c);
+            return;
         }
     }
 
@@ -203,9 +200,6 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
 
     connection_check(c);
 
-    if (c->invalid)
-        return 0;
-
     if (c->client != NULL) {
         uo_client_post_select(c->client, sx);
         while (c->client != NULL &&
@@ -231,7 +225,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
             case PA_DISCONNECT:
                 fprintf(stderr, "aborting connection to server\n");
                 connection_invalidate(c);
-                break;
+                return -1;
             }
         }
     }
@@ -264,7 +258,7 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
                 /* XXX: only disconnect this server */
                 fprintf(stderr, "aborting connection to client\n");
                 connection_invalidate(c);
-                break;
+                return -1;
             }
         }
     }
@@ -274,9 +268,6 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
 
 void connection_idle(struct connection *c, time_t now) {
     connection_check(c);
-
-    if (c->invalid)
-        return;
 
     if (c->client == NULL) {
         if (c->reconnecting && now >= c->next_reconnect) {

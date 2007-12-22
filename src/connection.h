@@ -76,7 +76,7 @@ struct connection {
     struct instance *instance;
 
     /* flags */
-    int invalid, background;
+    int background;
 
     int in_game;
 

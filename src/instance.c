@@ -28,14 +28,8 @@ void instance_pre_select(struct instance *instance,
                          struct selectx *sx) {
     struct connection *c, *n;
 
-    list_for_each_entry_safe(c, n, &instance->connections, siblings) {
-        if (c->invalid) {
-            list_del(&c->siblings);
-            connection_delete(c);
-        } else {
-            connection_pre_select(c, sx);
-        }
-    }
+    list_for_each_entry_safe(c, n, &instance->connections, siblings)
+        connection_pre_select(c, sx);
 }
 
 void instance_post_select(struct instance *instance,
