@@ -68,9 +68,8 @@ static packet_action_t handle_talk(struct connection *c,
 }
 
 static packet_action_t handle_walk(struct connection *c,
-                                   void *data, size_t length) {
-    struct uo_packet_walk *p = data;
-    int ret;
+                                   const void *data, size_t length) {
+    const struct uo_packet_walk *p = data;
 
     assert(length == sizeof(*p));
 
@@ -93,13 +92,13 @@ static packet_action_t handle_walk(struct connection *c,
         return PA_DROP;
     }
 
-    ret = connection_walk_request(c, c->current_server, p);
+    connection_walk_request(c, c->current_server, p);
 
-    return ret ? PA_ACCEPT : PA_DROP;
+    return PA_DROP;
 }
 
 static packet_action_t handle_talk_ascii(struct connection *c,
-                                         void *data, size_t length) {
+                                         const void *data, size_t length) {
     const struct uo_packet_talk_ascii *p = data;
     size_t text_length;
 
@@ -119,7 +118,7 @@ static packet_action_t handle_talk_ascii(struct connection *c,
 }
 
 static packet_action_t handle_use(struct connection *c,
-                                  void *data, size_t length) {
+                                  const void *data, size_t length) {
     const struct uo_packet_use *p = data;
 
     assert(length == sizeof(*p));
@@ -158,7 +157,7 @@ static packet_action_t handle_use(struct connection *c,
 }
 
 static packet_action_t handle_action(struct connection *c,
-                                     void *data, size_t length) {
+                                     const void *data, size_t length) {
     (void)data;
     (void)length;
 
@@ -172,7 +171,7 @@ static packet_action_t handle_action(struct connection *c,
 }
 
 static packet_action_t handle_lift_request(struct connection *c,
-                                           void *data, size_t length) {
+                                           const void *data, size_t length) {
     const struct uo_packet_lift_request *p = data;
 
     assert(length == sizeof(*p));
@@ -193,7 +192,7 @@ static packet_action_t handle_lift_request(struct connection *c,
 }
 
 static packet_action_t handle_resynchronize(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     (void)c;
     (void)data;
     (void)length;
@@ -207,7 +206,7 @@ static packet_action_t handle_resynchronize(struct connection *c,
 }
 
 static packet_action_t handle_target(struct connection *c,
-                                     void *data, size_t length) {
+                                     const void *data, size_t length) {
     const struct uo_packet_target *p = data;
 
     assert(length == sizeof(*p));
@@ -228,13 +227,13 @@ static packet_action_t handle_target(struct connection *c,
 }
 
 static packet_action_t handle_ping(struct connection *c,
-                                   void *data, size_t length) {
+                                   const void *data, size_t length) {
     uo_server_send(c->current_server->server, data, length);
     return PA_DROP;
 }
 
 static packet_action_t handle_account_login(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     const struct uo_packet_account_login *p = data;
     int ret;
 
@@ -318,7 +317,7 @@ static packet_action_t handle_account_login(struct connection *c,
 }
 
 static packet_action_t handle_game_login(struct connection *c,
-                                         void *data, size_t length) {
+                                         const void *data, size_t length) {
     const struct uo_packet_game_login *p = data;
 
     assert(length == sizeof(*p));
@@ -331,7 +330,7 @@ static packet_action_t handle_game_login(struct connection *c,
 }
 
 static packet_action_t handle_play_character(struct connection *c,
-                                             void *data, size_t length) {
+                                             const void *data, size_t length) {
     const struct uo_packet_play_character *p = data;
 
     assert(length == sizeof(*p));
@@ -349,7 +348,7 @@ static packet_action_t handle_play_character(struct connection *c,
 }
 
 static packet_action_t handle_play_server(struct connection *c,
-                                          void *data, size_t length) {
+                                          const void *data, size_t length) {
     const struct uo_packet_play_server *p = data;
     struct connection *c2;
 
@@ -417,7 +416,7 @@ static packet_action_t handle_play_server(struct connection *c,
 }
 
 static packet_action_t handle_spy(struct connection *c,
-                                  void *data, size_t length) {
+                                  const void *data, size_t length) {
     (void)data;
     (void)length;
 
@@ -428,7 +427,7 @@ static packet_action_t handle_spy(struct connection *c,
 }
 
 static packet_action_t handle_talk_unicode(struct connection *c,
-                                           void *data, size_t length) {
+                                           const void *data, size_t length) {
     const struct uo_packet_talk_unicode *p = data;
 
     if (length < sizeof(*p))
@@ -439,8 +438,8 @@ static packet_action_t handle_talk_unicode(struct connection *c,
         unsigned num_keywords = (value & 0xfff0) >> 4;
         unsigned skip_bits = (num_keywords + 1) * 12;
         unsigned skip_bytes = 12 + (skip_bits + 7) / 8;
-        char *start = data;
-        char *t = start + skip_bytes;
+        const char *start = data;
+        const char *t = start + skip_bytes;
         size_t text_length = length - skip_bytes - 1;
 
         if (skip_bytes >= length)
@@ -467,7 +466,7 @@ static packet_action_t handle_talk_unicode(struct connection *c,
 }
 
 static packet_action_t handle_gump_response(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     const struct uo_packet_gump_response *p = data;
     struct uo_packet_close_gump close = {
         .cmd = PCK_Extended,
@@ -487,7 +486,7 @@ static packet_action_t handle_gump_response(struct connection *c,
 }
 
 static packet_action_t handle_client_version(struct connection *c,
-                                             void *data, size_t length) {
+                                             const void *data, size_t length) {
     (void)data;
     (void)length;
 
@@ -521,7 +520,7 @@ static packet_action_t handle_client_version(struct connection *c,
 }
 
 static packet_action_t handle_extended(struct connection *c,
-                                       void *data, size_t length) {
+                                       const void *data, size_t length) {
     const struct uo_packet_extended *p = data;
 
     (void)c;
@@ -537,7 +536,7 @@ static packet_action_t handle_extended(struct connection *c,
 }
 
 static packet_action_t handle_hardware(struct connection *c,
-                                       void *data, size_t length) {
+                                       const void *data, size_t length) {
     (void)data;
     (void)length;
 

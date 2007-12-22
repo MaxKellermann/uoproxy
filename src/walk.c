@@ -93,18 +93,20 @@ void connection_walk_server_removed(struct connection_walk_state *state,
     state->queue_size = 0;
 }
 
-int connection_walk_request(struct connection *c,
-                            struct linked_server *server,
-                            struct uo_packet_walk *p) {
+void
+connection_walk_request(struct connection *c,
+                        struct linked_server *server,
+                        const struct uo_packet_walk *p) {
     struct connection_walk_state *state = &c->walk;
     struct connection_walk_item *i;
+    struct uo_packet_walk walk;
 
     assert(state->server != NULL || state->queue_size == 0);
 
     if (state->server != NULL && state->server != server) {
         printf("rejecting walk\n");
         walk_cancel(c, server->server, p);
-        return 0;
+        return;
     }
 
     if (state->queue_size >= MAX_WALK_QUEUE) {
@@ -122,17 +124,19 @@ int connection_walk_request(struct connection *c,
     printf("walk seq_from_client=%u seq_to_server=%u\n", p->seq, state->seq_next);
 #endif
 
-    p->seq = i->seq = state->seq_next++;
+    walk = *p;
+    walk.seq = i->seq = state->seq_next++;
+    uo_server_send(server->server, &walk, sizeof(walk));
+
     if (state->seq_next == 0)
         state->seq_next = 1;
-
-    return 1;
 }
 
 void connection_walk_cancel(struct connection *c,
-                            struct uo_packet_walk_cancel *p) {
+                            const struct uo_packet_walk_cancel *p) {
     struct connection_walk_state *state = &c->walk;
     const struct connection_walk_item *i;
+    struct uo_packet_walk_cancel cancel;
 
     state->seq_next = 0;
 
@@ -152,17 +156,19 @@ void connection_walk_cancel(struct connection *c,
 #endif
 
     /* only send to requesting client */
-    p->seq = i->packet.seq;
-    uo_server_send(state->server->server, p, sizeof(*p));
+    cancel = *p;
+    cancel.seq = i->packet.seq;
+    uo_server_send(state->server->server, &cancel, sizeof(cancel));
 
     walk_clear(state);
 }
 
 void connection_walk_ack(struct connection *c,
-                         struct uo_packet_walk_ack *p) {
+                         const struct uo_packet_walk_ack *p) {
     struct connection_walk_state *state = &c->walk;
     const struct connection_walk_item *i;
     unsigned x, y;
+    struct uo_packet_walk_ack ack;
 
     if (state->server == NULL) {
         printf("WalkAck out of sync II\n");
@@ -219,8 +225,9 @@ void connection_walk_ack(struct connection *c,
                       i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */
-    p->seq = i->packet.seq;
-    uo_server_send(state->server->server, p, sizeof(*p));
+    ack = *p;
+    ack.seq = i->packet.seq;
+    uo_server_send(state->server->server, &ack, sizeof(ack));
 
     /* send WalkForce to all other clients */
     if (!list_empty(&c->servers) &&

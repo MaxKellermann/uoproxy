@@ -32,7 +32,7 @@ typedef enum {
 } packet_action_t;
 
 typedef packet_action_t (*packet_handler_t)(struct connection *c,
-                                            void *data, size_t length);
+                                            const void *data, size_t length);
 
 struct packet_binding {
     unsigned char cmd;

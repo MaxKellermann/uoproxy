@@ -91,7 +91,7 @@ static void send_antispy(struct uo_client *client) {
 }
 
 static packet_action_t handle_mobile_status(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     const struct uo_packet_mobile_status *p = data;
 
     (void)length;
@@ -102,7 +102,7 @@ static packet_action_t handle_mobile_status(struct connection *c,
 }
 
 static packet_action_t handle_world_item(struct connection *c,
-                                         void *data, size_t length) {
+                                         const void *data, size_t length) {
     const struct uo_packet_world_item *p = data;
 
     assert(length <= sizeof(*p));
@@ -113,8 +113,8 @@ static packet_action_t handle_world_item(struct connection *c,
 }
 
 static packet_action_t handle_start(struct connection *c,
-                                    void *data, size_t length) {
-    struct uo_packet_start *p = data;
+                                    const void *data, size_t length) {
+    const struct uo_packet_start *p = data;
 
     assert(length == sizeof(*p));
 
@@ -131,7 +131,7 @@ static packet_action_t handle_start(struct connection *c,
 }
 
 static packet_action_t handle_speak_ascii(struct connection *c,
-                                          void *data, size_t length) {
+                                          const void *data, size_t length) {
     (void)data;
     (void)length;
 
@@ -141,8 +141,8 @@ static packet_action_t handle_speak_ascii(struct connection *c,
 }
 
 static packet_action_t handle_delete(struct connection *c,
-                                     void *data, size_t length) {
-    struct uo_packet_delete *p = data;
+                                     const void *data, size_t length) {
+    const struct uo_packet_delete *p = data;
 
     assert(length == sizeof(*p));
 
@@ -152,8 +152,8 @@ static packet_action_t handle_delete(struct connection *c,
 }
 
 static packet_action_t handle_mobile_update(struct connection *c,
-                                            void *data, size_t length) {
-    struct uo_packet_mobile_update *p = data;
+                                            const void *data, size_t length) {
+    const struct uo_packet_mobile_update *p = data;
 
     assert(length == sizeof(*p));
 
@@ -163,8 +163,8 @@ static packet_action_t handle_mobile_update(struct connection *c,
 }
 
 static packet_action_t handle_walk_cancel(struct connection *c,
-                                          void *data, size_t length) {
-    struct uo_packet_walk_cancel *p = data;
+                                          const void *data, size_t length) {
+    const struct uo_packet_walk_cancel *p = data;
 
     assert(length == sizeof(*p));
 
@@ -179,8 +179,8 @@ static packet_action_t handle_walk_cancel(struct connection *c,
 }
 
 static packet_action_t handle_walk_ack(struct connection *c,
-                                       void *data, size_t length) {
-    struct uo_packet_walk_ack *p = data;
+                                       const void *data, size_t length) {
+    const struct uo_packet_walk_ack *p = data;
 
     assert(length == sizeof(*p));
 
@@ -192,8 +192,8 @@ static packet_action_t handle_walk_ack(struct connection *c,
 }
 
 static packet_action_t handle_container_open(struct connection *c,
-                                             void *data, size_t length) {
-    struct uo_packet_container_open *p = data;
+                                             const void *data, size_t length) {
+    const struct uo_packet_container_open *p = data;
 
     assert(length == sizeof(*p));
 
@@ -203,8 +203,8 @@ static packet_action_t handle_container_open(struct connection *c,
 }
 
 static packet_action_t handle_container_update(struct connection *c,
-                                               void *data, size_t length) {
-    struct uo_packet_container_update *p = data;
+                                               const void *data, size_t length) {
+    const struct uo_packet_container_update *p = data;
 
     assert(length == sizeof(*p));
 
@@ -214,8 +214,8 @@ static packet_action_t handle_container_update(struct connection *c,
 }
 
 static packet_action_t handle_equip(struct connection *c,
-                                    void *data, size_t length) {
-    struct uo_packet_equip *p = data;
+                                    const void *data, size_t length) {
+    const struct uo_packet_equip *p = data;
 
     assert(length == sizeof(*p));
 
@@ -225,8 +225,8 @@ static packet_action_t handle_equip(struct connection *c,
 }
 
 static packet_action_t handle_container_content(struct connection *c,
-                                                void *data, size_t length) {
-    struct uo_packet_container_content *p = data;
+                                                const void *data, size_t length) {
+    const struct uo_packet_container_content *p = data;
 
     if (length < sizeof(*p) - sizeof(p->items) ||
         length != sizeof(*p) - sizeof(p->items) + ntohs(p->num) * sizeof(p->items[0]))
@@ -238,8 +238,8 @@ static packet_action_t handle_container_content(struct connection *c,
 }
 
 static packet_action_t handle_personal_light_level(struct connection *c,
-                                                   void *data, size_t length) {
-    struct uo_packet_personal_light_level *p = data;
+                                                   const void *data, size_t length) {
+    const struct uo_packet_personal_light_level *p = data;
 
     assert(length == sizeof(*p));
 
@@ -250,8 +250,8 @@ static packet_action_t handle_personal_light_level(struct connection *c,
 }
 
 static packet_action_t handle_global_light_level(struct connection *c,
-                                                 void *data, size_t length) {
-    struct uo_packet_global_light_level *p = data;
+                                                 const void *data, size_t length) {
+    const struct uo_packet_global_light_level *p = data;
 
     assert(length == sizeof(*p));
 
@@ -261,7 +261,7 @@ static packet_action_t handle_global_light_level(struct connection *c,
 }
 
 static packet_action_t handle_popup_message(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     const struct uo_packet_popup_message *p = data;
 
     assert(length == sizeof(*p));
@@ -281,7 +281,7 @@ static packet_action_t handle_popup_message(struct connection *c,
 }
 
 static packet_action_t handle_login_complete(struct connection *c,
-                                             void *data, size_t length) {
+                                             const void *data, size_t length) {
     (void)data;
     (void)length;
 
@@ -292,7 +292,7 @@ static packet_action_t handle_login_complete(struct connection *c,
 }
 
 static packet_action_t handle_target(struct connection *c,
-                                     void *data, size_t length) {
+                                     const void *data, size_t length) {
     const struct uo_packet_target *p = data;
 
     assert(length == sizeof(*p));
@@ -303,7 +303,7 @@ static packet_action_t handle_target(struct connection *c,
 }
 
 static packet_action_t handle_war_mode(struct connection *c,
-                                       void *data, size_t length) {
+                                       const void *data, size_t length) {
     const struct uo_packet_war_mode *p = data;
 
     assert(length == sizeof(*p));
@@ -314,8 +314,8 @@ static packet_action_t handle_war_mode(struct connection *c,
 }
 
 static packet_action_t handle_ping(struct connection *c,
-                                   void *data, size_t length) {
-    struct uo_packet_ping *p = data;
+                                   const void *data, size_t length) {
+    const struct uo_packet_ping *p = data;
 
     assert(length == sizeof(*p));
 
@@ -325,8 +325,8 @@ static packet_action_t handle_ping(struct connection *c,
 }
 
 static packet_action_t handle_zone_change(struct connection *c,
-                                          void *data, size_t length) {
-    struct uo_packet_zone_change *p = data;
+                                          const void *data, size_t length) {
+    const struct uo_packet_zone_change *p = data;
 
     assert(length == sizeof(*p));
 
@@ -336,7 +336,7 @@ static packet_action_t handle_zone_change(struct connection *c,
 }
 
 static packet_action_t handle_mobile_moving(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     const struct uo_packet_mobile_moving *p = data;
 
     assert(length == sizeof(*p));
@@ -347,7 +347,7 @@ static packet_action_t handle_mobile_moving(struct connection *c,
 }
 
 static packet_action_t handle_mobile_incoming(struct connection *c,
-                                              void *data, size_t length) {
+                                              const void *data, size_t length) {
     const struct uo_packet_mobile_incoming *p = data;
 
     if (length < sizeof(*p) - sizeof(p->items))
@@ -359,7 +359,7 @@ static packet_action_t handle_mobile_incoming(struct connection *c,
 }
 
 static packet_action_t handle_char_list(struct connection *c,
-                                        void *data, size_t length) {
+                                        const void *data, size_t length) {
     const struct uo_packet_simple_character_list *p = data;
     const void *data_end = ((const char*)data) + length;
 
@@ -405,8 +405,8 @@ static packet_action_t handle_char_list(struct connection *c,
 }
 
 static packet_action_t handle_account_login_reject(struct connection *c,
-                                                   void *data, size_t length) {
-    struct uo_packet_account_login_reject *p = data;
+                                                   const void *data, size_t length) {
+    const struct uo_packet_account_login_reject *p = data;
 
     assert(length == sizeof(*p));
 
@@ -445,11 +445,11 @@ static struct addrinfo *make_addrinfo(u_int32_t ip, in_port_t port) {
 }
 
 static packet_action_t handle_relay(struct connection *c,
-                                    void *data, size_t length) {
+                                    const void *data, size_t length) {
     /* this packet tells the UO client where to connect; uoproxy hides
        this packet from the client, and only internally connects to
        the new server */
-    struct uo_packet_relay *p = data;
+    const struct uo_packet_relay *p = data;
     struct uo_packet_relay relay;
     struct addrinfo *server_address;
     int ret;
@@ -505,12 +505,12 @@ static packet_action_t handle_relay(struct connection *c,
 }
 
 static packet_action_t handle_server_list(struct connection *c,
-                                          void *data, size_t length) {
+                                          const void *data, size_t length) {
     /* this packet tells the UO client where to connect; what
        we do here is replace the server IP with our own one */
-    unsigned char *p = data;
+    const unsigned char *p = data;
     unsigned count, i, k;
-    struct uo_fragment_server_info *server_info;
+    const struct uo_fragment_server_info *server_info;
 
     (void)c;
 
@@ -533,14 +533,14 @@ static packet_action_t handle_server_list(struct connection *c,
         return PA_DROP;
     }
 
-    count = ntohs(*(uint16_t*)(p + 4));
+    count = ntohs(*(const uint16_t*)(p + 4));
 #ifdef DUMP_LOGIN
     printf("serverlist: %u servers\n", count);
 #endif
     if (length != 6 + count * sizeof(*server_info))
         return PA_DISCONNECT;
 
-    server_info = (struct uo_fragment_server_info*)(p + 6);
+    server_info = (const struct uo_fragment_server_info*)(p + 6);
     for (i = 0; i < count; i++, server_info++) {
         k = ntohs(server_info->index);
         if (k != i)
@@ -558,7 +558,7 @@ static packet_action_t handle_server_list(struct connection *c,
 }
 
 static packet_action_t handle_speak_unicode(struct connection *c,
-                                            void *data, size_t length) {
+                                            const void *data, size_t length) {
     (void)data;
     (void)length;
 
@@ -568,8 +568,8 @@ static packet_action_t handle_speak_unicode(struct connection *c,
 }
 
 static packet_action_t handle_supported_features(struct connection *c,
-                                                 void *data, size_t length) {
-    struct uo_packet_supported_features *p = data;
+                                                 const void *data, size_t length) {
+    const struct uo_packet_supported_features *p = data;
 
     assert(length == sizeof(*p));
 
@@ -579,7 +579,7 @@ static packet_action_t handle_supported_features(struct connection *c,
 }
 
 static packet_action_t handle_season(struct connection *c,
-                                     void *data, size_t length) {
+                                     const void *data, size_t length) {
     const struct uo_packet_season *p = data;
 
     assert(length == sizeof(*p));
@@ -590,7 +590,7 @@ static packet_action_t handle_season(struct connection *c,
 }
 
 static packet_action_t handle_extended(struct connection *c,
-                                       void *data, size_t length) {
+                                       const void *data, size_t length) {
     const struct uo_packet_extended *p = data;
 
     if (length < sizeof(*p))

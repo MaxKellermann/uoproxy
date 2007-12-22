@@ -215,15 +215,16 @@ void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
 void connection_walk_server_removed(struct connection_walk_state *state,
                                     struct linked_server *server);
 
-int connection_walk_request(struct connection *c,
-                            struct linked_server *server,
-                            struct uo_packet_walk *p);
+void
+connection_walk_request(struct connection *c,
+                        struct linked_server *server,
+                        const struct uo_packet_walk *p);
 
 void connection_walk_cancel(struct connection *c,
-                            struct uo_packet_walk_cancel *p);
+                            const struct uo_packet_walk_cancel *p);
 
 void connection_walk_ack(struct connection *c,
-                         struct uo_packet_walk_ack *p);
+                         const struct uo_packet_walk_ack *p);
 
 /* reconnect */
 
