@@ -2,6 +2,7 @@ uoproxy (0.1.4) unstable; urgency=low
 
   * fixed struct uo_packet_create_character
   * show which packet caused connection abort
+  * only disconnect the faulty client on protocol error
   * use libevent
 
  --
