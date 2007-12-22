@@ -191,10 +191,10 @@ void connection_remove_item(struct connection *c, u_int32_t serial) {
 
 void connection_delete_items(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
-    struct item *i;
+    struct item *i, *n;
     struct linked_server *ls;
 
-    list_for_each_entry(i, &c->items, siblings) {
+    list_for_each_entry_safe(i, n, &c->items, siblings) {
         p.serial = i->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -202,10 +202,9 @@ void connection_delete_items(struct connection *c) {
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
+        list_del(&i->siblings);
         free(i);
     }
-
-    INIT_LIST_HEAD(&c->items);
 }
 
 static struct mobile *
@@ -457,10 +456,10 @@ void connection_remove_mobile(struct connection *c, u_int32_t serial) {
 
 void connection_delete_mobiles(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
-    struct mobile *m;
+    struct mobile *m, *n;
     struct linked_server *ls;
 
-    list_for_each_entry(m, &c->mobiles, siblings) {
+    list_for_each_entry_safe(m, n, &c->mobiles, siblings) {
         p.serial = m->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -468,10 +467,9 @@ void connection_delete_mobiles(struct connection *c) {
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
+        list_del(&m->siblings);
         free_mobile(m);
     }
-
-    INIT_LIST_HEAD(&c->mobiles);
 }
 
 void connection_remove_serial(struct connection *c, u_int32_t serial) {
