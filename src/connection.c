@@ -47,6 +47,8 @@ int connection_new(struct instance *instance,
         return -ENOMEM;
 
     c->instance = instance;
+    INIT_LIST_HEAD(&c->items);
+    INIT_LIST_HEAD(&c->mobiles);
 
     ret = uo_server_create(server_socket, &server);
     if (ret != 0) {
