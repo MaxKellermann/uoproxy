@@ -175,8 +175,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
         server->seed = *(const uint32_t*)p;
         if (server->seed == 0) {
             fprintf(stderr, "zero seed from client\n");
-            sock_buff_dispose(server->sock);
-            server->sock = NULL;
+            uo_server_invoke_free(server);
             return NULL;
         }
 
@@ -193,8 +192,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
         fprintf(stderr, "malformed packet from client:\n");
         fhexdump(stderr, "  ", p, length);
         fflush(stderr);
-        sock_buff_dispose(server->sock);
-        server->sock = NULL;
+        uo_server_invoke_free(server);
         return NULL;
     }
 
@@ -244,8 +242,7 @@ void uo_server_send(struct uo_server *server,
                              src, length);
         if (nbytes < 0) {
             fprintf(stderr, "uo_compress() failed\n");
-            sock_buff_dispose(server->sock);
-            server->sock = NULL;
+            uo_server_invoke_free(server);
             return;
         }
 
@@ -253,8 +250,7 @@ void uo_server_send(struct uo_server *server,
     } else {
         if (length > buffer_free(server->sock->output)) {
             fprintf(stderr, "output buffer full in uo_server_send()\n");
-            sock_buff_dispose(server->sock);
-            server->sock = NULL;
+            uo_server_invoke_free(server);
             return;
         }
 

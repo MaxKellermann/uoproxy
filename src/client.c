@@ -201,8 +201,7 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
         fprintf(stderr, "malformed packet from server:\n");
         fhexdump(stderr, "  ", p, length);
         fflush(stderr);
-        sock_buff_dispose(client->sock);
-        client->sock = NULL;
+        uo_client_invoke_free(client);
         return NULL;
     }
 
@@ -241,8 +240,7 @@ uo_client_peek(struct uo_client *client, size_t *lengthp)
                                    p, length);
             if (nbytes < 0) {
                 fprintf(stderr, "decompression failed\n");
-                sock_buff_dispose(client->sock);
-                client->sock = NULL;
+                uo_client_invoke_free(client);
                 return NULL;
             }
 
@@ -285,8 +283,7 @@ void uo_client_send(struct uo_client *client,
 
     if (length > buffer_free(client->sock->output)) {
         fprintf(stderr, "output buffer full in uo_client_send()\n");
-        sock_buff_dispose(client->sock);
-        client->sock = NULL;
+        uo_client_invoke_free(client);
         return;
     }
 
