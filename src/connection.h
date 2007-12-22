@@ -152,8 +152,11 @@ void connection_broadcast_servers_except(struct connection *c,
 
 /* server list */
 
-struct linked_server *
-connection_add_server(struct connection *c, struct uo_server *server);
+void
+connection_server_add(struct connection *c, struct linked_server *ls);
+
+void
+connection_server_remove(struct connection *c, struct linked_server *ls);
 
 struct linked_server *
 connection_server_new(struct connection *c, int fd);
@@ -238,7 +241,7 @@ void connection_reconnect(struct connection *c);
 struct connection *find_attach_connection(struct connection *c);
 
 void attach_after_play_server(struct connection *c,
-                              struct uo_server *server);
+                              struct linked_server *ls);
 
 void attach_after_play_character(struct connection *c,
                                  struct linked_server *ls);

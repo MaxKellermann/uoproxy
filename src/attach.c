@@ -41,8 +41,7 @@ struct connection *find_attach_connection(struct connection *c) {
 }
 
 void attach_after_play_server(struct connection *c,
-                              struct uo_server *server) {
-    struct linked_server *ls;
+                              struct linked_server *ls) {
     struct uo_packet_supported_features supported_features;
     struct uo_packet_simple_character_list character_list;
 
@@ -51,12 +50,7 @@ void attach_after_play_server(struct connection *c,
 
     printf("attaching connection\n");
 
-    ls = connection_add_server(c, server);
-    if (ls == NULL) {
-        uo_server_dispose(server);
-        fprintf(stderr, "out of memory\n");
-        return;
-    }
+    connection_server_add(c, ls);
 
     ls->attaching = 1;
 

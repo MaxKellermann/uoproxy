@@ -364,16 +364,13 @@ static packet_action_t handle_play_server(struct connection *c,
 
     c2 = find_attach_connection(c);
     if (c2 != NULL) {
-        struct uo_server *server = c->current_server->server;
-
-        assert(server != NULL);
+        struct linked_server *ls = c->current_server;
 
         /* remove the object from the old connection */
-        c->current_server->invalid = 1;
-        c->current_server->server = NULL;
+        connection_server_remove(c, ls);
 
         /* attach it to the new connection */
-        attach_after_play_server(c2, server);
+        attach_after_play_server(c2, ls);
 
         return PA_DISCONNECT;
     }
