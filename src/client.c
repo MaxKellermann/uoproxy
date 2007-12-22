@@ -219,9 +219,9 @@ int uo_client_fileno(const struct uo_client *client) {
     return client->sock->fd;
 }
 
-static unsigned char *peek_from_buffer(struct uo_client *client,
-                                       struct buffer *buffer,
-                                       size_t *lengthp) {
+static const unsigned char *
+peek_from_buffer(struct uo_client *client,
+                 struct buffer *buffer, size_t *lengthp) {
     unsigned char *p;
     size_t length, packet_length;
 
