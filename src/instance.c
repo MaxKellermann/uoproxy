@@ -34,9 +34,9 @@ void instance_pre_select(struct instance *instance,
 
 void instance_post_select(struct instance *instance,
                           struct selectx *sx) {
-    struct connection *c;
+    struct connection *c, *n;
 
-    list_for_each_entry_safe(c, &instance->connections, siblings)
+    list_for_each_entry_safe(c, n, &instance->connections, siblings)
         connection_post_select(c, sx);
 }
 
