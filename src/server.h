@@ -24,7 +24,7 @@
 struct uo_server;
 
 struct uo_server_handler {
-    int (*packet)(void *data, size_t length, void *ctx);
+    int (*packet)(const void *data, size_t length, void *ctx);
     void (*free)(void *ctx);
 };
 

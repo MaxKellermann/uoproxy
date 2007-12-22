@@ -57,7 +57,7 @@ uo_server_invoke_free(struct uo_server *server)
     handler->free(server->handler_ctx);
 }
 
-static void *
+static const void *
 uo_server_peek(struct uo_server *server, size_t *lengthp);
 
 static void
@@ -67,7 +67,7 @@ static int
 server_sock_buff_data(void *ctx)
 {
     struct uo_server *server = ctx;
-    void *data;
+    const void *data;
     size_t length;
     int ret;
 
@@ -148,10 +148,10 @@ u_int32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
 }
 
-static void *
+static const void *
 uo_server_peek(struct uo_server *server, size_t *lengthp)
 {
-    unsigned char *p;
+    const unsigned char *p;
     size_t length, packet_length;
 
     if (server->sock == NULL)
@@ -173,7 +173,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
         if (length < 4)
             return NULL;
 
-        server->seed = *(uint32_t*)p;
+        server->seed = *(const uint32_t*)p;
         if (server->seed == 0) {
             fprintf(stderr, "zero seed from client\n");
             sock_buff_dispose(server->sock);

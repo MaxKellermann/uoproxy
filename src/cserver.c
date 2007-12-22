@@ -29,7 +29,7 @@
 #include <errno.h>
 
 static int
-server_packet(void *data, size_t length, void *ctx)
+server_packet(const void *data, size_t length, void *ctx)
 {
     struct linked_server *ls = ctx;
     struct connection *c = ls->connection;

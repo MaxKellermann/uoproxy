@@ -28,7 +28,7 @@
 #include <assert.h>
 
 static int
-client_packet(void *data, size_t length, void *ctx)
+client_packet(const void *data, size_t length, void *ctx)
 {
     struct connection *c = ctx;
     packet_action_t action;

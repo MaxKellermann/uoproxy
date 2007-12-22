@@ -59,7 +59,7 @@ uo_client_invoke_free(struct uo_client *client)
     handler->free(client->handler_ctx);
 }
 
-static void *
+static const void *
 uo_client_peek(struct uo_client *client, size_t *lengthp);
 
 static void
@@ -69,7 +69,7 @@ static int
 client_sock_buff_data(void *ctx)
 {
     struct uo_client *client = ctx;
-    void *data;
+    const void *data;
     size_t length;
     int ret;
 
@@ -220,14 +220,14 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
     return p;
 }
 
-static void *
+static const void *
 uo_client_peek(struct uo_client *client, size_t *lengthp)
 {
     if (client->sock == NULL)
         return NULL;
 
     if (client->compression_enabled) {
-        unsigned char *p;
+        const unsigned char *p;
         size_t length;
 
         p = buffer_peek(client->sock->input, &length);
