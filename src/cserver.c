@@ -116,11 +116,7 @@ connection_server_new(struct connection *c, int fd)
 void
 connection_server_dispose(struct connection *c, struct linked_server *ls)
 {
-    assert(ls != NULL);
-
-    (void)c;
-
-    list_del(&ls->siblings);
+    connection_server_remove(c, ls);
 
     if (ls->server != NULL)
         uo_server_dispose(ls->server);
