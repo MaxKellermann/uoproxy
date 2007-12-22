@@ -367,6 +367,7 @@ static packet_action_t handle_play_server(struct connection *c,
 
         /* remove the object from the old connection */
         connection_server_remove(c, ls);
+        connection_invalidate(c);
 
         /* attach it to the new connection */
         attach_after_play_server(c2, ls);
