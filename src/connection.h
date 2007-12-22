@@ -135,8 +135,6 @@ void connection_check(const struct connection *c);
 
 void connection_invalidate(struct connection *c);
 
-struct linked_server *connection_add_server(struct connection *c, struct uo_server *server);
-
 void connection_pre_select(struct connection *c, struct selectx *sx);
 
 int connection_post_select(struct connection *c, struct selectx *sx);
@@ -148,6 +146,13 @@ void connection_speak_console(struct connection *c, const char *msg);
 void connection_broadcast_servers_except(struct connection *c,
                                          const void *data, size_t length,
                                          struct uo_server *except);
+
+
+/* server list */
+
+struct linked_server *
+connection_add_server(struct connection *c, struct uo_server *server);
+
 
 /* state */
 
