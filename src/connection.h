@@ -214,6 +214,11 @@ void connection_walk_ack(struct connection *c,
 
 /* reconnect */
 
+int
+connection_client_connect(struct connection *c,
+                          const struct addrinfo *server_address,
+                          u_int32_t seed);
+
 void connection_disconnect(struct connection *c);
 
 void connection_reconnect(struct connection *c);

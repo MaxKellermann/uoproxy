@@ -298,9 +298,8 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DROP;
     }
 
-    ret = uo_client_create(c->instance->config->login_address,
-                           uo_server_seed(c->current_server->server),
-                           &c->client);
+    ret = connection_client_connect(c, c->instance->config->login_address,
+                                    uo_server_seed(c->current_server->server));
     if (ret != 0) {
         struct uo_packet_account_login_reject response;
 
@@ -397,7 +396,7 @@ static packet_action_t handle_play_server(struct connection *c,
         config = c->instance->config->game_servers + i;
 
         /* connect to new server */
-        ret = uo_client_create(config->address, 0xdeadbeef, &c->client);
+        ret = connection_client_connect(c, config->address, 0xdeadbeef);
         if (ret != 0) {
             if (verbose >= 1)
                 fprintf(stderr, "connect to game server failed: %s\n",

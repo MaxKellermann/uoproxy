@@ -287,7 +287,7 @@ void connection_idle(struct connection *c, time_t now) {
                 assert(config->game_servers != NULL);
                 assert(c->server_index < config->num_game_servers);
 
-                ret = uo_client_create(server_address, seed, &c->client);
+                ret = connection_client_connect(c, server_address, seed);
                 if (ret == 0) {
                     struct uo_packet_game_login p = {
                         .cmd = PCK_GameLogin,
@@ -308,8 +308,9 @@ void connection_idle(struct connection *c, time_t now) {
                 }
             } else {
                 /* connect to login server */
-                ret = uo_client_create(c->instance->config->login_address,
-                                       seed, &c->client);
+                ret = connection_client_connect(c,
+                                                c->instance->config->login_address,
+                                                seed);
                 if (ret == 0) {
                     struct uo_packet_account_login p = {
                         .cmd = PCK_AccountLogin,
