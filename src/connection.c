@@ -47,8 +47,12 @@ int connection_new(struct instance *instance,
         return -ENOMEM;
 
     c->instance = instance;
+    c->background = instance->config->background;
+    c->autoreconnect = instance->config->autoreconnect;
+
     INIT_LIST_HEAD(&c->items);
     INIT_LIST_HEAD(&c->mobiles);
+    INIT_LIST_HEAD(&c->servers);
 
     ret = uo_server_create(server_socket, &server);
     if (ret != 0) {
@@ -62,11 +66,6 @@ int connection_new(struct instance *instance,
         connection_delete(c);
         return -ENOMEM;
     }
-
-    c->background = instance->config->background;
-    c->autoreconnect = instance->config->autoreconnect;
-
-    INIT_LIST_HEAD(&c->servers);
 
     connection_check(c);
 
