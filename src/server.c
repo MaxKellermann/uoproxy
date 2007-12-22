@@ -54,7 +54,6 @@ uo_server_invoke_free(struct uo_server *server)
 {
     const struct uo_server_handler *handler;
 
-    assert(server->sock != NULL);
     assert(server->handler != NULL);
 
     handler = server->handler;
