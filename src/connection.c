@@ -116,21 +116,6 @@ void connection_invalidate(struct connection *c) {
     connection_delete(c);
 }
 
-struct linked_server *connection_add_server(struct connection *c, struct uo_server *server) {
-    struct linked_server *ls = calloc(1, sizeof(*ls));
-
-    connection_check(c);
-
-    if (ls == NULL)
-        return NULL;
-
-    ls->server = server;
-
-    list_add(&ls->siblings, &c->servers);
-
-    return ls;
-}
-
 static void remove_server(struct linked_server *ls) {
     assert(ls != NULL);
 
