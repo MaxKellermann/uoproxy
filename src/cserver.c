@@ -39,6 +39,7 @@ connection_add_server(struct connection *c, struct uo_server *server)
     if (ls == NULL)
         return NULL;
 
+    ls->connection = c;
     ls->server = server;
 
     list_add(&ls->siblings, &c->servers);

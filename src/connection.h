@@ -53,6 +53,8 @@ struct mobile {
 struct linked_server {
     struct list_head siblings;
 
+    struct connection *connection;
+
     struct uo_server *server;
     int invalid, welcome, attaching;
 };
