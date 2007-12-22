@@ -1,8 +1,7 @@
 /*
  * uoproxy
- * $Id: packets.c 260 2006-05-19 06:45:31Z make $
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
