@@ -39,7 +39,6 @@ static void change_character(struct connection *c,
                             "uoproxy: changing character");
 
     connection_reconnect(c);
-    c->reconnecting = 1;
 }
 
 void connection_handle_command(struct connection *c,
