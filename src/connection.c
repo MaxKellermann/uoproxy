@@ -38,7 +38,6 @@ int connection_new(struct instance *instance,
                    int server_socket,
                    struct connection **connectionp) {
     struct connection *c;
-    struct uo_server *server = NULL;
     struct linked_server *ls;
     int ret;
 
@@ -57,7 +56,6 @@ int connection_new(struct instance *instance,
     ls = connection_server_new(c, server_socket);
     if (ls == NULL) {
         ret = -errno;
-        uo_server_dispose(server);
         connection_delete(c);
         return ret;
     }
