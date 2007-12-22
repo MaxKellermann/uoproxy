@@ -36,14 +36,14 @@ void instance_post_select(struct instance *instance,
                           struct selectx *sx) {
     struct connection *c;
 
-    list_for_each_entry(c, &instance->connections, siblings)
+    list_for_each_entry_safe(c, &instance->connections, siblings)
         connection_post_select(c, sx);
 }
 
 void instance_idle(struct instance *instance, time_t now) {
     struct connection *c;
 
-    list_for_each_entry(c, &instance->connections, siblings)
+    list_for_each_entry_safe(c, &instance->connections, siblings)
         connection_idle(c, now);
 }
 
