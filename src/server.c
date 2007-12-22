@@ -93,6 +93,7 @@ server_sock_buff_free(int error, void *ctx)
     else
         log_error("error during communication with client", error);
 
+    sock_buff_dispose(server->sock);
     server->sock = NULL;
 
     uo_server_invoke_free(server);
