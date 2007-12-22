@@ -467,8 +467,7 @@ static packet_action_t handle_relay(struct connection *c,
     relay = *p;
 
     /* close old connection */
-    uo_client_dispose(c->client);
-    c->client = NULL;
+    connection_disconnect(c);
 
     /* extract new server's address */
     server_address = make_addrinfo(relay.ip, relay.port);

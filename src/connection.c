@@ -83,14 +83,7 @@ void connection_delete(struct connection *c) {
         free(ls);
     }
 
-    if (c->client != NULL) {
-        event_del(&c->ping_event);
-        uo_client_dispose(c->client);
-        c->client = NULL;
-    }
-
-    connection_delete_items(c);
-    connection_delete_mobiles(c);
+    connection_disconnect(c);
 
     free(c);
 }
