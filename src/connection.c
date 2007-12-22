@@ -135,11 +135,9 @@ void connection_pre_select(struct connection *c, struct selectx *sx) {
         uo_client_pre_select(c->client, sx);
 
     list_for_each_entry_safe(ls, n, &c->servers, siblings) {
-        assert(ls->invalid || ls->server != NULL);
+        assert(ls->server != NULL);
 
-        if (ls->invalid) {
-            connection_server_dispose(c, ls);
-        } else if (!uo_server_alive(ls->server)) {
+        if (!uo_server_alive(ls->server)) {
             if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
                 if (verbose >= 2)
                     printf("client disconnected, server connection still in use\n");
@@ -171,12 +169,8 @@ int connection_post_select(struct connection *c, struct selectx *sx) {
 
     assert(c->current_server == NULL);
 
-    list_for_each_entry_safe(ls, n, &c->servers, siblings) {
-        if (ls->invalid)
-            continue;
-
+    list_for_each_entry_safe(ls, n, &c->servers, siblings)
         uo_server_post_select(ls->server, sx);
-    }
 
     return 0;
 }

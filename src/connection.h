@@ -56,7 +56,7 @@ struct linked_server {
     struct connection *connection;
 
     struct uo_server *server;
-    int invalid, welcome, attaching;
+    int welcome, attaching;
 };
 
 struct connection_walk_item {

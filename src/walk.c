@@ -152,10 +152,8 @@ void connection_walk_cancel(struct connection *c,
 #endif
 
     /* only send to requesting client */
-    if (!state->server->invalid) {
-        p->seq = i->packet.seq;
-        uo_server_send(state->server->server, p, sizeof(*p));
-    }
+    p->seq = i->packet.seq;
+    uo_server_send(state->server->server, p, sizeof(*p));
 
     walk_clear(state);
 }
@@ -221,10 +219,8 @@ void connection_walk_ack(struct connection *c,
                       i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */
-    if (!state->server->invalid) {
-        p->seq = i->packet.seq;
-        uo_server_send(state->server->server, p, sizeof(*p));
-    }
+    p->seq = i->packet.seq;
+    uo_server_send(state->server->server, p, sizeof(*p));
 
     /* send WalkForce to all other clients */
     if (!list_empty(&c->servers) &&

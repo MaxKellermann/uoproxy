@@ -115,9 +115,6 @@ void attach_after_play_character(struct connection *c,
 
     connection_check(c);
 
-    if (ls->invalid)
-        return;
-
     assert(ls->server != NULL);
     assert(ls->attaching);
 
