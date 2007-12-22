@@ -223,8 +223,7 @@ static unsigned char *peek_from_buffer(struct uo_client *client,
 static const void *
 uo_client_peek(struct uo_client *client, size_t *lengthp)
 {
-    if (client->sock == NULL)
-        return NULL;
+    assert(client->sock != NULL);
 
     if (client->compression_enabled) {
         const unsigned char *p;
@@ -261,8 +260,7 @@ uo_client_peek(struct uo_client *client, size_t *lengthp)
 static void
 uo_client_shift(struct uo_client *client, size_t nbytes)
 {
-    if (client->sock == NULL)
-        return;
+    assert(client->sock != NULL);
 
     buffer_shift(client->compression_enabled
                  ? client->decompressed_buffer

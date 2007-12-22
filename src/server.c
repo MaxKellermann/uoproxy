@@ -154,8 +154,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
     const unsigned char *p;
     size_t length, packet_length;
 
-    if (server->sock == NULL)
-        return NULL;
+    assert(server->sock != NULL);
 
     p = buffer_peek(server->sock->input, &length);
     if (p == NULL)
@@ -219,8 +218,7 @@ uo_server_peek(struct uo_server *server, size_t *lengthp)
 static void
 uo_server_shift(struct uo_server *server, size_t nbytes)
 {
-    if (server->sock == NULL)
-        return;
+    assert(server->sock != NULL);
 
     buffer_shift(server->sock->input, nbytes);
     sock_buff_event_setup(server->sock);
