@@ -84,6 +84,8 @@ connection_server_remove(struct connection *c, struct linked_server *ls)
     if (c->current_server == ls)
         c->current_server = NULL;
 
+    connection_walk_server_removed(&c->walk, ls);
+
     ls->connection = NULL;
     list_del(&ls->siblings);
 }
