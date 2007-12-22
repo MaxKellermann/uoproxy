@@ -77,7 +77,7 @@ client_sock_buff_data(void *ctx)
         uo_client_shift(client, length);
 
         ret = client->handler->packet(data, length, client->handler_ctx);
-        if (ret <= 0)
+        if (ret < 0)
             return ret;
     }
 
