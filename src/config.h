@@ -41,8 +41,6 @@ struct config {
 #endif
 };
 
-extern int verbose;
-
 /** read configuration options from the command line */
 void parse_cmdline(struct config *config, int argc, char **argv);
 

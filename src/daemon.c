@@ -23,6 +23,8 @@
 
 #ifndef DISABLE_DAEMON_CODE
 
+#include "log.h"
+
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>

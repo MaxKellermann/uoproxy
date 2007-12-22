@@ -18,6 +18,8 @@
  *
  */
 
+#include "log.h"
+
 #include <assert.h>
 #include <sys/types.h>
 #include <stdlib.h>
