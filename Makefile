@@ -36,7 +36,7 @@ SOURCES = src/uoproxy.c src/config.c src/instance.c \
 	src/netutil.c \
 	src/server.c src/client.c \
 	src/packets.c src/compression.c \
-	src/connection.c src/cclient.c src/cserver.c src/cnet.c src/cstate.c src/walk.c \
+	src/connection.c src/cclient.c src/cserver.c src/cnet.c src/world.c src/walk.c \
 	src/handler.c src/shandler.c src/chandler.c \
 	src/attach.c src/reconnect.c \
 	src/dump.c \
