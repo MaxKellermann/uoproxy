@@ -21,9 +21,6 @@
 #include "connection.h"
 #include "server.h"
 
-#include <assert.h>
-#include <stdlib.h>
-
 void connection_delete_items(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     struct item *i, *n;
@@ -37,25 +34,8 @@ void connection_delete_items(struct connection *c) {
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
-        list_del(&i->siblings);
-        free(i);
+        world_remove_item(i);
     }
-}
-
-static void free_mobile(struct mobile *m) {
-    assert(m != NULL);
-    assert(m->serial != 0);
-
-    if (m->packet_mobile_incoming != NULL)
-        free(m->packet_mobile_incoming);
-    if (m->packet_mobile_status != NULL)
-        free(m->packet_mobile_status);
-
-#ifndef NDEBUG
-    memset(m, 0, sizeof(*m));
-#endif
-
-    free(m);
 }
 
 void connection_delete_mobiles(struct connection *c) {
@@ -71,7 +51,6 @@ void connection_delete_mobiles(struct connection *c) {
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
-        list_del(&m->siblings);
-        free_mobile(m);
+        world_remove_mobile(m);
     }
 }

@@ -159,6 +159,15 @@ static void free_item(struct item *i) {
     free(i);
 }
 
+void
+world_remove_item(struct item *item) {
+    assert(item != NULL);
+    assert(!list_empty(&item->siblings));
+
+    list_del(&item->siblings);
+    free_item(item);
+}
+
 /** deep-delete all items contained in the specified serial */
 static void
 remove_item_tree(struct world *world, uint32_t parent_serial) {
@@ -181,8 +190,7 @@ remove_item_tree(struct world *world, uint32_t parent_serial) {
     list_for_each_entry_safe(i, n, &temp, siblings) {
         remove_item_tree(world, i->serial);
 
-        list_del(&i->siblings);
-        free_item(i);
+        world_remove_item(i);
     }
 }
 
@@ -193,10 +201,8 @@ world_remove_item_serial(struct world *world, uint32_t serial)
 
     /* remove this entity */
     i = world_find_item(world, serial);
-    if (i != NULL) {
-        list_del(&i->siblings);
-        free_item(i);
-    }
+    if (i != NULL)
+        world_remove_item(i);
 
     /* remove equipped items */
     remove_item_tree(world, serial);
@@ -447,16 +453,23 @@ static void free_mobile(struct mobile *m) {
     free(m);
 }
 
+void
+world_remove_mobile(struct mobile *mobile) {
+    assert(mobile != NULL);
+    assert(!list_empty(&mobile->siblings));
+
+    list_del(&mobile->siblings);
+    free_mobile(mobile);
+}
+
 static void
 world_remove_mobile_serial(struct world *world, uint32_t serial) {
     struct mobile *m;
 
     /* remove this entity */
     m = find_mobile(world, serial);
-    if (m != NULL) {
-        list_del(&m->siblings);
-        free_mobile(m);
-    }
+    if (m != NULL)
+        world_remove_mobile(m);
 
     /* remove equipped items */
     remove_item_tree(world, serial);

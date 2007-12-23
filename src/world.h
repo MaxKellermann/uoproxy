@@ -90,6 +90,9 @@ world_container_content(struct world *world,
                         const struct uo_packet_container_content *p);
 
 void
+world_remove_item(struct item *item);
+
+void
 world_mobile_incoming(struct world *world,
                       const struct uo_packet_mobile_incoming *p);
 
@@ -108,6 +111,9 @@ world_mobile_moving(struct world *world,
 void
 world_mobile_zone(struct world *world,
                   const struct uo_packet_zone_change *p);
+
+void
+world_remove_mobile(struct mobile *mobile);
 
 void
 world_remove_serial(struct world *world, u_int32_t serial);
