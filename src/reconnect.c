@@ -53,7 +53,6 @@ static void
 connection_try_reconnect(struct connection *c)
 {
     struct config *config = c->instance->config;
-    const u_int32_t seed = rand();
     int ret;
 
     assert(c->in_game);
@@ -68,10 +67,11 @@ connection_try_reconnect(struct connection *c)
         assert(config->game_servers != NULL);
         assert(c->server_index < config->num_game_servers);
 
-        ret = connection_client_connect(c, server_address, seed);
+        ret = connection_client_connect(c, server_address, 0xdeadbeef);
         if (ret == 0) {
             struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
+                .auth_id = 0xdeadbeef,
             };
 
             log(2, "connected, doing GameLogin\n");
@@ -89,7 +89,7 @@ connection_try_reconnect(struct connection *c)
         /* connect to login server */
         ret = connection_client_connect(c,
                                         c->instance->config->login_address,
-                                        seed);
+                                        0xdeadbeef);
         if (ret == 0) {
             struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,
