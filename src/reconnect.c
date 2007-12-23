@@ -104,7 +104,7 @@ connection_try_reconnect(struct connection *c)
         } else {
             log_error("reconnect failed", ret);
             c->reconnecting = 0;
-            connection_reconnect(c);
+            connection_reconnect_delayed(c);
         }
     }
 }
