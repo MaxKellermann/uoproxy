@@ -526,27 +526,14 @@ handle_client_version(struct linked_server *ls,
     if (!client_version_defined(&ls->client_version))
         client_version_copy(&ls->client_version, p, length);
 
-    if (c->instance->config->client_version != NULL) {
-        struct client_version cv;
-        int ret;
-
-        if (c->client.client == NULL || c->client.reconnecting)
-            return PA_DROP;
-
-        ret = client_version_set(&cv, c->instance->config->client_version);
-        if (ret < 0)
-            return PA_DROP;
-
-        uo_client_send(c->client.client, cv.packet, cv.packet_length);
-
-        client_version_free(&cv);
-
+    if (client_version_defined(&c->client_version)) {
+        uo_client_send(c->client.client, c->client_version.packet,
+                       c->client_version.packet_length);
         return PA_DROP;
-    } else if (!client_version_defined(&c->client_version)) {
+    } else {
         client_version_copy(&c->client_version, p, length);
+        return PA_ACCEPT;
     }
-
-    return PA_ACCEPT;
 }
 
 static packet_action_t

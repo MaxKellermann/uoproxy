@@ -51,6 +51,10 @@ int connection_new(struct instance *instance,
     INIT_LIST_HEAD(&c->client.world.mobiles);
     INIT_LIST_HEAD(&c->servers);
 
+    if (instance->config->client_version != NULL)
+        client_version_set(&c->client_version,
+                           instance->config->client_version);
+
     ls = connection_server_new(c, server_socket);
     if (ls == NULL) {
         ret = errno;
