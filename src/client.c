@@ -94,29 +94,108 @@ uo_client_is_aborted(struct uo_client *client)
     return client->abort_event.ev_events != 0;
 }
 
-static const void *
-uo_client_peek(struct uo_client *client, size_t *lengthp);
-
-static void
-uo_client_shift(struct uo_client *client, size_t nbytes);
-
-static int
-client_sock_buff_data(void *ctx)
+static ssize_t
+client_decompress(struct uo_client *client,
+                  const unsigned char *data, size_t length)
 {
-    struct uo_client *client = ctx;
-    const void *data;
-    size_t length;
-    int ret;
+    unsigned char *dest;
+    size_t max_length;
+    ssize_t nbytes;
 
-    while ((data = uo_client_peek(client, &length)) != NULL) {
-        uo_client_shift(client, length);
-
-        ret = client->handler->packet(data, length, client->handler_ctx);
-        if (ret < 0)
-            return ret;
+    dest = fifo_buffer_write(client->decompressed_buffer, &max_length);
+    if (dest == NULL) {
+        log(1, "decompression buffer full\n");
+        uo_client_abort(client);
+        return -1;
     }
 
-    return 0;
+    nbytes = uo_decompress(&client->decompression,
+                           dest, max_length,
+                           data, length);
+    if (nbytes < 0) {
+        fprintf(stderr, "decompression failed\n");
+        uo_client_abort(client);
+        return -1;
+    }
+
+    sock_buff_event_setup(client->sock);
+    fifo_buffer_append(client->decompressed_buffer, (size_t)nbytes);
+
+    return (size_t)length;
+}
+
+static ssize_t
+client_packets_from_buffer(struct uo_client *client,
+                           const unsigned char *data, size_t length)
+{
+    size_t consumed = 0, packet_length;
+    int ret;
+
+    while (length > 0) {
+        packet_length = get_packet_length(data, length);
+        if (packet_length == PACKET_LENGTH_INVALID) {
+            fprintf(stderr, "malformed packet from client:\n");
+            fhexdump(stderr, "  ", data, length);
+            fflush(stderr);
+            uo_client_abort(client);
+            return 0;
+        }
+
+#ifdef DUMP_HEADERS
+        printf("from server: 0x%02x length=%zu\n",
+               data[0], packet_length);
+#endif
+
+        if (packet_length == 0 || packet_length > length)
+            break;
+
+#ifdef DUMP_SERVER_RECEIVE
+        fhexdump(stdout, "  ", data, packet_length);
+        fflush(stdout);
+#endif
+
+        ret = client->handler->packet(data, packet_length,
+                                      client->handler_ctx);
+        if (ret < 0)
+            return ret;
+
+        consumed += packet_length;
+        data += packet_length;
+        length -= packet_length;
+    }
+
+    return (ssize_t)consumed;
+}
+
+static ssize_t
+client_sock_buff_data(const void *data0, size_t length, void *ctx)
+{
+    struct uo_client *client = ctx;
+    const unsigned char *data = data0;
+
+    if (client->compression_enabled) {
+        ssize_t nbytes;
+        size_t consumed;
+
+        nbytes = client_decompress(client, data, length);
+        if (nbytes <= 0)
+            return 0;
+        consumed = (size_t)nbytes;
+
+        data = fifo_buffer_read(client->decompressed_buffer, &length);
+        if (data == NULL)
+            return consumed;
+
+        nbytes = client_packets_from_buffer(client, data, length);
+        if (nbytes < 0)
+            return nbytes;
+
+        fifo_buffer_consume(client->decompressed_buffer, (size_t)nbytes);
+
+        return consumed;
+    } else {
+        return client_packets_from_buffer(client, data, length);
+    }
 }
 
 static void
@@ -215,101 +294,6 @@ void uo_client_dispose(struct uo_client *client) {
         evtimer_del(&client->abort_event);
 
     free(client);
-}
-
-static const unsigned char *
-peek_from_buffer(struct uo_client *client,
-                 fifo_buffer_t buffer, size_t *lengthp) {
-    const unsigned char *p;
-    size_t length, packet_length;
-
-    p = fifo_buffer_read(buffer, &length);
-    if (p == NULL)
-        return NULL;
-
-#ifdef DUMP_CLIENT_PEEK
-    printf("peek from server, length=%zu:\n", length);
-    fhexdump(stdout, "  ", p, length);
-    fflush(stdout);
-#endif
-
-    assert(length > 0);
-
-    packet_length = get_packet_length(p, length);
-    if (packet_length == PACKET_LENGTH_INVALID) {
-        fprintf(stderr, "malformed packet from server:\n");
-        fhexdump(stderr, "  ", p, length);
-        fflush(stderr);
-        uo_client_abort(client);
-        return NULL;
-    }
-
-#ifdef DUMP_HEADERS
-    printf("from server: 0x%02x length=%zu\n", p[0], packet_length);
-#endif
-    if (packet_length == 0 || packet_length > length)
-        return NULL;
-#ifdef DUMP_CLIENT_RECEIVE
-    fhexdump(stdout, "  ", p, packet_length);
-    fflush(stdout);
-#endif
-
-    *lengthp = packet_length;
-    return p;
-}
-
-static const void *
-uo_client_peek(struct uo_client *client, size_t *lengthp)
-{
-    assert(client->sock != NULL);
-
-    if (client->compression_enabled) {
-        const unsigned char *p;
-        size_t length;
-
-        p = fifo_buffer_read(client->sock->input, &length);
-        if (p != NULL) {
-            unsigned char *dest;
-            size_t max_length;
-            ssize_t nbytes;
-
-            dest = fifo_buffer_write(client->decompressed_buffer, &max_length);
-            if (dest == NULL) {
-                log(1, "decompression buffer full\n");
-                uo_client_abort(client);
-                return NULL;
-            }
-
-            nbytes = uo_decompress(&client->decompression,
-                                   dest, max_length,
-                                   p, length);
-            if (nbytes < 0) {
-                fprintf(stderr, "decompression failed\n");
-                uo_client_abort(client);
-                return NULL;
-            }
-
-            fifo_buffer_consume(client->sock->input, length);
-            sock_buff_event_setup(client->sock);
-            fifo_buffer_append(client->decompressed_buffer, (size_t)nbytes);
-        }
-
-        return peek_from_buffer(client, client->decompressed_buffer, lengthp);
-    } else {
-        return peek_from_buffer(client, client->sock->input, lengthp);
-    }
-}
-
-static void
-uo_client_shift(struct uo_client *client, size_t nbytes)
-{
-    assert(client->sock != NULL);
-
-    fifo_buffer_consume(client->compression_enabled
-                        ? client->decompressed_buffer
-                        : client->sock->input,
-                 nbytes);
-    sock_buff_event_setup(client->sock);
 }
 
 void uo_client_send(struct uo_client *client,

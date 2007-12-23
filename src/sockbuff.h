@@ -30,10 +30,10 @@ struct sock_buff_handler {
     /**
      * Data is available.
      *
-     * @return 0, or -1 if the sock_buff has been closed within the
-     * function
+     * @return the number of bytes consumed, or -1 if the sock_buff
+     * has been closed within the function
      */
-    int (*data)(void *ctx);
+    ssize_t (*data)(const void *data, size_t length, void *ctx);
 
     /**
      * The socket has been closed due to an error or because the peer

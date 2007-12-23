@@ -92,29 +92,79 @@ uo_server_is_aborted(struct uo_server *server)
     return server->abort_event.ev_events != 0;
 }
 
-static const void *
-uo_server_peek(struct uo_server *server, size_t *lengthp);
-
-static void
-uo_server_shift(struct uo_server *server, size_t nbytes);
-
-static int
-server_sock_buff_data(void *ctx)
+static ssize_t
+server_packets_from_buffer(struct uo_server *server,
+                           const unsigned char *data, size_t length)
 {
-    struct uo_server *server = ctx;
-    const void *data;
-    size_t length;
+    size_t consumed = 0, packet_length;
     int ret;
 
-    while ((data = uo_server_peek(server, &length)) != NULL) {
-        ret = server->handler->packet(data, length, server->handler_ctx);
+    while (length > 0) {
+        packet_length = get_packet_length(data, length);
+        if (packet_length == PACKET_LENGTH_INVALID) {
+            fprintf(stderr, "malformed packet from server:\n");
+            fhexdump(stderr, "  ", data, length);
+            fflush(stderr);
+            uo_server_abort(server);
+            return 0;
+        }
+
+#ifdef DUMP_HEADERS
+        printf("from client: 0x%02x length=%zu\n",
+               data[0], packet_length);
+#endif
+
+        if (packet_length == 0 || packet_length > length)
+            break;
+
+#ifdef DUMP_CLIENT_RECEIVE
+        fhexdump(stdout, "  ", data, packet_length);
+        fflush(stdout);
+#endif
+
+        ret = server->handler->packet(data, packet_length,
+                                      server->handler_ctx);
         if (ret < 0)
             return ret;
 
-        uo_server_shift(server, length);
+        consumed += packet_length;
+        data += packet_length;
+        length -= packet_length;
     }
 
-    return 0;
+    return (ssize_t)consumed;
+}
+
+static ssize_t
+server_sock_buff_data(const void *data0, size_t length, void *ctx)
+{
+    const unsigned char *data = data0;
+    struct uo_server *server = ctx;
+    size_t consumed = 0;
+    ssize_t nbytes;
+
+    if (server->seed == 0) {
+        /* the first packet from a client is the seed, 4 bytes without
+           header */
+        if (length < 4)
+            return 0;
+
+        server->seed = *(const uint32_t*)(data + consumed);
+        if (server->seed == 0) {
+            log(2, "zero seed from client\n");
+            uo_server_abort(server);
+            return 0;
+        }
+
+        consumed += sizeof(uint32_t);
+    }
+
+    nbytes = server_packets_from_buffer(server,
+                                        data + consumed, length - consumed);
+    if (nbytes < 0)
+        return nbytes;
+
+    return consumed + (size_t)nbytes;
 }
 
 static void
@@ -185,80 +235,6 @@ void uo_server_dispose(struct uo_server *server) {
 
 uint32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
-}
-
-static const void *
-uo_server_peek(struct uo_server *server, size_t *lengthp)
-{
-    const unsigned char *p;
-    size_t length, packet_length;
-
-    assert(server->sock != NULL);
-
-    p = fifo_buffer_read(server->sock->input, &length);
-    if (p == NULL)
-        return NULL;
-
-#ifdef DUMP_SERVER_PEEK
-    printf("peek from client, length=%zu:\n", length);
-    fhexdump(stdout, "  ", p, length);
-    fflush(stdout);
-#endif
-
-    if (server->seed == 0) {
-        /* the first packet from a client is the seed, 4 bytes without
-           header */
-        if (length < 4)
-            return NULL;
-
-        server->seed = *(const uint32_t*)p;
-        if (server->seed == 0) {
-            fprintf(stderr, "zero seed from client\n");
-            uo_server_abort(server);
-            return NULL;
-        }
-
-        fifo_buffer_consume(server->sock->input, 4);
-        sock_buff_event_setup(server->sock);
-
-        p = fifo_buffer_read(server->sock->input, &length);
-        if (p == NULL)
-            return NULL;
-    }
-
-    packet_length = get_packet_length(p, length);
-    if (packet_length == PACKET_LENGTH_INVALID) {
-        fprintf(stderr, "malformed packet from client:\n");
-        fhexdump(stderr, "  ", p, length);
-        fflush(stderr);
-        uo_server_abort(server);
-        return NULL;
-    }
-
-#ifdef DUMP_HEADERS
-    printf("from client: 0x%02x length=%zu\n", p[0], packet_length);
-#endif
-    if (packet_length == 0 || packet_length > length)
-        return NULL;
-#ifdef DUMP_SERVER_RECEIVE
-    fhexdump(stdout, "  ", p, packet_length);
-    fflush(stdout);
-#endif
-
-    if (p[0] == PCK_GameLogin)
-        server->compression_enabled = 1;
-
-    *lengthp = packet_length;
-    return p;
-}
-
-static void
-uo_server_shift(struct uo_server *server, size_t nbytes)
-{
-    assert(server->sock != NULL);
-
-    fifo_buffer_consume(server->sock->input, nbytes);
-    sock_buff_event_setup(server->sock);
 }
 
 void uo_server_send(struct uo_server *server,

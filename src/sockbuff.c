@@ -71,10 +71,23 @@ int sock_buff_create(int fd, size_t input_max,
 static int
 sock_buff_invoke_data(struct sock_buff *sb)
 {
+    const void *data;
+    size_t length;
+    ssize_t nbytes;
+
     assert(sb->handler != NULL);
     assert(sb->handler->data != NULL);
 
-    return sb->handler->data(sb->handler_ctx);
+    data = fifo_buffer_read(sb->input, &length);
+    if (data == NULL)
+        return 0;
+
+    nbytes = sb->handler->data(data, length, sb->handler_ctx);
+    if (nbytes < 0)
+        return -1;
+
+    fifo_buffer_consume(sb->input, (size_t)nbytes);
+    return 0;
 }
 
 static void
