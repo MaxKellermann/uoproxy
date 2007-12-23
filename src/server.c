@@ -272,8 +272,6 @@ void uo_server_send(struct uo_server *server,
         }
 
         sock_buff_append(server->sock, (size_t)nbytes);
-
-        sock_buff_flush(server->sock);
     } else {
         sock_buff_send(server->sock, src, length);
     }

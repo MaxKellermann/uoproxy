@@ -55,14 +55,6 @@ void sock_buff_dispose(struct sock_buff *sb);
 void
 sock_buff_event_setup(struct sock_buff *sb);
 
-/**
- * Try to flush the output buffer.  Note that this function will not
- * trigger the free() callback.
- *
- * @return 0 on success, -1 on i/o error (see errno)
- */
-int sock_buff_flush(struct sock_buff *sb);
-
 void *
 sock_buff_write(struct sock_buff *sb, size_t *max_length_r);
 

@@ -279,7 +279,6 @@ int uo_client_create(const struct addrinfo *server_address,
 
     /* seed must be the first 4 bytes, and it must be flushed */
     uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
-    sock_buff_flush(client->sock);
 
     return 0;
 }

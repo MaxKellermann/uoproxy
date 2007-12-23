@@ -135,7 +135,15 @@ void sock_buff_dispose(struct sock_buff *sb) {
     free(sb);
 }
 
-int sock_buff_flush(struct sock_buff *sb) {
+/**
+ * Try to flush the output buffer.  Note that this function will not
+ * trigger the free() callback.
+ *
+ * @return 0 on success, -1 on i/o error (see errno)
+ */
+static int
+sock_buff_flush(struct sock_buff *sb)
+{
     ssize_t nbytes;
 
     nbytes = write_from_buffer(sb->fd, sb->output);
