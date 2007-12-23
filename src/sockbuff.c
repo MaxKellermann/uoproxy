@@ -42,6 +42,12 @@ struct sock_buff {
 static void
 sock_buff_event_setup(struct sock_buff *sb);
 
+
+/*
+ * constructor and destructor
+ *
+ */
+
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,
                      const struct sock_buff_handler *handler,
@@ -98,6 +104,12 @@ void sock_buff_dispose(struct sock_buff *sb) {
     free(sb);
 }
 
+
+/*
+ * invoke wrappers
+ *
+ */
+
 static int
 sock_buff_invoke_data(struct sock_buff *sb)
 {
@@ -139,6 +151,7 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
     handler->free(error, sb->handler_ctx);
 }
 
+
 /**
  * Try to flush the output buffer.  Note that this function will not
  * trigger the free() callback.
@@ -161,6 +174,12 @@ sock_buff_flush(struct sock_buff *sb)
 
     return 0;
 }
+
+
+/*
+ * libevent callback function
+ *
+ */
 
 static void
 sock_buff_event_callback(int fd, short event, void *ctx)
@@ -219,6 +238,12 @@ sock_buff_event_setup(struct sock_buff *sb)
         event_add(&sb->event, NULL);
     }
 }
+
+
+/*
+ * methods
+ *
+ */
 
 void *
 sock_buff_write(struct sock_buff *sb, size_t *max_length_r)
