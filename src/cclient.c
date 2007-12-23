@@ -34,6 +34,8 @@ client_packet(const void *data, size_t length, void *ctx)
     packet_action_t action;
     struct linked_server *ls;
 
+    assert(c->client.client != NULL);
+
     action = handle_packet_from_server(server_packet_bindings,
                                        c, data, length);
     switch (action) {
@@ -61,6 +63,8 @@ static void
 client_free(void *ctx)
 {
     struct connection *c = ctx;
+
+    assert(c->client.client != NULL);
 
     if (c->autoreconnect && c->in_game) {
         log(2, "server disconnected, auto-reconnecting\n");
