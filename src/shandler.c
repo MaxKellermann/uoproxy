@@ -19,6 +19,7 @@
  */
 
 #include "log.h"
+#include "version.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -42,7 +43,7 @@ static void welcome(struct connection *c) {
 
     list_for_each_entry(ls, &c->servers, siblings) {
         if (!ls->attaching && !ls->welcome) {
-            uo_server_speak_console(ls->server, "Welcome to uoproxy v0.1.0!  "
+            uo_server_speak_console(ls->server, "Welcome to uoproxy v" VERSION "!  "
                                     "http://max.kellermann.name/projects/uoproxy/");
             ls->welcome = 1;
         }
