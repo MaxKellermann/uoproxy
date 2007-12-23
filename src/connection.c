@@ -49,8 +49,8 @@ int connection_new(struct instance *instance,
     c->background = instance->config->background;
     c->autoreconnect = instance->config->autoreconnect;
 
-    INIT_LIST_HEAD(&c->items);
-    INIT_LIST_HEAD(&c->mobiles);
+    INIT_LIST_HEAD(&c->client.world.items);
+    INIT_LIST_HEAD(&c->client.world.mobiles);
     INIT_LIST_HEAD(&c->servers);
 
     ls = connection_server_new(c, server_socket);

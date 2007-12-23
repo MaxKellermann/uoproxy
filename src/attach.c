@@ -30,11 +30,12 @@ struct connection *find_attach_connection(struct connection *c) {
     struct connection *c2;
 
     list_for_each_entry(c2, &c->instance->connections, siblings)
-        if (c2 != c && c2->in_game && c2->packet_start.serial != 0 &&
+        if (c2 != c && c2->in_game &&
+            c2->client.world.packet_start.serial != 0 &&
             memcmp(c->username, c2->username, sizeof(c->username)) == 0 &&
             memcmp(c->password, c2->password, sizeof(c->password)) == 0 &&
             c->server_index == c2->server_index &&
-            c2->num_characters > 0)
+            c2->client.num_characters > 0)
             return c2;
 
     return NULL;
@@ -55,7 +56,7 @@ void attach_after_play_server(struct connection *c,
     ls->attaching = 1;
 
     supported_features.cmd = PCK_SupportedFeatures;
-    supported_features.flags = c->supported_features_flags;
+    supported_features.flags = c->client.supported_features_flags;
     uo_server_send(ls->server, &supported_features,
                    sizeof(supported_features));
 
@@ -63,7 +64,7 @@ void attach_after_play_server(struct connection *c,
     character_list.cmd = PCK_CharList;
     character_list.length = htons(sizeof(character_list));
     character_list.character_count = 1;
-    character_list.character_info[0] = c->characters[c->character_index];
+    character_list.character_info[0] = c->client.characters[c->character_index];
     character_list.city_count = 0;
     character_list.flags = htonl(0x14);
     uo_server_send(ls->server, &character_list,
@@ -78,7 +79,7 @@ void attach_after_play_server(struct connection *c,
 static void attach_item(struct connection *c,
                         struct linked_server *ls,
                         struct item *item) {
-    item->attach_sequence = c->item_attach_sequence;
+    item->attach_sequence = c->client.world.item_attach_sequence;
 
     if (item->packet_container_update.cmd == PCK_ContainerUpdate) {
         /* attach parent first */
@@ -86,7 +87,7 @@ static void attach_item(struct connection *c,
             = item->packet_container_update.item.parent_serial;
         struct item *parent = connection_find_item(c, parent_serial);
         if (parent != NULL &&
-            parent->attach_sequence != c->item_attach_sequence)
+            parent->attach_sequence != c->client.world.item_attach_sequence)
             attach_item(c, ls, parent);
 
         /* then this item as container content */
@@ -119,60 +120,61 @@ void attach_after_play_character(struct connection *c,
     assert(ls->attaching);
 
     /* 0x1b LoginConfirm */
-    if (c->packet_start.cmd == PCK_Start)
-        uo_server_send(ls->server, &c->packet_start,
-                       sizeof(c->packet_start));
+    if (c->client.world.packet_start.cmd == PCK_Start)
+        uo_server_send(ls->server, &c->client.world.packet_start,
+                       sizeof(c->client.world.packet_start));
 
     /* 0xbf 0x08 MapChange */
-    if (ntohs(c->packet_map_change.length) > 0) {
-        assert(c->packet_map_change.cmd == PCK_Extended);
-        assert(ntohs(c->packet_map_change.length) == sizeof(c->packet_map_change));
-        assert(ntohs(c->packet_map_change.extended_cmd) == 0x0008);
-        uo_server_send(ls->server, &c->packet_map_change,
-                       ntohs(c->packet_map_change.length));
+    if (ntohs(c->client.world.packet_map_change.length) > 0) {
+        assert(c->client.world.packet_map_change.cmd == PCK_Extended);
+        assert(ntohs(c->client.world.packet_map_change.length) == sizeof(c->client.world.packet_map_change));
+        assert(ntohs(c->client.world.packet_map_change.extended_cmd) == 0x0008);
+        uo_server_send(ls->server, &c->client.world.packet_map_change,
+                       ntohs(c->client.world.packet_map_change.length));
     }
 
     /* 0xbf 0x18 MapPatches */
-    if (ntohs(c->packet_map_patches.length) > 0) {
-        assert(c->packet_map_patches.cmd == PCK_Extended);
-        assert(ntohs(c->packet_map_patches.length) == sizeof(c->packet_map_patches));
-        assert(ntohs(c->packet_map_patches.extended_cmd) == 0x0018);
-        uo_server_send(ls->server, &c->packet_map_patches,
-                       ntohs(c->packet_map_patches.length));
+    if (ntohs(c->client.world.packet_map_patches.length) > 0) {
+        assert(c->client.world.packet_map_patches.cmd == PCK_Extended);
+        assert(ntohs(c->client.world.packet_map_patches.length) == sizeof(c->client.world.packet_map_patches));
+        assert(ntohs(c->client.world.packet_map_patches.extended_cmd) == 0x0018);
+        uo_server_send(ls->server, &c->client.world.packet_map_patches,
+                       ntohs(c->client.world.packet_map_patches.length));
     }
 
     /* 0xbc SeasonChange */
-    if (c->packet_season.cmd == PCK_Season)
-        uo_server_send(ls->server, &c->packet_season, sizeof(c->packet_season));
+    if (c->client.world.packet_season.cmd == PCK_Season)
+        uo_server_send(ls->server, &c->client.world.packet_season,
+                       sizeof(c->client.world.packet_season));
 
     /* 0xb9 SupportedFeatures */
     supported_features.cmd = PCK_SupportedFeatures;
-    supported_features.flags = c->supported_features_flags;
+    supported_features.flags = c->client.supported_features_flags;
     uo_server_send(ls->server, &supported_features,
                    sizeof(supported_features));
 
     /* 0x4f GlobalLightLevel */
-    if (c->packet_global_light_level.cmd == PCK_GlobalLightLevel)
-        uo_server_send(ls->server, &c->packet_global_light_level,
-                       sizeof(c->packet_global_light_level));
+    if (c->client.world.packet_global_light_level.cmd == PCK_GlobalLightLevel)
+        uo_server_send(ls->server, &c->client.world.packet_global_light_level,
+                       sizeof(c->client.world.packet_global_light_level));
 
     /* 0x4e PersonalLightLevel */
-    if (c->packet_personal_light_level.cmd == PCK_PersonalLightLevel)
-        uo_server_send(ls->server, &c->packet_personal_light_level,
-                       sizeof(c->packet_personal_light_level));
+    if (c->client.world.packet_personal_light_level.cmd == PCK_PersonalLightLevel)
+        uo_server_send(ls->server, &c->client.world.packet_personal_light_level,
+                       sizeof(c->client.world.packet_personal_light_level));
 
     /* 0x20 MobileUpdate */
-    if (c->packet_mobile_update.cmd == PCK_MobileUpdate)
-        uo_server_send(ls->server, &c->packet_mobile_update,
-                       sizeof(c->packet_mobile_update));
+    if (c->client.world.packet_mobile_update.cmd == PCK_MobileUpdate)
+        uo_server_send(ls->server, &c->client.world.packet_mobile_update,
+                       sizeof(c->client.world.packet_mobile_update));
 
     /* WarMode */
-    if (c->packet_war_mode.cmd == PCK_WarMode)
-        uo_server_send(ls->server, &c->packet_war_mode,
-                       sizeof(c->packet_war_mode));
+    if (c->client.world.packet_war_mode.cmd == PCK_WarMode)
+        uo_server_send(ls->server, &c->client.world.packet_war_mode,
+                       sizeof(c->client.world.packet_war_mode));
 
     /* mobiles */
-    list_for_each_entry(mobile, &c->mobiles, siblings) {
+    list_for_each_entry(mobile, &c->client.world.mobiles, siblings) {
         if (mobile->packet_mobile_incoming != NULL)
             uo_server_send(ls->server, mobile->packet_mobile_incoming,
                            ntohs(mobile->packet_mobile_incoming->length));
@@ -182,11 +184,10 @@ void attach_after_play_character(struct connection *c,
     }
 
     /* items */
-    ++c->item_attach_sequence;
-    list_for_each_entry(item, &c->items, siblings) {
-        if (item->attach_sequence != c->item_attach_sequence)
+    ++c->client.world.item_attach_sequence;
+    list_for_each_entry(item, &c->client.world.items, siblings)
+        if (item->attach_sequence != c->client.world.item_attach_sequence)
             attach_item(c, ls, item);
-    }
 
     /* LoginComplete */
     login_complete.cmd = PCK_ReDrawAll;

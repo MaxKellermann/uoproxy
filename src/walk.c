@@ -76,10 +76,10 @@ static void walk_cancel(struct connection *c,
     struct uo_packet_walk_cancel p = {
         .cmd = PCK_WalkCancel,
         .seq = old->seq,
-        .x = c->packet_start.x,
-        .y = c->packet_start.y,
-        .direction = c->packet_start.direction,
-        .z = c->packet_start.z,
+        .x = c->client.world.packet_start.x,
+        .y = c->client.world.packet_start.y,
+        .direction = c->client.world.packet_start.direction,
+        .z = c->client.world.packet_start.z,
     };
 
     uo_server_send(server, &p, sizeof(p));
@@ -127,7 +127,7 @@ connection_walk_request(struct connection *c,
 
     walk = *p;
     walk.seq = i->seq = state->seq_next++;
-    uo_client_send(c->client, &walk, sizeof(walk));
+    uo_client_send(c->client.client, &walk, sizeof(walk));
 
     if (state->seq_next == 0)
         state->seq_next = 1;
@@ -186,10 +186,10 @@ void connection_walk_ack(struct connection *c,
     printf("walk_ack seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
 #endif
 
-    x = ntohs(c->packet_start.x);
-    y = ntohs(c->packet_start.y);
+    x = ntohs(c->client.world.packet_start.x);
+    y = ntohs(c->client.world.packet_start.y);
 
-    if ((c->packet_start.direction & 0x07) == (i->packet.direction & 0x07)) {
+    if ((c->client.world.packet_start.direction & 0x07) == (i->packet.direction & 0x07)) {
         switch (i->packet.direction & 0x07) {
         case 0: /* north */
             --y;

@@ -86,18 +86,18 @@ connection_ping_event_callback(int fd __attr_unused,
     struct uo_packet_ping ping;
     struct timeval tv;
 
-    assert(c->client != NULL);
+    assert(c->client.client != NULL);
 
     ping.cmd = PCK_Ping;
-    ping.id = ++c->ping_request;
+    ping.id = ++c->client.ping_request;
 
     log(2, "sending ping\n");
-    uo_client_send(c->client, &ping, sizeof(ping));
+    uo_client_send(c->client.client, &ping, sizeof(ping));
 
     /* schedule next ping */
     tv.tv_sec = 30;
     tv.tv_usec = 0;
-    event_add(&c->ping_event, &tv);
+    event_add(&c->client.ping_event, &tv);
 }
 
 int
@@ -108,18 +108,18 @@ connection_client_connect(struct connection *c,
     int ret;
     struct timeval tv;
 
-    assert(c->client == NULL);
+    assert(c->client.client == NULL);
 
     ret = uo_client_create(server_address, seed,
                            &client_handler, c,
-                           &c->client);
+                           &c->client.client);
     if (ret != 0)
         return ret;
 
     tv.tv_sec = 30;
     tv.tv_usec = 0;
-    evtimer_set(&c->ping_event, connection_ping_event_callback, c);
-    evtimer_add(&c->ping_event, &tv);
+    evtimer_set(&c->client.ping_event, connection_ping_event_callback, c);
+    evtimer_add(&c->client.ping_event, &tv);
 
     return 0;
 }

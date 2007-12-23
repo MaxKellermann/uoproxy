@@ -32,7 +32,7 @@
 #include <stdlib.h>
 
 void connection_disconnect(struct connection *c) {
-    if (c->client == NULL)
+    if (c->client.client == NULL)
         return;
 
     if (c->reconnecting) {
@@ -43,10 +43,10 @@ void connection_disconnect(struct connection *c) {
     connection_delete_items(c);
     connection_delete_mobiles(c);
 
-    event_del(&c->ping_event);
+    event_del(&c->client.ping_event);
 
-    uo_client_dispose(c->client);
-    c->client = NULL;
+    uo_client_dispose(c->client.client);
+    c->client.client = NULL;
 }
 
 static void
@@ -57,7 +57,7 @@ connection_try_reconnect(struct connection *c)
 
     assert(c->in_game);
     assert(c->reconnecting);
-    assert(c->client == NULL);
+    assert(c->client.client == NULL);
 
     if (config->login_address == NULL) {
         /* connect to game server */
@@ -79,7 +79,7 @@ connection_try_reconnect(struct connection *c)
             memcpy(p.username, c->username, sizeof(p.username));
             memcpy(p.password, c->password, sizeof(p.password));
 
-            uo_client_send(c->client, &p, sizeof(p));
+            uo_client_send(c->client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
             c->reconnecting = 0;
@@ -98,7 +98,7 @@ connection_try_reconnect(struct connection *c)
             memcpy(p.username, c->username, sizeof(p.username));
             memcpy(p.password, c->password, sizeof(p.password));
 
-            uo_client_send(c->client, &p, sizeof(p));
+            uo_client_send(c->client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
             c->reconnecting = 0;
@@ -123,7 +123,7 @@ void connection_reconnect(struct connection *c) {
     connection_disconnect(c);
 
     assert(c->in_game);
-    assert(c->client == NULL);
+    assert(c->client.client == NULL);
 
     c->reconnecting = 1;
 
@@ -141,7 +141,7 @@ connection_reconnect_delayed(struct connection *c)
     connection_disconnect(c);
 
     assert(c->in_game);
-    assert(c->client == NULL);
+    assert(c->client.client == NULL);
 
     c->reconnecting = 1;
 

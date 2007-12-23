@@ -81,10 +81,10 @@ static packet_action_t handle_walk(struct connection *c,
         struct uo_packet_walk_cancel p2 = {
             .cmd = PCK_WalkCancel,
             .seq = p->seq,
-            .x = c->packet_start.x,
-            .y = c->packet_start.y,
-            .direction = c->packet_start.direction,
-            .z = c->packet_start.z,
+            .x = c->client.world.packet_start.x,
+            .y = c->client.world.packet_start.y,
+            .direction = c->client.world.packet_start.direction,
+            .z = c->client.world.packet_start.z,
         };
 
         uo_server_send(c->current_server->server, &p2, sizeof(p2));
@@ -211,15 +211,16 @@ static packet_action_t handle_target(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->packet_target.cmd == PCK_Target &&
-        c->packet_target.target_id != 0) {
+    if (c->client.world.packet_target.cmd == PCK_Target &&
+        c->client.world.packet_target.target_id != 0) {
         /* cancel this target for all other clients */
-        memset(&c->packet_target, 0, sizeof(c->packet_target));
-        c->packet_target.cmd = PCK_Target;
-        c->packet_target.flags = 3;
+        memset(&c->client.world.packet_target, 0,
+               sizeof(c->client.world.packet_target));
+        c->client.world.packet_target.cmd = PCK_Target;
+        c->client.world.packet_target.flags = 3;
 
-        connection_broadcast_servers_except(c, &c->packet_target,
-                                            sizeof(c->packet_target),
+        connection_broadcast_servers_except(c, &c->client.world.packet_target,
+                                            sizeof(c->client.world.packet_target),
                                             c->current_server->server);
     }
 
@@ -249,7 +250,7 @@ static packet_action_t handle_account_login(struct connection *c,
            p->username, p->password);
 #endif
 
-    if (c->client != NULL) {
+    if (c->client.client != NULL) {
         if (verbose >= 2)
             fprintf(stderr, "already logged in\n");
         return PA_DISCONNECT;
@@ -383,7 +384,7 @@ static packet_action_t handle_play_server(struct connection *c,
         int ret;
         struct uo_packet_game_login login;
 
-        assert(c->client == NULL);
+        assert(c->client.client == NULL);
 
         /* locate the selected game server */
         i = ntohs(p->index);
@@ -408,7 +409,7 @@ static packet_action_t handle_play_server(struct connection *c,
         memcpy(login.username, c->username, sizeof(login.username));
         memcpy(login.password, c->password, sizeof(login.password));
 
-        uo_client_send(c->client, &login, sizeof(login));
+        uo_client_send(c->client.client, &login, sizeof(login));
 
         return PA_DROP;
     }
@@ -495,7 +496,7 @@ static packet_action_t handle_client_version(struct connection *c,
         struct uo_packet_client_version *p;
         size_t version_length;
 
-        if (c->client == NULL || c->reconnecting)
+        if (c->client.client == NULL || c->reconnecting)
             return PA_DROP;
 
         version_length = strlen(c->instance->config->client_version);
@@ -509,7 +510,7 @@ static packet_action_t handle_client_version(struct connection *c,
         memcpy(p->version, c->instance->config->client_version,
                version_length + 1);
 
-        uo_client_send(c->client, p,
+        uo_client_send(c->client.client, p,
                        sizeof(*p) + version_length);
 
         free(p);

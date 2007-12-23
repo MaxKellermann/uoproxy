@@ -120,7 +120,7 @@ static packet_action_t handle_start(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->packet_start = *p;
+    c->client.world.packet_start = *p;
     c->in_game = 1;
 
     /* if we're auto-reconnecting, this is the point where it
@@ -245,8 +245,8 @@ static packet_action_t handle_personal_light_level(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->packet_start.serial == p->serial)
-        c->packet_personal_light_level = *p;
+    if (c->client.world.packet_start.serial == p->serial)
+        c->client.world.packet_personal_light_level = *p;
 
     return PA_ACCEPT;
 }
@@ -257,7 +257,7 @@ static packet_action_t handle_global_light_level(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->packet_global_light_level = *p;
+    c->client.world.packet_global_light_level = *p;
 
     return PA_ACCEPT;
 }
@@ -288,7 +288,7 @@ static packet_action_t handle_login_complete(struct connection *c,
     (void)length;
 
     if (c->instance->config->antispy)
-        send_antispy(c->client);
+        send_antispy(c->client.client);
 
     return PA_ACCEPT;
 }
@@ -299,7 +299,7 @@ static packet_action_t handle_target(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->packet_target = *p;
+    c->client.world.packet_target = *p;
 
     return PA_ACCEPT;
 }
@@ -310,7 +310,7 @@ static packet_action_t handle_war_mode(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->packet_war_mode = *p;
+    c->client.world.packet_war_mode = *p;
 
     return PA_ACCEPT;
 }
@@ -321,7 +321,7 @@ static packet_action_t handle_ping(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->ping_ack = p->id;
+    c->client.ping_ack = p->id;
 
     return PA_DROP;
 }
@@ -372,19 +372,19 @@ static packet_action_t handle_char_list(struct connection *c,
     if (p->character_count > 0 && length >= sizeof(*p)) {
         unsigned idx;
 
-        memset(c->characters, 0, sizeof(c->characters));
+        memset(c->client.characters, 0, sizeof(c->client.characters));
 
-        for (idx = 0, c->num_characters = 0;
+        for (idx = 0, c->client.num_characters = 0;
              idx < p->character_count &&
              idx < MAX_CHARACTERS &&
                  (const void*)&p->character_info[idx + 1] <= data_end;
              ++idx) {
             if (p->character_info[idx].name[0] != 0)
-                ++c->num_characters;
+                ++c->client.num_characters;
         }
 
-        memcpy(c->characters, p->character_info,
-               idx * sizeof(c->characters[0]));
+        memcpy(c->client.characters, p->character_info,
+               idx * sizeof(c->client.characters[0]));
     }
 
     /* respond directly during reconnect */
@@ -398,7 +398,7 @@ static packet_action_t handle_char_list(struct connection *c,
         if (verbose >= 2)
             printf("sending PlayCharacter\n");
 
-        uo_client_send(c->client, &p2, sizeof(p2));
+        uo_client_send(c->client.client, &p2, sizeof(p2));
 
         return PA_DROP;
     }
@@ -500,7 +500,7 @@ static packet_action_t handle_relay(struct connection *c,
     memcpy(login.username, c->username, sizeof(login.username));
     memcpy(login.password, c->password, sizeof(login.password));
 
-    uo_client_send(c->client, &login, sizeof(login));
+    uo_client_send(c->client.client, &login, sizeof(login));
 
     return PA_DROP;
 }
@@ -521,7 +521,7 @@ static packet_action_t handle_server_list(struct connection *c,
         return PA_DISCONNECT;
 
     if (c->instance->config->antispy)
-        send_antispy(c->client);
+        send_antispy(c->client.client);
 
     if (c->reconnecting) {
         struct uo_packet_play_server p2 = {
@@ -529,7 +529,7 @@ static packet_action_t handle_server_list(struct connection *c,
             .index = 0, /* XXX */
         };
 
-        uo_client_send(c->client, &p2, sizeof(p2));
+        uo_client_send(c->client.client, &p2, sizeof(p2));
 
         return PA_DROP;
     }
@@ -574,7 +574,7 @@ static packet_action_t handle_supported_features(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->supported_features_flags = p->flags;
+    c->client.supported_features_flags = p->flags;
 
     return PA_ACCEPT;
 }
@@ -585,7 +585,7 @@ static packet_action_t handle_season(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    c->packet_season = *p;
+    c->client.world.packet_season = *p;
 
     return PA_ACCEPT;
 }
@@ -596,7 +596,7 @@ handle_client_version(struct connection *c,
                       size_t length __attr_unused) {
     if (c->reconnecting && c->client_version != NULL) {
         /* during reconnect, we try to transmit the cached version number */
-        uo_client_send(c->client, c->client_version,
+        uo_client_send(c->client.client, c->client_version,
                        get_packet_length(c->client_version, 0x8000));
         return PA_DROP;
     }
@@ -617,14 +617,14 @@ static packet_action_t handle_extended(struct connection *c,
 
     switch (ntohs(p->extended_cmd)) {
     case 0x0008:
-        if (length <= sizeof(c->packet_map_change))
-            memcpy(&c->packet_map_change, data, length);
+        if (length <= sizeof(c->client.world.packet_map_change))
+            memcpy(&c->client.world.packet_map_change, data, length);
 
         break;
 
     case 0x0018:
-        if (length <= sizeof(c->packet_map_patches))
-            memcpy(&c->packet_map_patches, data, length);
+        if (length <= sizeof(c->client.world.packet_map_patches))
+            memcpy(&c->client.world.packet_map_patches, data, length);
         break;
     }
 

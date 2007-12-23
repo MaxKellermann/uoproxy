@@ -52,6 +52,43 @@ struct mobile {
     struct uo_packet_mobile_status *packet_mobile_status;
 };
 
+struct world {
+    /* a lot of packets needed to attach a client*/
+
+    struct uo_packet_start packet_start;
+    struct uo_packet_map_change packet_map_change;
+    struct uo_packet_map_patches packet_map_patches;
+    struct uo_packet_season packet_season;
+    struct uo_packet_mobile_update packet_mobile_update;
+    struct uo_packet_global_light_level packet_global_light_level;
+    struct uo_packet_personal_light_level packet_personal_light_level;
+    struct uo_packet_war_mode packet_war_mode;
+    struct uo_packet_target packet_target;
+
+    /* mobiles in the world */
+
+    struct list_head mobiles;
+
+    /* items in the world */
+
+    struct list_head items;
+    unsigned item_attach_sequence;
+};
+
+struct stateful_client {
+    struct uo_client *client;
+    struct event ping_event;
+
+    struct uo_fragment_character_info characters[MAX_CHARACTERS];
+    unsigned num_characters;
+
+    u_int16_t supported_features_flags;
+
+    unsigned char ping_request, ping_ack;
+
+    struct world world;
+};
+
 struct linked_server {
     struct list_head siblings;
 
@@ -88,29 +125,16 @@ struct connection {
     int autoreconnect, reconnecting;
     struct event reconnect_event;
 
+    /* client stuff (= connection to server) */
+
+    struct stateful_client client;
+
     /* state */
     char username[30], password[30];
 
     unsigned server_index;
 
-    struct uo_fragment_character_info characters[MAX_CHARACTERS];
-    unsigned num_characters, character_index;
-
-    u_int16_t supported_features_flags;
-    struct uo_packet_start packet_start;
-    struct uo_packet_map_change packet_map_change;
-    struct uo_packet_map_patches packet_map_patches;
-    struct uo_packet_season packet_season;
-    struct uo_packet_mobile_update packet_mobile_update;
-    struct uo_packet_global_light_level packet_global_light_level;
-    struct uo_packet_personal_light_level packet_personal_light_level;
-    struct uo_packet_war_mode packet_war_mode;
-    struct uo_packet_target packet_target;
-    unsigned char ping_request, ping_ack;
-    struct list_head items;
-    unsigned item_attach_sequence;
-
-    struct list_head mobiles;
+    unsigned character_index;
 
     struct connection_walk_state walk;
 
@@ -119,8 +143,6 @@ struct connection {
     struct uo_packet_client_version *client_version;
 
     /* sub-objects */
-    struct uo_client *client;
-    struct event ping_event;
 
     struct list_head servers;
     struct linked_server *current_server;

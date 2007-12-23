@@ -28,7 +28,7 @@
 static void change_character(struct connection *c,
                              struct linked_server *server,
                              unsigned idx) {
-    if (idx >= MAX_CHARACTERS || c->characters[idx].name[0] == 0) {
+    if (idx >= MAX_CHARACTERS || c->client.characters[idx].name[0] == 0) {
         uo_server_speak_console(server->server,
                                 "uoproxy: no character in slot");
         return;
@@ -51,7 +51,7 @@ void connection_handle_command(struct connection *c,
         uo_server_speak_console(server->server,
                                 "uoproxy commands: % %reconnect %char %drop");
     } else if (strcmp(command, "reconnect") == 0) {
-        if (c->client == NULL) {
+        if (c->client.client == NULL) {
             uo_server_speak_console(server->server,
                                     "uoproxy: not connected");
         } else {
@@ -63,17 +63,17 @@ void connection_handle_command(struct connection *c,
         char msg[1024] = "uoproxy:";
         unsigned i;
 
-        if (c->num_characters == 0) {
+        if (c->client.num_characters == 0) {
             uo_server_speak_console(server->server,
                                     "uoproxy: no characters in list");
             return;
         }
 
         for (i = 0; i < MAX_CHARACTERS; i++) {
-            if (c->characters[i].name[0]) {
+            if (c->client.characters[i].name[0]) {
                 sprintf(msg + strlen(msg), " %u=", i);
-                strncat(msg, c->characters[i].name,
-                        sizeof(c->characters[i].name));
+                strncat(msg, c->client.characters[i].name,
+                        sizeof(c->client.characters[i].name));
             }
         }
 
@@ -86,20 +86,20 @@ void connection_handle_command(struct connection *c,
                                     "uoproxy: invalid %char syntax");
         }
     } else if (strcmp(command, "drop") == 0) {
-        if (c->client == NULL) {
+        if (c->client.client == NULL) {
             uo_server_speak_console(server->server,
                                     "uoproxy: not connected");
         } else {
             struct uo_packet_drop p = {
                 .cmd = PCK_Drop,
                 .serial = 0,
-                .x = c->packet_start.x,
-                .y = c->packet_start.y,
-                .z = ntohs(c->packet_start.x),
+                .x = c->client.world.packet_start.x,
+                .y = c->client.world.packet_start.y,
+                .z = ntohs(c->client.world.packet_start.x),
                 .dest_serial = 0,
             };
 
-            uo_client_send(c->client, &p, sizeof(p));
+            uo_client_send(c->client.client, &p, sizeof(p));
         }
     } else {
         uo_server_speak_console(server->server,

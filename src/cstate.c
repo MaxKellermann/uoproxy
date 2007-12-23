@@ -31,7 +31,7 @@ struct item *connection_find_item(struct connection *c,
                                   u_int32_t serial) {
     struct item *item;
 
-    list_for_each_entry(item, &c->items, siblings) {
+    list_for_each_entry(item, &c->client.world.items, siblings) {
         if (item->serial == serial)
             return item;
     }
@@ -52,7 +52,7 @@ static struct item *make_item(struct connection *c, u_int32_t serial) {
 
     i->serial = serial;
 
-    list_add(&i->siblings, &c->items);
+    list_add(&i->siblings, &c->client.world.items);
 
     return i;
 }
@@ -157,7 +157,7 @@ static void remove_item_tree(struct connection *c,
     INIT_LIST_HEAD(&temp);
 
     /* move all direct children to the temporary list */
-    list_for_each_entry_safe(i, n, &c->items, siblings) {
+    list_for_each_entry_safe(i, n, &c->client.world.items, siblings) {
         if (i->packet_container_update.item.parent_serial == parent_serial ||
             i->packet_equip.parent_serial == parent_serial) {
             /* move to temp list */
@@ -194,7 +194,7 @@ void connection_delete_items(struct connection *c) {
     struct item *i, *n;
     struct linked_server *ls;
 
-    list_for_each_entry_safe(i, n, &c->items, siblings) {
+    list_for_each_entry_safe(i, n, &c->client.world.items, siblings) {
         p.serial = i->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -212,7 +212,7 @@ find_mobile(struct connection *c, u_int32_t serial)
 {
     struct mobile *mobile;
 
-    list_for_each_entry(mobile, &c->mobiles, siblings) {
+    list_for_each_entry(mobile, &c->client.world.mobiles, siblings) {
         if (mobile->serial == serial)
             return mobile;
     }
@@ -236,7 +236,7 @@ static struct mobile *add_mobile(struct connection *c,
 
     m->serial = serial;
 
-    list_add(&m->siblings, &c->mobiles);
+    list_add(&m->siblings, &c->client.world.mobiles);
 
     return m;
 }
@@ -297,20 +297,20 @@ void connection_mobile_incoming(struct connection *c,
 
     assert(p->cmd == PCK_MobileIncoming);
 
-    if (p->serial == c->packet_start.serial) {
+    if (p->serial == c->client.world.packet_start.serial) {
         /* update player's mobile */
-        c->packet_start.body = p->body;
-        c->packet_start.x = p->x;
-        c->packet_start.y = p->y;
-        c->packet_start.z = htons(p->z);
-        c->packet_start.direction = p->direction;
+        c->client.world.packet_start.body = p->body;
+        c->client.world.packet_start.x = p->x;
+        c->client.world.packet_start.y = p->y;
+        c->client.world.packet_start.z = htons(p->z);
+        c->client.world.packet_start.direction = p->direction;
 
-        c->packet_mobile_update.body = p->body;
-        c->packet_mobile_update.hue = p->hue;
-        c->packet_mobile_update.x = p->x;
-        c->packet_mobile_update.y = p->y;
-        c->packet_mobile_update.direction = p->direction;
-        c->packet_mobile_update.z = p->z;
+        c->client.world.packet_mobile_update.body = p->body;
+        c->client.world.packet_mobile_update.hue = p->hue;
+        c->client.world.packet_mobile_update.x = p->x;
+        c->client.world.packet_mobile_update.y = p->y;
+        c->client.world.packet_mobile_update.direction = p->direction;
+        c->client.world.packet_mobile_update.z = p->z;
     }
 
     m = add_mobile(c, p->serial);
@@ -344,15 +344,15 @@ void connection_mobile_update(struct connection *c,
                               const struct uo_packet_mobile_update *p) {
     struct mobile *m;
 
-    if (c->packet_start.serial == p->serial) {
+    if (c->client.world.packet_start.serial == p->serial) {
         /* update player's mobile */
-        c->packet_mobile_update = *p;
+        c->client.world.packet_mobile_update = *p;
 
-        c->packet_start.body = p->body;
-        c->packet_start.x = p->x;
-        c->packet_start.y = p->y;
-        c->packet_start.z = htons(p->z);
-        c->packet_start.direction = p->direction;
+        c->client.world.packet_start.body = p->body;
+        c->client.world.packet_start.x = p->x;
+        c->client.world.packet_start.y = p->y;
+        c->client.world.packet_start.z = htons(p->z);
+        c->client.world.packet_start.direction = p->direction;
     }
 
     m = find_mobile(c, p->serial);
@@ -377,20 +377,20 @@ void connection_mobile_moving(struct connection *c,
                               const struct uo_packet_mobile_moving *p) {
     struct mobile *m;
 
-    if (c->packet_start.serial == p->serial) {
+    if (c->client.world.packet_start.serial == p->serial) {
         /* update player's mobile */
-        c->packet_start.body = p->body;
-        c->packet_start.x = p->x;
-        c->packet_start.y = p->y;
-        c->packet_start.z = htons(p->z);
-        c->packet_start.direction = p->direction;
+        c->client.world.packet_start.body = p->body;
+        c->client.world.packet_start.x = p->x;
+        c->client.world.packet_start.y = p->y;
+        c->client.world.packet_start.z = htons(p->z);
+        c->client.world.packet_start.direction = p->direction;
 
-        c->packet_mobile_update.body = p->body;
-        c->packet_mobile_update.hue = p->hue;
-        c->packet_mobile_update.x = p->x;
-        c->packet_mobile_update.y = p->y;
-        c->packet_mobile_update.direction = p->direction;
-        c->packet_mobile_update.z = p->z;
+        c->client.world.packet_mobile_update.body = p->body;
+        c->client.world.packet_mobile_update.hue = p->hue;
+        c->client.world.packet_mobile_update.x = p->x;
+        c->client.world.packet_mobile_update.y = p->y;
+        c->client.world.packet_mobile_update.direction = p->direction;
+        c->client.world.packet_mobile_update.z = p->z;
     }
 
     m = find_mobile(c, p->serial);
@@ -415,13 +415,13 @@ void connection_mobile_moving(struct connection *c,
 
 void connection_mobile_zone(struct connection *c,
                             const struct uo_packet_zone_change *p) {
-    c->packet_start.x = p->x;
-    c->packet_start.y = p->y;
-    c->packet_start.z = p->z;
+    c->client.world.packet_start.x = p->x;
+    c->client.world.packet_start.y = p->y;
+    c->client.world.packet_start.z = p->z;
 
-    c->packet_mobile_update.x = p->x;
-    c->packet_mobile_update.y = p->y;
-    c->packet_mobile_update.z = ntohs(p->z);
+    c->client.world.packet_mobile_update.x = p->x;
+    c->client.world.packet_mobile_update.y = p->y;
+    c->client.world.packet_mobile_update.z = ntohs(p->z);
 }
 
 static void free_mobile(struct mobile *m) {
@@ -459,7 +459,7 @@ void connection_delete_mobiles(struct connection *c) {
     struct mobile *m, *n;
     struct linked_server *ls;
 
-    list_for_each_entry_safe(m, n, &c->mobiles, siblings) {
+    list_for_each_entry_safe(m, n, &c->client.world.mobiles, siblings) {
         p.serial = m->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -485,15 +485,15 @@ void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
                        u_int8_t direction, u_int8_t notoriety) {
     struct mobile *m;
 
-    c->packet_start.x = x;
-    c->packet_start.y = y;
-    c->packet_start.direction = direction;
+    c->client.world.packet_start.x = x;
+    c->client.world.packet_start.y = y;
+    c->client.world.packet_start.direction = direction;
 
-    c->packet_mobile_update.x = x;
-    c->packet_mobile_update.y = y;
-    c->packet_mobile_update.direction = direction;
+    c->client.world.packet_mobile_update.x = x;
+    c->client.world.packet_mobile_update.y = y;
+    c->client.world.packet_mobile_update.direction = direction;
 
-    m = find_mobile(c, c->packet_start.serial);
+    m = find_mobile(c, c->client.world.packet_start.serial);
     if (m != NULL && m->packet_mobile_incoming != NULL) {
         m->packet_mobile_incoming->x = x;
         m->packet_mobile_incoming->y = y;
