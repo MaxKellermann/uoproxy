@@ -72,13 +72,8 @@ connection_free(struct connection *c)
 
     connection_check(c);
 
-    list_for_each_entry_safe(ls, n, &c->servers, siblings) {
-        list_del(&ls->siblings);
-
-        if (ls->server != NULL)
-            uo_server_dispose(ls->server);
-        free(ls);
-    }
+    list_for_each_entry_safe(ls, n, &c->servers, siblings)
+        connection_server_dispose(c, ls);
 
     connection_disconnect(c);
 
