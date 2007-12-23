@@ -249,6 +249,13 @@ int uo_client_create(const struct addrinfo *server_address,
         return save_errno;
     }
 
+    ret = socket_set_nodelay(sockfd, 1);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(sockfd);
+        return save_errno;
+    }
+
     client = (struct uo_client*)calloc(1, sizeof(*client));
     if (client == NULL) {
         close(sockfd);

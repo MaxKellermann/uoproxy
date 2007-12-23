@@ -200,6 +200,10 @@ int uo_server_create(int sockfd,
     if (ret < 0)
         return errno;
 
+    ret = socket_set_nodelay(sockfd, 1);
+    if (ret < 0)
+        return errno;
+
     server = (struct uo_server*)calloc(1, sizeof(*server));
     if (server == NULL)
         return ENOMEM;
