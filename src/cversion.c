@@ -27,8 +27,8 @@
 
 static const char *protocol_names[PROTOCOL_COUNT] = {
     [PROTOCOL_UNKNOWN] = "unknown",
-    [PROTOCOL_5] = "version 5 or older",
-    [PROTOCOL_6] = "version 6",
+    [PROTOCOL_5] = "5 or older",
+    [PROTOCOL_6] = "6.0.1.7",
 };
 
 const char *
@@ -80,7 +80,7 @@ client_version_compare(const char *a, const char *b)
 static enum protocol_version
 determine_protocol_version(const char *version)
 {
-    if (client_version_compare(version, "6") >= 0)
+    if (client_version_compare(version, "6.0.1.7") >= 0)
         return PROTOCOL_6;
     else if (client_version_compare(version, "1") >= 0)
         return PROTOCOL_5;
