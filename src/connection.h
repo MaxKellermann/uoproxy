@@ -192,25 +192,31 @@ connection_server_dispose(struct connection *c, struct linked_server *ls);
 
 /* state */
 
-struct item *connection_find_item(struct connection *c,
-                                  u_int32_t serial);
+struct item *
+world_find_item(struct world *world, u_int32_t serial);
 
-void connection_world_item(struct connection *c,
-                           const struct uo_packet_world_item *p);
+void
+world_world_item(struct world *world,
+                 const struct uo_packet_world_item *p);
 
-void connection_equip(struct connection *c,
-                      const struct uo_packet_equip *p);
+void
+world_equip(struct world *world,
+            const struct uo_packet_equip *p);
 
-void connection_container_open(struct connection *c,
-                               const struct uo_packet_container_open *p);
+void
+world_container_open(struct world *world,
+                     const struct uo_packet_container_open *p);
 
-void connection_container_update(struct connection *c,
-                                 const struct uo_packet_container_update *p);
+void
+world_container_update(struct world *world,
+                       const struct uo_packet_container_update *p);
 
-void connection_container_content(struct connection *c,
-                                  const struct uo_packet_container_content *p);
+void
+world_container_content(struct world *world,
+                        const struct uo_packet_container_content *p);
 
-void connection_remove_item(struct connection *c, u_int32_t serial);
+void
+world_remove_item(struct world *world, u_int32_t serial);
 
 void connection_delete_items(struct connection *c);
 
@@ -229,11 +235,13 @@ void connection_mobile_moving(struct connection *c,
 void connection_mobile_zone(struct connection *c,
                             const struct uo_packet_zone_change *p);
 
-void connection_remove_mobile(struct connection *c, u_int32_t serial);
+void
+world_remove_mobile(struct world *world, u_int32_t serial);
 
 void connection_delete_mobiles(struct connection *c);
 
-void connection_remove_serial(struct connection *c, u_int32_t serial);
+void
+world_remove_serial(struct world *world, u_int32_t serial);
 
 void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
                        u_int8_t direction, u_int8_t notoriety);

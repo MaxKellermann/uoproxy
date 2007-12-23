@@ -27,11 +27,13 @@
 #include "connection.h"
 #include "server.h"
 
-struct item *connection_find_item(struct connection *c,
-                                  u_int32_t serial) {
+struct item *
+world_find_item(struct world *world,
+                u_int32_t serial)
+{
     struct item *item;
 
-    list_for_each_entry(item, &c->client.world.items, siblings) {
+    list_for_each_entry(item, &world->items, siblings) {
         if (item->serial == serial)
             return item;
     }
@@ -39,10 +41,12 @@ struct item *connection_find_item(struct connection *c,
     return NULL;
 }
 
-static struct item *make_item(struct connection *c, u_int32_t serial) {
+static struct item *
+make_item(struct world *world, u_int32_t serial)
+{
     struct item *i;
 
-    i = connection_find_item(c, serial);
+    i = world_find_item(world, serial);
     if (i != NULL)
         return i;
 
@@ -52,19 +56,21 @@ static struct item *make_item(struct connection *c, u_int32_t serial) {
 
     i->serial = serial;
 
-    list_add(&i->siblings, &c->client.world.items);
+    list_add(&i->siblings, &world->items);
 
     return i;
 }
 
-void connection_world_item(struct connection *c,
-                           const struct uo_packet_world_item *p) {
+void
+world_world_item(struct world *world,
+                 const struct uo_packet_world_item *p)
+{
     struct item *i;
 
     assert(p->cmd == PCK_WorldItem);
     assert(ntohs(p->length) <= sizeof(*p));
 
-    i = make_item(c, p->serial & htonl(0x7fffffff));
+    i = make_item(world, p->serial & htonl(0x7fffffff));
     if (i == NULL) {
         fprintf(stderr, "out of memory\n");
         return;
@@ -73,13 +79,15 @@ void connection_world_item(struct connection *c,
     i->packet_world_item = *p;
 }
 
-void connection_equip(struct connection *c,
-                      const struct uo_packet_equip *p) {
+void
+world_equip(struct world *world,
+            const struct uo_packet_equip *p)
+{
     struct item *i;
 
     assert(p->cmd == PCK_Equip);
 
-    i = make_item(c, p->serial);
+    i = make_item(world, p->serial);
     if (i == NULL) {
         fprintf(stderr, "out of memory\n");
         return;
@@ -88,13 +96,15 @@ void connection_equip(struct connection *c,
     i->packet_equip = *p;
 }
 
-void connection_container_open(struct connection *c,
-                               const struct uo_packet_container_open *p) {
+void
+world_container_open(struct world *world,
+                     const struct uo_packet_container_open *p)
+{
     struct item *i;
 
     assert(p->cmd == PCK_ContainerOpen);
 
-    i = make_item(c, p->serial);
+    i = make_item(world, p->serial);
     if (i == NULL) {
         fprintf(stderr, "out of memory\n");
         return;
@@ -103,13 +113,15 @@ void connection_container_open(struct connection *c,
     i->packet_container_open = *p;
 }
 
-void connection_container_update(struct connection *c,
-                                 const struct uo_packet_container_update *p) {
+void
+world_container_update(struct world *world,
+                       const struct uo_packet_container_update *p)
+{
     struct item *i;
 
     assert(p->cmd == PCK_ContainerUpdate);
 
-    i = make_item(c, p->item.serial);
+    i = make_item(world, p->item.serial);
     if (i == NULL) {
         fprintf(stderr, "out of memory\n");
         return;
@@ -118,15 +130,17 @@ void connection_container_update(struct connection *c,
     i->packet_container_update = *p;
 }
 
-void connection_container_content(struct connection *c,
-                                  const struct uo_packet_container_content *p) {
+void
+world_container_content(struct world *world,
+                        const struct uo_packet_container_content *p)
+{
     struct item *i;
     unsigned t;
 
     assert(p->cmd == PCK_ContainerContent);
 
     for (t = 0; t < ntohs(p->num); t++) {
-        i = make_item(c, p->items[t].serial);
+        i = make_item(world, p->items[t].serial);
         if (i == NULL) {
             fprintf(stderr, "out of memory\n");
             return;
@@ -149,15 +163,15 @@ static void free_item(struct item *i) {
 }
 
 /** deep-delete all items contained in the specified serial */
-static void remove_item_tree(struct connection *c,
-                             u_int32_t parent_serial) {
+static void
+remove_item_tree(struct world *world, u_int32_t parent_serial) {
     struct item *i, *n;
     struct list_head temp;
 
     INIT_LIST_HEAD(&temp);
 
     /* move all direct children to the temporary list */
-    list_for_each_entry_safe(i, n, &c->client.world.items, siblings) {
+    list_for_each_entry_safe(i, n, &world->items, siblings) {
         if (i->packet_container_update.item.parent_serial == parent_serial ||
             i->packet_equip.parent_serial == parent_serial) {
             /* move to temp list */
@@ -168,25 +182,27 @@ static void remove_item_tree(struct connection *c,
 
     /* delete these, and recursively delete their children */
     list_for_each_entry_safe(i, n, &temp, siblings) {
-        remove_item_tree(c, i->serial);
+        remove_item_tree(world, i->serial);
 
         list_del(&i->siblings);
         free_item(i);
     }
 }
 
-void connection_remove_item(struct connection *c, u_int32_t serial) {
+void
+world_remove_item(struct world *world, u_int32_t serial)
+{
     struct item *i;
 
     /* remove this entity */
-    i = connection_find_item(c, serial);
+    i = world_find_item(world, serial);
     if (i != NULL) {
         list_del(&i->siblings);
         free_item(i);
     }
 
     /* remove equipped items */
-    remove_item_tree(c, serial);
+    remove_item_tree(world, serial);
 }
 
 void connection_delete_items(struct connection *c) {
@@ -208,11 +224,11 @@ void connection_delete_items(struct connection *c) {
 }
 
 static struct mobile *
-find_mobile(struct connection *c, u_int32_t serial)
+find_mobile(struct world *world, u_int32_t serial)
 {
     struct mobile *mobile;
 
-    list_for_each_entry(mobile, &c->client.world.mobiles, siblings) {
+    list_for_each_entry(mobile, &world->mobiles, siblings) {
         if (mobile->serial == serial)
             return mobile;
     }
@@ -224,7 +240,7 @@ static struct mobile *add_mobile(struct connection *c,
                                  u_int32_t serial) {
     struct mobile *m;
 
-    m = find_mobile(c, serial);
+    m = find_mobile(&c->client.world, serial);
     if (m != NULL)
         return m;
 
@@ -287,7 +303,7 @@ static void read_equipped(struct connection *c,
             item = (const struct uo_packet_fragment_mobile_item*)i;
         }
 
-        connection_equip(c, &equip);
+        world_equip(&c->client.world, &equip);
     }
 }
 
@@ -355,7 +371,7 @@ void connection_mobile_update(struct connection *c,
         c->client.world.packet_start.direction = p->direction;
     }
 
-    m = find_mobile(c, p->serial);
+    m = find_mobile(&c->client.world, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
                 ntohl(p->serial));
@@ -393,7 +409,7 @@ void connection_mobile_moving(struct connection *c,
         c->client.world.packet_mobile_update.z = p->z;
     }
 
-    m = find_mobile(c, p->serial);
+    m = find_mobile(&c->client.world, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_moving: no such mobile 0x%x\n",
                 ntohl(p->serial));
@@ -440,18 +456,19 @@ static void free_mobile(struct mobile *m) {
     free(m);
 }
 
-void connection_remove_mobile(struct connection *c, u_int32_t serial) {
+void
+world_remove_mobile(struct world *world, u_int32_t serial) {
     struct mobile *m;
 
     /* remove this entity */
-    m = find_mobile(c, serial);
+    m = find_mobile(world, serial);
     if (m != NULL) {
         list_del(&m->siblings);
         free_mobile(m);
     }
 
     /* remove equipped items */
-    remove_item_tree(c, serial);
+    remove_item_tree(world, serial);
 }
 
 void connection_delete_mobiles(struct connection *c) {
@@ -472,13 +489,14 @@ void connection_delete_mobiles(struct connection *c) {
     }
 }
 
-void connection_remove_serial(struct connection *c, u_int32_t serial) {
+void
+world_remove_serial(struct world *world, u_int32_t serial) {
     u_int32_t host_serial = ntohl(serial);
 
     if (host_serial < 0x40000000)
-        connection_remove_mobile(c, serial);
+        world_remove_mobile(world, serial);
     else if (host_serial < 0x80000000)
-        connection_remove_item(c, serial);
+        world_remove_item(world, serial);
 }
 
 void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
@@ -493,7 +511,7 @@ void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
     c->client.world.packet_mobile_update.y = y;
     c->client.world.packet_mobile_update.direction = direction;
 
-    m = find_mobile(c, c->client.world.packet_start.serial);
+    m = find_mobile(&c->client.world, c->client.world.packet_start.serial);
     if (m != NULL && m->packet_mobile_incoming != NULL) {
         m->packet_mobile_incoming->x = x;
         m->packet_mobile_incoming->y = y;

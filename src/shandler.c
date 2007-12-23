@@ -109,7 +109,7 @@ static packet_action_t handle_world_item(struct connection *c,
 
     assert(length <= sizeof(*p));
 
-    connection_world_item(c, p);
+    world_world_item(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -148,7 +148,7 @@ static packet_action_t handle_delete(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_remove_serial(c, p->serial);
+    world_remove_serial(&c->client.world, p->serial);
 
     return PA_ACCEPT;
 }
@@ -199,7 +199,7 @@ static packet_action_t handle_container_open(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_container_open(c, p);
+    world_container_open(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -210,7 +210,7 @@ static packet_action_t handle_container_update(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_container_update(c, p);
+    world_container_update(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -221,7 +221,7 @@ static packet_action_t handle_equip(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_equip(c, p);
+    world_equip(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -234,7 +234,7 @@ static packet_action_t handle_container_content(struct connection *c,
         length != sizeof(*p) - sizeof(p->items) + ntohs(p->num) * sizeof(p->items[0]))
         return PA_DISCONNECT;
 
-    connection_container_content(c, p);
+    world_container_content(&c->client.world, p);
 
     return PA_ACCEPT;
 }
