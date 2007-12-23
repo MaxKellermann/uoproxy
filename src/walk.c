@@ -130,7 +130,7 @@ connection_walk_request(struct linked_server *server,
 #endif
 
     walk = *p;
-    walk.seq = i->seq = state->seq_next++;
+    walk.seq = i->seq = (uint8_t)state->seq_next++;
     uo_client_send(server->connection->client.client, &walk, sizeof(walk));
 
     if (state->seq_next == 0)
