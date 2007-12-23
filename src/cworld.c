@@ -21,7 +21,9 @@
 #include "connection.h"
 #include "server.h"
 
-void connection_delete_items(struct connection *c) {
+static void
+connection_delete_items(struct connection *c)
+{
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     struct item *i, *n;
     struct linked_server *ls;
@@ -38,7 +40,9 @@ void connection_delete_items(struct connection *c) {
     }
 }
 
-void connection_delete_mobiles(struct connection *c) {
+static void
+connection_delete_mobiles(struct connection *c)
+{
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     struct mobile *m, *n;
     struct linked_server *ls;
@@ -53,4 +57,11 @@ void connection_delete_mobiles(struct connection *c) {
 
         world_remove_mobile(m);
     }
+}
+
+void
+connection_world_clear(struct connection *c)
+{
+    connection_delete_items(c);
+    connection_delete_mobiles(c);
 }

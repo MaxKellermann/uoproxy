@@ -37,8 +37,7 @@ void connection_disconnect(struct connection *c) {
         c->client.reconnecting = 0;
     }
 
-    connection_delete_items(c);
-    connection_delete_mobiles(c);
+    connection_world_clear(c);
 
     event_del(&c->client.ping_event);
 

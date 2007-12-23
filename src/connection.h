@@ -146,9 +146,8 @@ connection_server_dispose(struct connection *c, struct linked_server *ls);
 
 /* world */
 
-void connection_delete_items(struct connection *c);
-
-void connection_delete_mobiles(struct connection *c);
+void
+connection_world_clear(struct connection *c);
 
 
 /* walk */
