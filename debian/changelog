@@ -3,6 +3,8 @@ uoproxy (0.1.4) unstable; urgency=low
   * fixed struct uo_packet_create_character
   * show which packet caused connection abort
   * only disconnect the faulty client on protocol error
+  * send cached client version during reconnect; this fixed game login on
+    servers supporting client version 6
   * use libevent
 
  --

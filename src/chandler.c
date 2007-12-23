@@ -515,6 +515,10 @@ static packet_action_t handle_client_version(struct connection *c,
         free(p);
 
         return PA_DROP;
+    } else if (c->client_version == NULL) {
+        c->client_version = malloc(length);
+        if (c->client_version != NULL)
+            memcpy(c->client_version, data, length);
     }
 
     return PA_ACCEPT;
@@ -596,7 +600,7 @@ struct packet_binding client_packet_bindings[] = {
     { .cmd = PCK_GumpResponse,
       .handler = handle_gump_response,
     },
-    { .cmd = PCK_ClientVersion,
+    { .cmd = PCK_ClientVersion, /* 0xbd */
       .handler = handle_client_version,
     },
     { .cmd = PCK_Extended,

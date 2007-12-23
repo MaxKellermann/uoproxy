@@ -114,6 +114,10 @@ struct connection {
 
     struct connection_walk_state walk;
 
+    /* client version */
+
+    struct uo_packet_client_version *client_version;
+
     /* sub-objects */
     struct uo_client *client;
     struct event ping_event;

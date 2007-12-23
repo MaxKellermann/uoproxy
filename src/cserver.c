@@ -47,7 +47,9 @@ server_packet(const void *data, size_t length, void *ctx)
 
     switch (action) {
     case PA_ACCEPT:
-        if (c->client != NULL && !c->reconnecting)
+        if (c->client != NULL &&
+            (!c->reconnecting ||
+             *(const unsigned char*)data == PCK_ClientVersion))
             uo_client_send(c->client, data, length);
         break;
 

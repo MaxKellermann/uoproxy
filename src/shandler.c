@@ -20,6 +20,7 @@
 
 #include "log.h"
 #include "version.h"
+#include "compiler.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -589,6 +590,20 @@ static packet_action_t handle_season(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t
+handle_client_version(struct connection *c,
+                      const void *data __attr_unused,
+                      size_t length __attr_unused) {
+    if (c->reconnecting && c->client_version != NULL) {
+        /* during reconnect, we try to transmit the cached version number */
+        uo_client_send(c->client, c->client_version,
+                       get_packet_length(c->client_version, 0x8000));
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 static packet_action_t handle_extended(struct connection *c,
                                        const void *data, size_t length) {
     const struct uo_packet_extended *p = data;
@@ -709,6 +724,9 @@ struct packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_Season, /* 0xbc */
       .handler = handle_season,
+    },
+    { .cmd = PCK_ClientVersion, /* 0xbd */
+      .handler = handle_client_version,
     },
     { .cmd = PCK_Extended, /* 0xbf */
       .handler = handle_extended,
