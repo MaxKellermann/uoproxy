@@ -46,8 +46,6 @@ int uo_server_create(int sockfd,
                      struct uo_server **serverp);
 void uo_server_dispose(struct uo_server *server);
 
-int uo_server_fileno(const struct uo_server *server);
-
 u_int32_t uo_server_seed(const struct uo_server *server);
 
 void uo_server_send(struct uo_server *server,

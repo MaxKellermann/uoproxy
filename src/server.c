@@ -180,10 +180,6 @@ void uo_server_dispose(struct uo_server *server) {
     free(server);
 }
 
-int uo_server_fileno(const struct uo_server *server) {
-    return server->sock->fd;
-}
-
 u_int32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
 }

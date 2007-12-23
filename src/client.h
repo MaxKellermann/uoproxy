@@ -48,8 +48,6 @@ int uo_client_create(const struct addrinfo *server_address,
                      struct uo_client **clientp);
 void uo_client_dispose(struct uo_client *client);
 
-int uo_client_fileno(const struct uo_client *client);
-
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length);
 

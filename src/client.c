@@ -215,10 +215,6 @@ void uo_client_dispose(struct uo_client *client) {
     free(client);
 }
 
-int uo_client_fileno(const struct uo_client *client) {
-    return client->sock->fd;
-}
-
 static const unsigned char *
 peek_from_buffer(struct uo_client *client,
                  fifo_buffer_t buffer, size_t *lengthp) {
