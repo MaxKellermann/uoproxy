@@ -204,24 +204,6 @@ world_remove_item(struct world *world, uint32_t serial)
     remove_item_tree(world, serial);
 }
 
-void connection_delete_items(struct connection *c) {
-    struct uo_packet_delete p = { .cmd = PCK_Delete };
-    struct item *i, *n;
-    struct linked_server *ls;
-
-    list_for_each_entry_safe(i, n, &c->client.world.items, siblings) {
-        p.serial = i->serial;
-
-        list_for_each_entry(ls, &c->servers, siblings) {
-            if (!ls->attaching)
-                uo_server_send(ls->server, &p, sizeof(p));
-        }
-
-        list_del(&i->siblings);
-        free(i);
-    }
-}
-
 static struct mobile *
 find_mobile(struct world *world, uint32_t serial)
 {
@@ -480,24 +462,6 @@ world_remove_mobile(struct world *world, uint32_t serial) {
 
     /* remove equipped items */
     remove_item_tree(world, serial);
-}
-
-void connection_delete_mobiles(struct connection *c) {
-    struct uo_packet_delete p = { .cmd = PCK_Delete };
-    struct mobile *m, *n;
-    struct linked_server *ls;
-
-    list_for_each_entry_safe(m, n, &c->client.world.mobiles, siblings) {
-        p.serial = m->serial;
-
-        list_for_each_entry(ls, &c->servers, siblings) {
-            if (!ls->attaching)
-                uo_server_send(ls->server, &p, sizeof(p));
-        }
-
-        list_del(&m->siblings);
-        free_mobile(m);
-    }
 }
 
 void
