@@ -40,7 +40,7 @@ int connection_new(struct instance *instance,
 
     c = calloc(1, sizeof(*c));
     if (c == NULL)
-        return -ENOMEM;
+        return ENOMEM;
 
     c->instance = instance;
     c->background = instance->config->background;
@@ -52,7 +52,7 @@ int connection_new(struct instance *instance,
 
     ls = connection_server_new(c, server_socket);
     if (ls == NULL) {
-        ret = -errno;
+        ret = errno;
         connection_free(c);
         return ret;
     }

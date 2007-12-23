@@ -479,9 +479,7 @@ static packet_action_t handle_relay(struct connection *c,
     /* connect to new server */
     ret = connection_client_connect(c, server_address, relay.auth_id);
     if (ret != 0) {
-        if (verbose >= 1)
-            fprintf(stderr, "connect to game server failed: %s\n",
-                    strerror(-ret));
+        log_error("connect to game server failed", ret);
         freeaddrinfo(server_address);
         return PA_DROP;
     }

@@ -317,8 +317,7 @@ handle_account_login(struct linked_server *ls,
     if (ret != 0) {
         struct uo_packet_account_login_reject response;
 
-        fprintf(stderr, "uo_client_create() failed: %s\n",
-                strerror(-ret));
+        log_error("connection to login server failed", ret);
 
         response.cmd = PCK_AccountLoginReject;
         response.reason = 0x02; /* blocked */
@@ -414,9 +413,7 @@ handle_play_server(struct linked_server *ls,
         /* connect to new server */
         ret = connection_client_connect(c, config->address, 0xdeadbeef);
         if (ret != 0) {
-            if (verbose >= 1)
-                fprintf(stderr, "connect to game server failed: %s\n",
-                        strerror(-ret));
+            log_error("connect to game server failed", ret);
             return PA_DISCONNECT;
         }
 

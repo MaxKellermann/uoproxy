@@ -150,14 +150,14 @@ int uo_server_create(int sockfd,
 
     server = (struct uo_server*)calloc(1, sizeof(*server));
     if (server == NULL)
-        return -ENOMEM;
+        return ENOMEM;
 
     ret = sock_buff_create(sockfd, 8192, 65536,
                            &server_sock_buff_handler, server,
                            &server->sock);
-    if (ret < 0) {
+    if (ret != 0) {
         free(server);
-        return -ENOMEM;
+        return ret;
     }
 
     server->handler = handler;

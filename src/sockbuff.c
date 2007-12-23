@@ -41,7 +41,7 @@ int sock_buff_create(int fd, size_t input_max,
 
     sb = (struct sock_buff*)malloc(sizeof(*sb));
     if (sb == NULL)
-        return -ENOMEM;
+        return ENOMEM;
 
     sb->fd = fd;
     sb->event.ev_events = 0;
@@ -49,14 +49,14 @@ int sock_buff_create(int fd, size_t input_max,
     ret = fifo_buffer_new(input_max, &sb->input);
     if (ret < 0) {
         free(sb);
-        return -ENOMEM;
+        return ENOMEM;
     }
 
     ret = fifo_buffer_new(output_max, &sb->output);
     if (ret < 0) {
         fifo_buffer_delete(&sb->input);
         free(sb);
-        return -ENOMEM;
+        return ENOMEM;
     }
 
     sb->handler = handler;
@@ -109,7 +109,7 @@ int sock_buff_flush(struct sock_buff *sb) {
     if (nbytes < 0) {
         int save_errno = errno;
         sock_buff_invoke_free(sb, errno);
-        return -save_errno;
+        return save_errno;
     }
 
     fifo_buffer_consume(sb->output, (size_t)nbytes);
@@ -153,7 +153,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
 
     if (event & EV_WRITE) {
         ret = sock_buff_flush(sb);
-        if (ret < 0)
+        if (ret != 0)
             perror("failed to write");
     }
 

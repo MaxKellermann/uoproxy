@@ -45,10 +45,10 @@ log_oom(void)
 static inline void
 log_error(const char *msg, int error)
 {
-    if (error > 0)
+    if (error <= 0)
         log(1, "%s: %d\n", msg, error);
     else
-        log(1, "%s: %s\n", msg, strerror(-error));
+        log(1, "%s: %s\n", msg, strerror(error));
 }
 
 static inline void

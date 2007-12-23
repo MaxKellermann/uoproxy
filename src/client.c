@@ -153,36 +153,36 @@ int uo_client_create(const struct addrinfo *server_address,
 
     sockfd = socket(server_address->ai_family, SOCK_STREAM, 0);
     if (sockfd < 0)
-        return -errno;
+        return errno;
 
     ret = connect(sockfd, server_address->ai_addr,
                   server_address->ai_addrlen);
     if (ret < 0) {
         int save_errno = errno;
         close(sockfd);
-        return -save_errno;
+        return save_errno;
     }
 
     client = (struct uo_client*)calloc(1, sizeof(*client));
     if (client == NULL) {
         close(sockfd);
-        return -ENOMEM;
+        return ENOMEM;
     }
 
     ret = sock_buff_create(sockfd, 8192, 65536,
                            &client_sock_buff_handler, client,
                            &client->sock);
-    if (ret < 0) {
+    if (ret != 0) {
         free(client);
         close(sockfd);
-        return -ENOMEM;
+        return ret;
     }
 
     uo_decompression_init(&client->decompression);
     ret = fifo_buffer_new(65536, &client->decompressed_buffer);
     if (ret < 0) {
         uo_client_dispose(client);
-        return -ENOMEM;
+        return ENOMEM;
     }
 
     client->handler = handler;
