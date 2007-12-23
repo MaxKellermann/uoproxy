@@ -36,12 +36,6 @@
 #include <signal.h>
 #include <grp.h>
 
-#ifdef DISABLE_LOGGING
-#define log(level, ...)
-#else
-#define log(level, ...) do { if (verbose >= (level)) { printf(__VA_ARGS__); fflush(stdout); } } while (0)
-#endif
-
 void instance_daemonize(struct instance *instance) {
     struct config *config = instance->config;
     int ret, parentfd = -1, loggerfd = -1;

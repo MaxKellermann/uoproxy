@@ -18,50 +18,22 @@
  *
  */
 
-#ifndef __UOPROXY_LOG_H
-#define __UOPROXY_LOG_H
+#include "log.h"
 
-#include "compiler.h"
-
-#include <string.h>
+#include <stdio.h>
 #include <errno.h>
+#include <stdarg.h>
 
-extern int verbose;
-
-#ifdef DISABLE_LOGGING
-#define log(level, ...)
-#define log_oom()
-#define log_error(msg, error)
-#define log_errno(msg)
-#else
+int verbose = 1;
 
 void
 do_log(const char *fmt, ...)
-    __attr_printf(1, 2);
-
-#define log(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
-
-static inline void
-log_oom(void)
 {
-    log(1, "Out of memory\n");
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+
+    fflush(stderr);
 }
-
-static inline void
-log_error(const char *msg, int error)
-{
-    if (error <= 0)
-        log(1, "%s: %d\n", msg, error);
-    else
-        log(1, "%s: %s\n", msg, strerror(error));
-}
-
-static inline void
-log_errno(const char *msg)
-{
-    log(1, "%s: %s\n", msg, strerror(errno));
-}
-
-#endif
-
-#endif

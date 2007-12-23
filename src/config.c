@@ -38,8 +38,6 @@
 #include <unistd.h>
 #endif
 
-int verbose = 1;
-
 static void usage(void) {
     puts("usage: uoproxy [options] [server:port]\n\n"
          "valid options:\n"

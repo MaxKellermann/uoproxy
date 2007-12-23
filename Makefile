@@ -31,7 +31,7 @@ WARNING_CFLAGS += -std=gnu99
 endif
 
 SOURCES = src/uoproxy.c src/config.c src/instance.c \
-	src/daemon.c \
+	src/daemon.c src/log.c \
 	src/fifo-buffer.c src/buffered-io.c src/sockbuff.c \
 	src/netutil.c \
 	src/server.c src/client.c \
