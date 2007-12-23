@@ -28,6 +28,16 @@
 #include <string.h>
 #include <errno.h>
 
+struct sock_buff {
+    int fd;
+    struct event event;
+
+    fifo_buffer_t input, output;
+
+    const struct sock_buff_handler *handler;
+    void *handler_ctx;
+};
+
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,
                      const struct sock_buff_handler *handler,
