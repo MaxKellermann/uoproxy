@@ -274,6 +274,8 @@ handle_account_login(struct linked_server *ls,
     memcpy(c->password, p->password, sizeof(c->password));
 
     if (config->num_game_servers > 0) {
+        /* we have a game server list and thus we emulate the login
+           server */
         unsigned i, num_game_servers = config->num_game_servers;
         struct game_server_config *game_servers = config->game_servers;
         struct uo_packet_server_list *p2;
@@ -310,26 +312,29 @@ handle_account_login(struct linked_server *ls,
         free(p2);
 
         return PA_DROP;
+    } else if (config->login_address != NULL) {
+        /* connect to the real login server */
+        ret = connection_client_connect(c, config->login_address,
+                                        uo_server_seed(ls->server));
+        if (ret != 0) {
+            struct uo_packet_account_login_reject response;
+
+            log_error("connection to login server failed", ret);
+
+            response.cmd = PCK_AccountLoginReject;
+            response.reason = 0x02; /* blocked */
+
+            uo_server_send(ls->server, &response,
+                           sizeof(response));
+            return PA_DROP;
+        }
+
+        return PA_ACCEPT;
+    } else {
+        /* should not happen */
+
+        return PA_DISCONNECT;
     }
-
-    assert(config->login_address != NULL);
-
-    ret = connection_client_connect(c, config->login_address,
-                                    uo_server_seed(ls->server));
-    if (ret != 0) {
-        struct uo_packet_account_login_reject response;
-
-        log_error("connection to login server failed", ret);
-
-        response.cmd = PCK_AccountLoginReject;
-        response.reason = 0x02; /* blocked */
-
-        uo_server_send(ls->server, &response,
-                       sizeof(response));
-        return PA_DROP;
-    }
-
-    return PA_ACCEPT;
 }
 
 static packet_action_t
