@@ -22,58 +22,15 @@
 #define __CONNECTION_H
 
 #include "packets.h"
-#include "list.h"
+#include "world.h"
 
 #include <event.h>
 
 #define MAX_CHARACTERS 16
 #define MAX_WALK_QUEUE 4
 
-struct selectx;
 struct instance;
 struct addrinfo;
-
-struct item {
-    struct list_head siblings;
-
-    u_int32_t serial;
-    struct uo_packet_world_item packet_world_item;
-    struct uo_packet_equip packet_equip;
-    struct uo_packet_container_open packet_container_open;
-    struct uo_packet_container_update packet_container_update;
-    unsigned attach_sequence;
-};
-
-struct mobile {
-    struct list_head siblings;
-
-    u_int32_t serial;
-    struct uo_packet_mobile_incoming *packet_mobile_incoming;
-    struct uo_packet_mobile_status *packet_mobile_status;
-};
-
-struct world {
-    /* a lot of packets needed to attach a client*/
-
-    struct uo_packet_start packet_start;
-    struct uo_packet_map_change packet_map_change;
-    struct uo_packet_map_patches packet_map_patches;
-    struct uo_packet_season packet_season;
-    struct uo_packet_mobile_update packet_mobile_update;
-    struct uo_packet_global_light_level packet_global_light_level;
-    struct uo_packet_personal_light_level packet_personal_light_level;
-    struct uo_packet_war_mode packet_war_mode;
-    struct uo_packet_target packet_target;
-
-    /* mobiles in the world */
-
-    struct list_head mobiles;
-
-    /* items in the world */
-
-    struct list_head items;
-    unsigned item_attach_sequence;
-};
 
 struct stateful_client {
     int reconnecting;
@@ -189,65 +146,10 @@ connection_server_dispose(struct connection *c, struct linked_server *ls);
 
 /* world */
 
-struct item *
-world_find_item(struct world *world, u_int32_t serial);
-
-void
-world_world_item(struct world *world,
-                 const struct uo_packet_world_item *p);
-
-void
-world_equip(struct world *world,
-            const struct uo_packet_equip *p);
-
-void
-world_container_open(struct world *world,
-                     const struct uo_packet_container_open *p);
-
-void
-world_container_update(struct world *world,
-                       const struct uo_packet_container_update *p);
-
-void
-world_container_content(struct world *world,
-                        const struct uo_packet_container_content *p);
-
-void
-world_remove_item(struct world *world, u_int32_t serial);
-
 void connection_delete_items(struct connection *c);
-
-void
-world_mobile_incoming(struct world *world,
-                      const struct uo_packet_mobile_incoming *p);
-
-void
-world_mobile_status(struct world *world,
-                    const struct uo_packet_mobile_status *p);
-
-void
-world_mobile_update(struct world *world,
-                    const struct uo_packet_mobile_update *p);
-
-void
-world_mobile_moving(struct world *world,
-                    const struct uo_packet_mobile_moving *p);
-
-void
-world_mobile_zone(struct world *world,
-                  const struct uo_packet_zone_change *p);
-
-void
-world_remove_mobile(struct world *world, u_int32_t serial);
 
 void connection_delete_mobiles(struct connection *c);
 
-void
-world_remove_serial(struct world *world, u_int32_t serial);
-
-void
-world_walked(struct world *world, u_int16_t x, u_int16_t y,
-             u_int8_t direction, u_int8_t notoriety);
 
 /* walk */
 

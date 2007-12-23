@@ -18,13 +18,11 @@
  *
  */
 
-#include "connection.h"
-#include "server.h"
+#include "world.h"
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 struct item *
 world_find_item(struct world *world,

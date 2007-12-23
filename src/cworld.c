@@ -23,8 +23,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
 void connection_delete_items(struct connection *c) {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
