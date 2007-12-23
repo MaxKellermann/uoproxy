@@ -83,6 +83,21 @@ int sock_buff_create(int fd, size_t input_max,
     return 0;
 }
 
+void sock_buff_dispose(struct sock_buff *sb) {
+    assert(sb->fd >= 0);
+
+    if (sb->event.ev_events != 0) {
+        event_del(&sb->event);
+        sb->event.ev_events = 0;
+    }
+
+    close(sb->fd);
+
+    fifo_buffer_free(sb->input);
+    fifo_buffer_free(sb->output);
+    free(sb);
+}
+
 static int
 sock_buff_invoke_data(struct sock_buff *sb)
 {
@@ -122,21 +137,6 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
     sb->handler = NULL;
 
     handler->free(error, sb->handler_ctx);
-}
-
-void sock_buff_dispose(struct sock_buff *sb) {
-    assert(sb->fd >= 0);
-
-    if (sb->event.ev_events != 0) {
-        event_del(&sb->event);
-        sb->event.ev_events = 0;
-    }
-
-    close(sb->fd);
-
-    fifo_buffer_free(sb->input);
-    fifo_buffer_free(sb->output);
-    free(sb);
 }
 
 /**
