@@ -100,10 +100,6 @@ static packet_action_t handle_talk_ascii(struct connection *c,
     const struct uo_packet_talk_ascii *p = data;
     size_t text_length;
 
-    (void)c;
-    (void)data;
-    (void)length;
-
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
