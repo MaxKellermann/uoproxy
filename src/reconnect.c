@@ -29,8 +29,6 @@
 #include "config.h"
 #include "log.h"
 
-#include <stdlib.h>
-
 void connection_disconnect(struct connection *c) {
     if (c->client.client == NULL)
         return;
