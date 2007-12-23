@@ -68,6 +68,15 @@ int sock_buff_create(int fd, size_t input_max,
     return 0;
 }
 
+static int
+sock_buff_invoke_data(struct sock_buff *sb)
+{
+    assert(sb->handler != NULL);
+    assert(sb->handler->data != NULL);
+
+    return sb->handler->data(sb->handler_ctx);
+}
+
 static void
 sock_buff_invoke_free(struct sock_buff *sb, int error)
 {
@@ -133,7 +142,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
             sock_buff_invoke_free(sb, errno);
             return;
         } else if (nbytes > 0) {
-            ret = sb->handler->data(sb->handler_ctx);
+            ret = sock_buff_invoke_data(sb);
             if (ret < 0)
                 return;
         }
