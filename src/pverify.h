@@ -29,6 +29,22 @@
 
 #include <assert.h>
 
+static inline int
+char_is_printable(char ch)
+{
+    return (signed char)ch >= 0x20;
+}
+
+static inline int
+verify_printable_asciiz(const char *p, size_t length)
+{
+    size_t i;
+    for (i = 0; i < length; ++i)
+        if (!char_is_printable(p[i]))
+            return 0;
+    return p[length] == 0;
+}
+
 /**
  * Verifies that the specified packet really contains a string.
  */
@@ -40,8 +56,7 @@ packet_verify_client_version(const struct uo_packet_client_version *p,
     assert(p->cmd == PCK_ClientVersion);
 
     return length > sizeof(*p) &&
-        p->version[0] != 0 &&
-        p->version[length - sizeof(*p)] == 0;
+        verify_printable_asciiz(p->version, length - sizeof(*p));
 }
 
 #endif
