@@ -21,6 +21,7 @@
 #include "config.h"
 #include "netutil.h"
 #include "version.h"
+#include "log.h"
 
 #include <sys/socket.h>
 #include <stdio.h>
@@ -320,8 +321,10 @@ static void assign_string(char **destp, const char *src) {
     *destp = *src == 0 ? NULL : strdup(src);
 }
 
-static int parse_game_server(const char *path, unsigned no,
-                             struct game_server_config *config, char *string) {
+static void
+parse_game_server(const char *path, unsigned no,
+                  struct game_server_config *config, char *string)
+{
     char *eq = strchr(string, '=');
     struct addrinfo hints;
     int ret;
@@ -335,8 +338,10 @@ static int parse_game_server(const char *path, unsigned no,
     *eq = 0;
 
     config->name = strdup(string);
-    if (config->name == NULL)
-        return -ENOMEM;
+    if (config->name == NULL) {
+        log_oom();
+        exit(2);
+    }
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
@@ -348,8 +353,6 @@ static int parse_game_server(const char *path, unsigned no,
                 eq + 1, gai_strerror(ret));
         exit(1);
     }
-
-    return 0;
 }
 
 int config_read_file(struct config *config, const char *path) {
@@ -361,7 +364,7 @@ int config_read_file(struct config *config, const char *path) {
 
     file = fopen(path, "r");
     if (file == NULL)
-        return -errno;
+        return errno;
 
     while (fgets(line, sizeof(line), file) != NULL) {
         /* increase line number */
@@ -467,25 +470,23 @@ int config_read_file(struct config *config, const char *path) {
 
             config->game_servers = calloc(config->num_game_servers,
                                           sizeof(*config->game_servers));
-            if (config->game_servers == NULL)
-                return -ENOMEM;
+            if (config->game_servers == NULL) {
+                log_oom();
+                exit(2);
+            }
 
             for (p = value, i = 0; i < config->num_game_servers; ++i) {
                 char *o = p;
 
                 p = strchr(o, ',');
                 if (p == NULL) {
-                    ret = parse_game_server(path, no,
-                                            config->game_servers + i, o);
-                    if (ret < 0)
-                        return ret;
+                    parse_game_server(path, no,
+                                      config->game_servers + i, o);
                     break;
                 } else {
                     *p++ = 0;
-                    ret = parse_game_server(path, no,
-                                            config->game_servers + i, o);
-                    if (ret < 0)
-                        return ret;
+                    parse_game_server(path, no,
+                                      config->game_servers + i, o);
                 }
             }
         } else if (strcmp(key, "background") == 0) {
