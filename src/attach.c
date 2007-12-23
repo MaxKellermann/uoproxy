@@ -76,19 +76,22 @@ void attach_after_play_server(struct connection *c,
     */
 }
 
-static void attach_item(struct connection *c,
-                        struct linked_server *ls,
-                        struct item *item) {
-    item->attach_sequence = c->client.world.item_attach_sequence;
+static void
+attach_item(struct linked_server *ls,
+            struct item *item)
+{
+    struct world *world = &ls->connection->client.world;
+
+    item->attach_sequence = world->item_attach_sequence;
 
     if (item->packet_container_update.cmd == PCK_ContainerUpdate) {
         /* attach parent first */
         uint32_t parent_serial
             = item->packet_container_update.item.parent_serial;
-        struct item *parent = world_find_item(&c->client.world, parent_serial);
+        struct item *parent = world_find_item(world, parent_serial);
         if (parent != NULL &&
-            parent->attach_sequence != c->client.world.item_attach_sequence)
-            attach_item(c, ls, parent);
+            parent->attach_sequence != world->item_attach_sequence)
+            attach_item(ls, parent);
 
         /* then this item as container content */
         uo_server_send(ls->server, &item->packet_container_update,
@@ -188,7 +191,7 @@ void attach_after_play_character(struct connection *c,
     ++world->item_attach_sequence;
     list_for_each_entry(item, &world->items, siblings)
         if (item->attach_sequence != world->item_attach_sequence)
-            attach_item(c, ls, item);
+            attach_item(ls, item);
 
     /* LoginComplete */
     login_complete.cmd = PCK_ReDrawAll;
