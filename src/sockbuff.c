@@ -54,11 +54,12 @@ sock_buff_event_setup(struct sock_buff *sb);
  *
  */
 
-int sock_buff_create(int fd, size_t input_max,
-                     size_t output_max,
-                     const struct sock_buff_handler *handler,
-                     void *handler_ctx,
-                     struct sock_buff **sbp) {
+struct sock_buff *
+sock_buff_create(int fd, size_t input_max,
+                 size_t output_max,
+                 const struct sock_buff_handler *handler,
+                 void *handler_ctx)
+{
     struct sock_buff *sb;
 
     assert(handler != NULL);
@@ -67,7 +68,7 @@ int sock_buff_create(int fd, size_t input_max,
 
     sb = (struct sock_buff*)malloc(sizeof(*sb));
     if (sb == NULL)
-        return ENOMEM;
+        return NULL;
 
     sb->flush.siblings.next = NULL;
     sb->flush.flush = sock_buff_flush_callback;
@@ -78,14 +79,14 @@ int sock_buff_create(int fd, size_t input_max,
     sb->input = fifo_buffer_new(input_max);
     if (sb->input == NULL) {
         free(sb);
-        return ENOMEM;
+        return NULL;
     }
 
     sb->output = fifo_buffer_new(output_max);
     if (sb->output == NULL) {
         fifo_buffer_free(sb->input);
         free(sb);
-        return ENOMEM;
+        return NULL;
     }
 
     sb->handler = handler;
@@ -93,9 +94,7 @@ int sock_buff_create(int fd, size_t input_max,
 
     sock_buff_event_setup(sb);
 
-    *sbp = sb;
-
-    return 0;
+    return sb;
 }
 
 void sock_buff_dispose(struct sock_buff *sb) {

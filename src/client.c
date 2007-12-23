@@ -262,13 +262,13 @@ int uo_client_create(const struct addrinfo *server_address,
         return ENOMEM;
     }
 
-    ret = sock_buff_create(sockfd, 8192, 65536,
-                           &client_sock_buff_handler, client,
-                           &client->sock);
-    if (ret != 0) {
+    client->sock = sock_buff_create(sockfd, 8192, 65536,
+                                    &client_sock_buff_handler, client);
+    if (client->sock == NULL) {
+        int save_errno = errno;
         free(client);
         close(sockfd);
-        return ret;
+        return save_errno;
     }
 
     uo_decompression_init(&client->decompression);

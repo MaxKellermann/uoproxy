@@ -208,12 +208,11 @@ int uo_server_create(int sockfd,
     if (server == NULL)
         return ENOMEM;
 
-    ret = sock_buff_create(sockfd, 8192, 65536,
-                           &server_sock_buff_handler, server,
-                           &server->sock);
-    if (ret != 0) {
+    server->sock = sock_buff_create(sockfd, 8192, 65536,
+                                    &server_sock_buff_handler, server);
+    if (server->sock == NULL) {
         free(server);
-        return ret;
+        return errno;
     }
 
     server->handler = handler;

@@ -43,11 +43,12 @@ struct sock_buff_handler {
 
 struct sock_buff;
 
-int sock_buff_create(int fd, size_t input_max,
-                     size_t output_max,
-                     const struct sock_buff_handler *handler,
-                     void *handler_ctx,
-                     struct sock_buff **sbp);
+struct sock_buff *
+sock_buff_create(int fd, size_t input_max,
+                 size_t output_max,
+                 const struct sock_buff_handler *handler,
+                 void *handler_ctx);
+
 void sock_buff_dispose(struct sock_buff *sb);
 
 void *
