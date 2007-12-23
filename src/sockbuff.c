@@ -76,6 +76,11 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
     assert(sb->handler != NULL);
     assert(sb->fd >= 0);
 
+    if (sb->event.ev_events != 0) {
+        event_del(&sb->event);
+        sb->event.ev_events = 0;
+    }
+
     handler = sb->handler;
     sb->handler = NULL;
 
@@ -85,7 +90,11 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
 void sock_buff_dispose(struct sock_buff *sb) {
     assert(sb->fd >= 0);
 
-    event_del(&sb->event);
+    if (sb->event.ev_events != 0) {
+        event_del(&sb->event);
+        sb->event.ev_events = 0;
+    }
+
     close(sb->fd);
 
     fifo_buffer_free(sb->input);
@@ -156,8 +165,10 @@ sock_buff_event_setup(struct sock_buff *sb)
     if (sb->event.ev_events == event)
         return;
 
-    if (sb->event.ev_events != 0)
+    if (sb->event.ev_events != 0) {
         event_del(&sb->event);
+        sb->event.ev_events = 0;
+    }
 
     if (event != 0) {
         event_set(&sb->event, sb->fd, event, sock_buff_event_callback, sb);
