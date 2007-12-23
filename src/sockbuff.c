@@ -22,6 +22,7 @@
 #include "compiler.h"
 #include "buffered-io.h"
 #include "fifo-buffer.h"
+#include "flush.h"
 
 #include <assert.h>
 #include <unistd.h>
@@ -30,6 +31,8 @@
 #include <errno.h>
 
 struct sock_buff {
+    struct pending_flush flush;
+
     int fd;
     struct event event;
 
@@ -38,6 +41,9 @@ struct sock_buff {
     const struct sock_buff_handler *handler;
     void *handler_ctx;
 };
+
+static void
+sock_buff_flush_callback(struct pending_flush *flush);
 
 static void
 sock_buff_event_setup(struct sock_buff *sb);
@@ -62,6 +68,9 @@ int sock_buff_create(int fd, size_t input_max,
     sb = (struct sock_buff*)malloc(sizeof(*sb));
     if (sb == NULL)
         return ENOMEM;
+
+    sb->flush.siblings.next = NULL;
+    sb->flush.flush = sock_buff_flush_callback;
 
     sb->fd = fd;
     sb->event.ev_events = 0;
@@ -97,6 +106,8 @@ void sock_buff_dispose(struct sock_buff *sb) {
         sb->event.ev_events = 0;
     }
 
+    flush_del(&sb->flush);
+
     close(sb->fd);
 
     fifo_buffer_free(sb->input);
@@ -124,7 +135,9 @@ sock_buff_invoke_data(struct sock_buff *sb)
     if (data == NULL)
         return 0;
 
+    flush_begin();
     nbytes = sb->handler->data(data, length, sb->handler_ctx);
+    flush_end();
     if (nbytes < 0)
         return -1;
 
@@ -145,12 +158,19 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
         sb->event.ev_events = 0;
     }
 
+    flush_del(&sb->flush);
+
     handler = sb->handler;
     sb->handler = NULL;
 
     handler->free(error, sb->handler_ctx);
 }
 
+
+/*
+ * flush
+ *
+ */
 
 /**
  * Try to flush the output buffer.  Note that this function will not
@@ -173,6 +193,14 @@ sock_buff_flush(struct sock_buff *sb)
     sock_buff_event_setup(sb);
 
     return 0;
+}
+
+static void
+sock_buff_flush_callback(struct pending_flush *flush)
+{
+    struct sock_buff *sb = (struct sock_buff *)flush;
+
+    sock_buff_flush(sb);
 }
 
 
@@ -255,7 +283,7 @@ void
 sock_buff_append(struct sock_buff *sb, size_t length)
 {
     fifo_buffer_append(sb->output, length);
-    sock_buff_flush(sb);
+    flush_add(&sb->flush);
 }
 
 void
@@ -274,5 +302,5 @@ sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
 
     fifo_buffer_append(sb->output, length);
 
-    sock_buff_flush(sb);
+    flush_add(&sb->flush);
 }
