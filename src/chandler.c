@@ -273,13 +273,13 @@ handle_account_login(struct linked_server *ls,
     memcpy(c->username, p->username, sizeof(c->username));
     memcpy(c->password, p->password, sizeof(c->password));
 
-    if (config->login_address == NULL &&
-        config->game_servers != NULL &&
-        config->num_game_servers > 0) {
+    if (config->num_game_servers > 0) {
         unsigned i, num_game_servers = config->num_game_servers;
         struct game_server_config *game_servers = config->game_servers;
         struct uo_packet_server_list *p2;
         struct sockaddr_in *sin;
+
+        assert(config->game_servers != NULL);
 
         length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
 
@@ -311,6 +311,8 @@ handle_account_login(struct linked_server *ls,
 
         return PA_DROP;
     }
+
+    assert(config->login_address != NULL);
 
     ret = connection_client_connect(c, config->login_address,
                                     uo_server_seed(ls->server));
