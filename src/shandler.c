@@ -590,8 +590,9 @@ static packet_action_t
 handle_client_version(struct connection *c,
                       const void *data __attr_unused,
                       size_t length __attr_unused) {
-    if (c->client.reconnecting && client_version_defined(&c->client_version)) {
-        /* during reconnect, we try to transmit the cached version number */
+    if (client_version_defined(&c->client_version)) {
+        /* respond to this packet directly if we know the version
+           number */
         uo_client_send(c->client.client, c->client_version.packet,
                        c->client_version.packet_length);
         return PA_DROP;
