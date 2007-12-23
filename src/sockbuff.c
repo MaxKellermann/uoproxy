@@ -136,8 +136,10 @@ sock_buff_event_callback(int fd, short event, void *ctx)
 
     if (event & EV_WRITE) {
         ret = sock_buff_flush(sb);
-        if (ret != 0)
-            perror("failed to write");
+        if (ret != 0) {
+            sock_buff_invoke_free(sb, errno);
+            return;
+        }
     }
 
     sock_buff_event_setup(sb);
