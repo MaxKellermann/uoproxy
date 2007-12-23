@@ -20,12 +20,12 @@
 
 #include "sockbuff.h"
 #include "compiler.h"
+#include "buffered-io.h"
+#include "log.h"
 
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <stdio.h>
 
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,
@@ -94,24 +94,18 @@ void sock_buff_dispose(struct sock_buff *sb) {
 }
 
 int sock_buff_flush(struct sock_buff *sb) {
-    const unsigned char *p;
-    size_t length = 0;
     ssize_t nbytes;
 
-    p = fifo_buffer_read(sb->output, &length);
-    if (p == NULL)
+    nbytes = write_from_buffer(sb->fd, sb->output);
+    if (nbytes == -2)
         return 0;
 
-    assert(length > 0);
-
-    nbytes = write(sb->fd, p, length);
     if (nbytes < 0) {
         int save_errno = errno;
         sock_buff_invoke_free(sb, errno);
         return save_errno;
     }
 
-    fifo_buffer_consume(sb->output, (size_t)nbytes);
     return 0;
 }
 
@@ -124,30 +118,20 @@ sock_buff_event_callback(int fd, short event, void *ctx)
     assert(fd == sb->fd);
 
     if (event & EV_READ) {
-        void *p;
-        size_t max_length;
         ssize_t nbytes;
 
-        p = fifo_buffer_write(sb->input, &max_length);
-        assert(p != NULL);
-
-        nbytes = read(sb->fd, p, max_length);
-        if (nbytes < 0) {
-            perror("failed to read");
+        nbytes = read_to_buffer(sb->fd, sb->input, 65536);
+        if (nbytes == -2) {
+            log(2, "input buffer is full\n");
+        } else if (nbytes < 0) {
+            log_errno("failed to read");
             sock_buff_invoke_free(sb, errno);
             return;
+        } else {
+            ret = sb->handler->data(sb->handler_ctx);
+            if (ret < 0)
+                return;
         }
-
-        if (nbytes == 0) {
-            sock_buff_invoke_free(sb, 0);
-            return;
-        }
-
-        fifo_buffer_append(sb->input, (size_t)nbytes);
-
-        ret = sb->handler->data(sb->handler_ctx);
-        if (ret < 0)
-            return;
     }
 
     if (event & EV_WRITE) {
