@@ -90,7 +90,7 @@ static packet_action_t handle_walk(struct connection *c,
         return PA_DROP;
     }
 
-    connection_walk_request(c, c->current_server, p);
+    connection_walk_request(c->current_server, p);
 
     return PA_DROP;
 }

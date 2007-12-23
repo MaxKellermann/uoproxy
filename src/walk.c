@@ -97,10 +97,9 @@ void connection_walk_server_removed(struct connection_walk_state *state,
 }
 
 void
-connection_walk_request(struct connection *c,
-                        struct linked_server *server,
+connection_walk_request(struct linked_server *server,
                         const struct uo_packet_walk *p) {
-    struct connection_walk_state *state = &c->walk;
+    struct connection_walk_state *state = &server->connection->walk;
     struct connection_walk_item *i;
     struct uo_packet_walk walk;
 
@@ -108,14 +107,15 @@ connection_walk_request(struct connection *c,
 
     if (state->server != NULL && state->server != server) {
         printf("rejecting walk\n");
-        walk_cancel(&c->client.world, server->server, p);
+        walk_cancel(&server->connection->client.world, server->server, p);
         return;
     }
 
     if (state->queue_size >= MAX_WALK_QUEUE) {
         /* XXX */
         printf("queue full\n");
-        walk_cancel(&c->client.world, server->server, &state->queue[0].packet);
+        walk_cancel(&server->connection->client.world, server->server,
+                    &state->queue[0].packet);
         walk_shift(state);
     }
 
@@ -129,7 +129,7 @@ connection_walk_request(struct connection *c,
 
     walk = *p;
     walk.seq = i->seq = state->seq_next++;
-    uo_client_send(c->client.client, &walk, sizeof(walk));
+    uo_client_send(server->connection->client.client, &walk, sizeof(walk));
 
     if (state->seq_next == 0)
         state->seq_next = 1;

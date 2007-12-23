@@ -258,8 +258,7 @@ void connection_walk_server_removed(struct connection_walk_state *state,
                                     struct linked_server *server);
 
 void
-connection_walk_request(struct connection *c,
-                        struct linked_server *server,
+connection_walk_request(struct linked_server *server,
                         const struct uo_packet_walk *p);
 
 void connection_walk_cancel(struct connection *c,
