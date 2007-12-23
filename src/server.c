@@ -23,16 +23,13 @@
 #include "compression.h"
 #include "packets.h"
 #include "dump.h"
-#include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"
 #include "socket-util.h"
 
 #include <assert.h>
 #include <errno.h>
-#include <netdb.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
 
 #include <event.h>

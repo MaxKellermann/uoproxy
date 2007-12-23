@@ -22,10 +22,7 @@
 
 #include <assert.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
 
 #ifdef __linux
 #include <netinet/in.h>

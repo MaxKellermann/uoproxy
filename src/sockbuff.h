@@ -21,8 +21,6 @@
 #ifndef __SOCKBUFF_H
 #define __SOCKBUFF_H
 
-#include "fifo-buffer.h"
-
 #include <sys/types.h>
 #include <event.h>
 

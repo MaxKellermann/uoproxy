@@ -21,6 +21,7 @@
 #include "sockbuff.h"
 #include "compiler.h"
 #include "buffered-io.h"
+#include "fifo-buffer.h"
 
 #include <assert.h>
 #include <unistd.h>
