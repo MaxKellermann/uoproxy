@@ -128,3 +128,19 @@ connection_client_connect(struct connection *c,
 
     return 0;
 }
+
+void
+connection_client_disconnect(struct stateful_client *client)
+{
+    assert(client->client != NULL);
+
+    if (client->reconnecting) {
+        event_del(&client->reconnect_event);
+        client->reconnecting = 0;
+    }
+
+    event_del(&client->ping_event);
+
+    uo_client_dispose(client->client);
+    client->client = NULL;
+}

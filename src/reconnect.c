@@ -32,17 +32,8 @@ void connection_disconnect(struct connection *c) {
     if (c->client.client == NULL)
         return;
 
-    if (c->client.reconnecting) {
-        event_del(&c->client.reconnect_event);
-        c->client.reconnecting = 0;
-    }
-
+    connection_client_disconnect(&c->client);
     connection_world_clear(c);
-
-    event_del(&c->client.ping_event);
-
-    uo_client_dispose(c->client.client);
-    c->client.client = NULL;
 }
 
 static void

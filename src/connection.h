@@ -175,6 +175,9 @@ connection_client_connect(struct connection *c,
                           const struct addrinfo *server_address,
                           uint32_t seed);
 
+void
+connection_client_disconnect(struct stateful_client *client);
+
 void connection_disconnect(struct connection *c);
 
 void connection_reconnect(struct connection *c);
