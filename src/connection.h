@@ -23,6 +23,7 @@
 
 #include "packets.h"
 #include "world.h"
+#include "cversion.h"
 
 #include <event.h>
 
@@ -57,7 +58,7 @@ struct linked_server {
     struct uo_server *server;
     int welcome, attaching;
 
-    struct uo_packet_client_version *client_version;
+    struct client_version client_version;
 };
 
 struct connection_walk_item {
@@ -101,7 +102,7 @@ struct connection {
 
     /* client version */
 
-    struct uo_packet_client_version *client_version;
+    struct client_version client_version;
 
     /* sub-objects */
 

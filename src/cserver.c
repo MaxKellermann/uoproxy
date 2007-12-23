@@ -148,8 +148,7 @@ connection_server_dispose(struct connection *c, struct linked_server *ls)
     if (ls->server != NULL)
         uo_server_dispose(ls->server);
 
-    if (ls->client_version != NULL)
-        free(ls->client_version);
+    client_version_free(&ls->client_version);
 
     poison(ls, sizeof(*ls));
     free(ls);

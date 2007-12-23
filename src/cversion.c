@@ -20,6 +20,7 @@
 
 #include "cversion.h"
 #include "packets.h"
+#include "pverify.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -29,6 +30,24 @@ client_version_free(struct client_version *cv)
 {
     if (cv->packet != NULL)
         free(cv->packet);
+}
+
+int
+client_version_copy(struct client_version *cv,
+                    const struct uo_packet_client_version *packet,
+                    size_t length)
+{
+    if (!packet_verify_client_version(packet, length))
+        return 0;
+
+    cv->packet = malloc(length);
+    if (cv->packet == NULL)
+        return -1;
+
+    cv->packet_length = length;
+
+    memcpy(cv->packet, packet, length);
+    return 1;
 }
 
 int

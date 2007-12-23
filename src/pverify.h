@@ -18,32 +18,30 @@
  *
  */
 
-#ifndef __UOPROXY_CVERSION_H
-#define __UOPROXY_CVERSION_H
+/*
+ * Verify UO network packets.
+ */
 
-#include <stddef.h>
+#ifndef __UOPROXY_PVERIFY_H
+#define __UOPROXY_PVERIFY_H
 
-struct client_version {
-    struct uo_packet_client_version *packet;
-    size_t packet_length;
-};
+#include "packets.h"
 
+#include <assert.h>
+
+/**
+ * Verifies that the specified packet really contains a string.
+ */
 static inline int
-client_version_defined(const struct client_version *cv)
+packet_verify_client_version(const struct uo_packet_client_version *p,
+                             size_t length)
 {
-    return cv->packet != NULL;
+    assert(length >= 3);
+    assert(p->cmd == PCK_ClientVersion);
+
+    return length > sizeof(*p) &&
+        p->version[0] != 0 &&
+        p->version[length - sizeof(*p)] == 0;
 }
-
-void
-client_version_free(struct client_version *cv);
-
-int
-client_version_copy(struct client_version *cv,
-                    const struct uo_packet_client_version *packet,
-                    size_t length);
-
-int
-client_version_set(struct client_version *cv,
-                   const char *version);
 
 #endif

@@ -80,8 +80,7 @@ connection_free(struct connection *c)
     if (c->client.reconnecting)
         event_del(&c->client.reconnect_event);
 
-    if (c->client_version != NULL)
-        free(c->client_version);
+    client_version_free(&c->client_version);
 
     poison(c, sizeof(*c));
     free(c);

@@ -521,13 +521,10 @@ handle_client_version(struct linked_server *ls,
                       const void *data, size_t length)
 {
     struct connection *c = ls->connection;
+    const struct uo_packet_client_version *p = data;
 
-    if (ls->client_version != NULL)
-        free(ls->client_version);
-
-    ls->client_version = malloc(length);
-    if (ls->client_version != NULL)
-        memcpy(ls->client_version, data, length);
+    if (!client_version_defined(&ls->client_version))
+        client_version_copy(&ls->client_version, p, length);
 
     if (c->instance->config->client_version != NULL) {
         struct client_version cv;
@@ -545,10 +542,8 @@ handle_client_version(struct linked_server *ls,
         client_version_free(&cv);
 
         return PA_DROP;
-    } else if (c->client_version == NULL) {
-        c->client_version = malloc(length);
-        if (c->client_version != NULL)
-            memcpy(c->client_version, data, length);
+    } else if (!client_version_defined(&c->client_version)) {
+        client_version_copy(&c->client_version, p, length);
     }
 
     return PA_ACCEPT;
