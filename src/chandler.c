@@ -535,7 +535,11 @@ handle_client_version(struct linked_server *ls,
 
         return PA_DROP;
     } else {
-        client_version_copy(&c->client_version, p, length);
+        int ret = client_version_copy(&c->client_version, p, length);
+        if (ret > 0)
+            log(2, "client version '%s'\n", c->client_version.packet->version);
+        else if (ret == 0)
+            log(2, "invalid client version\n");
         return PA_ACCEPT;
     }
 }
