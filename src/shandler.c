@@ -125,7 +125,7 @@ static packet_action_t handle_start(struct connection *c,
 
     /* if we're auto-reconnecting, this is the point where it
        succeeded */
-    c->reconnecting = 0;
+    c->client.reconnecting = 0;
 
     c->walk.seq_next = 0;
 
@@ -268,7 +268,7 @@ static packet_action_t handle_popup_message(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         if (p->msg == 0x05) {
             connection_speak_console(c, "previous character is still online, trying again");
         } else {
@@ -388,7 +388,7 @@ static packet_action_t handle_char_list(struct connection *c,
     }
 
     /* respond directly during reconnect */
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         struct uo_packet_play_character p2 = {
             .cmd = PCK_PlayCharacter,
             .slot = htonl(c->character_index),
@@ -412,7 +412,7 @@ static packet_action_t handle_account_login_reject(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         if (verbose >= 1)
             fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
                     p->reason);
@@ -459,7 +459,7 @@ static packet_action_t handle_relay(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->in_game && !c->reconnecting)
+    if (c->in_game && !c->client.reconnecting)
         return PA_DISCONNECT;
 
     if (verbose >= 2)
@@ -523,7 +523,7 @@ static packet_action_t handle_server_list(struct connection *c,
     if (c->instance->config->antispy)
         send_antispy(c->client.client);
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         struct uo_packet_play_server p2 = {
             .cmd = PCK_PlayServer,
             .index = 0, /* XXX */
@@ -594,7 +594,7 @@ static packet_action_t
 handle_client_version(struct connection *c,
                       const void *data __attr_unused,
                       size_t length __attr_unused) {
-    if (c->reconnecting && c->client_version != NULL) {
+    if (c->client.reconnecting && c->client_version != NULL) {
         /* during reconnect, we try to transmit the cached version number */
         uo_client_send(c->client.client, c->client_version,
                        get_packet_length(c->client_version, 0x8000));

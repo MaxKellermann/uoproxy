@@ -35,9 +35,9 @@ void connection_disconnect(struct connection *c) {
     if (c->client.client == NULL)
         return;
 
-    if (c->reconnecting) {
-        event_del(&c->reconnect_event);
-        c->reconnecting = 0;
+    if (c->client.reconnecting) {
+        event_del(&c->client.reconnect_event);
+        c->client.reconnecting = 0;
     }
 
     connection_delete_items(c);
@@ -56,7 +56,7 @@ connection_try_reconnect(struct connection *c)
     int ret;
 
     assert(c->in_game);
-    assert(c->reconnecting);
+    assert(c->client.reconnecting);
     assert(c->client.client == NULL);
 
     if (config->login_address == NULL) {
@@ -82,7 +82,7 @@ connection_try_reconnect(struct connection *c)
             uo_client_send(c->client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            c->reconnecting = 0;
+            c->client.reconnecting = 0;
             connection_reconnect_delayed(c);
         }
     } else {
@@ -101,7 +101,7 @@ connection_try_reconnect(struct connection *c)
             uo_client_send(c->client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            c->reconnecting = 0;
+            c->client.reconnecting = 0;
             connection_reconnect_delayed(c);
         }
     }
@@ -117,7 +117,7 @@ connection_reconnect_event_callback(int fd __attr_unused,
 }
 
 void connection_reconnect(struct connection *c) {
-    if (c->reconnecting)
+    if (c->client.reconnecting)
         return;
 
     connection_disconnect(c);
@@ -125,7 +125,7 @@ void connection_reconnect(struct connection *c) {
     assert(c->in_game);
     assert(c->client.client == NULL);
 
-    c->reconnecting = 1;
+    c->client.reconnecting = 1;
 
     connection_try_reconnect(c);
 }
@@ -135,7 +135,7 @@ connection_reconnect_delayed(struct connection *c)
 {
     struct timeval tv;
 
-    if (c->reconnecting)
+    if (c->client.reconnecting)
         return;
 
     connection_disconnect(c);
@@ -143,10 +143,11 @@ connection_reconnect_delayed(struct connection *c)
     assert(c->in_game);
     assert(c->client.client == NULL);
 
-    c->reconnecting = 1;
+    c->client.reconnecting = 1;
 
     tv.tv_sec = 5;
     tv.tv_usec = 0;
-    evtimer_set(&c->reconnect_event, connection_reconnect_event_callback, c);
-    evtimer_add(&c->reconnect_event, &tv);
+    evtimer_set(&c->client.reconnect_event,
+                connection_reconnect_event_callback, c);
+    evtimer_add(&c->client.reconnect_event, &tv);
 }

@@ -76,6 +76,9 @@ struct world {
 };
 
 struct stateful_client {
+    int reconnecting;
+    struct event reconnect_event;
+
     struct uo_client *client;
     struct event ping_event;
 
@@ -122,8 +125,7 @@ struct connection {
     int in_game;
 
     /* reconnect */
-    int autoreconnect, reconnecting;
-    struct event reconnect_event;
+    int autoreconnect;
 
     /* client stuff (= connection to server) */
 

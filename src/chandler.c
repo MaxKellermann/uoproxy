@@ -76,7 +76,7 @@ static packet_action_t handle_walk(struct connection *c,
     if (!c->in_game)
         return PA_DISCONNECT;
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         /* while reconnecting, reject all walk requests */
         struct uo_packet_walk_cancel p2 = {
             .cmd = PCK_WalkCancel,
@@ -123,7 +123,7 @@ static packet_action_t handle_use(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         uo_server_speak_console(c->current_server->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
@@ -161,7 +161,7 @@ static packet_action_t handle_action(struct connection *c,
     (void)data;
     (void)length;
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         uo_server_speak_console(c->current_server->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
@@ -176,7 +176,7 @@ static packet_action_t handle_lift_request(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    if (c->reconnecting) {
+    if (c->client.reconnecting) {
         /* while reconnecting, reject all lift requests */
         struct uo_packet_lift_reject p2 = {
             .cmd = PCK_LiftReject,
@@ -496,7 +496,7 @@ static packet_action_t handle_client_version(struct connection *c,
         struct uo_packet_client_version *p;
         size_t version_length;
 
-        if (c->client.client == NULL || c->reconnecting)
+        if (c->client.client == NULL || c->client.reconnecting)
             return PA_DROP;
 
         version_length = strlen(c->instance->config->client_version);
