@@ -198,6 +198,19 @@ sock_buff_event_setup(struct sock_buff *sb)
     }
 }
 
+void *
+sock_buff_write(struct sock_buff *sb, size_t *max_length_r)
+{
+    return fifo_buffer_write(sb->output, max_length_r);
+}
+
+void
+sock_buff_append(struct sock_buff *sb, size_t length)
+{
+    fifo_buffer_append(sb->output, length);
+    sock_buff_flush(sb);
+}
+
 void
 sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
 {

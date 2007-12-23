@@ -257,7 +257,7 @@ void uo_server_send(struct uo_server *server,
         size_t max_length;
         ssize_t nbytes;
 
-        dest = fifo_buffer_write(server->sock->output, &max_length);
+        dest = sock_buff_write(server->sock, &max_length);
         if (dest == NULL) {
             fprintf(stderr, "output buffer full in uo_server_send()\n");
             uo_server_abort(server);
@@ -271,7 +271,7 @@ void uo_server_send(struct uo_server *server,
             return;
         }
 
-        fifo_buffer_append(server->sock->output, (size_t)nbytes);
+        sock_buff_append(server->sock, (size_t)nbytes);
 
         sock_buff_flush(server->sock);
     } else {
