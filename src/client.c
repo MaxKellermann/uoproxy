@@ -118,7 +118,6 @@ client_decompress(struct uo_client *client,
         return -1;
     }
 
-    sock_buff_event_setup(client->sock);
     fifo_buffer_append(client->decompressed_buffer, (size_t)nbytes);
 
     return (size_t)length;

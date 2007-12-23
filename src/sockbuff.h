@@ -52,9 +52,6 @@ int sock_buff_create(int fd, size_t input_max,
                      struct sock_buff **sbp);
 void sock_buff_dispose(struct sock_buff *sb);
 
-void
-sock_buff_event_setup(struct sock_buff *sb);
-
 void *
 sock_buff_write(struct sock_buff *sb, size_t *max_length_r);
 

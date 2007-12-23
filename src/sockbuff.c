@@ -38,6 +38,9 @@ struct sock_buff {
     void *handler_ctx;
 };
 
+static void
+sock_buff_event_setup(struct sock_buff *sb);
+
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,
                      const struct sock_buff_handler *handler,
@@ -191,7 +194,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
     sock_buff_event_setup(sb);
 }
 
-void
+static void
 sock_buff_event_setup(struct sock_buff *sb)
 {
     short event = EV_PERSIST;
