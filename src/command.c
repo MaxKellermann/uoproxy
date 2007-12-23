@@ -48,7 +48,7 @@ connection_handle_command(struct linked_server *server, const char *command)
 
     connection_check(c);
 
-    if (!c->in_game || server == NULL || server->server == NULL)
+    if (!c->in_game || server->server == NULL)
         return;
 
     if (*command == 0) {
