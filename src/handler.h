@@ -37,12 +37,10 @@ typedef enum {
     PA_DISCONNECT,
 } packet_action_t;
 
-typedef packet_action_t (*packet_handler_t)(struct connection *c,
-                                            const void *data, size_t length);
-
 struct packet_binding {
     unsigned char cmd;
-    packet_handler_t handler;
+    packet_action_t (*handler)(struct connection *c,
+                               const void *data, size_t length);
 };
 
 extern struct packet_binding server_packet_bindings[];
