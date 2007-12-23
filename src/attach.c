@@ -119,8 +119,6 @@ attach_after_play_character(struct linked_server *ls)
     struct mobile *mobile;
     struct item *item;
 
-    connection_check(c);
-
     assert(ls->server != NULL);
     assert(ls->attaching);
 
@@ -154,7 +152,7 @@ attach_after_play_character(struct linked_server *ls)
 
     /* 0xb9 SupportedFeatures */
     supported_features.cmd = PCK_SupportedFeatures;
-    supported_features.flags = c->client.supported_features_flags;
+    supported_features.flags = ls->connection->client.supported_features_flags;
     uo_server_send(ls->server, &supported_features,
                    sizeof(supported_features));
 
