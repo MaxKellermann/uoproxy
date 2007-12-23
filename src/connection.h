@@ -237,6 +237,9 @@ void connection_disconnect(struct connection *c);
 
 void connection_reconnect(struct connection *c);
 
+void
+connection_reconnect_delayed(struct connection *c);
+
 /* attach */
 
 struct connection *find_attach_connection(struct connection *c);

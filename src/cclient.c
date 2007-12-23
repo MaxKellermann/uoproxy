@@ -65,7 +65,7 @@ client_free(void *ctx)
     if (c->autoreconnect && c->in_game) {
         log(2, "server disconnected, auto-reconnecting\n");
         connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
-        connection_reconnect(c);
+        connection_reconnect_delayed(c);
     } else {
         log(1, "server disconnected\n");
         connection_invalidate(c);

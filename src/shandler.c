@@ -273,7 +273,7 @@ static packet_action_t handle_popup_message(struct connection *c,
             connection_speak_console(c, "character change failed, trying again");
         }
 
-        connection_reconnect(c);
+        connection_reconnect_delayed(c);
         return PA_DROP;
     }
 
@@ -415,7 +415,7 @@ static packet_action_t handle_account_login_reject(struct connection *c,
             fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
                     p->reason);
 
-        connection_reconnect(c);
+        connection_reconnect_delayed(c);
         return PA_DROP;
     }
 

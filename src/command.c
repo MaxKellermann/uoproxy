@@ -57,8 +57,7 @@ void connection_handle_command(struct connection *c,
         } else {
             uo_server_speak_console(server->server,
                                     "uoproxy: reconnecting");
-            connection_disconnect(c);
-            c->reconnecting = 1;
+            connection_reconnect(c);
         }
     } else if (strcmp(command, "char") == 0) {
         char msg[1024] = "uoproxy:";

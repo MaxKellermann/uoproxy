@@ -83,7 +83,7 @@ connection_try_reconnect(struct connection *c)
         } else {
             log_error("reconnect failed", ret);
             c->reconnecting = 0;
-            connection_reconnect(c);
+            connection_reconnect_delayed(c);
         }
     } else {
         /* connect to login server */
@@ -119,6 +119,22 @@ connection_reconnect_event_callback(int fd __attr_unused,
 }
 
 void connection_reconnect(struct connection *c) {
+    if (c->reconnecting)
+        return;
+
+    connection_disconnect(c);
+
+    assert(c->in_game);
+    assert(c->client == NULL);
+
+    c->reconnecting = 1;
+
+    connection_try_reconnect(c);
+}
+
+void
+connection_reconnect_delayed(struct connection *c)
+{
     struct timeval tv;
 
     if (c->reconnecting)
