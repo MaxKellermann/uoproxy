@@ -19,6 +19,7 @@
  */
 
 #include "world.h"
+#include "poison.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -153,9 +154,7 @@ static void free_item(struct item *i) {
     assert(i != NULL);
     assert(i->serial != 0);
 
-#ifndef NDEBUG
-    memset(i, 0, sizeof(*i));
-#endif
+    poison(i, sizeof(*i));
 
     free(i);
 }
@@ -447,9 +446,7 @@ static void free_mobile(struct mobile *m) {
     if (m->packet_mobile_status != NULL)
         free(m->packet_mobile_status);
 
-#ifndef NDEBUG
-    memset(m, 0, sizeof(*m));
-#endif
+    poison(m, sizeof(*m));
 
     free(m);
 }
