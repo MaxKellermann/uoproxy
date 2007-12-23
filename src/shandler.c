@@ -629,7 +629,7 @@ static packet_action_t handle_extended(struct connection *c,
     return PA_ACCEPT;
 }
 
-struct packet_binding server_packet_bindings[] = {
+struct client_packet_binding server_packet_bindings[] = {
     { .cmd = PCK_MobileStatus, /* 0x11 */
       .handler = handle_mobile_status,
     },

@@ -34,8 +34,8 @@ client_packet(const void *data, size_t length, void *ctx)
     packet_action_t action;
     struct linked_server *ls;
 
-    action = handle_packet(server_packet_bindings,
-                           c, data, length);
+    action = handle_packet_from_server(server_packet_bindings,
+                                       c, data, length);
     switch (action) {
     case PA_ACCEPT:
         if (!c->client.reconnecting)

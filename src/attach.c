@@ -110,9 +110,10 @@ attach_item(struct linked_server *ls,
                        sizeof(item->packet_equip));
 }
 
-void attach_after_play_character(struct connection *c,
-                                 struct linked_server *ls) {
-    struct world *world = &c->client.world;
+void
+attach_after_play_character(struct linked_server *ls)
+{
+    struct world *world = &ls->connection->client.world;
     struct uo_packet_supported_features supported_features;
     struct uo_packet_login_complete login_complete;
     struct mobile *mobile;

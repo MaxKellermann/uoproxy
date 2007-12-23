@@ -20,15 +20,33 @@
 
 #include "handler.h"
 
-packet_action_t handle_packet(struct packet_binding *bindings,
-                              struct connection *c,
-                              const void *data, size_t length) {
+packet_action_t
+handle_packet_from_server(struct client_packet_binding *bindings,
+                          struct connection *c,
+                          const void *data, size_t length)
+{
     const unsigned char cmd
         = *(const unsigned char*)data;
 
     for (; bindings->handler != NULL; bindings++) {
         if (bindings->cmd == cmd)
             return bindings->handler(c, data, length);
+    }
+
+    return PA_ACCEPT;
+}
+
+packet_action_t
+handle_packet_from_client(struct server_packet_binding *bindings,
+                          struct linked_server *ls,
+                          const void *data, size_t length)
+{
+    const unsigned char cmd
+        = *(const unsigned char*)data;
+
+    for (; bindings->handler != NULL; bindings++) {
+        if (bindings->cmd == cmd)
+            return bindings->handler(ls, data, length);
     }
 
     return PA_ACCEPT;

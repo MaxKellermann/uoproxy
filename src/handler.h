@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <stddef.h>
 
 struct connection;
+struct linked_server;
 
 /** what to do with the packet? */
 typedef enum {
@@ -37,17 +38,29 @@ typedef enum {
     PA_DISCONNECT,
 } packet_action_t;
 
-struct packet_binding {
+struct client_packet_binding {
     unsigned char cmd;
     packet_action_t (*handler)(struct connection *c,
                                const void *data, size_t length);
 };
 
-extern struct packet_binding server_packet_bindings[];
-extern struct packet_binding client_packet_bindings[];
+struct server_packet_binding {
+    unsigned char cmd;
+    packet_action_t (*handler)(struct linked_server *ls,
+                               const void *data, size_t length);
+};
 
-packet_action_t handle_packet(struct packet_binding *bindings,
-                              struct connection *c,
-                              const void *data, size_t length);
+extern struct client_packet_binding server_packet_bindings[];
+extern struct server_packet_binding client_packet_bindings[];
+
+packet_action_t
+handle_packet_from_server(struct client_packet_binding *bindings,
+                          struct connection *c,
+                          const void *data, size_t length);
+
+packet_action_t
+handle_packet_from_client(struct server_packet_binding *bindings,
+                          struct linked_server *ls,
+                          const void *data, size_t length);
 
 #endif

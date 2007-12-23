@@ -147,7 +147,6 @@ struct connection {
     /* sub-objects */
 
     struct list_head servers;
-    struct linked_server *current_server;
 };
 
 int connection_new(struct instance *instance,
@@ -288,8 +287,8 @@ struct connection *find_attach_connection(struct connection *c);
 void attach_after_play_server(struct connection *c,
                               struct linked_server *ls);
 
-void attach_after_play_character(struct connection *c,
-                                 struct linked_server *ls);
+void
+attach_after_play_character(struct linked_server *ls);
 
 /* command */
 

@@ -37,14 +37,8 @@ server_packet(const void *data, size_t length, void *ctx)
 
     assert(c != NULL);
 
-    c->current_server = ls;
-    action = handle_packet(client_packet_bindings,
-                           c, data, length);
-    if (ls->connection == c) {
-        assert(c->current_server == ls);
-        c->current_server = NULL;
-    }
-
+    action = handle_packet_from_client(client_packet_bindings,
+                                       ls, data, length);
     switch (action) {
     case PA_ACCEPT:
         if (c->client.client != NULL &&
@@ -115,9 +109,6 @@ connection_server_remove(struct connection *c, struct linked_server *ls)
     connection_check(c);
     assert(ls != NULL);
     assert(c == ls->connection);
-
-    if (c->current_server == ls)
-        c->current_server = NULL;
 
     connection_walk_server_removed(&c->walk, ls);
 

@@ -26,6 +26,7 @@
 #include "server.h"
 #include "config.h"
 #include "log.h"
+#include "compiler.h"
 
 #include <sys/socket.h>
 #include <assert.h>
@@ -54,49 +55,57 @@ static char *simple_unicode_to_ascii(char *dest, const u_int16_t *src,
     return dest;
 }
 
-static packet_action_t handle_talk(struct connection *c,
-                                   const char *text) {
+static packet_action_t
+handle_talk(struct linked_server *ls,
+            const char *text)
+{
     /* the percent sign introduces an uoproxy command */
     if (text[0] == '%') {
-        connection_handle_command(c->current_server, text + 1);
+        connection_handle_command(ls, text + 1);
         return PA_DROP;
     }
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_walk(struct connection *c,
-                                   const void *data, size_t length) {
+static packet_action_t
+handle_walk(struct linked_server *ls,
+            const void *data, size_t length)
+{
     const struct uo_packet_walk *p = data;
 
     assert(length == sizeof(*p));
 
-    if (!c->in_game)
+    if (!ls->connection->in_game)
         return PA_DISCONNECT;
 
-    if (c->client.reconnecting) {
+    if (ls->connection->client.reconnecting) {
+        struct world *world = &ls->connection->client.world;
+
         /* while reconnecting, reject all walk requests */
         struct uo_packet_walk_cancel p2 = {
             .cmd = PCK_WalkCancel,
             .seq = p->seq,
-            .x = c->client.world.packet_start.x,
-            .y = c->client.world.packet_start.y,
-            .direction = c->client.world.packet_start.direction,
-            .z = c->client.world.packet_start.z,
+            .x = world->packet_start.x,
+            .y = world->packet_start.y,
+            .direction = world->packet_start.direction,
+            .z = world->packet_start.z,
         };
 
-        uo_server_send(c->current_server->server, &p2, sizeof(p2));
+        uo_server_send(ls->server, &p2, sizeof(p2));
 
         return PA_DROP;
     }
 
-    connection_walk_request(c->current_server, p);
+    connection_walk_request(ls, p);
 
     return PA_DROP;
 }
 
-static packet_action_t handle_talk_ascii(struct connection *c,
-                                         const void *data, size_t length) {
+static packet_action_t
+handle_talk_ascii(struct linked_server *ls,
+                  const void *data, size_t length)
+{
     const struct uo_packet_talk_ascii *p = data;
     size_t text_length;
 
@@ -108,17 +117,19 @@ static packet_action_t handle_talk_ascii(struct connection *c,
     if (p->text[text_length] != 0)
         return PA_DISCONNECT;
 
-    return handle_talk(c, p->text);
+    return handle_talk(ls, p->text);
 }
 
-static packet_action_t handle_use(struct connection *c,
-                                  const void *data, size_t length) {
+static packet_action_t
+handle_use(struct linked_server *ls,
+           const void *data, size_t length)
+{
     const struct uo_packet_use *p = data;
 
     assert(length == sizeof(*p));
 
-    if (c->client.reconnecting) {
-        uo_server_speak_console(c->current_server->server,
+    if (ls->connection->client.reconnecting) {
+        uo_server_speak_console(ls->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
     }
@@ -150,13 +161,12 @@ static packet_action_t handle_use(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_action(struct connection *c,
-                                     const void *data, size_t length) {
-    (void)data;
-    (void)length;
-
-    if (c->client.reconnecting) {
-        uo_server_speak_console(c->current_server->server,
+static packet_action_t
+handle_action(struct linked_server *ls,
+              const void *data __attr_unused, size_t length __attr_unused)
+{
+    if (ls->connection->client.reconnecting) {
+        uo_server_speak_console(ls->server,
                                 "please wait until uoproxy finishes reconnecting");
         return PA_DROP;
     }
@@ -164,20 +174,22 @@ static packet_action_t handle_action(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_lift_request(struct connection *c,
-                                           const void *data, size_t length) {
+static packet_action_t
+handle_lift_request(struct linked_server *ls,
+                    const void *data, size_t length)
+{
     const struct uo_packet_lift_request *p = data;
 
     assert(length == sizeof(*p));
 
-    if (c->client.reconnecting) {
+    if (ls->connection->client.reconnecting) {
         /* while reconnecting, reject all lift requests */
         struct uo_packet_lift_reject p2 = {
             .cmd = PCK_LiftReject,
             .reason = 0x00, /* CannotLift */
         };
 
-        uo_server_send(c->current_server->server, &p2, sizeof(p2));
+        uo_server_send(ls->server, &p2, sizeof(p2));
 
         return PA_DROP;
     }
@@ -185,24 +197,25 @@ static packet_action_t handle_lift_request(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_resynchronize(struct connection *c,
-                                            const void *data, size_t length) {
-    (void)c;
-    (void)data;
-    (void)length;
-
+static packet_action_t
+handle_resynchronize(struct linked_server *ls,
+                     const void *data __attr_unused,
+                     size_t length __attr_unused)
+{
     if (verbose >= 3)
         printf("Resync!\n");
 
-    c->walk.seq_next = 0;
+    ls->connection->walk.seq_next = 0;
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_target(struct connection *c,
-                                     const void *data, size_t length) {
+static packet_action_t
+handle_target(struct linked_server *ls,
+              const void *data, size_t length)
+{
     const struct uo_packet_target *p = data;
-    struct world *world = &c->client.world;
+    struct world *world = &ls->connection->client.world;
 
     assert(length == sizeof(*p));
 
@@ -214,29 +227,34 @@ static packet_action_t handle_target(struct connection *c,
         world->packet_target.cmd = PCK_Target;
         world->packet_target.flags = 3;
 
-        connection_broadcast_servers_except(c, &world->packet_target,
+        connection_broadcast_servers_except(ls->connection,
+                                            &world->packet_target,
                                             sizeof(world->packet_target),
-                                            c->current_server->server);
+                                            ls->server);
     }
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_ping(struct connection *c,
-                                   const void *data, size_t length) {
-    uo_server_send(c->current_server->server, data, length);
+static packet_action_t
+handle_ping(struct linked_server *ls,
+            const void *data, size_t length)
+{
+    uo_server_send(ls->server, data, length);
     return PA_DROP;
 }
 
-static packet_action_t handle_account_login(struct connection *c,
-                                            const void *data, size_t length) {
+static packet_action_t
+handle_account_login(struct linked_server *ls,
+                     const void *data, size_t length) {
     const struct uo_packet_account_login *p = data;
+    struct connection *c = ls->connection;
     const struct config *config = c->instance->config;
     int ret;
 
     assert(length == sizeof(*p));
-    assert(sizeof(p->username) == sizeof(c->username));
-    assert(sizeof(p->password) == sizeof(c->password));
+    assert(sizeof(p->username) == sizeof(ls->connection->username));
+    assert(sizeof(p->password) == sizeof(ls->connection->password));
 
     if (c->in_game)
         return PA_DISCONNECT;
@@ -288,14 +306,14 @@ static packet_action_t handle_account_login(struct connection *c,
             p2->game_servers[i].address = sin->sin_addr.s_addr;
         }
 
-        uo_server_send(c->current_server->server, p2, length);
+        uo_server_send(ls->server, p2, length);
         free(p2);
 
         return PA_DROP;
     }
 
     ret = connection_client_connect(c, config->login_address,
-                                    uo_server_seed(c->current_server->server));
+                                    uo_server_seed(ls->server));
     if (ret != 0) {
         struct uo_packet_account_login_reject response;
 
@@ -305,7 +323,7 @@ static packet_action_t handle_account_login(struct connection *c,
         response.cmd = PCK_AccountLoginReject;
         response.reason = 0x02; /* blocked */
 
-        uo_server_send(c->current_server->server, &response,
+        uo_server_send(ls->server, &response,
                        sizeof(response));
         return PA_DROP;
     }
@@ -313,55 +331,59 @@ static packet_action_t handle_account_login(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_game_login(struct connection *c,
-                                         const void *data, size_t length) {
+static packet_action_t
+handle_game_login(struct linked_server *ls,
+                  const void *data, size_t length)
+{
     const struct uo_packet_game_login *p = data;
 
     assert(length == sizeof(*p));
-    assert(sizeof(p->username) == sizeof(c->username));
-    assert(sizeof(p->password) == sizeof(c->password));
+    assert(sizeof(p->username) == sizeof(ls->connection->username));
+    assert(sizeof(p->password) == sizeof(ls->connection->password));
 
     /* valid uoproxy clients will never send this packet, as we're
        hiding the Relay packets from them */
     return PA_DISCONNECT;
 }
 
-static packet_action_t handle_play_character(struct connection *c,
-                                             const void *data, size_t length) {
+static packet_action_t
+handle_play_character(struct linked_server *ls,
+                      const void *data, size_t length)
+{
     const struct uo_packet_play_character *p = data;
 
     assert(length == sizeof(*p));
 
-    if (c->current_server->attaching) {
+    if (ls->attaching) {
         if (verbose >= 2)
             printf("attaching connection, stage II\n");
-        attach_after_play_character(c, c->current_server);
+        attach_after_play_character(ls);
         return PA_DROP;
     }
 
-    c->character_index = ntohl(p->slot);
+    ls->connection->character_index = ntohl(p->slot);
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_play_server(struct connection *c,
-                                          const void *data, size_t length) {
+static packet_action_t
+handle_play_server(struct linked_server *ls,
+                   const void *data, size_t length)
+{
     const struct uo_packet_play_server *p = data;
-    struct connection *c2;
+    struct connection *c = ls->connection, *c2;
 
     assert(length == sizeof(*p));
 
     if (c->in_game)
         return PA_DISCONNECT;
 
-    assert(c->current_server->siblings.next == &c->servers);
+    assert(ls->siblings.next == &c->servers);
 
     c->server_index = ntohs(p->index);
 
     c2 = find_attach_connection(c);
     if (c2 != NULL) {
-        struct linked_server *ls = c->current_server;
-
         /* remove the object from the old connection */
         connection_server_remove(c, ls);
         connection_invalidate(c);
@@ -413,19 +435,23 @@ static packet_action_t handle_play_server(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_spy(struct connection *c,
-                                  const void *data, size_t length) {
+static packet_action_t
+handle_spy(struct linked_server *ls,
+           const void *data, size_t length)
+{
     (void)data;
     (void)length;
 
-    if (c->instance->config->antispy)
+    if (ls->connection->instance->config->antispy)
         return PA_DROP;
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_talk_unicode(struct connection *c,
-                                           const void *data, size_t length) {
+static packet_action_t
+handle_talk_unicode(struct linked_server *ls,
+                    const void *data, size_t length)
+{
     const struct uo_packet_talk_unicode *p = data;
 
     if (length < sizeof(*p))
@@ -447,7 +473,7 @@ static packet_action_t handle_talk_unicode(struct connection *c,
             return PA_DISCONNECT;
 
         /* the text may be UTF-8, but we ignore that for now */
-        return handle_talk(c, t);
+        return handle_talk(ls, t);
     } else {
         size_t text_length = (length - sizeof(*p)) / 2;
 
@@ -456,15 +482,17 @@ static packet_action_t handle_talk_unicode(struct connection *c,
 
             t = simple_unicode_to_ascii(msg, p->text, text_length);
             if (t != NULL)
-                return handle_talk(c, t);
+                return handle_talk(ls, t);
         }
     }
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_gump_response(struct connection *c,
-                                            const void *data, size_t length) {
+static packet_action_t
+handle_gump_response(struct linked_server *ls,
+                     const void *data, size_t length)
+{
     const struct uo_packet_gump_response *p = data;
     struct uo_packet_close_gump close = {
         .cmd = PCK_Extended,
@@ -477,16 +505,17 @@ static packet_action_t handle_gump_response(struct connection *c,
         return PA_DISCONNECT;
 
     /* close the gump on all other clients */
-    connection_broadcast_servers_except(c, &close, sizeof(close),
-                                        c->current_server->server);
+    connection_broadcast_servers_except(ls->connection, &close, sizeof(close),
+                                        ls->server);
 
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_client_version(struct connection *c,
-                                             const void *data, size_t length) {
-    (void)data;
-    (void)length;
+static packet_action_t
+handle_client_version(struct linked_server *ls,
+                      const void *data, size_t length)
+{
+    struct connection *c = ls->connection;
 
     if (c->instance->config->client_version != NULL) {
         struct uo_packet_client_version *p;
@@ -521,11 +550,11 @@ static packet_action_t handle_client_version(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_extended(struct connection *c,
-                                       const void *data, size_t length) {
+static packet_action_t
+handle_extended(struct linked_server *ls __attr_unused,
+                const void *data, size_t length)
+{
     const struct uo_packet_extended *p = data;
-
-    (void)c;
 
     if (length < sizeof(*p))
         return PA_DISCONNECT;
@@ -537,18 +566,17 @@ static packet_action_t handle_extended(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_hardware(struct connection *c,
-                                       const void *data, size_t length) {
-    (void)data;
-    (void)length;
-
-    if (c->instance->config->antispy)
+static packet_action_t
+handle_hardware(struct linked_server *ls,
+                const void *data __attr_unused, size_t length __attr_unused)
+{
+    if (ls->connection->instance->config->antispy)
         return PA_DROP;
 
     return PA_ACCEPT;
 }
 
-struct packet_binding client_packet_bindings[] = {
+struct server_packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Walk,
       .handler = handle_walk,
     },
