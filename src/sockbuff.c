@@ -33,7 +33,6 @@ int sock_buff_create(int fd, size_t input_max,
                      void *handler_ctx,
                      struct sock_buff **sbp) {
     struct sock_buff *sb;
-    int ret;
 
     assert(handler != NULL);
     assert(handler->data != NULL);
@@ -46,15 +45,15 @@ int sock_buff_create(int fd, size_t input_max,
     sb->fd = fd;
     sb->event.ev_events = 0;
 
-    ret = fifo_buffer_new(input_max, &sb->input);
-    if (ret < 0) {
+    sb->input = fifo_buffer_new(input_max);
+    if (sb->input == NULL) {
         free(sb);
         return ENOMEM;
     }
 
-    ret = fifo_buffer_new(output_max, &sb->output);
-    if (ret < 0) {
-        fifo_buffer_delete(&sb->input);
+    sb->output = fifo_buffer_new(output_max);
+    if (sb->output == NULL) {
+        fifo_buffer_free(sb->input);
         free(sb);
         return ENOMEM;
     }
@@ -89,8 +88,8 @@ void sock_buff_dispose(struct sock_buff *sb) {
     event_del(&sb->event);
     close(sb->fd);
 
-    fifo_buffer_delete(&sb->input);
-    fifo_buffer_delete(&sb->output);
+    fifo_buffer_free(sb->input);
+    fifo_buffer_free(sb->output);
     free(sb);
 }
 

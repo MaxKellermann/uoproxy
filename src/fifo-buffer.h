@@ -29,11 +29,11 @@ typedef struct fifo_buffer *fifo_buffer_t;
 extern "C" {
 #endif
 
-int
-fifo_buffer_new(size_t size, fifo_buffer_t *buffer_r);
+fifo_buffer_t
+fifo_buffer_new(size_t size);
 
 void
-fifo_buffer_delete(fifo_buffer_t *buffer_r);
+fifo_buffer_free(fifo_buffer_t buffer);
 
 void
 fifo_buffer_clear(fifo_buffer_t buffer);

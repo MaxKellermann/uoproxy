@@ -179,8 +179,8 @@ int uo_client_create(const struct addrinfo *server_address,
     }
 
     uo_decompression_init(&client->decompression);
-    ret = fifo_buffer_new(65536, &client->decompressed_buffer);
-    if (ret < 0) {
+    client->decompressed_buffer = fifo_buffer_new(65536);
+    if (client->decompressed_buffer == NULL) {
         uo_client_dispose(client);
         return ENOMEM;
     }
@@ -202,7 +202,7 @@ int uo_client_create(const struct addrinfo *server_address,
 }
 
 void uo_client_dispose(struct uo_client *client) {
-    fifo_buffer_delete(&client->decompressed_buffer);
+    fifo_buffer_free(client->decompressed_buffer);
 
     if (client->sock != NULL)
         sock_buff_dispose(client->sock);
