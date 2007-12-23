@@ -87,9 +87,7 @@ connection_try_reconnect(struct connection *c)
         }
     } else {
         /* connect to login server */
-        ret = connection_client_connect(c,
-                                        c->instance->config->login_address,
-                                        0xdeadbeef);
+        ret = connection_client_connect(c, config->login_address, 0xdeadbeef);
         if (ret == 0) {
             struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,
