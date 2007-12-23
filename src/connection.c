@@ -82,6 +82,9 @@ void connection_delete(struct connection *c) {
 
     connection_disconnect(c);
 
+    if (c->reconnecting)
+        event_del(&c->reconnect_event);
+
     free(c);
 }
 
