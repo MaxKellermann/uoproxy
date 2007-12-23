@@ -236,11 +236,11 @@ find_mobile(struct world *world, u_int32_t serial)
     return NULL;
 }
 
-static struct mobile *add_mobile(struct connection *c,
-                                 u_int32_t serial) {
+static struct mobile *
+add_mobile(struct world *world, u_int32_t serial) {
     struct mobile *m;
 
-    m = find_mobile(&c->client.world, serial);
+    m = find_mobile(world, serial);
     if (m != NULL)
         return m;
 
@@ -252,7 +252,7 @@ static struct mobile *add_mobile(struct connection *c,
 
     m->serial = serial;
 
-    list_add(&m->siblings, &c->client.world.mobiles);
+    list_add(&m->siblings, &world->mobiles);
 
     return m;
 }
@@ -273,8 +273,9 @@ static void replace_packet(void **destp, const void *src,
     memcpy(*destp, src, length);
 }
 
-static void read_equipped(struct connection *c,
-                          const struct uo_packet_mobile_incoming *p) {
+static void
+read_equipped(struct world *world,
+              const struct uo_packet_mobile_incoming *p) {
     const char *p0, *i, *end;
     const struct uo_packet_fragment_mobile_item *item;
     struct uo_packet_equip equip = {
@@ -303,7 +304,7 @@ static void read_equipped(struct connection *c,
             item = (const struct uo_packet_fragment_mobile_item*)i;
         }
 
-        world_equip(&c->client.world, &equip);
+        world_equip(world, &equip);
     }
 }
 
@@ -329,14 +330,14 @@ void connection_mobile_incoming(struct connection *c,
         c->client.world.packet_mobile_update.z = p->z;
     }
 
-    m = add_mobile(c, p->serial);
+    m = add_mobile(&c->client.world, p->serial);
     if (m == NULL)
         return;
 
     replace_packet((void**)&m->packet_mobile_incoming,
                    p, ntohs(p->length));
 
-    read_equipped(c, p);
+    read_equipped(&c->client.world, p);
 }
 
 void connection_mobile_status(struct connection *c,
@@ -345,7 +346,7 @@ void connection_mobile_status(struct connection *c,
 
     assert(p->cmd == PCK_MobileStatus);
 
-    m = add_mobile(c, p->serial);
+    m = add_mobile(&c->client.world, p->serial);
     if (m == NULL)
         return;
 
