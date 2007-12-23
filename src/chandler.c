@@ -21,6 +21,7 @@
 #include "instance.h"
 #include "packets.h"
 #include "handler.h"
+#include "cversion.h"
 #include "connection.h"
 #include "client.h"
 #include "server.h"
@@ -529,27 +530,19 @@ handle_client_version(struct linked_server *ls,
         memcpy(ls->client_version, data, length);
 
     if (c->instance->config->client_version != NULL) {
-        struct uo_packet_client_version *p;
-        size_t version_length;
+        struct client_version cv;
+        int ret;
 
         if (c->client.client == NULL || c->client.reconnecting)
             return PA_DROP;
 
-        version_length = strlen(c->instance->config->client_version);
-
-        p = malloc(sizeof(*p) + version_length);
-        if (p == NULL)
+        ret = client_version_set(&cv, c->instance->config->client_version);
+        if (ret < 0)
             return PA_DROP;
 
-        p->cmd = PCK_ClientVersion;
-        p->length = htons(sizeof(*p) + version_length);
-        memcpy(p->version, c->instance->config->client_version,
-               version_length + 1);
+        uo_client_send(c->client.client, cv.packet, cv.packet_length);
 
-        uo_client_send(c->client.client, p,
-                       sizeof(*p) + version_length);
-
-        free(p);
+        client_version_free(&cv);
 
         return PA_DROP;
     } else if (c->client_version == NULL) {
