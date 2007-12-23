@@ -231,6 +231,7 @@ static packet_action_t handle_ping(struct connection *c,
 static packet_action_t handle_account_login(struct connection *c,
                                             const void *data, size_t length) {
     const struct uo_packet_account_login *p = data;
+    const struct config *config = c->instance->config;
     int ret;
 
     assert(length == sizeof(*p));
@@ -254,11 +255,11 @@ static packet_action_t handle_account_login(struct connection *c,
     memcpy(c->username, p->username, sizeof(c->username));
     memcpy(c->password, p->password, sizeof(c->password));
 
-    if (c->instance->config->login_address == NULL &&
-        c->instance->config->game_servers != NULL &&
-        c->instance->config->num_game_servers > 0) {
-        unsigned i, num_game_servers = c->instance->config->num_game_servers;
-        struct game_server_config *game_servers = c->instance->config->game_servers;
+    if (config->login_address == NULL &&
+        config->game_servers != NULL &&
+        config->num_game_servers > 0) {
+        unsigned i, num_game_servers = config->num_game_servers;
+        struct game_server_config *game_servers = config->game_servers;
         struct uo_packet_server_list *p2;
         struct sockaddr_in *sin;
 
@@ -293,7 +294,7 @@ static packet_action_t handle_account_login(struct connection *c,
         return PA_DROP;
     }
 
-    ret = connection_client_connect(c, c->instance->config->login_address,
+    ret = connection_client_connect(c, config->login_address,
                                     uo_server_seed(c->current_server->server));
     if (ret != 0) {
         struct uo_packet_account_login_reject response;
