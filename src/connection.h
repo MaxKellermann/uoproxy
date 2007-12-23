@@ -153,8 +153,6 @@ int connection_new(struct instance *instance,
                    int server_socket,
                    struct connection **connectionp);
 
-void connection_delete(struct connection *c);
-
 #ifdef NDEBUG
 static inline void
 connection_check(const struct connection *c)
@@ -165,7 +163,7 @@ connection_check(const struct connection *c)
 void connection_check(const struct connection *c);
 #endif
 
-void connection_invalidate(struct connection *c);
+void connection_delete(struct connection *c);
 
 void connection_speak_console(struct connection *c, const char *msg);
 

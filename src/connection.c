@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <errno.h>
 
+static void
+connection_free(struct connection *c);
+
 int connection_new(struct instance *instance,
                    int server_socket,
                    struct connection **connectionp) {
@@ -50,7 +53,7 @@ int connection_new(struct instance *instance,
     ls = connection_server_new(c, server_socket);
     if (ls == NULL) {
         ret = -errno;
-        connection_delete(c);
+        connection_free(c);
         return ret;
     }
 
@@ -61,7 +64,9 @@ int connection_new(struct instance *instance,
     return 0;
 }
 
-void connection_delete(struct connection *c) {
+static void
+connection_free(struct connection *c)
+{
     struct linked_server *ls, *n;
 
     connection_check(c);
@@ -98,7 +103,9 @@ void connection_check(const struct connection *c) {
 }
 #endif
 
-void connection_invalidate(struct connection *c) {
+void
+connection_delete(struct connection *c)
+{
     list_del(&c->siblings);
-    connection_delete(c);
+    connection_free(c);
 }

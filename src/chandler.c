@@ -386,7 +386,7 @@ handle_play_server(struct linked_server *ls,
     if (c2 != NULL) {
         /* remove the object from the old connection */
         connection_server_remove(c, ls);
-        connection_invalidate(c);
+        connection_delete(c);
 
         /* attach it to the new connection */
         attach_after_play_server(c2, ls);

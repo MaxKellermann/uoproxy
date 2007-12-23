@@ -50,7 +50,7 @@ client_packet(const void *data, size_t length, void *ctx)
     case PA_DISCONNECT:
         log(2, "aborting connection to server after packet 0x%x\n",
             *(const unsigned char*)data);
-        connection_invalidate(c);
+        connection_delete(c);
         return -1;
     }
 
@@ -69,7 +69,7 @@ client_free(void *ctx)
         connection_reconnect_delayed(c);
     } else {
         log(1, "server disconnected\n");
-        connection_invalidate(c);
+        connection_delete(c);
     }
 }
 

@@ -58,7 +58,7 @@ server_packet(const void *data, size_t length, void *ctx)
             if (c->background)
                 log(1, "backgrounding\n");
             else
-                connection_invalidate(c);
+                connection_delete(c);
         }
         return -1;
     }
@@ -85,7 +85,7 @@ server_free(void *ctx)
     } else {
         log(1, "last client disconnected, removing connection\n");
         connection_server_dispose(c, ls);
-        connection_invalidate(c);
+        connection_delete(c);
     }
 }
 
