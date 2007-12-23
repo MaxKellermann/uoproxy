@@ -70,16 +70,18 @@ static void walk_clear(struct connection_walk_state *state) {
     state->queue_size = 0;
 }
 
-static void walk_cancel(struct connection *c,
-                        struct uo_server *server,
-                        const struct uo_packet_walk *old) {
+static void
+walk_cancel(struct world *world,
+            struct uo_server *server,
+            const struct uo_packet_walk *old)
+{
     struct uo_packet_walk_cancel p = {
         .cmd = PCK_WalkCancel,
         .seq = old->seq,
-        .x = c->client.world.packet_start.x,
-        .y = c->client.world.packet_start.y,
-        .direction = c->client.world.packet_start.direction,
-        .z = c->client.world.packet_start.z,
+        .x = world->packet_start.x,
+        .y = world->packet_start.y,
+        .direction = world->packet_start.direction,
+        .z = world->packet_start.z,
     };
 
     uo_server_send(server, &p, sizeof(p));
@@ -106,14 +108,14 @@ connection_walk_request(struct connection *c,
 
     if (state->server != NULL && state->server != server) {
         printf("rejecting walk\n");
-        walk_cancel(c, server->server, p);
+        walk_cancel(&c->client.world, server->server, p);
         return;
     }
 
     if (state->queue_size >= MAX_WALK_QUEUE) {
         /* XXX */
         printf("queue full\n");
-        walk_cancel(c, server->server, &state->queue[0].packet);
+        walk_cancel(&c->client.world, server->server, &state->queue[0].packet);
         walk_shift(state);
     }
 
