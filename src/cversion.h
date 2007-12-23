@@ -23,9 +23,16 @@
 
 #include <stddef.h>
 
+enum protocol_version {
+    PROTOCOL_UNKNOWN = 0,
+    PROTOCOL_5,
+    PROTOCOL_6,
+};
+
 struct client_version {
     struct uo_packet_client_version *packet;
     size_t packet_length;
+    enum protocol_version protocol;
 };
 
 static inline int

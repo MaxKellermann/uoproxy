@@ -32,6 +32,48 @@ client_version_free(struct client_version *cv)
         free(cv->packet);
 }
 
+static int
+client_version_compare(const char *a, const char *b)
+{
+    char *a_endptr, *b_endptr;
+    unsigned long a_int, b_int;
+
+    assert(a != NULL);
+    assert(b != NULL);
+
+    while (1) {
+        a_int = strtoul(a, &a_endptr, 10);
+        b_int = strtoul(b, &b_endptr, 10);
+
+        if (a_int < b_int)
+            return -1;
+        if (a_int > b_int)
+            return 1;
+
+        if (*a_endptr < *b_endptr)
+            return -1;
+        if (*a_endptr > *b_endptr)
+            return 1;
+
+        if (*a_endptr == 0)
+            return 0;
+
+        a = a_endptr + 1;
+        b = b_endptr + 1;
+    }
+}
+
+static enum protocol_version
+determine_protocol_version(const char *version)
+{
+    if (client_version_compare(version, "6") >= 0)
+        return PROTOCOL_6;
+    else if (client_version_compare(version, "1") >= 0)
+        return PROTOCOL_5;
+    else
+        return PROTOCOL_UNKNOWN;
+}
+
 int
 client_version_copy(struct client_version *cv,
                     const struct uo_packet_client_version *packet,
@@ -47,6 +89,8 @@ client_version_copy(struct client_version *cv,
     cv->packet_length = length;
 
     memcpy(cv->packet, packet, length);
+
+    cv->protocol = determine_protocol_version(packet->version);
     return 1;
 }
 
@@ -63,5 +107,7 @@ client_version_set(struct client_version *cv,
     cv->packet->cmd = PCK_ClientVersion;
     cv->packet->length = htons(sizeof(*cv->packet) + length);
     memcpy(cv->packet->version, version, length + 1);
+
+    cv->protocol = determine_protocol_version(version);
     return 1;
 }
