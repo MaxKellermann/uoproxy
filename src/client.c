@@ -298,9 +298,6 @@ void uo_client_dispose(struct uo_client *client) {
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length) {
-    void *dest;
-    size_t max_length;
-
     assert(client->sock != NULL || uo_client_is_aborted(client));
     assert(length > 0);
 
@@ -316,14 +313,5 @@ void uo_client_send(struct uo_client *client,
     if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = 1;
 
-    dest = fifo_buffer_write(client->sock->output, &max_length);
-    if (dest == NULL || length > max_length) {
-        fprintf(stderr, "output buffer full in uo_client_send()\n");
-        uo_client_abort(client);
-        return;
-    }
-
-    memcpy(dest, src, length);
-    fifo_buffer_append(client->sock->output, length);
-    sock_buff_flush(client->sock);
+    sock_buff_send(client->sock, src, length);
 }

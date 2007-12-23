@@ -71,4 +71,7 @@ sock_buff_event_setup(struct sock_buff *sb);
  */
 int sock_buff_flush(struct sock_buff *sb);
 
+void
+sock_buff_send(struct sock_buff *sb, const void *data, size_t length);
+
 #endif

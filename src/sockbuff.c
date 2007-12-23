@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 
 int sock_buff_create(int fd, size_t input_max,
@@ -195,4 +196,23 @@ sock_buff_event_setup(struct sock_buff *sb)
         event_set(&sb->event, sb->fd, event, sock_buff_event_callback, sb);
         event_add(&sb->event, NULL);
     }
+}
+
+void
+sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
+{
+    void *dest;
+    size_t max_length;
+
+    dest = fifo_buffer_write(sb->output, &max_length);
+    if (dest == NULL || length > max_length) {
+        sock_buff_invoke_free(sb, ENOSPC);
+        return;
+    }
+
+    memcpy(dest, data, length);
+
+    fifo_buffer_append(sb->output, length);
+
+    sock_buff_flush(sb);
 }

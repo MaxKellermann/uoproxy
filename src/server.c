@@ -239,9 +239,6 @@ uint32_t uo_server_seed(const struct uo_server *server) {
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length) {
-    void *dest;
-    size_t max_length;
-
     assert(server->sock != NULL || uo_server_is_aborted(server));
     assert(length > 0);
     assert(get_packet_length(src, length) == length);
@@ -255,15 +252,17 @@ void uo_server_send(struct uo_server *server,
     fflush(stdout);
 #endif
 
-    dest = fifo_buffer_write(server->sock->output, &max_length);
-    if (dest == NULL) {
-        fprintf(stderr, "output buffer full in uo_server_send()\n");
-        uo_server_abort(server);
-        return;
-    }
-
     if (server->compression_enabled) {
+        void *dest;
+        size_t max_length;
         ssize_t nbytes;
+
+        dest = fifo_buffer_write(server->sock->output, &max_length);
+        if (dest == NULL) {
+            fprintf(stderr, "output buffer full in uo_server_send()\n");
+            uo_server_abort(server);
+            return;
+        }
 
         nbytes = uo_compress(dest, max_length, src, length);
         if (nbytes < 0) {
@@ -273,16 +272,9 @@ void uo_server_send(struct uo_server *server,
         }
 
         fifo_buffer_append(server->sock->output, (size_t)nbytes);
+
+        sock_buff_flush(server->sock);
     } else {
-        if (length > max_length) {
-            fprintf(stderr, "output buffer full in uo_server_send()\n");
-            uo_server_abort(server);
-            return;
-        }
-
-        memcpy(dest, src, length);
-        fifo_buffer_append(server->sock->output, length);
+        sock_buff_send(server->sock, src, length);
     }
-
-    sock_buff_flush(server->sock);
 }
