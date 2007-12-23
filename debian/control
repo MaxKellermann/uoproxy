@@ -3,7 +3,7 @@ Section: games
 Priority: extra
 Maintainer: Max Kellermann <max@duempel.org>
 Build-Depends: debhelper (>= 5), libevent-dev (>= 1.1)
-Standards-Version: 3.7.2
+Standards-Version: 3.7.3
 
 Package: uoproxy
 Architecture: any
