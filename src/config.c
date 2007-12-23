@@ -119,7 +119,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         {0,0,0,0}
     };
 #endif
-    u_int16_t bind_port = 0;
+    uint16_t bind_port = 0;
     const char *login_address = NULL;
     struct addrinfo hints;
 #ifndef DISABLE_DAEMON_CODE

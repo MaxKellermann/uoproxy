@@ -38,12 +38,12 @@
 
 #define TALK_MAX 128
 
-static char *simple_unicode_to_ascii(char *dest, const u_int16_t *src,
+static char *simple_unicode_to_ascii(char *dest, const uint16_t *src,
                                      size_t length) {
     size_t position;
 
     for (position = 0; position < length && src[position] != 0; position++) {
-        u_int16_t ch = ntohs(src[position]);
+        uint16_t ch = ntohs(src[position]);
         if (ch & 0xff00)
             return NULL;
 
@@ -140,7 +140,7 @@ handle_use(struct linked_server *ls,
         if (i == NULL) {
             printf("Use 0x%x\n", ntohl(p->serial));
         } else {
-            u_int16_t item_id;
+            uint16_t item_id;
 
             if (i->packet_world_item.cmd == PCK_WorldItem)
                 item_id = i->packet_world_item.item_id;
@@ -455,7 +455,7 @@ handle_talk_unicode(struct linked_server *ls,
         return PA_DISCONNECT;
 
     if (p->type == 0xc0) {
-        u_int16_t value = ntohs(p->text[0]);
+        uint16_t value = ntohs(p->text[0]);
         unsigned num_keywords = (value & 0xfff0) >> 4;
         unsigned skip_bits = (num_keywords + 1) * 12;
         unsigned skip_bytes = 12 + (skip_bits + 7) / 8;

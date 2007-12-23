@@ -107,7 +107,7 @@ connection_ping_event_callback(int fd __attr_unused,
 int
 connection_client_connect(struct connection *c,
                           const struct addrinfo *server_address,
-                          u_int32_t seed)
+                          uint32_t seed)
 {
     int ret;
     struct timeval tv;

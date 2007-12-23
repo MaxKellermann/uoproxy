@@ -39,8 +39,10 @@ static void walk_shift(struct connection_walk_state *state) {
                 state->queue_size * sizeof(*state->queue));
 }
 
-static const struct connection_walk_item *find_by_seq(struct connection_walk_state *state,
-                                                      u_int8_t seq) {
+static const struct connection_walk_item *
+find_by_seq(struct connection_walk_state *state,
+            uint8_t seq)
+{
     unsigned i;
 
     for (i = 0; i < state->queue_size; i++)

@@ -42,7 +42,7 @@ struct stateful_client {
     struct uo_fragment_character_info characters[MAX_CHARACTERS];
     unsigned num_characters;
 
-    u_int16_t supported_features_flags;
+    uint16_t supported_features_flags;
 
     unsigned char ping_request, ping_ack;
 
@@ -60,14 +60,14 @@ struct linked_server {
 
 struct connection_walk_item {
     struct uo_packet_walk packet;
-    u_int8_t seq;
+    uint8_t seq;
 };
 
 struct connection_walk_state {
     struct linked_server *server;
     struct connection_walk_item queue[MAX_WALK_QUEUE];
     unsigned queue_size;
-    u_int8_t seq_next;
+    uint8_t seq_next;
 };
 
 struct connection {
@@ -170,7 +170,7 @@ void connection_walk_ack(struct connection *c,
 int
 connection_client_connect(struct connection *c,
                           const struct addrinfo *server_address,
-                          u_int32_t seed);
+                          uint32_t seed);
 
 void connection_disconnect(struct connection *c);
 

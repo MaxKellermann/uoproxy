@@ -425,7 +425,7 @@ static packet_action_t handle_account_login_reject(struct connection *c,
     return PA_ACCEPT;
 }
 
-static struct addrinfo *make_addrinfo(u_int32_t ip, in_port_t port) {
+static struct addrinfo *make_addrinfo(uint32_t ip, in_port_t port) {
     struct sockaddr_in sin;
     struct addrinfo *ai = calloc(1, sizeof(*ai) + sizeof(sin));
 

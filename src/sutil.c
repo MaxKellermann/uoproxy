@@ -38,10 +38,10 @@ static void write_fixed_string(char *dest, size_t max_length,
 }
 
 void uo_server_speak_ascii(struct uo_server *server,
-                           u_int32_t serial,
+                           uint32_t serial,
                            int16_t graphic,
-                           u_int8_t type,
-                           u_int16_t hue, u_int16_t font,
+                           uint8_t type,
+                           uint16_t hue, uint16_t font,
                            const char *name,
                            const char *text) {
     struct uo_packet_speak_ascii *p;

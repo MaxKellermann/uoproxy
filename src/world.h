@@ -27,7 +27,7 @@
 struct item {
     struct list_head siblings;
 
-    u_int32_t serial;
+    uint32_t serial;
     struct uo_packet_world_item packet_world_item;
     struct uo_packet_equip packet_equip;
     struct uo_packet_container_open packet_container_open;
@@ -38,7 +38,7 @@ struct item {
 struct mobile {
     struct list_head siblings;
 
-    u_int32_t serial;
+    uint32_t serial;
     struct uo_packet_mobile_incoming *packet_mobile_incoming;
     struct uo_packet_mobile_status *packet_mobile_status;
 };
@@ -67,7 +67,7 @@ struct world {
 };
 
 struct item *
-world_find_item(struct world *world, u_int32_t serial);
+world_find_item(struct world *world, uint32_t serial);
 
 void
 world_world_item(struct world *world,
@@ -116,10 +116,10 @@ void
 world_remove_mobile(struct mobile *mobile);
 
 void
-world_remove_serial(struct world *world, u_int32_t serial);
+world_remove_serial(struct world *world, uint32_t serial);
 
 void
-world_walked(struct world *world, u_int16_t x, u_int16_t y,
-             u_int8_t direction, u_int8_t notoriety);
+world_walked(struct world *world, uint16_t x, uint16_t y,
+             uint8_t direction, uint8_t notoriety);
 
 #endif
