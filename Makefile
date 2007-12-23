@@ -32,7 +32,8 @@ endif
 
 SOURCES = src/uoproxy.c src/config.c src/instance.c \
 	src/daemon.c src/log.c \
-	src/fifo-buffer.c src/buffered-io.c src/sockbuff.c \
+	src/fifo-buffer.c src/sockbuff.c \
+	src/buffered-io.c src/socket-util.c \
 	src/netutil.c \
 	src/server.c src/client.c \
 	src/packets.c src/compression.c \

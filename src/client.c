@@ -26,6 +26,7 @@
 #include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"
+#include "socket-util.h"
 
 #include <sys/socket.h>
 #include <assert.h>
@@ -157,6 +158,13 @@ int uo_client_create(const struct addrinfo *server_address,
 
     ret = connect(sockfd, server_address->ai_addr,
                   server_address->ai_addrlen);
+    if (ret < 0) {
+        int save_errno = errno;
+        close(sockfd);
+        return save_errno;
+    }
+
+    ret = socket_set_nonblock(sockfd, 1);
     if (ret < 0) {
         int save_errno = errno;
         close(sockfd);
@@ -333,5 +341,5 @@ void uo_client_send(struct uo_client *client,
 
     memcpy(dest, src, length);
     fifo_buffer_append(client->sock->output, length);
-    sock_buff_event_setup(client->sock);
+    sock_buff_flush(client->sock);
 }

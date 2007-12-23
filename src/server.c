@@ -26,6 +26,7 @@
 #include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"
+#include "socket-util.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -147,6 +148,10 @@ int uo_server_create(int sockfd,
     assert(handler != NULL);
     assert(handler->packet != NULL);
     assert(handler->free != NULL);
+
+    ret = socket_set_nonblock(sockfd, 1);
+    if (ret < 0)
+        return errno;
 
     server = (struct uo_server*)calloc(1, sizeof(*server));
     if (server == NULL)
@@ -303,5 +308,5 @@ void uo_server_send(struct uo_server *server,
         fifo_buffer_append(server->sock->output, length);
     }
 
-    sock_buff_event_setup(server->sock);
+    sock_buff_flush(server->sock);
 }
