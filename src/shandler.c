@@ -98,7 +98,7 @@ static packet_action_t handle_mobile_status(struct connection *c,
 
     (void)length;
 
-    connection_mobile_status(c, p);
+    world_mobile_status(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -159,7 +159,7 @@ static packet_action_t handle_mobile_update(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_mobile_update(c, p);
+    world_mobile_update(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -332,7 +332,7 @@ static packet_action_t handle_zone_change(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_mobile_zone(c, p);
+    world_mobile_zone(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -343,7 +343,7 @@ static packet_action_t handle_mobile_moving(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    connection_mobile_moving(c, p);
+    world_mobile_moving(&c->client.world, p);
 
     return PA_ACCEPT;
 }
@@ -355,7 +355,7 @@ static packet_action_t handle_mobile_incoming(struct connection *c,
     if (length < sizeof(*p) - sizeof(p->items))
         return PA_DISCONNECT;
 
-    connection_mobile_incoming(c, p);
+    world_mobile_incoming(&c->client.world, p);
 
     return PA_ACCEPT;
 }

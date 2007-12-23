@@ -220,20 +220,25 @@ world_remove_item(struct world *world, u_int32_t serial);
 
 void connection_delete_items(struct connection *c);
 
-void connection_mobile_incoming(struct connection *c,
-                                const struct uo_packet_mobile_incoming *p);
+void
+world_mobile_incoming(struct world *world,
+                      const struct uo_packet_mobile_incoming *p);
 
-void connection_mobile_status(struct connection *c,
-                              const struct uo_packet_mobile_status *p);
+void
+world_mobile_status(struct world *world,
+                    const struct uo_packet_mobile_status *p);
 
-void connection_mobile_update(struct connection *c,
-                              const struct uo_packet_mobile_update *p);
+void
+world_mobile_update(struct world *world,
+                    const struct uo_packet_mobile_update *p);
 
-void connection_mobile_moving(struct connection *c,
-                              const struct uo_packet_mobile_moving *p);
+void
+world_mobile_moving(struct world *world,
+                    const struct uo_packet_mobile_moving *p);
 
-void connection_mobile_zone(struct connection *c,
-                            const struct uo_packet_zone_change *p);
+void
+world_mobile_zone(struct world *world,
+                  const struct uo_packet_zone_change *p);
 
 void
 world_remove_mobile(struct world *world, u_int32_t serial);

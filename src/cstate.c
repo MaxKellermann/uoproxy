@@ -275,7 +275,8 @@ static void replace_packet(void **destp, const void *src,
 
 static void
 read_equipped(struct world *world,
-              const struct uo_packet_mobile_incoming *p) {
+              const struct uo_packet_mobile_incoming *p)
+{
     const char *p0, *i, *end;
     const struct uo_packet_fragment_mobile_item *item;
     struct uo_packet_equip equip = {
@@ -308,45 +309,49 @@ read_equipped(struct world *world,
     }
 }
 
-void connection_mobile_incoming(struct connection *c,
-                                const struct uo_packet_mobile_incoming *p) {
+void
+world_mobile_incoming(struct world *world,
+                      const struct uo_packet_mobile_incoming *p)
+{
     struct mobile *m;
 
     assert(p->cmd == PCK_MobileIncoming);
 
-    if (p->serial == c->client.world.packet_start.serial) {
+    if (p->serial == world->packet_start.serial) {
         /* update player's mobile */
-        c->client.world.packet_start.body = p->body;
-        c->client.world.packet_start.x = p->x;
-        c->client.world.packet_start.y = p->y;
-        c->client.world.packet_start.z = htons(p->z);
-        c->client.world.packet_start.direction = p->direction;
+        world->packet_start.body = p->body;
+        world->packet_start.x = p->x;
+        world->packet_start.y = p->y;
+        world->packet_start.z = htons(p->z);
+        world->packet_start.direction = p->direction;
 
-        c->client.world.packet_mobile_update.body = p->body;
-        c->client.world.packet_mobile_update.hue = p->hue;
-        c->client.world.packet_mobile_update.x = p->x;
-        c->client.world.packet_mobile_update.y = p->y;
-        c->client.world.packet_mobile_update.direction = p->direction;
-        c->client.world.packet_mobile_update.z = p->z;
+        world->packet_mobile_update.body = p->body;
+        world->packet_mobile_update.hue = p->hue;
+        world->packet_mobile_update.x = p->x;
+        world->packet_mobile_update.y = p->y;
+        world->packet_mobile_update.direction = p->direction;
+        world->packet_mobile_update.z = p->z;
     }
 
-    m = add_mobile(&c->client.world, p->serial);
+    m = add_mobile(world, p->serial);
     if (m == NULL)
         return;
 
     replace_packet((void**)&m->packet_mobile_incoming,
                    p, ntohs(p->length));
 
-    read_equipped(&c->client.world, p);
+    read_equipped(world, p);
 }
 
-void connection_mobile_status(struct connection *c,
-                              const struct uo_packet_mobile_status *p) {
+void
+world_mobile_status(struct world *world,
+                    const struct uo_packet_mobile_status *p)
+{
     struct mobile *m;
 
     assert(p->cmd == PCK_MobileStatus);
 
-    m = add_mobile(&c->client.world, p->serial);
+    m = add_mobile(world, p->serial);
     if (m == NULL)
         return;
 
@@ -357,22 +362,24 @@ void connection_mobile_status(struct connection *c,
                        p, ntohs(p->length));
 }
 
-void connection_mobile_update(struct connection *c,
-                              const struct uo_packet_mobile_update *p) {
+void
+world_mobile_update(struct world *world,
+                    const struct uo_packet_mobile_update *p)
+{
     struct mobile *m;
 
-    if (c->client.world.packet_start.serial == p->serial) {
+    if (world->packet_start.serial == p->serial) {
         /* update player's mobile */
-        c->client.world.packet_mobile_update = *p;
+        world->packet_mobile_update = *p;
 
-        c->client.world.packet_start.body = p->body;
-        c->client.world.packet_start.x = p->x;
-        c->client.world.packet_start.y = p->y;
-        c->client.world.packet_start.z = htons(p->z);
-        c->client.world.packet_start.direction = p->direction;
+        world->packet_start.body = p->body;
+        world->packet_start.x = p->x;
+        world->packet_start.y = p->y;
+        world->packet_start.z = htons(p->z);
+        world->packet_start.direction = p->direction;
     }
 
-    m = find_mobile(&c->client.world, p->serial);
+    m = find_mobile(world, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
                 ntohl(p->serial));
@@ -390,27 +397,29 @@ void connection_mobile_update(struct connection *c,
     }
 }
 
-void connection_mobile_moving(struct connection *c,
-                              const struct uo_packet_mobile_moving *p) {
+void
+world_mobile_moving(struct world *world,
+                    const struct uo_packet_mobile_moving *p)
+{
     struct mobile *m;
 
-    if (c->client.world.packet_start.serial == p->serial) {
+    if (world->packet_start.serial == p->serial) {
         /* update player's mobile */
-        c->client.world.packet_start.body = p->body;
-        c->client.world.packet_start.x = p->x;
-        c->client.world.packet_start.y = p->y;
-        c->client.world.packet_start.z = htons(p->z);
-        c->client.world.packet_start.direction = p->direction;
+        world->packet_start.body = p->body;
+        world->packet_start.x = p->x;
+        world->packet_start.y = p->y;
+        world->packet_start.z = htons(p->z);
+        world->packet_start.direction = p->direction;
 
-        c->client.world.packet_mobile_update.body = p->body;
-        c->client.world.packet_mobile_update.hue = p->hue;
-        c->client.world.packet_mobile_update.x = p->x;
-        c->client.world.packet_mobile_update.y = p->y;
-        c->client.world.packet_mobile_update.direction = p->direction;
-        c->client.world.packet_mobile_update.z = p->z;
+        world->packet_mobile_update.body = p->body;
+        world->packet_mobile_update.hue = p->hue;
+        world->packet_mobile_update.x = p->x;
+        world->packet_mobile_update.y = p->y;
+        world->packet_mobile_update.direction = p->direction;
+        world->packet_mobile_update.z = p->z;
     }
 
-    m = find_mobile(&c->client.world, p->serial);
+    m = find_mobile(world, p->serial);
     if (m == NULL) {
         fprintf(stderr, "warning in connection_mobile_moving: no such mobile 0x%x\n",
                 ntohl(p->serial));
@@ -430,15 +439,17 @@ void connection_mobile_moving(struct connection *c,
     }
 }
 
-void connection_mobile_zone(struct connection *c,
-                            const struct uo_packet_zone_change *p) {
-    c->client.world.packet_start.x = p->x;
-    c->client.world.packet_start.y = p->y;
-    c->client.world.packet_start.z = p->z;
+void
+world_mobile_zone(struct world *world,
+                  const struct uo_packet_zone_change *p)
+{
+    world->packet_start.x = p->x;
+    world->packet_start.y = p->y;
+    world->packet_start.z = p->z;
 
-    c->client.world.packet_mobile_update.x = p->x;
-    c->client.world.packet_mobile_update.y = p->y;
-    c->client.world.packet_mobile_update.z = ntohs(p->z);
+    world->packet_mobile_update.x = p->x;
+    world->packet_mobile_update.y = p->y;
+    world->packet_mobile_update.z = ntohs(p->z);
 }
 
 static void free_mobile(struct mobile *m) {
