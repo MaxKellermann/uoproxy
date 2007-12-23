@@ -18,13 +18,12 @@
  *
  */
 
-#include <sys/types.h>
+#include "server.h"
+#include "packets.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <netinet/in.h>
-
-#include "server.h"
-#include "packets.h"
 
 static void write_fixed_string(char *dest, size_t max_length,
                                const char *src) {

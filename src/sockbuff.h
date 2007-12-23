@@ -23,6 +23,7 @@
 
 #include "fifo-buffer.h"
 
+#include <sys/types.h>
 #include <event.h>
 
 struct sock_buff_handler {

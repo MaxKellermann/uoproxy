@@ -18,16 +18,15 @@
  *
  */
 
-#include "compiler.h"
-
-#include <assert.h>
-#include <time.h>
-
 #include "connection.h"
 #include "instance.h"
 #include "client.h"
 #include "config.h"
 #include "log.h"
+#include "compiler.h"
+
+#include <assert.h>
+#include <time.h>
 
 void connection_disconnect(struct connection *c) {
     if (c->client.client == NULL)

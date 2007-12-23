@@ -18,8 +18,6 @@
  *
  */
 
-#include <stdio.h>
-
 #include "dump.h"
 
 void fhexdump(FILE *stream, const char *indent,

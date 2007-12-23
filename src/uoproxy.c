@@ -18,21 +18,19 @@
  *
  */
 
+#include "instance.h"
+#include "connection.h"
+#include "config.h"
+#include "version.h"
 #include "compiler.h"
 #include "log.h"
 
-#include <sys/types.h>
 #include <sys/signal.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "connection.h"
-#include "config.h"
-#include "instance.h"
-#include "version.h"
 
 static void
 deinit_signals(struct instance *instance)

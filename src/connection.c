@@ -18,16 +18,15 @@
  *
  */
 
+#include "connection.h"
+#include "instance.h"
+#include "server.h"
+#include "config.h"
+
 #include <assert.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-
-#include "instance.h"
-#include "connection.h"
-#include "server.h"
-#include "config.h"
 
 int connection_new(struct instance *instance,
                    int server_socket,

@@ -18,11 +18,15 @@
  *
  */
 
+#include "client.h"
+#include "sockbuff.h"
+#include "compression.h"
+#include "packets.h"
+#include "dump.h"
 #include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <assert.h>
 #include <errno.h>
@@ -30,12 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-
-#include "client.h"
-#include "sockbuff.h"
-#include "compression.h"
-#include "packets.h"
-#include "dump.h"
 
 #include <event.h>
 

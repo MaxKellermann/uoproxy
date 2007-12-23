@@ -18,11 +18,17 @@
  *
  */
 
+#include "handler.h"
+#include "instance.h"
+#include "packets.h"
+#include "connection.h"
+#include "server.h"
+#include "client.h"
+#include "config.h"
 #include "log.h"
 #include "version.h"
 #include "compiler.h"
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <assert.h>
 #include <netinet/in.h>
@@ -30,14 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
-
-#include "instance.h"
-#include "packets.h"
-#include "handler.h"
-#include "connection.h"
-#include "server.h"
-#include "client.h"
-#include "config.h"
 
 static void welcome(struct connection *c) {
     struct linked_server *ls;

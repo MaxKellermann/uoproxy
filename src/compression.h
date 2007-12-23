@@ -18,6 +18,11 @@
  *
  */
 
+#ifndef __UOPROXY_COMPRESSION_H
+#define __UOPROXY_COMPRESSION_H
+
+#include <sys/types.h> /* for ssize_t */
+
 struct uo_decompression {
     int bit, treepos, mask;
     unsigned char value;
@@ -31,3 +36,5 @@ ssize_t uo_decompress(struct uo_decompression *de,
 
 ssize_t uo_compress(unsigned char *dest, size_t dest_max_len,
                     const unsigned char *src, size_t src_len);
+
+#endif

@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,12 +18,12 @@
  *
  */
 
-#include <string.h>
-#include <stdio.h>
-
 #include "connection.h"
 #include "server.h"
 #include "client.h"
+
+#include <string.h>
+#include <stdio.h>
 
 static void change_character(struct connection *c,
                              struct linked_server *server,

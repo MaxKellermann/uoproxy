@@ -18,7 +18,10 @@
  *
  */
 
-#include <sys/types.h>
+#include "config.h"
+#include "netutil.h"
+#include "version.h"
+
 #include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,10 +36,6 @@
 #include <pwd.h>
 #include <unistd.h>
 #endif
-
-#include "config.h"
-#include "netutil.h"
-#include "version.h"
 
 int verbose = 1;
 

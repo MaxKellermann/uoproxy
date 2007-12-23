@@ -18,14 +18,14 @@
  *
  */
 
+#include "connection.h"
+#include "packets.h"
+#include "server.h"
+#include "client.h"
+
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-
-#include "packets.h"
-#include "connection.h"
-#include "server.h"
-#include "client.h"
 
 static void walk_shift(struct connection_walk_state *state) {
     assert(state->queue_size > 0);

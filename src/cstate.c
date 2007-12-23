@@ -18,18 +18,17 @@
  *
  */
 
+#include "connection.h"
+#include "server.h"
+
 #include <assert.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "connection.h"
-#include "server.h"
-
 struct item *
 world_find_item(struct world *world,
-                u_int32_t serial)
+                uint32_t serial)
 {
     struct item *item;
 
@@ -42,7 +41,7 @@ world_find_item(struct world *world,
 }
 
 static struct item *
-make_item(struct world *world, u_int32_t serial)
+make_item(struct world *world, uint32_t serial)
 {
     struct item *i;
 
@@ -164,7 +163,7 @@ static void free_item(struct item *i) {
 
 /** deep-delete all items contained in the specified serial */
 static void
-remove_item_tree(struct world *world, u_int32_t parent_serial) {
+remove_item_tree(struct world *world, uint32_t parent_serial) {
     struct item *i, *n;
     struct list_head temp;
 
@@ -190,7 +189,7 @@ remove_item_tree(struct world *world, u_int32_t parent_serial) {
 }
 
 void
-world_remove_item(struct world *world, u_int32_t serial)
+world_remove_item(struct world *world, uint32_t serial)
 {
     struct item *i;
 
@@ -224,7 +223,7 @@ void connection_delete_items(struct connection *c) {
 }
 
 static struct mobile *
-find_mobile(struct world *world, u_int32_t serial)
+find_mobile(struct world *world, uint32_t serial)
 {
     struct mobile *mobile;
 
@@ -237,7 +236,7 @@ find_mobile(struct world *world, u_int32_t serial)
 }
 
 static struct mobile *
-add_mobile(struct world *world, u_int32_t serial) {
+add_mobile(struct world *world, uint32_t serial) {
     struct mobile *m;
 
     m = find_mobile(world, serial);
@@ -469,7 +468,7 @@ static void free_mobile(struct mobile *m) {
 }
 
 void
-world_remove_mobile(struct world *world, u_int32_t serial) {
+world_remove_mobile(struct world *world, uint32_t serial) {
     struct mobile *m;
 
     /* remove this entity */
@@ -502,8 +501,8 @@ void connection_delete_mobiles(struct connection *c) {
 }
 
 void
-world_remove_serial(struct world *world, u_int32_t serial) {
-    u_int32_t host_serial = ntohl(serial);
+world_remove_serial(struct world *world, uint32_t serial) {
+    uint32_t host_serial = ntohl(serial);
 
     if (host_serial < 0x40000000)
         world_remove_mobile(world, serial);
@@ -512,8 +511,8 @@ world_remove_serial(struct world *world, u_int32_t serial) {
 }
 
 void
-world_walked(struct world *world, u_int16_t x, u_int16_t y,
-             u_int8_t direction, u_int8_t notoriety) {
+world_walked(struct world *world, uint16_t x, uint16_t y,
+             uint8_t direction, uint8_t notoriety) {
     struct mobile *m;
 
     world->packet_start.x = x;

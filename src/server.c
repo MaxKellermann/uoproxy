@@ -18,23 +18,21 @@
  *
  */
 
+#include "server.h"
+#include "sockbuff.h"
+#include "compression.h"
+#include "packets.h"
+#include "dump.h"
 #include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"
 
-#include <sys/types.h>
 #include <assert.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-
-#include "server.h"
-#include "sockbuff.h"
-#include "compression.h"
-#include "packets.h"
-#include "dump.h"
 
 #include <event.h>
 
@@ -180,7 +178,7 @@ void uo_server_dispose(struct uo_server *server) {
     free(server);
 }
 
-u_int32_t uo_server_seed(const struct uo_server *server) {
+uint32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
 }
 

@@ -18,6 +18,8 @@
  *
  */
 
+#include "netutil.h"
+
 #include <assert.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -25,8 +27,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "netutil.h"
 
 int getaddrinfo_helper(const char *host_and_port, int default_port,
                        const struct addrinfo *hints,

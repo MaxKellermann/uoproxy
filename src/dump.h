@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@
 
 #ifndef __DUMP_H
 #define __DUMP_H
+
+#include <stddef.h>
+#include <stdio.h>
 
 void fhexdump(FILE *stream, const char *indent,
               const void *data, size_t length);

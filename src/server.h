@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@
 
 #ifndef __SERVER_H
 #define __SERVER_H
+
+#include <stdint.h>
+#include <stddef.h>
 
 struct uo_server;
 
@@ -46,7 +49,7 @@ int uo_server_create(int sockfd,
                      struct uo_server **serverp);
 void uo_server_dispose(struct uo_server *server);
 
-u_int32_t uo_server_seed(const struct uo_server *server);
+uint32_t uo_server_seed(const struct uo_server *server);
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);
@@ -55,10 +58,10 @@ void uo_server_send(struct uo_server *server,
 /* utilities */
 
 void uo_server_speak_ascii(struct uo_server *server,
-                           u_int32_t serial,
+                           uint32_t serial,
                            int16_t graphic,
-                           u_int8_t type,
-                           u_int16_t hue, u_int16_t font,
+                           uint8_t type,
+                           uint16_t hue, uint16_t font,
                            const char *name,
                            const char *text);
 

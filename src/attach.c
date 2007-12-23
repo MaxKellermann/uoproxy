@@ -18,13 +18,13 @@
  *
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "connection.h"
 #include "instance.h"
 #include "server.h"
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
 struct connection *find_attach_connection(struct connection *c) {
     struct connection *c2;
@@ -83,7 +83,7 @@ static void attach_item(struct connection *c,
 
     if (item->packet_container_update.cmd == PCK_ContainerUpdate) {
         /* attach parent first */
-        u_int32_t parent_serial
+        uint32_t parent_serial
             = item->packet_container_update.item.parent_serial;
         struct item *parent = world_find_item(&c->client.world, parent_serial);
         if (parent != NULL &&

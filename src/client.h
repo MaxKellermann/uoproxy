@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@
 
 #ifndef __CLIENT_H
 #define __CLIENT_H
+
+#include <stdint.h>
+#include <stddef.h>
 
 struct addrinfo;
 struct uo_client;
@@ -42,7 +45,7 @@ struct uo_client_handler {
 };
 
 int uo_client_create(const struct addrinfo *server_address,
-                     u_int32_t seed,
+                     uint32_t seed,
                      const struct uo_client_handler *handler,
                      void *handler_ctx,
                      struct uo_client **clientp);

@@ -18,6 +18,7 @@
  *
  */
 
+#include "sockbuff.h"
 #include "compiler.h"
 
 #include <assert.h>
@@ -25,8 +26,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
-
-#include "sockbuff.h"
 
 int sock_buff_create(int fd, size_t input_max,
                      size_t output_max,

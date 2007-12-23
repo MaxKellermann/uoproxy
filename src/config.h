@@ -21,6 +21,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <sys/types.h> /* for uid_t/gid_t */
+
 struct game_server_config {
     char *name;
     struct addrinfo *address;

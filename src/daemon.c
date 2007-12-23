@@ -23,9 +23,10 @@
 
 #ifndef DISABLE_DAEMON_CODE
 
+#include "instance.h"
+#include "config.h"
 #include "log.h"
 
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,9 +35,6 @@
 #include <string.h>
 #include <signal.h>
 #include <grp.h>
-
-#include "config.h"
-#include "instance.h"
 
 #ifdef DISABLE_LOGGING
 #define log(level, ...)
