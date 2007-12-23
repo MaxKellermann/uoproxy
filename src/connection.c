@@ -22,6 +22,7 @@
 #include "instance.h"
 #include "server.h"
 #include "config.h"
+#include "poison.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -87,6 +88,7 @@ connection_free(struct connection *c)
     if (c->client_version != NULL)
         free(c->client_version);
 
+    poison(c, sizeof(*c));
     free(c);
 }
 
