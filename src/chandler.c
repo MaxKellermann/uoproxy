@@ -521,6 +521,13 @@ handle_client_version(struct linked_server *ls,
 {
     struct connection *c = ls->connection;
 
+    if (ls->client_version != NULL)
+        free(ls->client_version);
+
+    ls->client_version = malloc(length);
+    if (ls->client_version != NULL)
+        memcpy(ls->client_version, data, length);
+
     if (c->instance->config->client_version != NULL) {
         struct uo_packet_client_version *p;
         size_t version_length;

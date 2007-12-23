@@ -56,6 +56,8 @@ struct linked_server {
 
     struct uo_server *server;
     int welcome, attaching;
+
+    struct uo_packet_client_version *client_version;
 };
 
 struct connection_walk_item {
