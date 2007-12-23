@@ -596,9 +596,12 @@ handle_client_version(struct connection *c,
         uo_client_send(c->client.client, c->client_version.packet,
                        c->client_version.packet_length);
         return PA_DROP;
+    } else {
+        /* we don't know the version - forward the request to all
+           clients */
+        c->client.version_requested = 1;
+        return PA_ACCEPT;
     }
-
-    return PA_ACCEPT;
 }
 
 static packet_action_t handle_extended(struct connection *c,

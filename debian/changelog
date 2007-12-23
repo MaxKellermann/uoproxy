@@ -7,6 +7,7 @@ uoproxy (0.2) unstable; urgency=low
     servers supporting client version 6
   * use libevent
   * write buffering, enable TCP_NODELAY
+  * forward client version packets only if they were requested by the server
   * do asynchronous writes
 
  --

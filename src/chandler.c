@@ -527,8 +527,12 @@ handle_client_version(struct linked_server *ls,
         client_version_copy(&ls->client_version, p, length);
 
     if (client_version_defined(&c->client_version)) {
-        uo_client_send(c->client.client, c->client_version.packet,
-                       c->client_version.packet_length);
+        if (c->client.version_requested) {
+            uo_client_send(c->client.client, c->client_version.packet,
+                           c->client_version.packet_length);
+            c->client.version_requested = 0;
+        }
+
         return PA_DROP;
     } else {
         client_version_copy(&c->client_version, p, length);

@@ -34,7 +34,7 @@ struct instance;
 struct addrinfo;
 
 struct stateful_client {
-    int reconnecting;
+    int reconnecting, version_requested;
     struct event reconnect_event;
 
     struct uo_client *client;

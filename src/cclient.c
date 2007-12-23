@@ -139,6 +139,8 @@ connection_client_disconnect(struct stateful_client *client)
         client->reconnecting = 0;
     }
 
+    client->version_requested = 0;
+
     event_del(&client->ping_event);
 
     uo_client_dispose(client->client);
