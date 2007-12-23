@@ -188,6 +188,8 @@ int uo_client_create(const struct addrinfo *server_address,
     client->handler = handler;
     client->handler_ctx = handler_ctx;
 
+    *clientp = client;
+
     /* seed must be the first 4 bytes, and it must be flushed */
     uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
     ret = sock_buff_flush(client->sock);
@@ -195,8 +197,6 @@ int uo_client_create(const struct addrinfo *server_address,
         uo_client_dispose(client);
         return ret;
     }
-
-    *clientp = client;
 
     return 0;
 }
