@@ -243,8 +243,9 @@ void connection_delete_mobiles(struct connection *c);
 void
 world_remove_serial(struct world *world, u_int32_t serial);
 
-void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
-                       u_int8_t direction, u_int8_t notoriety);
+void
+world_walked(struct world *world, u_int16_t x, u_int16_t y,
+             u_int8_t direction, u_int8_t notoriety);
 
 /* walk */
 

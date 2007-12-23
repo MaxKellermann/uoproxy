@@ -499,19 +499,20 @@ world_remove_serial(struct world *world, u_int32_t serial) {
         world_remove_item(world, serial);
 }
 
-void connection_walked(struct connection *c, u_int16_t x, u_int16_t y,
-                       u_int8_t direction, u_int8_t notoriety) {
+void
+world_walked(struct world *world, u_int16_t x, u_int16_t y,
+             u_int8_t direction, u_int8_t notoriety) {
     struct mobile *m;
 
-    c->client.world.packet_start.x = x;
-    c->client.world.packet_start.y = y;
-    c->client.world.packet_start.direction = direction;
+    world->packet_start.x = x;
+    world->packet_start.y = y;
+    world->packet_start.direction = direction;
 
-    c->client.world.packet_mobile_update.x = x;
-    c->client.world.packet_mobile_update.y = y;
-    c->client.world.packet_mobile_update.direction = direction;
+    world->packet_mobile_update.x = x;
+    world->packet_mobile_update.y = y;
+    world->packet_mobile_update.direction = direction;
 
-    m = find_mobile(&c->client.world, c->client.world.packet_start.serial);
+    m = find_mobile(world, world->packet_start.serial);
     if (m != NULL && m->packet_mobile_incoming != NULL) {
         m->packet_mobile_incoming->x = x;
         m->packet_mobile_incoming->y = y;

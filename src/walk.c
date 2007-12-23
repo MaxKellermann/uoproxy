@@ -222,8 +222,8 @@ void connection_walk_ack(struct connection *c,
         }
     }
 
-    connection_walked(c, htons(x), htons(y),
-                      i->packet.direction, p->notoriety);
+    world_walked(&c->client.world, htons(x), htons(y),
+                 i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */
     ack = *p;
