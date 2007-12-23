@@ -202,19 +202,20 @@ static packet_action_t handle_resynchronize(struct connection *c,
 static packet_action_t handle_target(struct connection *c,
                                      const void *data, size_t length) {
     const struct uo_packet_target *p = data;
+    struct world *world = &c->client.world;
 
     assert(length == sizeof(*p));
 
-    if (c->client.world.packet_target.cmd == PCK_Target &&
-        c->client.world.packet_target.target_id != 0) {
+    if (world->packet_target.cmd == PCK_Target &&
+        world->packet_target.target_id != 0) {
         /* cancel this target for all other clients */
-        memset(&c->client.world.packet_target, 0,
-               sizeof(c->client.world.packet_target));
-        c->client.world.packet_target.cmd = PCK_Target;
-        c->client.world.packet_target.flags = 3;
+        memset(&world->packet_target, 0,
+               sizeof(world->packet_target));
+        world->packet_target.cmd = PCK_Target;
+        world->packet_target.flags = 3;
 
-        connection_broadcast_servers_except(c, &c->client.world.packet_target,
-                                            sizeof(c->client.world.packet_target),
+        connection_broadcast_servers_except(c, &world->packet_target,
+                                            sizeof(world->packet_target),
                                             c->current_server->server);
     }
 
