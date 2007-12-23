@@ -294,8 +294,7 @@ void attach_after_play_character(struct connection *c,
 
 /* command */
 
-void connection_handle_command(struct connection *c,
-                               struct linked_server *server,
-                               const char *command);
+void
+connection_handle_command(struct linked_server *server, const char *command);
 
 #endif

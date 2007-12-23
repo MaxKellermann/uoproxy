@@ -41,9 +41,13 @@ static void change_character(struct connection *c,
     connection_reconnect(c);
 }
 
-void connection_handle_command(struct connection *c,
-                               struct linked_server *server,
-                               const char *command) {
+void
+connection_handle_command(struct linked_server *server, const char *command)
+{
+    struct connection *c = server->connection;
+
+    connection_check(c);
+
     if (!c->in_game || server == NULL || server->server == NULL)
         return;
 

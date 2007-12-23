@@ -58,7 +58,7 @@ static packet_action_t handle_talk(struct connection *c,
                                    const char *text) {
     /* the percent sign introduces an uoproxy command */
     if (text[0] == '%') {
-        connection_handle_command(c, c->current_server, text + 1);
+        connection_handle_command(c->current_server, text + 1);
         return PA_DROP;
     }
 
