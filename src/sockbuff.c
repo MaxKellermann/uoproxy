@@ -109,11 +109,10 @@ int sock_buff_flush(struct sock_buff *sb) {
     if (nbytes == -2)
         return 0;
 
-    if (nbytes < 0) {
-        int save_errno = errno;
-        sock_buff_invoke_free(sb, errno);
-        return save_errno;
-    }
+    if (nbytes < 0)
+        return -1;
+
+    sock_buff_event_setup(sb);
 
     return 0;
 }
@@ -142,7 +141,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
 
     if (event & EV_WRITE) {
         ret = sock_buff_flush(sb);
-        if (ret != 0) {
+        if (ret < 0) {
             sock_buff_invoke_free(sb, errno);
             return;
         }
