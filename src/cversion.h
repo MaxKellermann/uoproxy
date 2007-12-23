@@ -27,6 +27,7 @@ enum protocol_version {
     PROTOCOL_UNKNOWN = 0,
     PROTOCOL_5,
     PROTOCOL_6,
+    PROTOCOL_COUNT
 };
 
 struct client_version {
@@ -34,6 +35,9 @@ struct client_version {
     size_t packet_length;
     enum protocol_version protocol;
 };
+
+const char *
+protocol_name(enum protocol_version protocol);
 
 static inline int
 client_version_defined(const struct client_version *cv)

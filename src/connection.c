@@ -23,6 +23,7 @@
 #include "server.h"
 #include "config.h"
 #include "poison.h"
+#include "log.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -51,9 +52,14 @@ int connection_new(struct instance *instance,
     INIT_LIST_HEAD(&c->client.world.mobiles);
     INIT_LIST_HEAD(&c->servers);
 
-    if (instance->config->client_version != NULL)
-        client_version_set(&c->client_version,
-                           instance->config->client_version);
+    if (instance->config->client_version != NULL) {
+        ret = client_version_set(&c->client_version,
+                                 instance->config->client_version);
+        if (ret > 0)
+            log(2, "configured client version '%s', protocol '%s'\n",
+                c->client_version.packet->version,
+                protocol_name(c->client_version.protocol));
+    }
 
     ls = connection_server_new(c, server_socket);
     if (ls == NULL) {
