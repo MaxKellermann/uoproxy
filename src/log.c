@@ -34,5 +34,5 @@ do_log(const char *fmt, ...)
     vprintf(fmt, ap);
     va_end(ap);
 
-    fflush(stderr);
+    fflush(stdout);
 }
