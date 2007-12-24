@@ -22,7 +22,6 @@
 #define __DUMP_H
 
 #include <stddef.h>
-#include <stdio.h>
 
 void
 log_hexdump(int level, const void *data, size_t length);

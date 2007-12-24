@@ -22,6 +22,7 @@
 #include "log.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 static void
 hexdump_line(char *dest, size_t address,
