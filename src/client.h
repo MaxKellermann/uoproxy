@@ -28,6 +28,7 @@
 
 struct addrinfo;
 struct uo_client;
+struct uo_packet_seed;
 
 struct uo_client_handler {
     /**
@@ -48,6 +49,7 @@ struct uo_client_handler {
 
 int uo_client_create(const struct addrinfo *server_address,
                      uint32_t seed,
+                     const struct uo_packet_seed *seed6,
                      const struct uo_client_handler *handler,
                      void *handler_ctx,
                      struct uo_client **clientp);

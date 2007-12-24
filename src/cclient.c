@@ -124,6 +124,7 @@ connection_client_connect(struct connection *c,
     assert(c->client.client == NULL);
 
     ret = uo_client_create(server_address, seed,
+                           c->client_version.seed,
                            &client_handler, c,
                            &c->client.client);
     if (ret != 0)

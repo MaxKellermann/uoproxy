@@ -217,6 +217,7 @@ struct sock_buff_handler client_sock_buff_handler = {
 
 int uo_client_create(const struct addrinfo *server_address,
                      uint32_t seed,
+                     const struct uo_packet_seed *seed6,
                      const struct uo_client_handler *handler,
                      void *handler_ctx,
                      struct uo_client **clientp) {
@@ -281,7 +282,10 @@ int uo_client_create(const struct addrinfo *server_address,
     *clientp = client;
 
     /* seed must be the first 4 bytes, and it must be flushed */
-    uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
+    if (seed6 == NULL)
+        uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
+    else
+        uo_client_send(client, seed6, sizeof(*seed6));
 
     return 0;
 }
