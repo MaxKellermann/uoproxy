@@ -203,9 +203,10 @@ static packet_action_t
 handle_drop(struct linked_server *ls,
             const void *data, size_t length)
 {
-    struct uo_client *client = ls->connection->client.client;
+    struct stateful_client *client = &ls->connection->client;
 
-    if (client == NULL)
+    if (!ls->connection->in_game || client->reconnecting ||
+        client->client == NULL)
         return PA_DROP;
 
     if (ls->client_version.protocol < PROTOCOL_6) {
@@ -218,7 +219,7 @@ handle_drop(struct linked_server *ls,
             return PA_ACCEPT;
 
         drop_5_to_6(&p6, p);
-        uo_client_send(client, &p6, sizeof(p6));
+        uo_client_send(client->client, &p6, sizeof(p6));
     } else {
         const struct uo_packet_drop_6 *p = data;
         struct uo_packet_drop p5;
@@ -229,7 +230,7 @@ handle_drop(struct linked_server *ls,
             return PA_ACCEPT;
 
         drop_6_to_5(&p5, p);
-        uo_client_send(client, &p5, sizeof(p5));
+        uo_client_send(client->client, &p5, sizeof(p5));
     }
 
     return PA_ACCEPT;
