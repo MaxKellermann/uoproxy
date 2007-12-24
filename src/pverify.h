@@ -73,4 +73,18 @@ packet_verify_container_content(const struct uo_packet_container_content *p,
         length == sizeof(*p) - sizeof(p->items) + ntohs(p->num) * sizeof(p->items[0]);
 }
 
+/**
+ * Verifies that the packet length is correct for the number of items.
+ */
+static inline int
+packet_verify_container_content_6(const struct uo_packet_container_content_6 *p,
+                                  size_t length)
+{
+    assert(length >= 3);
+    assert(p->cmd == PCK_ContainerContent);
+
+    return length >= sizeof(*p) - sizeof(p->items) &&
+        length == sizeof(*p) - sizeof(p->items) + ntohs(p->num) * sizeof(p->items[0]);
+}
+
 #endif

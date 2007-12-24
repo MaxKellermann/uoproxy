@@ -131,6 +131,12 @@ void connection_broadcast_servers_except(struct connection *c,
                                          const void *data, size_t length,
                                          struct uo_server *except);
 
+void
+connection_broadcast_divert(struct connection *c,
+                            enum protocol_version new_protocol,
+                            const void *old_data, size_t old_length,
+                            const void *new_data, size_t new_length);
+
 
 /* server list */
 

@@ -28,6 +28,7 @@
 #include "config.h"
 #include "log.h"
 #include "compiler.h"
+#include "bridge.h"
 
 #include <sys/socket.h>
 #include <assert.h>
@@ -193,6 +194,42 @@ handle_lift_request(struct linked_server *ls,
         uo_server_send(ls->server, &p2, sizeof(p2));
 
         return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
+static packet_action_t
+handle_drop(struct linked_server *ls,
+            const void *data, size_t length)
+{
+    struct uo_client *client = ls->connection->client.client;
+
+    if (client == NULL)
+        return PA_DROP;
+
+    if (ls->client_version.protocol < PROTOCOL_6) {
+        const struct uo_packet_drop *p = data;
+        struct uo_packet_drop_6 p6;
+
+        assert(length == sizeof(*p));
+
+        if (ls->connection->client_version.protocol < PROTOCOL_6)
+            return PA_ACCEPT;
+
+        drop_5_to_6(&p6, p);
+        uo_client_send(client, &p6, sizeof(p6));
+    } else {
+        const struct uo_packet_drop_6 *p = data;
+        struct uo_packet_drop p5;
+
+        assert(length == sizeof(*p));
+
+        if (ls->connection->client_version.protocol >= PROTOCOL_6)
+            return PA_ACCEPT;
+
+        drop_6_to_5(&p5, p);
+        uo_client_send(client, &p5, sizeof(p5));
     }
 
     return PA_ACCEPT;
@@ -597,6 +634,9 @@ struct server_packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_LiftRequest,
       .handler = handle_lift_request,
+    },
+    { .cmd = PCK_Drop, /* 0x08 */
+      .handler = handle_drop,
     },
     { .cmd = PCK_Resynchronize,
       .handler = handle_resynchronize,

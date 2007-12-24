@@ -29,6 +29,7 @@
 #include "log.h"
 #include "version.h"
 #include "compiler.h"
+#include "bridge.h"
 
 #include <sys/socket.h>
 #include <assert.h>
@@ -205,13 +206,35 @@ static packet_action_t handle_container_open(struct connection *c,
 
 static packet_action_t handle_container_update(struct connection *c,
                                                const void *data, size_t length) {
-    const struct uo_packet_container_update *p = data;
+    if (c->client_version.protocol < PROTOCOL_6) {
+        const struct uo_packet_container_update *p = data;
+        struct uo_packet_container_update_6 p6;
 
-    assert(length == sizeof(*p));
+        assert(length == sizeof(*p));
 
-    world_container_update(&c->client.world, p);
+        container_update_5_to_6(&p6, p);
 
-    return PA_ACCEPT;
+        world_container_update(&c->client.world, &p6);
+
+        connection_broadcast_divert(c, PROTOCOL_6,
+                                    data, length,
+                                    &p6, sizeof(p6));
+    } else {
+        const struct uo_packet_container_update_6 *p = data;
+        struct uo_packet_container_update p5;
+
+        assert(length == sizeof(*p));
+
+        container_update_6_to_5(&p5, p);
+
+        world_container_update(&c->client.world, p);
+
+        connection_broadcast_divert(c, PROTOCOL_6,
+                                    &p5, sizeof(p5),
+                                    data, length);
+    }
+
+    return PA_DROP;
 }
 
 static packet_action_t handle_equip(struct connection *c,
@@ -227,14 +250,51 @@ static packet_action_t handle_equip(struct connection *c,
 
 static packet_action_t handle_container_content(struct connection *c,
                                                 const void *data, size_t length) {
-    const struct uo_packet_container_content *p = data;
+    if (c->client_version.protocol < PROTOCOL_6) {
+        const struct uo_packet_container_content *p = data;
+        struct uo_packet_container_content_6 *p6;
+        size_t length6;
 
-    if (!packet_verify_container_content(p, length))
-        return PA_DISCONNECT;
+        if (!packet_verify_container_content(p, length))
+            return PA_DISCONNECT;
 
-    world_container_content(&c->client.world, p);
+        p6 = container_content_5_to_6(p, &length6);
+        if (p6 == NULL) {
+            log_oom();
+            return PA_DROP;
+        }
 
-    return PA_ACCEPT;
+        world_container_content(&c->client.world, p6);
+
+        connection_broadcast_divert(c, PROTOCOL_6,
+                                    data, length,
+                                    p6, length6);
+
+        free(p6);
+    } else {
+        const struct uo_packet_container_content_6 *p = data;
+        struct uo_packet_container_content *p5;
+        size_t length5;
+
+        if (!packet_verify_container_content_6(p, length))
+            return PA_DISCONNECT;
+
+        world_container_content(&c->client.world, p);
+
+        p5 = container_content_6_to_5(p, &length5);
+        if (p5 == NULL) {
+            log_oom();
+            return PA_DROP;
+        }
+
+        connection_broadcast_divert(c, PROTOCOL_6,
+                                    p5, length5,
+                                    data, length);
+
+        free(p5);
+    }
+
+    return PA_DROP;
 }
 
 static packet_action_t handle_personal_light_level(struct connection *c,

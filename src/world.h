@@ -31,7 +31,7 @@ struct item {
     struct uo_packet_world_item packet_world_item;
     struct uo_packet_equip packet_equip;
     struct uo_packet_container_open packet_container_open;
-    struct uo_packet_container_update packet_container_update;
+    struct uo_packet_container_update_6 packet_container_update;
     unsigned attach_sequence;
 };
 
@@ -83,11 +83,11 @@ world_container_open(struct world *world,
 
 void
 world_container_update(struct world *world,
-                       const struct uo_packet_container_update *p);
+                       const struct uo_packet_container_update_6 *p);
 
 void
 world_container_content(struct world *world,
-                        const struct uo_packet_container_content *p);
+                        const struct uo_packet_container_content_6 *p);
 
 void
 world_remove_item(struct item *item);

@@ -21,6 +21,7 @@
 #include "connection.h"
 #include "instance.h"
 #include "server.h"
+#include "bridge.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -94,8 +95,17 @@ attach_item(struct linked_server *ls,
             attach_item(ls, parent);
 
         /* then this item as container content */
-        uo_server_send(ls->server, &item->packet_container_update,
-                       sizeof(item->packet_container_update));
+
+        if (ls->client_version.protocol < PROTOCOL_6) {
+            /* convert to v5 packet */
+            struct uo_packet_container_update p5;
+
+            container_update_6_to_5(&p5, &item->packet_container_update);
+            uo_server_send(ls->server, &p5, sizeof(p5));
+        } else {
+            uo_server_send(ls->server, &item->packet_container_update,
+                           sizeof(item->packet_container_update));
+        }
     }
 
     if (item->packet_container_open.cmd == PCK_ContainerOpen)

@@ -240,6 +240,7 @@ enum uo_packet_type_t {
 };
 
 extern const size_t packet_lengths[0x100];
+extern const size_t packet_lengths_6[0x100];
 
 #define PACKET_LENGTH_INVALID ((size_t)-1)
 
@@ -258,6 +259,12 @@ static inline size_t get_packet_length(enum protocol_version protocol,
 
     if (max_length == 0)
         return 0;
+
+    if (protocol >= PROTOCOL_6) {
+        length = packet_lengths_6[p[0]];
+        if (length > 0)
+            return length;
+    }
 
     length = packet_lengths[p[0]];
     if (length == 0xffff)
@@ -334,6 +341,16 @@ struct uo_packet_drop {
     uint32_t serial;
     int16_t x, y;
     int8_t z;
+    uint32_t dest_serial;
+} __attribute__ ((packed));
+
+/* 0x08 Drop (protocol v6) */
+struct uo_packet_drop_6 {
+    unsigned char cmd;
+    uint32_t serial;
+    int16_t x, y;
+    int8_t z;
+    uint8_t unknown0;
     uint32_t dest_serial;
 } __attribute__ ((packed));
 
@@ -467,10 +484,28 @@ struct uo_packet_fragment_container_item {
     uint16_t hue;
 } __attribute__ ((packed));
 
+/* for 0x25 ContainerUpdate (protocol v6) */
+struct uo_packet_fragment_container_item_6 {
+    uint32_t serial;
+    uint16_t item_id;
+    uint8_t unknown0;
+    uint16_t amount;
+    int16_t x, y;
+    uint8_t unknown1;
+    uint32_t parent_serial;
+    uint16_t hue;
+} __attribute__ ((packed));
+
 /* 0x25 ContainerUpdate */
 struct uo_packet_container_update {
     unsigned char cmd;
     struct uo_packet_fragment_container_item item;
+} __attribute__ ((packed));
+
+/* 0x25 ContainerUpdate (protocol v6) */
+struct uo_packet_container_update_6 {
+    unsigned char cmd;
+    struct uo_packet_fragment_container_item_6 item;
 } __attribute__ ((packed));
 
 /* 0x27 LiftReject */
@@ -496,6 +531,14 @@ struct uo_packet_container_content {
     uint16_t length;
     uint16_t num;
     struct uo_packet_fragment_container_item items[1];
+} __attribute__ ((packed));
+
+/* 0x3c ContainerContent (protocol v6) */
+struct uo_packet_container_content_6 {
+    unsigned char cmd;
+    uint16_t length;
+    uint16_t num;
+    struct uo_packet_fragment_container_item_6 items[1];
 } __attribute__ ((packed));
 
 /* 0x4f GlobalLightLevel */

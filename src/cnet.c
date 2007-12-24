@@ -47,3 +47,27 @@ void connection_broadcast_servers_except(struct connection *c,
         if (!ls->attaching && ls->server != except)
             uo_server_send(ls->server, data, length);
 }
+
+void
+connection_broadcast_divert(struct connection *c,
+                            enum protocol_version new_protocol,
+                            const void *old_data, size_t old_length,
+                            const void *new_data, size_t new_length)
+{
+    struct linked_server *ls;
+
+    assert(new_protocol > PROTOCOL_UNKNOWN);
+    assert(old_data != NULL);
+    assert(old_length > 0);
+    assert(new_data != NULL);
+    assert(new_length > 0);
+
+    list_for_each_entry(ls, &c->servers, siblings) {
+        if (!ls->attaching) {
+            if (ls->client_version.protocol >= new_protocol)
+                uo_server_send(ls->server, new_data, new_length);
+            else
+                uo_server_send(ls->server, old_data, old_length);
+        }
+    }
+}
