@@ -22,6 +22,7 @@
 #include "sockbuff.h"
 #include "compression.h"
 #include "packets.h"
+#include "pversion.h"
 #include "dump.h"
 #include "fifo-buffer.h"
 #include "log.h"
@@ -43,6 +44,8 @@ struct uo_client {
     int compression_enabled;
     struct uo_decompression decompression;
     fifo_buffer_t decompressed_buffer;
+
+    enum protocol_version protocol_version;
 
     const struct uo_client_handler *handler;
     void *handler_ctx;
@@ -299,6 +302,15 @@ void uo_client_dispose(struct uo_client *client) {
         evtimer_del(&client->abort_event);
 
     free(client);
+}
+
+void
+uo_client_set_protocol(struct uo_client *client,
+                       enum protocol_version protocol_version)
+{
+    assert(client->protocol_version == PROTOCOL_UNKNOWN);
+
+    client->protocol_version = protocol_version;
 }
 
 void uo_client_send(struct uo_client *client,

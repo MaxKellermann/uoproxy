@@ -120,6 +120,10 @@ connection_client_connect(struct connection *c,
     if (ret != 0)
         return ret;
 
+    if (client_version_defined(&c->client_version))
+        uo_client_set_protocol(c->client.client,
+                               c->client_version.protocol);
+
     tv.tv_sec = 30;
     tv.tv_usec = 0;
     evtimer_set(&c->client.ping_event, connection_ping_event_callback,

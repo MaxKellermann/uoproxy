@@ -21,6 +21,8 @@
 #ifndef __CLIENT_H
 #define __CLIENT_H
 
+#include "pversion.h"
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -50,6 +52,10 @@ int uo_client_create(const struct addrinfo *server_address,
                      void *handler_ctx,
                      struct uo_client **clientp);
 void uo_client_dispose(struct uo_client *client);
+
+void
+uo_client_set_protocol(struct uo_client *client,
+                       enum protocol_version protocol_version);
 
 void uo_client_send(struct uo_client *client,
                     const void *src, size_t length);

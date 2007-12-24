@@ -21,6 +21,8 @@
 #ifndef __SERVER_H
 #define __SERVER_H
 
+#include "pversion.h"
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -50,6 +52,10 @@ int uo_server_create(int sockfd,
 void uo_server_dispose(struct uo_server *server);
 
 uint32_t uo_server_seed(const struct uo_server *server);
+
+void
+uo_server_set_protocol(struct uo_server *server,
+                       enum protocol_version protocol_version);
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);

@@ -39,6 +39,8 @@ struct uo_server {
     uint32_t seed;
     int compression_enabled;
 
+    enum protocol_version protocol_version;
+
     const struct uo_server_handler *handler;
     void *handler_ctx;
 
@@ -235,6 +237,15 @@ void uo_server_dispose(struct uo_server *server) {
 
 uint32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
+}
+
+void
+uo_server_set_protocol(struct uo_server *server,
+                       enum protocol_version protocol_version)
+{
+    assert(server->protocol_version == PROTOCOL_UNKNOWN);
+
+    server->protocol_version = protocol_version;
 }
 
 void uo_server_send(struct uo_server *server,

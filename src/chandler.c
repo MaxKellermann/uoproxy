@@ -525,10 +525,12 @@ handle_client_version(struct linked_server *ls,
 
     if (!client_version_defined(&ls->client_version)) {
         int ret = client_version_copy(&ls->client_version, p, length);
-        if (ret > 0)
+        if (ret > 0) {
+            uo_server_set_protocol(ls->server, ls->client_version.protocol);
             log(2, "client version '%s', protocol '%s'\n",
                 ls->client_version.packet->version,
                 protocol_name(ls->client_version.protocol));
+        }
     }
 
     if (client_version_defined(&c->client_version)) {
@@ -541,11 +543,14 @@ handle_client_version(struct linked_server *ls,
         return PA_DROP;
     } else {
         int ret = client_version_copy(&c->client_version, p, length);
-        if (ret > 0)
+        if (ret > 0) {
+            if (c->client.client != NULL)
+                uo_client_set_protocol(c->client.client,
+                                       c->client_version.protocol);
             log(2, "emulating client version '%s', protocol '%s'\n",
                 c->client_version.packet->version,
                 protocol_name(c->client_version.protocol));
-        else if (ret == 0)
+        } else if (ret == 0)
             log(2, "invalid client version\n");
         return PA_ACCEPT;
     }
