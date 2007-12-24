@@ -20,41 +20,72 @@
 
 #include "dump.h"
 
+#include <assert.h>
+
+static void
+hexdump_line(char *dest, size_t address,
+             const unsigned char *data, size_t length)
+{
+    size_t i;
+
+    assert(length > 0);
+    assert(length <= 0x10);
+
+    snprintf(dest, 10, "  %05zx", address);
+    dest += 7;
+    *dest++ = ' ';
+
+    for (i = 0; i < 0x10; ++i) {
+        *dest++ = ' ';
+        if (i == 8)
+            *dest++ = ' ';
+
+        if (i < length)
+            snprintf(dest, 3, "%02x", data[i]);
+        else {
+            dest[0] = ' ';
+            dest[1] = ' ';
+        }
+
+        dest += 2;
+    }
+
+    *dest++ = ' ';
+    *dest++ = ' ';
+
+    for (i = 0; i < length; ++i) {
+        if (i == 8)
+            *dest++ = ' ';
+
+        if (data[i] <= ' ')
+            *dest++ = ' ';
+        else if (data[i] < 0x80)
+            *dest++ = (char)data[i];
+        else
+            *dest++ = '.';
+    }
+
+    *dest++ = '\n';
+    *dest++ = '\0';
+}
+
+static size_t
+min_size_t(size_t a, size_t b)
+{
+    return a < b ? a : b;
+}
+
 void fhexdump(FILE *stream, const char *indent,
               const void *data, size_t length) {
     const unsigned char *p = data;
-    size_t row, column;
+    size_t row;
+    char line[80];
+
+    (void)indent;
 
     for (row = 0; row < length; row += 0x10) {
-        fprintf(stream, "%s0x%05zx", indent, row);
-
-        putc(' ', stream);
-
-        for (column = 0; column < 0x10; column++) {
-            if (column == 8)
-                putc(' ', stream);
-            if (row + column < length)
-                fprintf(stream, " %02x", p[row + column]);
-            else
-                fputs("   ", stream);
-        }
-
-        fputs("  ", stream);
-
-        for (column = 0; column < 0x10 && row + column < length; column++) {
-            const unsigned char ch = p[row + column];
-
-            if (column == 8)
-                putc(' ', stream);
-
-            if (ch <= ' ')
-                putc(' ', stream);
-            else if (ch < 0x80)
-                putc(ch, stream);
-            else
-                putc('.', stream);
-        }
-
-        putc('\n', stream);
+        hexdump_line(line, row, p + row,
+                     min_size_t(0x10, length - row));
+        fputs(line, stream);
     }
 }
