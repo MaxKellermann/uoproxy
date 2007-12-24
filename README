@@ -56,8 +56,13 @@ Installation
 ------------
 
 uoproxy was developed on Linux, but will probably run on any POSIX
-operating system, including Solaris, FreeBSD, MacOS X.  You need gcc
-and GNU make to compile it.  Type:
+operating system, including Solaris, FreeBSD, MacOS X.  You need the
+following to compile it:
+
+- gcc
+- GNU make
+
+Type:
 
  make
 
