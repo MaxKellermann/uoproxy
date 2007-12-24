@@ -46,7 +46,7 @@ HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
-.PHONY: all clean install strip dist upload
+.PHONY: all clean install strip dist upload rpm
 
 all: src/uoproxy
 
@@ -77,3 +77,11 @@ dist:
 upload:
 	scp README NEWS max@swift:/var/www/gzipped/download/uoproxy/doc/
 	ssh max@swift chmod a+rX -R /var/www/gzipped/download/uoproxy/doc/
+
+rpm: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' NEWS |head -1)
+rpm: REVISION := 1
+rpm: dist
+	scp /tmp/uoproxy/uoproxy-$(VERSION).tar.bz2 redrat:/usr/src/redhat/SOURCES/uoproxy-$(VERSION).tar.bz2
+	scp rpm/uoproxy.spec redrat:/usr/src/redhat/SPECS/
+	ssh -n redrat rpmbuild -bb /usr/src/redhat/SPECS/uoproxy.spec
+	scp redrat:/usr/src/redhat/RPMS/i386/uoproxy-$(VERSION)-$(REVISION).i386.rpm /tmp/uoproxy/
