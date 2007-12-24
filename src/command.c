@@ -21,9 +21,11 @@
 #include "connection.h"
 #include "server.h"
 #include "client.h"
+#include "log.h"
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static void change_character(struct connection *c,
                              struct linked_server *server,
@@ -53,7 +55,7 @@ connection_handle_command(struct linked_server *server, const char *command)
 
     if (*command == 0) {
         uo_server_speak_console(server->server,
-                                "uoproxy commands: % %reconnect %char %drop");
+                                "uoproxy commands: % %reconnect %char %drop %verbose");
     } else if (strcmp(command, "reconnect") == 0) {
         if (c->client.client == NULL) {
             uo_server_speak_console(server->server,
@@ -117,6 +119,20 @@ connection_handle_command(struct linked_server *server, const char *command)
 
             uo_client_send(c->client.client, &p, sizeof(p));
         }
+    } else if (strncmp(command, "verbose", 7) == 0) {
+        if (command[7] == ' ') {
+            char *endptr;
+            long new_verbose = strtol(command + 8, &endptr, 10);
+
+            if (*endptr == 0) {
+                verbose = (int)new_verbose;
+                log(1, "verbose modified, new value=%d\n", verbose);
+                return;
+            }
+        }
+
+        uo_server_speak_console(server->server,
+                                "uoproxy: invalid %verbose syntax");
     } else {
         uo_server_speak_console(server->server,
                                 "unknown uoproxy command, type '%' for help");

@@ -12,6 +12,7 @@ uoproxy (0.2) unstable; urgency=low
   * auto-reconnect after invalid packet from server
   * log invalid packets
   * do asynchronous writes
+  * new command "%verbose" modifies the log level
 
  --
 
