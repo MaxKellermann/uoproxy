@@ -140,7 +140,7 @@ handle_use(struct linked_server *ls,
     do {
         struct item *i = connection_find_item(c, p->serial);
         if (i == NULL) {
-            printf("Use 0x%x\n", ntohl(p->serial));
+            log(7, "Use 0x%x\n", ntohl(p->serial));
         } else {
             uint16_t item_id;
 
@@ -153,8 +153,8 @@ handle_use(struct linked_server *ls,
             else
                 item_id = 0xffff;
 
-            printf("Use 0x%x item_id=0x%x\n",
-                   ntohl(p->serial), ntohs(item_id));
+            log(7, "Use 0x%x item_id=0x%x\n",
+                ntohl(p->serial), ntohs(item_id));
         }
         fflush(stdout);
     } while (0);
@@ -241,8 +241,7 @@ handle_resynchronize(struct linked_server *ls,
                      const void *data __attr_unused,
                      size_t length __attr_unused)
 {
-    if (verbose >= 3)
-        printf("Resync!\n");
+    log(3, "Resync!\n");
 
     ls->connection->walk.seq_next = 0;
 
@@ -299,13 +298,12 @@ handle_account_login(struct linked_server *ls,
         return PA_DISCONNECT;
 
 #ifdef DUMP_LOGIN
-    printf("account_login: username=%s password=%s\n",
-           p->username, p->password);
+    log(7, "account_login: username=%s password=%s\n",
+        p->username, p->password);
 #endif
 
     if (c->client.client != NULL) {
-        if (verbose >= 2)
-            fprintf(stderr, "already logged in\n");
+        log(2, "already logged in\n");
         return PA_DISCONNECT;
     }
 
@@ -326,7 +324,7 @@ handle_account_login(struct linked_server *ls,
 
         p2 = calloc(1, length);
         if (p2 == NULL) {
-            fprintf(stderr, "out of memory\n");
+            log_oom();
             return PA_DISCONNECT;
         }
 
@@ -400,8 +398,7 @@ handle_play_character(struct linked_server *ls,
     assert(length == sizeof(*p));
 
     if (ls->attaching) {
-        if (verbose >= 2)
-            printf("attaching connection, stage II\n");
+        log(2, "attaching connection, stage II\n");
         attach_after_play_character(ls);
         return PA_DROP;
     }
@@ -603,9 +600,7 @@ handle_extended(struct linked_server *ls __attr_unused,
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
-#ifdef DUMP_HEADERS
-    printf("from client: extended 0x%04x\n", ntohs(p->extended_cmd));
-#endif
+    log(8, "from client: extended 0x%04x\n", ntohs(p->extended_cmd));
 
     return PA_ACCEPT;
 }

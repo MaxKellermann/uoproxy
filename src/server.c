@@ -30,7 +30,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <event.h>
 
@@ -262,14 +261,14 @@ void uo_server_send(struct uo_server *server,
 
         dest = sock_buff_write(server->sock, &max_length);
         if (dest == NULL) {
-            fprintf(stderr, "output buffer full in uo_server_send()\n");
+            log(1, "output buffer full in uo_server_send()\n");
             uo_server_abort(server);
             return;
         }
 
         nbytes = uo_compress(dest, max_length, src, length);
         if (nbytes < 0) {
-            fprintf(stderr, "uo_compress() failed\n");
+            log(1, "uo_compress() failed\n");
             uo_server_abort(server);
             return;
         }

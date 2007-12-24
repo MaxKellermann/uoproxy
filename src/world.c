@@ -20,10 +20,10 @@
 
 #include "world.h"
 #include "poison.h"
+#include "log.h"
 
 #include <assert.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 struct item *
@@ -71,7 +71,7 @@ world_world_item(struct world *world,
 
     i = make_item(world, p->serial & htonl(0x7fffffff));
     if (i == NULL) {
-        fprintf(stderr, "out of memory\n");
+        log_oom();
         return;
     }
 
@@ -88,7 +88,7 @@ world_equip(struct world *world,
 
     i = make_item(world, p->serial);
     if (i == NULL) {
-        fprintf(stderr, "out of memory\n");
+        log_oom();
         return;
     }
 
@@ -105,7 +105,7 @@ world_container_open(struct world *world,
 
     i = make_item(world, p->serial);
     if (i == NULL) {
-        fprintf(stderr, "out of memory\n");
+        log_oom();
         return;
     }
 
@@ -122,7 +122,7 @@ world_container_update(struct world *world,
 
     i = make_item(world, p->item.serial);
     if (i == NULL) {
-        fprintf(stderr, "out of memory\n");
+        log_oom();
         return;
     }
 
@@ -141,7 +141,7 @@ world_container_content(struct world *world,
     for (t = 0; t < ntohs(p->num); t++) {
         i = make_item(world, p->items[t].serial);
         if (i == NULL) {
-            fprintf(stderr, "out of memory\n");
+            log_oom();
             return;
         }
 
@@ -231,7 +231,7 @@ add_mobile(struct world *world, uint32_t serial) {
 
     m = calloc(1, sizeof(*m));
     if (m == NULL) {
-        fprintf(stderr, "out of memory\n");
+        log_oom();
         return NULL;
     }
 
@@ -251,7 +251,7 @@ static void replace_packet(void **destp, const void *src,
 
     *destp = malloc(length);
     if (*destp == NULL) {
-        fprintf(stderr, "out of memory\n");
+        log_oom();
         return;
     }
 
@@ -366,8 +366,8 @@ world_mobile_update(struct world *world,
 
     m = find_mobile(world, p->serial);
     if (m == NULL) {
-        fprintf(stderr, "warning in connection_mobile_update: no such mobile 0x%x\n",
-                ntohl(p->serial));
+        log(3, "warning in connection_mobile_update: no such mobile 0x%x\n",
+            ntohl(p->serial));
         return;
     }
 
@@ -406,8 +406,8 @@ world_mobile_moving(struct world *world,
 
     m = find_mobile(world, p->serial);
     if (m == NULL) {
-        fprintf(stderr, "warning in connection_mobile_moving: no such mobile 0x%x\n",
-                ntohl(p->serial));
+        log(3, "warning in connection_mobile_moving: no such mobile 0x%x\n",
+            ntohl(p->serial));
         return;
     }
 

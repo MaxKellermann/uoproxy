@@ -34,7 +34,6 @@
 #include <sys/socket.h>
 #include <assert.h>
 #include <netinet/in.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
@@ -453,8 +452,7 @@ static packet_action_t handle_char_list(struct connection *c,
             .client_ip = 0xdeadbeef, /* XXX */
         };
 
-        if (verbose >= 2)
-            printf("sending PlayCharacter\n");
+        log(2, "sending PlayCharacter\n");
 
         uo_client_send(c->client.client, &p2, sizeof(p2));
 
@@ -471,9 +469,8 @@ static packet_action_t handle_account_login_reject(struct connection *c,
     assert(length == sizeof(*p));
 
     if (c->client.reconnecting) {
-        if (verbose >= 1)
-            fprintf(stderr, "reconnect failed: AccountLoginReject reason=0x%x\n",
-                    p->reason);
+        log(1, "reconnect failed: AccountLoginReject reason=0x%x\n",
+            p->reason);
 
         connection_reconnect_delayed(c);
         return PA_DROP;
@@ -520,8 +517,7 @@ static packet_action_t handle_relay(struct connection *c,
     if (c->in_game && !c->client.reconnecting)
         return PA_DISCONNECT;
 
-    if (verbose >= 2)
-        printf("changing to game connection\n");
+    log(2, "changing to game connection\n");
 
     /* save the relay packet - its buffer will be freed soon */
     relay = *p;
@@ -532,7 +528,7 @@ static packet_action_t handle_relay(struct connection *c,
     /* extract new server's address */
     server_address = make_addrinfo(relay.ip, relay.port);
     if (server_address == NULL) {
-        fprintf(stderr, "out of memory");
+        log_oom();
         return PA_DISCONNECT;
     }
 
@@ -547,8 +543,7 @@ static packet_action_t handle_relay(struct connection *c,
     freeaddrinfo(server_address);
 
     /* send game login to new server */
-    if (verbose >= 2)
-        printf("connected, doing GameLogin\n");
+    log(2, "connected, doing GameLogin\n");
 
     login.cmd = PCK_GameLogin;
     login.auth_id = relay.auth_id;
@@ -591,9 +586,7 @@ static packet_action_t handle_server_list(struct connection *c,
     }
 
     count = ntohs(*(const uint16_t*)(p + 4));
-#ifdef DUMP_LOGIN
-    printf("serverlist: %u servers\n", count);
-#endif
+    log(5, "serverlist: %u servers\n", count);
     if (length != 6 + count * sizeof(*server_info))
         return PA_DISCONNECT;
 
@@ -603,12 +596,10 @@ static packet_action_t handle_server_list(struct connection *c,
         if (k != i)
             return PA_DISCONNECT;
 
-#ifdef DUMP_LOGIN
-        printf("server %u: name=%s address=0x%08x\n",
-               ntohs(server_info->index),
-               server_info->name,
-               ntohl(server_info->address));
-#endif
+        log(6, "server %u: name=%s address=0x%08x\n",
+            ntohs(server_info->index),
+            server_info->name,
+            ntohl(server_info->address));
     }
 
     return PA_ACCEPT;
@@ -671,9 +662,7 @@ static packet_action_t handle_extended(struct connection *c,
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
-#ifdef DUMP_HEADERS
-    printf("from server: extended 0x%04x\n", ntohs(p->extended_cmd));
-#endif
+    log(8, "from server: extended 0x%04x\n", ntohs(p->extended_cmd));
 
     switch (ntohs(p->extended_cmd)) {
     case 0x0008:

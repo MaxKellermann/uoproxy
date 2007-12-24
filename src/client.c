@@ -35,7 +35,6 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdio.h>
 
 #include <event.h>
 
@@ -116,7 +115,7 @@ client_decompress(struct uo_client *client,
                            dest, max_length,
                            data, length);
     if (nbytes < 0) {
-        fprintf(stderr, "decompression failed\n");
+        log(1, "decompression failed\n");
         uo_client_abort(client);
         return -1;
     }

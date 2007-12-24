@@ -22,10 +22,10 @@
 #include "packets.h"
 #include "server.h"
 #include "client.h"
+#include "log.h"
 
 #include <assert.h>
 #include <string.h>
-#include <stdio.h>
 
 static void walk_shift(struct connection_walk_state *state) {
     assert(state->queue_size > 0);
@@ -108,14 +108,14 @@ connection_walk_request(struct linked_server *server,
     assert(state->server != NULL || state->queue_size == 0);
 
     if (state->server != NULL && state->server != server) {
-        printf("rejecting walk\n");
+        log(2, "rejecting walk\n");
         walk_cancel(&server->connection->client.world, server->server, p);
         return;
     }
 
     if (state->queue_size >= MAX_WALK_QUEUE) {
         /* XXX */
-        printf("queue full\n");
+        log(2, "queue full\n");
         walk_cancel(&server->connection->client.world, server->server,
                     &state->queue[0].packet);
         walk_shift(state);
@@ -125,9 +125,7 @@ connection_walk_request(struct linked_server *server,
     i = &state->queue[state->queue_size++];
     i->packet = *p;
 
-#ifdef DUMP_WALK
-    printf("walk seq_from_client=%u seq_to_server=%u\n", p->seq, state->seq_next);
-#endif
+    log(7, "walk seq_from_client=%u seq_to_server=%u\n", p->seq, state->seq_next);
 
     walk = *p;
     walk.seq = i->seq = (uint8_t)state->seq_next++;
@@ -146,19 +144,17 @@ void connection_walk_cancel(struct connection *c,
     state->seq_next = 0;
 
     if (state->server == NULL) {
-        printf("WalkCancel out of sync II\n");
+        log(1, "WalkCancel out of sync II\n");
         return;
     }
 
     i = find_by_seq(state, p->seq);
     if (i == NULL) {
-        printf("WalkCancel out of sync\n");
+        log(1, "WalkCancel out of sync\n");
         return;
     }
 
-#ifdef DUMP_WALK
-    printf("walk_cancel seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
-#endif
+    log(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
 
     /* only send to requesting client */
     cancel = *p;
@@ -176,19 +172,17 @@ void connection_walk_ack(struct connection *c,
     struct uo_packet_walk_ack ack;
 
     if (state->server == NULL) {
-        printf("WalkAck out of sync II\n");
+        log(1, "WalkAck out of sync II\n");
         return;
     }
 
     i = find_by_seq(state, p->seq);
     if (i == NULL) {
-        printf("WalkAck out of sync\n");
+        log(1, "WalkAck out of sync\n");
         return;
     }
 
-#ifdef DUMP_WALK
-    printf("walk_ack seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
-#endif
+    log(7, "walk_ack seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
 
     x = ntohs(c->client.world.packet_start.x);
     y = ntohs(c->client.world.packet_start.y);

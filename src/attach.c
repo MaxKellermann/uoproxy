@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,9 +22,9 @@
 #include "instance.h"
 #include "server.h"
 #include "bridge.h"
+#include "log.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 struct connection *find_attach_connection(struct connection *c) {
@@ -50,7 +50,7 @@ void attach_after_play_server(struct connection *c,
     assert(c->in_game);
     connection_check(c);
 
-    printf("attaching connection\n");
+    log(2, "attaching connection\n");
 
     connection_server_add(c, ls);
 
