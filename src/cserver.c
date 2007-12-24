@@ -23,7 +23,6 @@
 #include "client.h"
 #include "handler.h"
 #include "log.h"
-#include "dump.h"
 #include "poison.h"
 
 #include <assert.h>

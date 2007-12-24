@@ -23,7 +23,6 @@
 #include "server.h"
 #include "handler.h"
 #include "log.h"
-#include "dump.h"
 #include "compiler.h"
 
 #include <assert.h>

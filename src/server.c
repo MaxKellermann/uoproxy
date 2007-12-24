@@ -22,7 +22,6 @@
 #include "sockbuff.h"
 #include "compression.h"
 #include "packets.h"
-#include "dump.h"
 #include "log.h"
 #include "compiler.h"
 #include "socket-util.h"

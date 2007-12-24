@@ -18,7 +18,6 @@
  *
  */
 
-#include "dump.h"
 #include "log.h"
 
 #include <assert.h>

@@ -23,7 +23,6 @@
 #include "compression.h"
 #include "packets.h"
 #include "pversion.h"
-#include "dump.h"
 #include "fifo-buffer.h"
 #include "log.h"
 #include "compiler.h"

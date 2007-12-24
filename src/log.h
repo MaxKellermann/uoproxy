@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <stddef.h>
 
 extern int verbose;
 
@@ -33,6 +34,7 @@ extern int verbose;
 #define log_oom()
 #define log_error(msg, error)
 #define log_errno(msg)
+#define log_hexdump(level, data, length)
 #else
 
 void
@@ -61,6 +63,9 @@ log_errno(const char *msg)
 {
     log(1, "%s: %s\n", msg, strerror(errno));
 }
+
+void
+log_hexdump(int level, const void *data, size_t length);
 
 #endif
 
