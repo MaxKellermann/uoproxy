@@ -30,6 +30,8 @@ client_version_free(struct client_version *cv)
 {
     if (cv->packet != NULL)
         free(cv->packet);
+    if (cv->seed != NULL)
+        free(cv->seed);
 }
 
 static int
@@ -66,7 +68,9 @@ client_version_compare(const char *a, const char *b)
 static enum protocol_version
 determine_protocol_version(const char *version)
 {
-    if (client_version_compare(version, "6.0.1.7") >= 0)
+    if (client_version_compare(version, "6.0.5") >= 0)
+        return PROTOCOL_6_0_5;
+    else if (client_version_compare(version, "6.0.1.7") >= 0)
         return PROTOCOL_6;
     else if (client_version_compare(version, "1") >= 0)
         return PROTOCOL_5;
@@ -111,5 +115,24 @@ client_version_set(struct client_version *cv,
     memcpy(cv->packet->version, version, length + 1);
 
     cv->protocol = determine_protocol_version(version);
+    return 1;
+}
+
+int
+client_version_seed(struct client_version *cv,
+                    const struct uo_packet_seed *seed)
+{
+    assert(cv->seed == NULL);
+    assert(seed->cmd == PCK_Seed);
+
+    cv->seed = malloc(sizeof(*cv->seed));
+    if (cv->seed == NULL)
+        return -1;
+
+    memcpy(cv->seed, seed, sizeof(*cv->seed));
+
+    /* this packet is only know to 6.0.5.0 clients, so we don't check
+       the packet contents here */
+    cv->protocol = PROTOCOL_6_0_5;
     return 1;
 }

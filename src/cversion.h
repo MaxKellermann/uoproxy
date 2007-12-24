@@ -27,6 +27,7 @@
 
 struct client_version {
     struct uo_packet_client_version *packet;
+    struct uo_packet_seed *seed;
     size_t packet_length;
     enum protocol_version protocol;
 };
@@ -48,5 +49,9 @@ client_version_copy(struct client_version *cv,
 int
 client_version_set(struct client_version *cv,
                    const char *version);
+
+int
+client_version_seed(struct client_version *cv,
+                    const struct uo_packet_seed *seed);
 
 #endif
