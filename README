@@ -61,6 +61,7 @@ following to compile it:
 
 - gcc
 - GNU make
+- libevent development files (package "libevent-dev" or "libevent-devel")
 
 Type:
 
