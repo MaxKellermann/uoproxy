@@ -46,6 +46,8 @@ HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
+.PHONY: all clean install strip release upload
+
 all: src/uoproxy
 
 clean:
