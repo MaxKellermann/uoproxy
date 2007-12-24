@@ -25,6 +25,7 @@ enum protocol_version {
     PROTOCOL_UNKNOWN = 0,
     PROTOCOL_5,
     PROTOCOL_6,
+    PROTOCOL_6_0_5,
     PROTOCOL_COUNT
 };
 

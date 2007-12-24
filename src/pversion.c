@@ -26,6 +26,7 @@ static const char *protocol_names[PROTOCOL_COUNT] = {
     [PROTOCOL_UNKNOWN] = "unknown",
     [PROTOCOL_5] = "5 or older",
     [PROTOCOL_6] = "6.0.1.7",
+    [PROTOCOL_6_0_5] = "6.0.5.0",
 };
 
 const char *
