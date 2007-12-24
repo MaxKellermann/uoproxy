@@ -46,7 +46,7 @@ HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
-.PHONY: all clean install strip release upload
+.PHONY: all clean install strip dist upload
 
 all: src/uoproxy
 
@@ -67,8 +67,8 @@ install: src/uoproxy
 strip: src/uoproxy
 	strip --strip-all $^
 
-release: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' debian/changelog |head -1)
-release:
+dist: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' NEWS |head -1)
+dist:
 	rm -rf /tmp/uoproxy
 	mkdir -p /tmp/uoproxy
 	svn export . /tmp/uoproxy/uoproxy-$(VERSION)
