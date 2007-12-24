@@ -122,9 +122,8 @@ int main(int argc, char **argv) {
 
     config_get(&config, argc, argv);
 
-    if (verbose >= 1)
-        printf("uoproxy v" VERSION
-               ", http://max.kellermann.name/projects/uoproxy/\n");
+    log(1, "uoproxy v" VERSION
+        ", http://max.kellermann.name/projects/uoproxy/\n");
 
     /* set up */
 
