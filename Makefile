@@ -1,8 +1,9 @@
 # uoproxy Makefile
-# (c) 2005-2006 Max Kellermann <max@duempel.org>
+# (c) 2005-2007 Max Kellermann <max@duempel.org>
 # $Id$
 
 CC := gcc
+PREFIX = /usr/local
 
 # change this value to 'yes' to enable the debugging version
 DEBUG = no
@@ -55,6 +56,11 @@ $(OBJECTS): %.o: %.c $(HEADERS)
 
 src/uoproxy: $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^
+
+install: src/uoproxy
+	install -d -m 0755 /etc $(PREFIX)/bin
+	install -m 0644 conf/uoproxy.conf /etc
+	install -m 0755 src/uoproxy $(PREFIX)/bin
 
 strip: src/uoproxy
 	strip --strip-all $^
