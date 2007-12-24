@@ -82,7 +82,7 @@ log_hexdump(int level, const void *data, size_t length)
     size_t row;
     char line[80];
 
-    if (level < verbose)
+    if (level > verbose)
         return;
 
     for (row = 0; row < length; row += 0x10) {
