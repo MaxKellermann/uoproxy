@@ -224,6 +224,9 @@ sock_buff_event_callback(int fd, short event, void *ctx)
             ret = sock_buff_invoke_data(sb);
             if (ret < 0)
                 return;
+        } else if (nbytes == 0) {
+            sock_buff_invoke_free(sb, 0);
+            return;
         } else if (nbytes == -1) {
             sock_buff_invoke_free(sb, errno);
             return;
