@@ -81,7 +81,7 @@ static void usage(void) {
          );
 }
 
-static struct addrinfo *port_to_addrinfo(unsigned port) {
+static struct addrinfo *port_to_addrinfo(int port) {
     struct addrinfo hints, *ai;
     int ret;
 
@@ -119,7 +119,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         {0,0,0,0}
     };
 #endif
-    uint16_t bind_port = 0;
+    int bind_port = 0;
     const char *login_address = NULL;
     struct addrinfo hints;
 #ifndef DISABLE_DAEMON_CODE
@@ -158,7 +158,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
             break;
 
         case 'p':
-            bind_port = (unsigned)strtoul(optarg, NULL, 10);
+            bind_port = atoi(optarg);
             if (bind_port == 0) {
                 fprintf(stderr, "invalid port specification\n");
                 exit(1);
