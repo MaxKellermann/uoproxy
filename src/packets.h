@@ -21,6 +21,8 @@
 #ifndef __PACKETS_H
 #define __PACKETS_H
 
+#include "pversion.h"
+
 #include <netinet/in.h>
 #include <stdint.h>
 
@@ -247,9 +249,12 @@ extern const size_t packet_lengths[0x100];
  * Returns PACKET_LENGTH_INVALID when the packet contains invalid
  * data.  The length being bigger than max_length is not an error.
  */
-static inline size_t get_packet_length(const void *q, size_t max_length) {
+static inline size_t get_packet_length(enum protocol_version protocol,
+                                       const void *q, size_t max_length) {
     const unsigned char *p = q;
     size_t length;
+
+    (void)protocol;
 
     if (max_length == 0)
         return 0;

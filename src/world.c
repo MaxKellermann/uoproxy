@@ -244,7 +244,7 @@ add_mobile(struct world *world, uint32_t serial) {
 
 static void replace_packet(void **destp, const void *src,
                            size_t length) {
-    assert(length == get_packet_length(src, length));
+    assert(length == get_packet_length(PROTOCOL_6, src, length));
 
     if (*destp != NULL)
         free(*destp);

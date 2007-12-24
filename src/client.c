@@ -134,7 +134,8 @@ client_packets_from_buffer(struct uo_client *client,
     int ret;
 
     while (length > 0) {
-        packet_length = get_packet_length(data, length);
+        packet_length = get_packet_length(client->protocol_version,
+                                          data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
             fprintf(stderr, "malformed packet from client:\n");
             fhexdump(stderr, "  ", data, length);

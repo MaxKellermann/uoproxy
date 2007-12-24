@@ -99,7 +99,8 @@ server_packets_from_buffer(struct uo_server *server,
     int ret;
 
     while (length > 0) {
-        packet_length = get_packet_length(data, length);
+        packet_length = get_packet_length(server->protocol_version,
+                                          data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
             fprintf(stderr, "malformed packet from server:\n");
             fhexdump(stderr, "  ", data, length);
@@ -252,7 +253,7 @@ void uo_server_send(struct uo_server *server,
                     const void *src, size_t length) {
     assert(server->sock != NULL || uo_server_is_aborted(server));
     assert(length > 0);
-    assert(get_packet_length(src, length) == length);
+    assert(get_packet_length(server->protocol_version, src, length) == length);
 
     if (uo_server_is_aborted(server))
         return;
