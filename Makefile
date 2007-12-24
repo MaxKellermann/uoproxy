@@ -59,7 +59,7 @@ src/uoproxy: $(OBJECTS)
 
 install: src/uoproxy
 	install -d -m 0755 /etc $(PREFIX)/bin
-	install -m 0644 conf/uoproxy.conf /etc
+	test -f /etc/uoproxy.conf || install -m 0644 conf/uoproxy.conf /etc
 	install -m 0755 src/uoproxy $(PREFIX)/bin
 
 strip: src/uoproxy
