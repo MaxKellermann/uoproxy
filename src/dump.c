@@ -18,6 +18,8 @@
  *
  */
 
+#ifndef DISABLE_DAEMON_CODE
+
 #include "log.h"
 
 #include <assert.h>
@@ -91,3 +93,5 @@ log_hexdump(int level, const void *data, size_t length)
         log(level, "%s\n", line);
     }
 }
+
+#endif

@@ -119,6 +119,7 @@ connection_handle_command(struct linked_server *server, const char *command)
 
             uo_client_send(c->client.client, &p, sizeof(p));
         }
+#ifndef DISABLE_LOGGING
     } else if (strncmp(command, "verbose", 7) == 0) {
         if (command[7] == ' ') {
             char *endptr;
@@ -133,6 +134,7 @@ connection_handle_command(struct linked_server *server, const char *command)
 
         uo_server_speak_console(server->server,
                                 "uoproxy: invalid %verbose syntax");
+#endif
     } else {
         uo_server_speak_console(server->server,
                                 "unknown uoproxy command, type '%' for help");

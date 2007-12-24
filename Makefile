@@ -46,7 +46,7 @@ HEADERS = $(wildcard src/*.h)
 
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
-.PHONY: all clean install strip dist upload rpm
+.PHONY: all clean install strip tiny dist upload rpm
 
 all: src/uoproxy
 
@@ -66,6 +66,9 @@ install: src/uoproxy
 
 strip: src/uoproxy
 	strip --strip-all $^
+
+tiny: CFLAGS += -DDISABLE_DAEMON_CODE -DDISABLE_LOGGING
+tiny: src/uoproxy strip
 
 dist: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' NEWS |head -1)
 dist:

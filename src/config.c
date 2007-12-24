@@ -149,6 +149,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
                    ", http://max.kellermann.name/projects/uoproxy/\n");
             exit(0);
 
+#ifndef DISABLE_LOGGING
         case 'v':
             ++verbose;
             break;
@@ -156,6 +157,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         case 'q':
             verbose = 0;
             break;
+#endif
 
         case 'p':
             bind_port = atoi(optarg);
@@ -165,11 +167,11 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
             }
             break;
 
+#ifndef DISABLE_DAEMON_CODE
         case 'D':
             config->no_daemon = 1;
             break;
 
-#ifndef DISABLE_DAEMON_CODE
         case 'P':
             if (config->pidfile != NULL)
                 free(config->pidfile);
@@ -419,12 +421,19 @@ int config_read_file(struct config *config, const char *path) {
                 exit(1);
             }
         } else if (strcmp(key, "pidfile") == 0) {
+#ifndef DISABLE_DAEMON_CODE
             assign_string(&config->pidfile, value);
+#endif
         } else if (strcmp(key, "logger") == 0) {
+#ifndef DISABLE_DAEMON_CODE
             assign_string(&config->logger, value);
+#endif
         } else if (strcmp(key, "chroot") == 0) {
+#ifndef DISABLE_DAEMON_CODE
             assign_string(&config->chroot_dir, value);
+#endif
         } else if (strcmp(key, "user") == 0) {
+#ifndef DISABLE_DAEMON_CODE
             struct passwd *pw;
 
             pw = getpwnam(value);
@@ -442,6 +451,7 @@ int config_read_file(struct config *config, const char *path) {
 
             config->uid = pw->pw_uid;
             config->gid = pw->pw_gid;
+#endif
         } else if (strcmp(key, "server_list") == 0) {
             unsigned i;
 
@@ -534,6 +544,7 @@ void config_dispose(struct config *config) {
         config->client_version = NULL;
     }
 
+#ifndef DISABLE_DAEMON_CODE
     if (config->pidfile != NULL)
         free(config->pidfile);
 
@@ -542,4 +553,5 @@ void config_dispose(struct config *config) {
 
     if (config->chroot_dir != NULL)
         free(config->chroot_dir);
+#endif
 }

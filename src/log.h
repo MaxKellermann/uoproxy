@@ -27,8 +27,6 @@
 #include <errno.h>
 #include <stddef.h>
 
-extern int verbose;
-
 #ifdef DISABLE_LOGGING
 #define log(level, ...)
 #define log_oom()
@@ -36,6 +34,8 @@ extern int verbose;
 #define log_errno(msg)
 #define log_hexdump(level, data, length)
 #else
+
+extern int verbose;
 
 void
 do_log(const char *fmt, ...)
