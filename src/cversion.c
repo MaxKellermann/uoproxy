@@ -104,8 +104,10 @@ client_version_set(struct client_version *cv,
     if (cv->packet == NULL)
         return -1;
 
+    cv->packet_length = sizeof(*cv->packet) + length;
+
     cv->packet->cmd = PCK_ClientVersion;
-    cv->packet->length = htons(sizeof(*cv->packet) + length);
+    cv->packet->length = htons(cv->packet_length);
     memcpy(cv->packet->version, version, length + 1);
 
     cv->protocol = determine_protocol_version(version);
