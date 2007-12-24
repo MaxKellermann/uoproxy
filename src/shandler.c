@@ -21,6 +21,7 @@
 #include "handler.h"
 #include "instance.h"
 #include "packets.h"
+#include "pverify.h"
 #include "connection.h"
 #include "server.h"
 #include "client.h"
@@ -228,8 +229,7 @@ static packet_action_t handle_container_content(struct connection *c,
                                                 const void *data, size_t length) {
     const struct uo_packet_container_content *p = data;
 
-    if (length < sizeof(*p) - sizeof(p->items) ||
-        length != sizeof(*p) - sizeof(p->items) + ntohs(p->num) * sizeof(p->items[0]))
+    if (!packet_verify_container_content(p, length))
         return PA_DISCONNECT;
 
     world_container_content(&c->client.world, p);
