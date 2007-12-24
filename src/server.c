@@ -136,6 +136,12 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
     size_t consumed = 0;
     ssize_t nbytes;
 
+    if (server->seed == 0 && data[0] == 0xef) {
+        /* client 6.0.5.0 sends a "0xef" seed packet instead of the
+           raw 32 bit seed */
+        server->seed = 0xef;
+    }
+
     if (server->seed == 0) {
         /* the first packet from a client is the seed, 4 bytes without
            header */

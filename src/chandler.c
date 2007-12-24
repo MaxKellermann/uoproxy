@@ -615,6 +615,28 @@ handle_hardware(struct linked_server *ls,
     return PA_ACCEPT;
 }
 
+static packet_action_t
+handle_seed(struct linked_server *ls,
+            const void *data, size_t length __attr_unused)
+{
+    const struct uo_packet_seed *p = data;
+
+    assert(length == sizeof(*p));
+
+    if (ls->client_version.seed == NULL) {
+        client_version_seed(&ls->client_version, p);
+        log(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
+            ntohl(p->client_major), ntohl(p->client_minor),
+            ntohl(p->client_revision), ntohl(p->client_patch));
+    }
+
+    if (!client_version_defined(&ls->connection->client_version) &&
+        ls->connection->client_version.seed == NULL)
+        client_version_seed(&ls->connection->client_version, p);
+
+    return PA_DROP;
+}
+
 struct server_packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Walk,
       .handler = handle_walk,
@@ -675,6 +697,9 @@ struct server_packet_binding client_packet_bindings[] = {
     },
     { .cmd = PCK_Hardware, /* 0xd9 */
       .handler = handle_hardware,
+    },
+    { .cmd = PCK_Seed, /* 0xef */
+      .handler = handle_seed,
     },
     { .handler = NULL }
 };
