@@ -233,7 +233,7 @@ handle_drop(struct linked_server *ls,
         uo_client_send(client->client, &p5, sizeof(p5));
     }
 
-    return PA_ACCEPT;
+    return PA_DROP;
 }
 
 static packet_action_t
