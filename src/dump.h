@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-void fhexdump(FILE *stream, const char *indent,
-              const void *data, size_t length);
+void
+log_hexdump(int level, const void *data, size_t length);
 
 #endif

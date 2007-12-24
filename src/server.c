@@ -102,25 +102,19 @@ server_packets_from_buffer(struct uo_server *server,
         packet_length = get_packet_length(server->protocol_version,
                                           data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
-            fprintf(stderr, "malformed packet from server:\n");
-            fhexdump(stderr, "  ", data, length);
-            fflush(stderr);
+            log(1, "malformed packet from server\n");
+            log_hexdump(5, data, length);
             uo_server_abort(server);
             return 0;
         }
 
-#ifdef DUMP_HEADERS
-        printf("from client: 0x%02x length=%zu\n",
-               data[0], packet_length);
-#endif
+        log(9, "from client: 0x%02x length=%zu\n",
+            data[0], packet_length);
 
         if (packet_length == 0 || packet_length > length)
             break;
 
-#ifdef DUMP_CLIENT_RECEIVE
-        fhexdump(stdout, "  ", data, packet_length);
-        fflush(stdout);
-#endif
+        log_hexdump(10, data, packet_length);
 
         ret = server->handler->packet(data, packet_length,
                                       server->handler_ctx);
@@ -258,11 +252,8 @@ void uo_server_send(struct uo_server *server,
     if (uo_server_is_aborted(server))
         return;
 
-#ifdef DUMP_SERVER_SEND
-    printf("sending to packet to client, length=%zu:\n", length);
-    fhexdump(stdout, "  ", src, length);
-    fflush(stdout);
-#endif
+    log(9, "sending to packet to client, length=%zu\n", length);
+    log_hexdump(10, src, length);
 
     if (server->compression_enabled) {
         void *dest;

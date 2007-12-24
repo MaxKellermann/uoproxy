@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2007 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  */
 
 #include "dump.h"
+#include "log.h"
 
 #include <assert.h>
 
@@ -65,8 +66,7 @@ hexdump_line(char *dest, size_t address,
             *dest++ = '.';
     }
 
-    *dest++ = '\n';
-    *dest++ = '\0';
+    *dest = '\0';
 }
 
 static size_t
@@ -75,17 +75,19 @@ min_size_t(size_t a, size_t b)
     return a < b ? a : b;
 }
 
-void fhexdump(FILE *stream, const char *indent,
-              const void *data, size_t length) {
+void
+log_hexdump(int level, const void *data, size_t length)
+{
     const unsigned char *p = data;
     size_t row;
     char line[80];
 
-    (void)indent;
+    if (level < verbose)
+        return;
 
     for (row = 0; row < length; row += 0x10) {
         hexdump_line(line, row, p + row,
                      min_size_t(0x10, length - row));
-        fputs(line, stream);
+        log(level, "%s\n", line);
     }
 }
