@@ -237,6 +237,7 @@ enum uo_packet_type_t {
     PCK_AOSTooltip = 0xd6,
     PCK_Hardware = 0xd9,
     PCK_AOSObjProp = 0xdc,
+    PCK_Seed = 0xef,
 };
 
 extern const size_t packet_lengths[0x100];
@@ -815,6 +816,16 @@ struct uo_packet_hardware {
     uint8_t clients_running, clients_installed, partial_installed;
     char language[8];
     uint8_t unknown1[64];
+} __attribute__ ((packed));
+
+/* 0xef Seed */
+struct uo_packet_seed {
+    unsigned char cmd;
+    uint32_t seed;
+    uint32_t client_major;
+    uint32_t client_minor;
+    uint32_t client_revision;
+    uint32_t client_patch;
 } __attribute__ ((packed));
 
 #endif
