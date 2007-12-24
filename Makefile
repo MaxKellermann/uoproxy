@@ -75,5 +75,5 @@ release:
 	cd /tmp/uoproxy && fakeroot tar cjf uoproxy-$(VERSION).tar.bz2 uoproxy-$(VERSION)
 
 upload:
-	scp README debian/changelog max@swift:/var/www/gzipped/download/uoproxy/doc/
+	scp README NEWS max@swift:/var/www/gzipped/download/uoproxy/doc/
 	ssh max@swift chmod a+rX -R /var/www/gzipped/download/uoproxy/doc/

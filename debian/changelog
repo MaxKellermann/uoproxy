@@ -1,26 +1,13 @@
 uoproxy (0.2) unstable; urgency=low
 
-  * fixed struct uo_packet_create_character
-  * show which packet caused connection abort
-  * only disconnect the faulty client on protocol error
-  * send cached client version during reconnect; this fixed game login on
-    servers supporting client version 6
-  * use libevent
-  * write buffering, enable TCP_NODELAY
-  * forward client version packets only if they were requested by the server
-  * support client 6.0.1.7
-  * auto-reconnect after invalid packet from server
-  * log invalid packets
-  * do asynchronous writes
-  * new command "%verbose" modifies the log level
+  * new upstream release
+  * moved DH_COMPAT to debian/compat
 
  --
 
 uoproxy (0.1.3) unstable; urgency=low
 
-  * increased maximum packet size from 8 kB to 32 kB
-  * registered packet 0xDC
-  * consider unregistered packets invalid
+  * new upstream release
   * LSB init script
   * don't use cdbs
   * added debian/copyright
@@ -30,42 +17,19 @@ uoproxy (0.1.3) unstable; urgency=low
 
 uoproxy (0.1.2) unstable; urgency=low
 
-  * auto-close gumps in multi client mode
-  * sync walking with walk_force instead of mobile_update; this fixes the
-    z-walk bug
-  * copy username and password before sending internal server list
-  * local port defaults to 2593
-  * added #includes required on FreeBSD
+  * new upstream release
 
  -- Max Kellermann <max@duempel.org>  Wed,  8 Feb 2006 23:42:42 +0100
 
 uoproxy (0.1.1) unstable; urgency=low
 
-  * corrected the getopt string
-  * remember equip packets
-  * parse encoded speech
-  * new command "%drop" which drops the item currently held
-  * bugfix: serials are in network byte order
-  * read equipment list from mobile_incoming packet
-  * handle container packets: open, update, content
-  * delete all child objects when an entity is deleted
-  * bugfix: check c->reconnecting before c->in_game
-  * don't forward relay packet, connect to game server internally
-  * show real character name while attaching
-  * borrowed packet length table from wolfpack
-  * when reconnecting, connect to the login server
-  * don't delete connection when other clients are online
-  * flush input buffer before select()
-  * added DUMP_USE option
-  * check for full output buffers
-  * auto-cancel target cursor in multi client mode
-  * added antispy option
+  * new upstream release
 
  -- Max Kellermann <max@duempel.org>  Tue, 27 Dec 2005 00:21:14 +0100
 
 uoproxy (0.1.0) unstable; urgency=low
 
-  * initial version
+  * initial debian package
 
  -- Max Kellermann <max@duempel.org>  Wed, 14 Dec 2005 23:32:35 +0100
 
