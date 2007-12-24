@@ -18,35 +18,17 @@
  *
  */
 
-#ifndef __UOPROXY_CVERSION_H
-#define __UOPROXY_CVERSION_H
+#ifndef __UOPROXY_PVERSION_H
+#define __UOPROXY_PVERSION_H
 
-#include "pversion.h"
-
-#include <stddef.h>
-
-struct client_version {
-    struct uo_packet_client_version *packet;
-    size_t packet_length;
-    enum protocol_version protocol;
+enum protocol_version {
+    PROTOCOL_UNKNOWN = 0,
+    PROTOCOL_5,
+    PROTOCOL_6,
+    PROTOCOL_COUNT
 };
 
-static inline int
-client_version_defined(const struct client_version *cv)
-{
-    return cv->packet != NULL;
-}
-
-void
-client_version_free(struct client_version *cv);
-
-int
-client_version_copy(struct client_version *cv,
-                    const struct uo_packet_client_version *packet,
-                    size_t length);
-
-int
-client_version_set(struct client_version *cv,
-                   const char *version);
+const char *
+protocol_name(enum protocol_version protocol);
 
 #endif

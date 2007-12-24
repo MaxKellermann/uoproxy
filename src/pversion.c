@@ -18,35 +18,20 @@
  *
  */
 
-#ifndef __UOPROXY_CVERSION_H
-#define __UOPROXY_CVERSION_H
-
 #include "pversion.h"
 
-#include <stddef.h>
+#include <assert.h>
 
-struct client_version {
-    struct uo_packet_client_version *packet;
-    size_t packet_length;
-    enum protocol_version protocol;
+static const char *protocol_names[PROTOCOL_COUNT] = {
+    [PROTOCOL_UNKNOWN] = "unknown",
+    [PROTOCOL_5] = "5 or older",
+    [PROTOCOL_6] = "6.0.1.7",
 };
 
-static inline int
-client_version_defined(const struct client_version *cv)
+const char *
+protocol_name(enum protocol_version protocol)
 {
-    return cv->packet != NULL;
+    assert((unsigned)protocol < PROTOCOL_COUNT);
+
+    return protocol_names[protocol];
 }
-
-void
-client_version_free(struct client_version *cv);
-
-int
-client_version_copy(struct client_version *cv,
-                    const struct uo_packet_client_version *packet,
-                    size_t length);
-
-int
-client_version_set(struct client_version *cv,
-                   const char *version);
-
-#endif

@@ -25,20 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *protocol_names[PROTOCOL_COUNT] = {
-    [PROTOCOL_UNKNOWN] = "unknown",
-    [PROTOCOL_5] = "5 or older",
-    [PROTOCOL_6] = "6.0.1.7",
-};
-
-const char *
-protocol_name(enum protocol_version protocol)
-{
-    assert((unsigned)protocol < PROTOCOL_COUNT);
-
-    return protocol_names[protocol];
-}
-
 void
 client_version_free(struct client_version *cv)
 {
