@@ -220,13 +220,13 @@ sock_buff_event_callback(int fd, short event, void *ctx)
         ssize_t nbytes;
 
         nbytes = read_to_buffer(sb->fd, sb->input, 65536);
-        if (nbytes == -1) {
-            sock_buff_invoke_free(sb, errno);
-            return;
-        } else if (nbytes > 0) {
+        if (nbytes > 0) {
             ret = sock_buff_invoke_data(sb);
             if (ret < 0)
                 return;
+        } else if (nbytes == -1) {
+            sock_buff_invoke_free(sb, errno);
+            return;
         }
     }
 
