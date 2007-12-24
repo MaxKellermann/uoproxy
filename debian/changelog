@@ -9,6 +9,7 @@ uoproxy (0.2) unstable; urgency=low
   * write buffering, enable TCP_NODELAY
   * forward client version packets only if they were requested by the server
   * support client 6.0.1.7
+  * auto-reconnect after invalid packet from server
   * do asynchronous writes
 
  --

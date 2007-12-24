@@ -52,7 +52,15 @@ client_packet(const void *data, size_t length, void *ctx)
     case PA_DISCONNECT:
         log(2, "aborting connection to server after packet 0x%x\n",
             *(const unsigned char*)data);
-        connection_delete(c);
+        log_hexdump(6, data, length);
+
+        if (c->autoreconnect && c->in_game) {
+            log(2, "auto-reconnecting\n");
+            connection_disconnect(c);
+            connection_reconnect_delayed(c);
+        } else {
+            connection_delete(c);
+        }
         return -1;
     }
 
