@@ -57,7 +57,7 @@ connection_handle_command(struct linked_server *server, const char *command)
         uo_server_speak_console(server->server,
                                 "uoproxy commands: % %reconnect %char %drop %verbose");
     } else if (strcmp(command, "reconnect") == 0) {
-        if (c->client.client == NULL) {
+        if (c->client.client == NULL || c->client.reconnecting) {
             uo_server_speak_console(server->server,
                                     "uoproxy: not connected");
         } else {
@@ -92,7 +92,7 @@ connection_handle_command(struct linked_server *server, const char *command)
                                     "uoproxy: invalid %char syntax");
         }
     } else if (strcmp(command, "drop") == 0) {
-        if (c->client.client == NULL) {
+        if (c->client.client == NULL || c->client.reconnecting) {
             uo_server_speak_console(server->server,
                                     "uoproxy: not connected");
         } else if (c->client_version.protocol < PROTOCOL_6) {
