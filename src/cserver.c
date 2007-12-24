@@ -54,6 +54,8 @@ server_packet(const void *data, size_t length, void *ctx)
     case PA_DISCONNECT:
         log(2, "aborting connection to client after packet 0x%x\n",
             *(const unsigned char*)data);
+        log_hexdump(6, data, length);
+
         connection_server_dispose(c, ls);
         if (list_empty(&c->servers)) {
             if (c->background)
