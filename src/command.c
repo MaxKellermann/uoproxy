@@ -93,13 +93,25 @@ connection_handle_command(struct linked_server *server, const char *command)
         if (c->client.client == NULL) {
             uo_server_speak_console(server->server,
                                     "uoproxy: not connected");
-        } else {
+        } else if (c->client_version.protocol < PROTOCOL_6) {
             struct uo_packet_drop p = {
                 .cmd = PCK_Drop,
                 .serial = 0,
                 .x = c->client.world.packet_start.x,
                 .y = c->client.world.packet_start.y,
                 .z = ntohs(c->client.world.packet_start.x),
+                .dest_serial = 0,
+            };
+
+            uo_client_send(c->client.client, &p, sizeof(p));
+        } else {
+            struct uo_packet_drop_6 p = {
+                .cmd = PCK_Drop,
+                .serial = 0,
+                .x = c->client.world.packet_start.x,
+                .y = c->client.world.packet_start.y,
+                .z = ntohs(c->client.world.packet_start.x),
+                .unknown0 = 0,
                 .dest_serial = 0,
             };
 
