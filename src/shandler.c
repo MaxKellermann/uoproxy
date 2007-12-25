@@ -449,7 +449,7 @@ static packet_action_t handle_char_list(struct connection *c,
         struct uo_packet_play_character p2 = {
             .cmd = PCK_PlayCharacter,
             .slot = htonl(c->character_index),
-            .client_ip = 0xdeadbeef, /* XXX */
+            .client_ip = htonl(0xc0a80102), /* 192.168.1.2 */
         };
 
         log(2, "sending PlayCharacter\n");
