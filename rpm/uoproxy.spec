@@ -13,7 +13,7 @@ URL: http://max.kellermann.name/projects/uoproxy/
 Source: http://download.berlios.de/uoproxy/uoproxy-%{version}.tar.bz2
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-BuildRequires: which
+BuildPrereq: gcc >= 4, libevent-devel
 
 %description
 uoproxy is a proxy server for Ultima Online. It adds features like
