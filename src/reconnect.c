@@ -40,11 +40,17 @@ static void
 connection_try_reconnect(struct connection *c)
 {
     struct config *config = c->instance->config;
+    uint32_t seed;
     int ret;
 
     assert(c->in_game);
     assert(c->client.reconnecting);
     assert(c->client.client == NULL);
+
+    if (c->client_version.seed != NULL)
+        seed = c->client_version.seed->seed;
+    else
+        seed = htonl(0xc0a80102); /* 192.168.1.2 */
 
     if (config->login_address == NULL) {
         /* connect to game server */
@@ -54,11 +60,11 @@ connection_try_reconnect(struct connection *c)
         assert(config->game_servers != NULL);
         assert(c->server_index < config->num_game_servers);
 
-        ret = connection_client_connect(c, server_address, 0xdeadbeef);
+        ret = connection_client_connect(c, server_address, seed);
         if (ret == 0) {
             struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
-                .auth_id = 0xdeadbeef,
+                .auth_id = seed,
             };
 
             log(2, "connected, doing GameLogin\n");
@@ -74,7 +80,7 @@ connection_try_reconnect(struct connection *c)
         }
     } else {
         /* connect to login server */
-        ret = connection_client_connect(c, config->login_address, 0xdeadbeef);
+        ret = connection_client_connect(c, config->login_address, seed);
         if (ret == 0) {
             struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,

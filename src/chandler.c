@@ -453,6 +453,7 @@ handle_play_server(struct linked_server *ls,
         struct game_server_config *config;
         int ret;
         struct uo_packet_game_login login;
+        uint32_t seed;
 
         assert(c->client.client == NULL);
 
@@ -464,7 +465,13 @@ handle_play_server(struct linked_server *ls,
         config = c->instance->config->game_servers + i;
 
         /* connect to new server */
-        ret = connection_client_connect(c, config->address, 0xdeadbeef);
+
+        if (c->client_version.seed != NULL)
+            seed = c->client_version.seed->seed;
+        else
+            seed = htonl(0xc0a80102); /* 192.168.1.2 */
+
+        ret = connection_client_connect(c, config->address, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PA_DISCONNECT;
@@ -472,7 +479,7 @@ handle_play_server(struct linked_server *ls,
 
         /* send game login to new server */
         login.cmd = PCK_GameLogin;
-        login.auth_id = 0xdeadbeef;
+        login.auth_id = seed;
 
         memcpy(login.username, c->username, sizeof(login.username));
         memcpy(login.password, c->password, sizeof(login.password));
