@@ -351,8 +351,18 @@ handle_account_login(struct linked_server *ls,
         return PA_DROP;
     } else if (config->login_address != NULL) {
         /* connect to the real login server */
-        ret = connection_client_connect(c, config->login_address,
-                                        uo_server_seed(ls->server));
+        uint32_t seed;
+
+        if (config->antispy)
+            /* since the login server seed usually contains the
+               internal IP address of the client, we want to hide it
+               in antispy mode - always send 192.168.1.2 which is
+               generic enough to be useless */
+            seed = htonl(0xc0a80102);
+        else
+            seed = uo_server_seed(ls->server);
+
+        ret = connection_client_connect(c, config->login_address, seed);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
 

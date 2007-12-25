@@ -13,6 +13,7 @@ uoproxy (0.2) unstable; urgency=low
   * log invalid packets
   * do asynchronous writes
   * new command "%verbose" modifies the log level
+  * hide internal IP address in antispy mode
 
  --
 
