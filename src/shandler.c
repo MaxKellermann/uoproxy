@@ -525,6 +525,14 @@ static packet_action_t handle_relay(struct connection *c,
     /* close old connection */
     connection_disconnect(c);
 
+    /* restore the "reconnecting" flag: it was cleared by
+       connection_client_disconnect(), but since continue reconnecting
+       on the new connection, we want to set it now.  the check at the
+       start of this function ensures that c->in_game is only set
+       during reconnecting. */
+
+    c->client.reconnecting = c->in_game;
+
     /* extract new server's address */
     server_address = make_addrinfo(relay.ip, relay.port);
     if (server_address == NULL) {
