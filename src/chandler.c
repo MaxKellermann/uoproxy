@@ -433,7 +433,7 @@ handle_play_server(struct linked_server *ls,
         /* attach it to the new connection */
         attach_after_play_server(c2, ls);
 
-        return PA_DROP;
+        return PA_DELETED;
     }
 
     if (c->instance->config->login_address == NULL &&
