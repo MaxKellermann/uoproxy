@@ -138,7 +138,17 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
     if (server->seed == 0 && data[0] == 0xef) {
         /* client 6.0.5.0 sends a "0xef" seed packet instead of the
            raw 32 bit seed */
-        server->seed = 0xef;
+        const struct uo_packet_seed *p = data0;
+
+        if (length < sizeof(*p))
+            return 0;
+
+        server->seed = p->seed;
+        if (server->seed == 0) {
+            log(2, "zero seed from client\n");
+            uo_server_abort(server);
+            return 0;
+        }
     }
 
     if (server->seed == 0) {
