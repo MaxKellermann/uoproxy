@@ -23,6 +23,7 @@
 #include "buffered-io.h"
 #include "fifo-buffer.h"
 #include "flush.h"
+#include "poison.h"
 
 #include <assert.h>
 #include <unistd.h>
@@ -111,6 +112,8 @@ void sock_buff_dispose(struct sock_buff *sb) {
 
     fifo_buffer_free(sb->input);
     fifo_buffer_free(sb->output);
+
+    poison(sb, sizeof(*sb));
     free(sb);
 }
 
