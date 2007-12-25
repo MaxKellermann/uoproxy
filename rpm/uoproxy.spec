@@ -41,7 +41,7 @@ and much more.
 %{_bindir}/uoproxy
 
 %changelog
-* Sat Dec 24 2007 Max Kellermann <max@duempel.org> - 0.2-1
+* Sat Dec 25 2007 Max Kellermann <max@duempel.org> - 0.2-1
 - Updated to release 0.2.
 
 * Sat Apr 08 2006 Dries Verachtert <dries@ulyssis.org> - 0.1.2-1.2
