@@ -298,6 +298,39 @@
     </table>
   </chapter>
 
+  <chapter id="tricks">
+    <title>Tips and tricks</title>
+
+    <section id="multihead">
+      <title>Multi-heading</title>
+
+      <para>
+        <filename>uoproxy</filename> allows you to play with multiple
+        clients on the one account at the same time, even if they talk
+        different protocol versions.
+      </para>
+    </section>
+
+    <section id="protocol_version">
+      <title>Translating between protocol versions</title>
+
+      <para>
+        <filename>uoproxy</filename> implements several versions of
+        the UO protocol and can translate between them on-the-fly.
+        The config option <varname>client_version</varname> specifies
+        the protocol version for talkin to the game server; if that
+        option is not configured, the first client sets the version.
+      </para>
+
+      <para>
+        Now imagine the server does not support a new (or old)
+        protocol version: just enter a suported version number into
+        the <varname>client_version</varname> option, and let
+        <filename>uoproxy</filename> do the rest.
+      </para>
+    </section>
+  </chapter>
+
   <chapter id="troubleshooting">
     <title>Troubleshooting</title>
 
