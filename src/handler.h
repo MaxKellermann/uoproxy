@@ -36,6 +36,9 @@ typedef enum {
 
     /** disconnect the endpoint from which this packet was received */
     PA_DISCONNECT,
+
+    /** the endpoint has been deleted */
+    PA_DELETED,
 } packet_action_t;
 
 struct client_packet_binding {

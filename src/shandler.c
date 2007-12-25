@@ -537,7 +537,7 @@ static packet_action_t handle_relay(struct connection *c,
     if (ret != 0) {
         log_error("connect to game server failed", ret);
         freeaddrinfo(server_address);
-        return PA_DROP;
+        return PA_DISCONNECT;
     }
 
     freeaddrinfo(server_address);
@@ -553,7 +553,7 @@ static packet_action_t handle_relay(struct connection *c,
 
     uo_client_send(c->client.client, &login, sizeof(login));
 
-    return PA_DROP;
+    return PA_DELETED;
 }
 
 static packet_action_t handle_server_list(struct connection *c,

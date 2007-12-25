@@ -64,6 +64,9 @@ server_packet(const void *data, size_t length, void *ctx)
                 connection_delete(c);
         }
         return -1;
+
+    case PA_DELETED:
+        return -1;
     }
 
     return 0;
