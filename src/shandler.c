@@ -534,13 +534,11 @@ static packet_action_t handle_relay(struct connection *c,
 
     /* connect to new server */
     ret = connection_client_connect(c, server_address, relay.auth_id);
+    freeaddrinfo(server_address);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
-        freeaddrinfo(server_address);
         return PA_DISCONNECT;
     }
-
-    freeaddrinfo(server_address);
 
     /* send game login to new server */
     log(2, "connected, doing GameLogin\n");
