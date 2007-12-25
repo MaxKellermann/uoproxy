@@ -1,0 +1,324 @@
+<?xml version='1.0' encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "docbook/dtd/xml/4.2/docbookx.dtd">
+<book>
+  <title>uoproxy</title>
+
+  <bookinfo>
+    <author>
+      <firstname>Max</firstname>
+      <surname>Kellermann</surname>
+      <email>max@duempel.org</email>
+    </author>
+  </bookinfo>
+
+  <preface id="what_is_uoproxy">
+    <title>
+      What is <filename>uoproxy</filename>?
+    </title>
+    <para>
+      uoproxy is a proxy server designed for Ultima Online.  It acts
+      as an Ultima Online server, and forwards the connection to a
+      'real' server.
+    </para>
+  </preface>
+
+  <chapter id="install">
+    <title>Installation</title>
+
+    <section id="install_debian">
+      <title>Installation on Debian or Ubuntu</title>
+
+      <para>
+        Download the Debian package from the
+        <filename>uoproxy</filename> home page.  Install it with
+        <command>dpkg -i</command> as root:
+      </para>
+
+      <programlisting>dpkg -i uoproxy_0.1.3_i386.deb</programlisting>
+
+      <para>
+        Edit the file <filename>/etc/uoproxy.conf</filename> and
+        restart the daemon:
+      </para>
+
+      <programlisting>/etc/init.d/uoproxy restart</programlisting>
+    </section>
+
+    <section id="install_redhat">
+      <title>Installation on RedHat / Ubuntu / SuSE</title>
+
+      <para>
+        Download the RPM package from the <filename>uoproxy</filename>
+        home page.  Install it with <command>rpm -i</command> as root:
+      </para>
+
+      <programlisting>rpm -i uoproxy-0.2-1.i386.rpm</programlisting>
+
+      <para>
+        Edit the file <filename>/etc/uoproxy.conf</filename> and
+        start the daemon:
+      </para>
+
+      <programlisting>uoproxy -D</programlisting>
+    </section>
+
+    <section id="compile">
+      <title>Compiling <filename>uoproxy</filename> from sources</title>
+
+      <para>
+        To compile, you need the following:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <filename>gcc</filename>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            GNU <filename>make</filename>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <filename>libevent</filename> development files (package
+            <filename>libevent-dev</filename> or
+            <filename>libevent-devel</filename>)
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        Download the <filename>uoproxy</filename> source tarball and
+        extract it.  Change to the source directory and build it with
+        <filename>make</filename> (or <filename>gmake</filename> if
+        you are on BSD/Mac OS X):
+      </para>
+
+      <programlisting>make</programlisting>
+
+      <para>
+        To run it from here without further installation, type:
+      </para>
+
+      <programlisting>./src/uoproxy -D -p 2593 dfi.defianceuo.com</programlisting>
+
+      <para>
+        This will run the daemon on port 2593 for connection to the
+        <ulink url="http://www.defianceuo.com/">Defiance</ulink>
+        shard.  <parameter>-D</parameter> tells
+        <filename>uoproxy</filename> to run in foreground, and it will
+        daemonize if you omit it.  For further configuration, you
+        might want to create a configuration file; as a good start,
+        copy the example file into your home directory and edit it:
+      </para>
+
+      <programlisting>cp conf/uoproxy.conf ~/.uoproxyrc</programlisting>
+
+      <para>
+        To install <filename>uoproxy</filename> permanently, type:
+      </para>
+
+      <programlisting>make install</programlisting>
+
+      <para>
+        It will install itself in <filename>/usr/local/bin</filename>
+        and copies the example configuration to
+        <filename>/etc/uoproxy.conf</filename>
+      </para>
+    </section>
+  </chapter>
+
+  <chapter id="configuration">
+    <title>Configuration</title>
+
+    <para>
+      Most configuration options are only available in the
+      configration file.  By default, <filename>uoproxy</filename>
+      looks for it in your home directory
+      (<filename>~/.uoproxyrc</filename>) and then in the system wide
+      configuration directory
+      (<filename>/etc/uoproxy.conf</filename>).  The following options
+      are available:
+    </para>
+
+    <table id="config_options">
+      <title>
+        <filename>uoproxy</filename> configuration options
+      </title>
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry>
+              Option
+            </entry>
+            <entry>
+              Description
+            </entry>
+            <entry>
+              Default
+            </entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>
+              <varname>port</varname>
+            </entry>
+            <entry>
+              The TCP port <filename>uoproxy</filename> binds on.
+            </entry>
+            <entry>
+              2593
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>server</varname>
+            </entry>
+            <entry>
+              The login server of the shard you wish to connect to.
+            </entry>
+            <entry>
+              none
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>pidfile</varname>
+            </entry>
+            <entry>
+              The path for <filename>uoproxy</filename>'s pid file.
+            </entry>
+            <entry>
+              no pid file
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>logger</varname>
+            </entry>
+            <entry>
+              The program which is used for logging.
+            </entry>
+            <entry>
+              log to standard output
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>chroot</varname>
+            </entry>
+            <entry>
+              Change root directory after initialization.
+            </entry>
+            <entry>
+              disabled
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname></varname>
+            </entry>
+            <entry>
+              Change to this user after initialization.
+            </entry>
+            <entry>
+              don't change user
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>server_list</varname>
+            </entry>
+            <entry>
+              <para>
+                Emulate a login server.  In the value of this option,
+                <filename>uoproxy</filename> expects a list of game
+                servers (not login servers!) in the form
+                <parameter>name=ip:port,name2=ip2:port2,...</parameter>
+              </para>
+            </entry>
+            <entry>
+              none
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>background</varname>
+            </entry>
+            <entry>
+              Keep connections after the last client has exited?
+            </entry>
+            <entry>
+              no
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>autoreconnect</varname>
+            </entry>
+            <entry>
+              Automatically reconnect to game server if the connection
+              fails for some reason?
+            </entry>
+            <entry>
+              yes
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>antispy</varname>
+            </entry>
+            <entry>
+              Block spy packets?  This includes known packets where
+              the client transmits information about the user's
+              computer.
+            </entry>
+            <entry>
+              no
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <varname>client_version</varname>
+            </entry>
+            <entry>
+              Report this client version to the game server and
+              emulate this protocol version.
+            </entry>
+            <entry>
+              forward the version reported by the first client
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+  </chapter>
+
+  <chapter id="troubleshooting">
+    <title>Troubleshooting</title>
+
+    <section id="packet_dump">
+      <title>Dumping packets</title>
+
+      <para>
+        If you experience a problem you cannot solve, and you ask for
+        help, you should include a packet dump.
+        <filename>uoproxy</filename> dumps packets at a verbosity of
+        10, i.e. you have to specify 9 <parameter>-v</parameter>
+        options when starting:
+      </para>
+
+      <programlisting>uoproxy -vvvvvvvvvD |tee /tmp/uoproxy.log</programlisting>
+
+      <para>
+        Note that this also logs your user name and password.  Since
+        problems with login packets are rare, you should delete them
+        before you send the log file.
+      </para>
+    </section>
+  </chapter>
+</book>

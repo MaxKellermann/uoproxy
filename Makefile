@@ -51,13 +51,16 @@ OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 all: src/uoproxy
 
 clean:
-	rm -f src/uoproxy src/*.o
+	rm -f src/uoproxy src/*.o doc/uoproxy.html
 
 $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c $(CFLAGS) $(WARNING_CFLAGS) $(FEATURE_CFLAGS) -o $@ $<
 
 src/uoproxy: $(OBJECTS)
 	$(CC) $(LDFLAGS) -o $@ $^
+
+doc/uoproxy.html: %.html: %.xml
+	xmlto -o doc xhtml-nochunks $<
 
 install: src/uoproxy
 	install -d -m 0755 /etc $(PREFIX)/bin

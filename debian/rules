@@ -16,7 +16,7 @@ build: debian/stamp-build
 debian/stamp-build:
 	dh_testdir
 
-	$(MAKE) CC=/usr/bin/gcc CFLAGS="$(CFLAGS)"
+	$(MAKE) CC=/usr/bin/gcc CFLAGS="$(CFLAGS)" all doc/uoproxy.html
 
 	touch debian/stamp-build
 
@@ -62,7 +62,7 @@ binary-indep: build install
 binary-arch: build install
 	dh_testdir -a
 	dh_testroot -a
-	dh_installdocs -a -A README -A TODO
+	dh_installdocs -a -A README TODO doc/uoproxy.html
 	dh_installchangelogs -a
 	dh_installinit -a
 	dh_install -a
