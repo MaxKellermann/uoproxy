@@ -533,6 +533,10 @@ static packet_action_t handle_relay(struct connection *c,
     }
 
     /* connect to new server */
+
+    if (c->client_version.seed != NULL)
+        c->client_version.seed->seed = relay.auth_id;
+
     ret = connection_client_connect(c, server_address, relay.auth_id);
     freeaddrinfo(server_address);
     if (ret != 0) {
