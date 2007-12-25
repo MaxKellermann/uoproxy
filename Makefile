@@ -80,8 +80,8 @@ dist:
 	svn export . /tmp/uoproxy/uoproxy-$(VERSION)
 	cd /tmp/uoproxy && fakeroot tar cjf uoproxy-$(VERSION).tar.bz2 uoproxy-$(VERSION)
 
-upload:
-	scp README NEWS max@swift:/var/www/gzipped/download/uoproxy/doc/
+upload: doc/uoproxy.html
+	scp README NEWS doc/uoproxy.html max@swift:/var/www/gzipped/download/uoproxy/doc/
 	ssh max@swift chmod a+rX -R /var/www/gzipped/download/uoproxy/doc/
 
 rpm: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' NEWS |head -1)
