@@ -176,6 +176,19 @@
           </row>
           <row>
             <entry>
+              <varname>bind</varname>
+            </entry>
+            <entry>
+              The IP and the TCP port <filename>uoproxy</filename>
+              binds on.  You cannot specify both
+              <varname>port</varname> and <varname>bind</varname>.
+            </entry>
+            <entry>
+              2593
+            </entry>
+          </row>
+          <row>
+            <entry>
               <varname>server</varname>
             </entry>
             <entry>

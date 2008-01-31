@@ -58,6 +58,10 @@ static void usage(void) {
          " --port port\n"
 #endif
          " -p port        listen on this port (default 2593)\n"
+#ifdef __GLIBC__
+         " --bind IP:port\n"
+#endif
+         " -b IP:port     listen on this IP and port (default *:2593)\n"
 #ifndef DISABLE_DAEMON_CODE
 #ifdef __GLIBC__
          " --logger program\n"
@@ -100,6 +104,26 @@ static struct addrinfo *port_to_addrinfo(int port) {
     return ai;
 }
 
+static struct addrinfo *
+parse_address(const char *host_and_port)
+{
+    struct addrinfo hints, *ai;
+    int ret;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    ret = getaddrinfo_helper(host_and_port, 2593, &hints, &ai);
+    if (ret != 0) {
+        fprintf(stderr, "getaddrinfo_helper failed: %s\n",
+                gai_strerror(ret));
+        exit(2);
+    }
+
+    return ai;
+}
+
 /** read configuration options from the command line */
 void parse_cmdline(struct config *config, int argc, char **argv) {
     int ret;
@@ -110,6 +134,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
         {"verbose", 0, 0, 'v'},
         {"quiet", 1, 0, 'q'},
         {"port", 1, 0, 'p'},
+        {"bind", 1, 0, 'b'},
 #ifndef DISABLE_DAEMON_CODE
         {"chroot", 1, 0, 'r'},
         {"user", 1, 0, 'u'},
@@ -120,7 +145,7 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
     };
 #endif
     int bind_port = 0;
-    const char *login_address = NULL;
+    const char *bind_address = NULL, *login_address = NULL;
     struct addrinfo hints;
 #ifndef DISABLE_DAEMON_CODE
     struct passwd *pw;
@@ -165,6 +190,10 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
                 fprintf(stderr, "invalid port specification\n");
                 exit(1);
             }
+            break;
+
+        case 'b':
+            bind_address = optarg;
             break;
 
 #ifndef DISABLE_DAEMON_CODE
@@ -262,6 +291,24 @@ void parse_cmdline(struct config *config, int argc, char **argv) {
     }
 
     /* resolve bind_address */
+
+    if (bind_address != NULL) {
+        if (bind_port != 0) {
+            fprintf(stderr, "You cannot specifiy both "
+#ifdef __GLIBC__
+                    "--bind and --port"
+#else
+                    "-b and -p"
+#endif
+                    "\n");
+            exit(1);
+        }
+
+        if (config->bind_address != NULL)
+            freeaddrinfo(config->bind_address);
+
+        config->bind_address = parse_address(bind_address);
+    }
 
     if (bind_port == 0 && config->bind_address == NULL)
         bind_port = 2593;
@@ -403,6 +450,11 @@ int config_read_file(struct config *config, const char *path) {
                 freeaddrinfo(config->bind_address);
 
             config->bind_address = port_to_addrinfo((unsigned)port);
+        } else if (strcmp(key, "bind") == 0) {
+            if (config->bind_address != NULL)
+                freeaddrinfo(config->bind_address);
+
+            config->bind_address = parse_address(value);
         } else if (strcmp(key, "server") == 0) {
             struct addrinfo hints;
 

@@ -1,5 +1,6 @@
 uoproxy (0.2.1) unstable; urgency=low
 
+  * support binding on an IP address
   * fix typo in log message
 
  --
