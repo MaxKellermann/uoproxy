@@ -318,7 +318,7 @@ void uo_client_send(struct uo_client *client,
     if (uo_client_is_aborted(client))
         return;
 
-    log(9, "sending to packet to server, length=%zu\n", length);
+    log(9, "sending packet to server, length=%zu\n", length);
     log_hexdump(10, src, length);
 
     if (*(const unsigned char*)src == PCK_GameLogin)

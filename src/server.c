@@ -266,7 +266,7 @@ void uo_server_send(struct uo_server *server,
     if (uo_server_is_aborted(server))
         return;
 
-    log(9, "sending to packet to client, length=%zu\n", length);
+    log(9, "sending packet to client, length=%zu\n", length);
     log_hexdump(10, src, length);
 
     if (server->compression_enabled) {
