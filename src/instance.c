@@ -25,9 +25,15 @@
 #include "netutil.h"
 #include "config.h"
 
-#include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#endif
 
 static void
 listener_event_callback(int fd, short event __attr_unused, void *ctx)
@@ -41,7 +47,11 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
     sa_len = sizeof(sa);
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK)
+        if (errno != EAGAIN
+#ifndef WIN32
+            && errno != EWOULDBLOCK
+#endif
+            )
             log_errno("accept() failed");
         return;
     }

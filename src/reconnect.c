@@ -27,7 +27,13 @@
 
 #include <assert.h>
 #include <time.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <netdb.h>
+#endif
 
 void connection_disconnect(struct connection *c) {
     if (c->client.client == NULL)

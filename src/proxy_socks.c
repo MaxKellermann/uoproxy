@@ -22,7 +22,14 @@
 #include "log.h"
 
 #include <stdint.h>
+#include <sys/types.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <netinet/in.h>
+#endif
 
 struct socks4_header {
     uint8_t version;
@@ -47,7 +54,7 @@ socks_connect(int fd, const struct sockaddr *address)
         .ip = in->sin_addr.s_addr,
     };
 
-    ssize_t nbytes = send(fd, &header, sizeof(header), 0);
+    ssize_t nbytes = send(fd, (const char *)&header, sizeof(header), 0);
     if (nbytes < 0) {
         log_errno("Failed to send SOCKS4 request");
         return false;
@@ -65,7 +72,7 @@ socks_connect(int fd, const struct sockaddr *address)
         return false;
     }
 
-    nbytes = recv(fd, &header, sizeof(header), 0);
+    nbytes = recv(fd, (char *)&header, sizeof(header), 0);
     if (nbytes < 0) {
         log_errno("Failed to receive SOCKS4 response");
         return false;

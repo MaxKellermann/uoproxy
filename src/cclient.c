@@ -31,7 +31,13 @@
 
 #include <assert.h>
 #include <unistd.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <netdb.h>
+#endif
 
 static int
 client_packet(const void *data, size_t length, void *ctx)

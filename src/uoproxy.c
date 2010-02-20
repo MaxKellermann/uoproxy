@@ -25,16 +25,26 @@
 #include "compiler.h"
 #include "log.h"
 
+#ifndef WIN32
 #include <sys/signal.h>
 #include <signal.h>
+#endif
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
+#ifndef WIN32
+
 static void
 deinit_signals(struct instance *instance)
 {
+    (void)instance;
     event_del(&instance->sigterm_event);
     event_del(&instance->sigint_event);
     event_del(&instance->sigquit_event);
@@ -70,6 +80,8 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     delete_all_connections(&instance->connections);
 }
 
+#endif
+
 static void config_get(struct config *config, int argc, char **argv) {
     const char *home;
     char path[4096];
@@ -95,6 +107,9 @@ static void config_get(struct config *config, int argc, char **argv) {
 static void
 setup_signal_handlers(struct instance *instance)
 {
+#ifdef WIN32
+    (void)instance;
+#else
     signal(SIGPIPE, SIG_IGN);
 
     event_set(&instance->sigterm_event, SIGTERM, EV_SIGNAL|EV_PERSIST,
@@ -108,6 +123,7 @@ setup_signal_handlers(struct instance *instance)
     event_set(&instance->sigquit_event, SIGQUIT, EV_SIGNAL|EV_PERSIST,
               exit_event_callback, instance);
     event_add(&instance->sigquit_event, NULL);
+#endif
 }
 
 int main(int argc, char **argv) {
@@ -117,6 +133,19 @@ int main(int argc, char **argv) {
     };
 
     INIT_LIST_HEAD(&instance.connections);
+
+    /* WinSock */
+
+#ifdef WIN32
+    WSADATA wsaData;
+
+    if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0 ||
+        LOBYTE(wsaData.wVersion) != 2 ||
+        HIBYTE(wsaData.wVersion) != 2 ) {
+        fprintf(stderr, "WSAStartup() failed\n");
+        return 1;
+    }
+#endif
 
     /* configuration */
 

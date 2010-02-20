@@ -16,9 +16,16 @@
 
 #include "socket_connect.h"
 
-#include <sys/socket.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/types.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#endif
 
 int
 socket_connect(int domain, int type, int protocol,

@@ -23,7 +23,6 @@
 #include "version.h"
 #include "log.h"
 
-#include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,11 +30,19 @@
 #ifdef __GLIBC__
 #include <getopt.h>
 #endif
-#include <netdb.h>
 #ifndef DISABLE_DAEMON_CODE
 #include <sys/stat.h>
 #include <pwd.h>
 #include <unistd.h>
+#endif
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <getopt.h>
+#else
+#include <sys/socket.h>
+#include <netdb.h>
 #endif
 
 static void usage(void) {

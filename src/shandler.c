@@ -31,12 +31,18 @@
 #include "compiler.h"
 #include "bridge.h"
 
-#include <sys/socket.h>
 #include <assert.h>
-#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
+#endif
 
 static void welcome(struct connection *c) {
     struct linked_server *ls;
@@ -609,7 +615,7 @@ static packet_action_t handle_server_list(struct connection *c,
         log(6, "server %u: name=%s address=0x%08x\n",
             ntohs(server_info->index),
             server_info->name,
-            ntohl(server_info->address));
+            (unsigned)ntohl(server_info->address));
     }
 
     return PA_ACCEPT;

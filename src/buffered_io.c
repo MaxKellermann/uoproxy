@@ -22,8 +22,17 @@
 #include "fifo_buffer.h"
 
 #include <assert.h>
-#include <unistd.h>
 #include <errno.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#endif
+
+#ifndef MSG_DONTWAIT
+#define MSG_DONTWAIT 0
+#endif
 
 ssize_t
 read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
@@ -42,7 +51,7 @@ read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
     if (length > max_length)
         length = max_length;
 
-    nbytes = read(fd, dest, length);
+    nbytes = recv(fd, dest, length, MSG_DONTWAIT);
     if (nbytes > 0)
         fifo_buffer_append(buffer, (size_t)nbytes);
 
@@ -60,7 +69,7 @@ write_from_buffer(int fd, struct fifo_buffer *buffer)
     if (data == NULL)
         return -2;
 
-    nbytes = write(fd, data, length);
+    nbytes = send(fd, data, length, MSG_DONTWAIT);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 
@@ -81,7 +90,7 @@ buffered_quick_write(int fd, struct fifo_buffer *output_buffer,
            try to commit the new data to the socket */
         ssize_t nbytes;
 
-        nbytes = write(fd, data, length);
+        nbytes = send(fd, data, length, MSG_DONTWAIT);
         if (nbytes <= 0) {
             /* didn't work - postpone the new data block */
             if (nbytes < 0 && errno == EAGAIN)

@@ -30,15 +30,22 @@
 #include "compiler.h"
 #include "bridge.h"
 
-#include <sys/socket.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <time.h>
 #include <arpa/inet.h>
+#endif
+
+#include <time.h>
 
 #define TALK_MAX 128
 
@@ -770,8 +777,10 @@ handle_seed(struct linked_server *ls,
     if (ls->client_version.seed == NULL) {
         client_version_seed(&ls->client_version, p);
         log(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
-            ntohl(p->client_major), ntohl(p->client_minor),
-            ntohl(p->client_revision), ntohl(p->client_patch));
+            (unsigned)ntohl(p->client_major),
+            (unsigned)ntohl(p->client_minor),
+            (unsigned)ntohl(p->client_revision),
+            (unsigned)ntohl(p->client_patch));
     }
 
     if (!client_version_defined(&ls->connection->client_version) &&

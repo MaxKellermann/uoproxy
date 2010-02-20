@@ -24,6 +24,10 @@
 #include <stdbool.h>
 #include <sys/types.h> /* for uid_t/gid_t */
 
+#ifdef WIN32
+#define DISABLE_DAEMON_CODE
+#endif
+
 struct game_server_config {
     char *name;
     struct addrinfo *address;

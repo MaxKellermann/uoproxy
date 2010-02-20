@@ -28,11 +28,18 @@
 #include "compiler.h"
 #include "socket_util.h"
 
-#include <sys/socket.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netdb.h>
+#endif
 
 #include <event.h>
 

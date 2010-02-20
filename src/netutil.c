@@ -21,12 +21,18 @@
 #include "netutil.h"
 
 #include <assert.h>
-#include <sys/socket.h>
 #include <errno.h>
-#include <netdb.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netdb.h>
+#endif
 
 int getaddrinfo_helper(const char *host_and_port, int default_port,
                        const struct addrinfo *hints,
@@ -45,7 +51,11 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 
         if (len >= sizeof(buffer)) {
             errno = ENAMETOOLONG;
+#ifdef WIN32
+            return EAI_FAIL;
+#else
             return EAI_SYSTEM;
+#endif
         }
 
         memcpy(buffer, host_and_port, len);
@@ -62,7 +72,7 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 }
 
 int setup_server_socket(const struct addrinfo *bind_address) {
-    int sockfd, ret, param;
+    int sockfd, ret;
 
     assert(bind_address != NULL);
 
@@ -73,13 +83,15 @@ int setup_server_socket(const struct addrinfo *bind_address) {
         exit(1);
     }
 
-    param = 1;
+#ifndef WIN32
+    int param = 1;
     ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {
         fprintf(stderr, "setsockopt failed: %s\n",
                 strerror(errno));
         exit(1);
     }
+#endif
 
     ret = bind(sockfd, bind_address->ai_addr,
                bind_address->ai_addrlen);

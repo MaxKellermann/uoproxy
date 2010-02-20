@@ -368,7 +368,7 @@ world_mobile_update(struct world *world,
     m = find_mobile(world, p->serial);
     if (m == NULL) {
         log(3, "warning in connection_mobile_update: no such mobile 0x%x\n",
-            ntohl(p->serial));
+            (unsigned)ntohl(p->serial));
         return;
     }
 
@@ -410,7 +410,7 @@ world_mobile_moving(struct world *world,
     m = find_mobile(world, p->serial);
     if (m == NULL) {
         log(3, "warning in connection_mobile_moving: no such mobile 0x%x\n",
-            ntohl(p->serial));
+            (unsigned)ntohl(p->serial));
         return;
     }
 

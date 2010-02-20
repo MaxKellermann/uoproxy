@@ -21,11 +21,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef DISABLE_DAEMON_CODE
-
 #include "instance.h"
 #include "config.h"
 #include "log.h"
+
+#ifndef DISABLE_DAEMON_CODE
 
 #include <sys/wait.h>
 #include <stdlib.h>

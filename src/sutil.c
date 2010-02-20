@@ -23,7 +23,12 @@
 
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 static void write_fixed_string(char *dest, size_t max_length,
                                const char *src) {

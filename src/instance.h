@@ -27,6 +27,10 @@
 #include <sys/types.h>
 #include <event.h>
 
+#ifdef WIN32
+#define DISABLE_DAEMON_CODE
+#endif
+
 struct instance {
     /* configuration */
     struct config *config;
