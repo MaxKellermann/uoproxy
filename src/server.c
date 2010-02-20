@@ -106,8 +106,8 @@ server_packets_from_buffer(struct uo_server *server,
             return 0;
         }
 
-        log(9, "from client: 0x%02x length=%zu\n",
-            data[0], packet_length);
+        log(9, "from client: 0x%02x length=%u\n",
+            data[0], (unsigned)packet_length);
 
         if (packet_length == 0 || packet_length > length)
             break;
@@ -266,7 +266,7 @@ void uo_server_send(struct uo_server *server,
     if (uo_server_is_aborted(server))
         return;
 
-    log(9, "sending packet to client, length=%zu\n", length);
+    log(9, "sending packet to client, length=%u\n", (unsigned)length);
     log_hexdump(10, src, length);
 
     if (server->compression_enabled) {

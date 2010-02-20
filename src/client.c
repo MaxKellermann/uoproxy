@@ -141,8 +141,8 @@ client_packets_from_buffer(struct uo_client *client,
             return 0;
         }
 
-        log(9, "from server: 0x%02x length=%zu\n",
-            data[0], packet_length);
+        log(9, "from server: 0x%02x length=%u\n",
+            data[0], (unsigned)packet_length);
 
         if (packet_length == 0 || packet_length > length)
             break;
@@ -318,7 +318,7 @@ void uo_client_send(struct uo_client *client,
     if (uo_client_is_aborted(client))
         return;
 
-    log(9, "sending packet to server, length=%zu\n", length);
+    log(9, "sending packet to server, length=%u\n", (unsigned)length);
     log_hexdump(10, src, length);
 
     if (*(const unsigned char*)src == PCK_GameLogin)

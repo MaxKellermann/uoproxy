@@ -34,7 +34,7 @@ hexdump_line(char *dest, size_t address,
     assert(length > 0);
     assert(length <= 0x10);
 
-    snprintf(dest, 10, "  %05zx", address);
+    snprintf(dest, 10, "  %05x", (unsigned)address);
     dest += 7;
     *dest++ = ' ';
 
