@@ -237,6 +237,7 @@ enum uo_packet_type_t {
     PCK_AOSTooltip = 0xd6,
     PCK_Hardware = 0xd9,
     PCK_AOSObjProp = 0xdc,
+    PCK_DisplayGumpPacked = 0xdd,
     PCK_Seed = 0xef,
 };
 
