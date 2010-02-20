@@ -57,7 +57,7 @@ $(OBJECTS): %.o: %.c $(HEADERS)
 	$(CC) -c $(CFLAGS) $(WARNING_CFLAGS) $(FEATURE_CFLAGS) -o $@ $<
 
 src/uoproxy: $(OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 doc/uoproxy.html: %.html: %.xml
 	xmlto -o doc xhtml-nochunks $<
