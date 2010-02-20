@@ -36,13 +36,13 @@ socket_set_cork(int fd, int value);
 
 #include "compiler.h"
 
-int
-socket_enable_nodelay(int fd __attr_unused)
+static inline int
+socket_set_nodelay(int fd __attr_unused, int value __attr_unused)
 {
     return 0;
 }
 
-int
+static inline int
 socket_set_cork(int fd __attr_unused, int value __attr_unused)
 {
     return 0;
