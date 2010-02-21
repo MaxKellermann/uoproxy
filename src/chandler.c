@@ -310,6 +310,28 @@ handle_account_login(struct linked_server *ls,
     memcpy(c->username, p->username, sizeof(c->username));
     memcpy(c->password, p->password, sizeof(c->password));
 
+    struct connection *other = find_attach_connection(c);
+    if (other != NULL) {
+        /* attaching to an existing connection, fake the server
+           list */
+        struct uo_packet_server_list p2;
+        struct sockaddr_in *sin;
+
+        assert(config->game_servers != NULL);
+
+        p2.cmd = PCK_ServerList;
+        p2.length = htons(sizeof(p2));
+        p2.unknown_0x5d = 0x5d;
+        p2.num_game_servers = htons(1);
+
+        p2.game_servers[0].index = htons(0);
+        strcpy(p2.game_servers[0].name, "attach");
+        p2.game_servers[0].address = 0xdeadbeef;
+
+        uo_server_send(ls->server, &p2, sizeof(p2));
+        return PA_DROP;
+    }
+
     if (config->num_game_servers > 0) {
         /* we have a game server list and thus we emulate the login
            server */
