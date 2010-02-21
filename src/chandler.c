@@ -315,7 +315,6 @@ handle_account_login(struct linked_server *ls,
         /* attaching to an existing connection, fake the server
            list */
         struct uo_packet_server_list p2;
-        struct sockaddr_in *sin;
 
         assert(config->game_servers != NULL);
 
