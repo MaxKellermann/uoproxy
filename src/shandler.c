@@ -546,7 +546,7 @@ static packet_action_t handle_relay(struct connection *c,
         c->client_version.seed->seed = relay.auth_id;
 
     ret = connection_client_connect(c, server_address, relay.auth_id);
-    freeaddrinfo(server_address);
+    free(server_address);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
         return PA_DISCONNECT;
