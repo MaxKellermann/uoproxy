@@ -316,8 +316,6 @@ handle_account_login(struct linked_server *ls,
            list */
         struct uo_packet_server_list p2;
 
-        assert(config->game_servers != NULL);
-
         p2.cmd = PCK_ServerList;
         p2.length = htons(sizeof(p2));
         p2.unknown_0x5d = 0x5d;
