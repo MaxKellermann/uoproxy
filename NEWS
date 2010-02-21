@@ -3,6 +3,7 @@ uoproxy (0.2.1) unstable; urgency=low
   * support binding on an IP address
   * fix typo in log message
   * support the "Gump Packed" packet (0xdd)
+  * return PA_DROP instead of PA_DELETED after attach
 
  --
 
