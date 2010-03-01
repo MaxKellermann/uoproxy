@@ -302,6 +302,9 @@ static packet_action_t handle_personal_light_level(struct connection *c,
 
     assert(length == sizeof(*p));
 
+    if (c->instance->config->light)
+        return PA_DROP;
+
     if (c->client.world.packet_start.serial == p->serial)
         c->client.world.packet_personal_light_level = *p;
 
@@ -313,6 +316,9 @@ static packet_action_t handle_global_light_level(struct connection *c,
     const struct uo_packet_global_light_level *p = data;
 
     assert(length == sizeof(*p));
+
+    if (c->instance->config->light)
+        return PA_DROP;
 
     c->client.world.packet_global_light_level = *p;
 

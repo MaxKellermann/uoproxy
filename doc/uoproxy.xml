@@ -296,6 +296,18 @@
           </row>
           <row>
             <entry>
+              <varname>light</varname>
+            </entry>
+            <entry>
+              Block light packets sent by the server, i.e. always
+              enable full light level?
+            </entry>
+            <entry>
+              no
+            </entry>
+          </row>
+          <row>
+            <entry>
               <varname>client_version</varname>
             </entry>
             <entry>

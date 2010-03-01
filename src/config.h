@@ -34,6 +34,12 @@ struct config {
     unsigned num_game_servers;
     struct game_server_config *game_servers;
     bool background, autoreconnect, antispy;
+
+    /**
+     * Always full light level?
+     */
+    bool light;
+
     char *client_version;
     /* daemon config */
 #ifndef DISABLE_DAEMON_CODE

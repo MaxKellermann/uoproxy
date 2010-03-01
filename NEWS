@@ -7,6 +7,7 @@ uoproxy (0.2.1) unstable; urgency=low
   * don't re-query the login server for attaching secondary client
   * allow short version string
   * remember mobile flags
+  * added option "light"
 
  --
 
