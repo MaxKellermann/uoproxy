@@ -38,6 +38,14 @@ struct pending_flush {
     void (*flush)(struct pending_flush *flush);
 };
 
+static inline void
+flush_init(struct pending_flush *flush,
+           void (*callback)(struct pending_flush *flush))
+{
+    flush->siblings.next = NULL;
+    flush->flush = callback;
+}
+
 void
 flush_begin(void);
 

@@ -72,8 +72,7 @@ sock_buff_create(int fd, size_t input_max,
     if (sb == NULL)
         return NULL;
 
-    sb->flush.siblings.next = NULL;
-    sb->flush.flush = sock_buff_flush_callback;
+    flush_init(&sb->flush, sock_buff_flush_callback);
 
     sb->fd = fd;
     sb->event.ev_events = 0;
