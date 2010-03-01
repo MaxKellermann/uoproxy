@@ -8,13 +8,13 @@ PREFIX = /usr/local
 # change this value to 'yes' to enable the debugging version
 DEBUG = no
 
-LDFLAGS = -levent
+LDFLAGS += -levent
 
 ifeq ($(DEBUG),yes)
 CFLAGS += -g -O0
 LDFLAGS += -g -O0
 else
-CFLAGS = -O3 -DNDEBUG=1
+CFLAGS += -O3 -DNDEBUG=1
 LDFLAGS += -O3
 endif
 
