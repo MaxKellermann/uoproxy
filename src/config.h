@@ -21,6 +21,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#include <stdbool.h>
 #include <sys/types.h> /* for uid_t/gid_t */
 
 struct game_server_config {
@@ -32,7 +33,7 @@ struct config {
     struct addrinfo *bind_address, *login_address;
     unsigned num_game_servers;
     struct game_server_config *game_servers;
-    int background, autoreconnect, antispy;
+    bool background, autoreconnect, antispy;
     char *client_version;
     /* daemon config */
 #ifndef DISABLE_DAEMON_CODE

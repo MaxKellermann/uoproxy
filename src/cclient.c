@@ -152,10 +152,10 @@ connection_client_disconnect(struct stateful_client *client)
 
     if (client->reconnecting) {
         event_del(&client->reconnect_event);
-        client->reconnecting = 0;
+        client->reconnecting = false;
     }
 
-    client->version_requested = 0;
+    client->version_requested = false;
 
     event_del(&client->ping_event);
 

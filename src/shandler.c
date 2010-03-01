@@ -45,7 +45,7 @@ static void welcome(struct connection *c) {
         if (!ls->attaching && !ls->welcome) {
             uo_server_speak_console(ls->server, "Welcome to uoproxy v" VERSION "!  "
                                     "http://max.kellermann.name/projects/uoproxy/");
-            ls->welcome = 1;
+            ls->welcome = true;
         }
     }
 }
@@ -120,11 +120,11 @@ static packet_action_t handle_start(struct connection *c,
     assert(length == sizeof(*p));
 
     c->client.world.packet_start = *p;
-    c->in_game = 1;
+    c->in_game = true;
 
     /* if we're auto-reconnecting, this is the point where it
        succeeded */
-    c->client.reconnecting = 0;
+    c->client.reconnecting = false;
 
     c->walk.seq_next = 0;
 
@@ -663,7 +663,7 @@ handle_client_version(struct connection *c,
     } else {
         /* we don't know the version - forward the request to all
            clients */
-        c->client.version_requested = 1;
+        c->client.version_requested = true;
         return PA_ACCEPT;
     }
 }

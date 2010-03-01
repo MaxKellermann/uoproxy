@@ -29,13 +29,14 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <event.h>
 
 struct uo_server {
     struct sock_buff *sock;
     uint32_t seed;
-    int compression_enabled;
+    bool compression_enabled;
 
     enum protocol_version protocol_version;
 

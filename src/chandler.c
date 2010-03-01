@@ -608,7 +608,7 @@ handle_client_version(struct linked_server *ls,
         if (c->client.version_requested) {
             uo_client_send(c->client.client, c->client_version.packet,
                            c->client_version.packet_length);
-            c->client.version_requested = 0;
+            c->client.version_requested = false;
         }
 
         return PA_DROP;

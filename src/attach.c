@@ -54,7 +54,7 @@ void attach_after_play_server(struct connection *c,
 
     connection_server_add(c, ls);
 
-    ls->attaching = 1;
+    ls->attaching = true;
 
     supported_features.cmd = PCK_SupportedFeatures;
     supported_features.flags = c->client.supported_features_flags;
@@ -207,5 +207,5 @@ attach_after_play_character(struct linked_server *ls)
     uo_server_send(ls->server, &login_complete,
                    sizeof(login_complete));
 
-    ls->attaching = 0;
+    ls->attaching = false;
 }

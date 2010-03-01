@@ -23,6 +23,7 @@
 
 #include "list.h"
 
+#include <stdbool.h>
 #include <sys/types.h>
 #include <event.h>
 
@@ -33,7 +34,7 @@ struct instance {
     /* state */
 
     struct event sigterm_event, sigint_event, sigquit_event;
-    int should_exit;
+    bool should_exit;
 
     int server_socket;
     struct event server_socket_event;

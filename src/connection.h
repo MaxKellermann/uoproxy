@@ -26,6 +26,7 @@
 #include "cversion.h"
 
 #include <event.h>
+#include <stdbool.h>
 
 #define MAX_CHARACTERS 16
 #define MAX_WALK_QUEUE 4
@@ -34,7 +35,7 @@ struct instance;
 struct addrinfo;
 
 struct stateful_client {
-    int reconnecting, version_requested;
+    bool reconnecting, version_requested;
     struct event reconnect_event;
 
     struct uo_client *client;
@@ -56,7 +57,7 @@ struct linked_server {
     struct connection *connection;
 
     struct uo_server *server;
-    int welcome, attaching;
+    bool welcome, attaching;
 
     struct client_version client_version;
 };
@@ -80,12 +81,12 @@ struct connection {
     struct instance *instance;
 
     /* flags */
-    int background;
+    bool background;
 
-    int in_game;
+    bool in_game;
 
     /* reconnect */
-    int autoreconnect;
+    bool autoreconnect;
 
     /* client stuff (= connection to server) */
 

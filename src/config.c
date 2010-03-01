@@ -349,11 +349,12 @@ static char *next_word(char **pp) {
     return word;
 }
 
-static int parse_bool(const char *path, unsigned no, const char *val) {
+static bool
+parse_bool(const char *path, unsigned no, const char *val) {
     if (strcmp(val, "yes") == 0) {
-        return 1;
+        return true;
     } else if (strcmp(val, "no") == 0) {
-        return 0;
+        return false;
     } else {
         fprintf(stderr, "%s line %u: specify either 'yes' or 'no'\n",
                 path, no);

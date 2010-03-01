@@ -57,7 +57,7 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     if (instance->should_exit)
         return;
 
-    instance->should_exit = 1;
+    instance->should_exit = true;
 
     deinit_signals(instance);
 
@@ -76,7 +76,7 @@ static void config_get(struct config *config, int argc, char **argv) {
     int ret;
 
     memset(config, 0, sizeof(*config));
-    config->autoreconnect = 1;
+    config->autoreconnect = true;
 
     home = getenv("HOME");
     if (home == NULL) {

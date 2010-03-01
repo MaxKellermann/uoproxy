@@ -75,7 +75,7 @@ connection_try_reconnect(struct connection *c)
             uo_client_send(c->client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            c->client.reconnecting = 0;
+            c->client.reconnecting = false;
             connection_reconnect_delayed(c);
         }
     } else {
@@ -94,7 +94,7 @@ connection_try_reconnect(struct connection *c)
             uo_client_send(c->client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            c->client.reconnecting = 0;
+            c->client.reconnecting = false;
             connection_reconnect_delayed(c);
         }
     }
@@ -118,7 +118,7 @@ void connection_reconnect(struct connection *c) {
     assert(c->in_game);
     assert(c->client.client == NULL);
 
-    c->client.reconnecting = 1;
+    c->client.reconnecting = true;
 
     connection_try_reconnect(c);
 }
@@ -136,7 +136,7 @@ connection_reconnect_delayed(struct connection *c)
     assert(c->in_game);
     assert(c->client.client == NULL);
 
-    c->client.reconnecting = 1;
+    c->client.reconnecting = true;
 
     tv.tv_sec = 5;
     tv.tv_usec = 0;

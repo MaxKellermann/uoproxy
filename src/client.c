@@ -34,12 +34,13 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <event.h>
 
 struct uo_client {
     struct sock_buff *sock;
-    int compression_enabled;
+    bool compression_enabled;
     struct uo_decompression decompression;
     fifo_buffer_t decompressed_buffer;
 
@@ -322,7 +323,7 @@ void uo_client_send(struct uo_client *client,
     log_hexdump(10, src, length);
 
     if (*(const unsigned char*)src == PCK_GameLogin)
-        client->compression_enabled = 1;
+        client->compression_enabled = true;
 
     sock_buff_send(client->sock, src, length);
 }

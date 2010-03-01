@@ -28,27 +28,28 @@
 #include "packets.h"
 
 #include <assert.h>
+#include <stdbool.h>
 
-static inline int
+static inline bool
 char_is_printable(char ch)
 {
     return (signed char)ch >= 0x20;
 }
 
-static inline int
+static inline bool
 verify_printable_asciiz(const char *p, size_t length)
 {
     size_t i;
     for (i = 0; i < length; ++i)
         if (!char_is_printable(p[i]))
-            return 0;
+            return false;
     return p[length] == 0;
 }
 
 /**
  * Verifies that the specified packet really contains a string.
  */
-static inline int
+static inline bool
 packet_verify_client_version(const struct uo_packet_client_version *p,
                              size_t length)
 {
@@ -62,7 +63,7 @@ packet_verify_client_version(const struct uo_packet_client_version *p,
 /**
  * Verifies that the packet length is correct for the number of items.
  */
-static inline int
+static inline bool
 packet_verify_container_content(const struct uo_packet_container_content *p,
                                 size_t length)
 {
@@ -76,7 +77,7 @@ packet_verify_container_content(const struct uo_packet_container_content *p,
 /**
  * Verifies that the packet length is correct for the number of items.
  */
-static inline int
+static inline bool
 packet_verify_container_content_6(const struct uo_packet_container_content_6 *p,
                                   size_t length)
 {
