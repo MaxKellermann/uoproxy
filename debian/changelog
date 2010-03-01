@@ -1,6 +1,7 @@
 uoproxy (0.3) unstable; urgency=low
 
   * Standards-Version 3.8.4
+  * init: complete the LSB section
 
  --
 
