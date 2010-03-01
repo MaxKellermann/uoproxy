@@ -86,6 +86,15 @@ machine running uoproxy.  UOGateway can be used to remove encryption
 and to add the uoproxy server to your Login.cfg.
 
 
+Running with Razor
+------------------
+
+Razor 1.0.12 is not compatible with uoproxy, due to a bug in Razor
+(uncaught NullReferenceException).  Unfortunately, I cannot report
+this bug to the Razor authors, because I have been banned for life
+from the runuo.com forums.  Sorry!
+
+
 Credits
 -------
 
