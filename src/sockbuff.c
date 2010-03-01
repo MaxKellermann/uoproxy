@@ -36,7 +36,8 @@ struct sock_buff {
     struct pending_flush flush;
 
     int fd;
-    struct event event;
+
+    struct event recv_event, send_event;
 
     fifo_buffer_t input, output;
 
@@ -48,7 +49,10 @@ static void
 sock_buff_flush_callback(struct pending_flush *flush);
 
 static void
-sock_buff_event_setup(struct sock_buff *sb);
+sock_buff_recv_callback(int fd, short event, void *ctx);
+
+static void
+sock_buff_send_callback(int fd, short event, void *ctx);
 
 
 /*
@@ -75,7 +79,11 @@ sock_buff_create(int fd, size_t input_max,
     flush_init(&sb->flush, sock_buff_flush_callback);
 
     sb->fd = fd;
-    sb->event.ev_events = 0;
+
+    event_set(&sb->recv_event, fd, EV_READ|EV_PERSIST,
+              sock_buff_recv_callback, sb);
+    event_set(&sb->send_event, fd, EV_WRITE|EV_PERSIST,
+              sock_buff_send_callback, sb);
 
     sb->input = fifo_buffer_new(input_max);
     if (sb->input == NULL) {
@@ -93,7 +101,7 @@ sock_buff_create(int fd, size_t input_max,
     sb->handler = handler;
     sb->handler_ctx = handler_ctx;
 
-    sock_buff_event_setup(sb);
+    event_add(&sb->recv_event, NULL);
 
     return sb;
 }
@@ -101,10 +109,8 @@ sock_buff_create(int fd, size_t input_max,
 void sock_buff_dispose(struct sock_buff *sb) {
     assert(sb->fd >= 0);
 
-    if (sb->event.ev_events != 0) {
-        event_del(&sb->event);
-        sb->event.ev_events = 0;
-    }
+    event_del(&sb->recv_event);
+    event_del(&sb->send_event);
 
     flush_del(&sb->flush);
 
@@ -158,10 +164,8 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
     assert(sb->handler != NULL);
     assert(sb->fd >= 0);
 
-    if (sb->event.ev_events != 0) {
-        event_del(&sb->event);
-        sb->event.ev_events = 0;
-    }
+    event_del(&sb->recv_event);
+    event_del(&sb->send_event);
 
     flush_del(&sb->flush);
 
@@ -206,7 +210,8 @@ sock_buff_flush_callback(struct pending_flush *flush)
     if (!sock_buff_flush(sb))
         return;
 
-    sock_buff_event_setup(sb);
+    if (fifo_buffer_empty(sb->output))
+        event_del(&sb->send_event);
 }
 
 
@@ -216,62 +221,47 @@ sock_buff_flush_callback(struct pending_flush *flush)
  */
 
 static void
-sock_buff_event_callback(int fd, short event, void *ctx)
+sock_buff_recv_callback(int fd, short event, void *ctx)
 {
     struct sock_buff *sb = ctx;
-    int ret;
+
+    (void)event;
 
     assert(fd == sb->fd);
 
-    if (event & EV_READ) {
-        ssize_t nbytes;
-
-        nbytes = read_to_buffer(sb->fd, sb->input, 65536);
-        if (nbytes > 0) {
-            if (!sock_buff_invoke_data(sb))
-                return;
-        } else if (nbytes == 0) {
-            sock_buff_invoke_free(sb, 0);
+    ssize_t nbytes = read_to_buffer(fd, sb->input, 65536);
+    if (nbytes > 0) {
+        if (!sock_buff_invoke_data(sb))
             return;
-        } else if (nbytes == -1) {
-            sock_buff_invoke_free(sb, errno);
-            return;
-        }
+    } else if (nbytes == 0) {
+        sock_buff_invoke_free(sb, 0);
+        return;
+    } else if (nbytes == -1) {
+        sock_buff_invoke_free(sb, errno);
+        return;
     }
 
-    if (event & EV_WRITE) {
-        if (!sock_buff_flush(sb)) {
-            sock_buff_invoke_free(sb, errno);
-            return;
-        }
-    }
-
-    sock_buff_event_setup(sb);
+    if (fifo_buffer_full(sb->input))
+        event_del(&sb->recv_event);
 }
 
 static void
-sock_buff_event_setup(struct sock_buff *sb)
+sock_buff_send_callback(int fd, short event, void *ctx)
 {
-    short event = EV_PERSIST;
+    struct sock_buff *sb = ctx;
 
-    if (!fifo_buffer_full(sb->input))
-        event |= EV_READ;
+    (void)fd;
+    (void)event;
 
-    if (!fifo_buffer_empty(sb->output))
-        event |= EV_WRITE;
+    assert(fd == sb->fd);
 
-    if (sb->event.ev_events == event)
+    if (!sock_buff_flush(sb)) {
+        sock_buff_invoke_free(sb, errno);
         return;
-
-    if (sb->event.ev_events != 0) {
-        event_del(&sb->event);
-        sb->event.ev_events = 0;
     }
 
-    if (event != 0) {
-        event_set(&sb->event, sb->fd, event, sock_buff_event_callback, sb);
-        event_add(&sb->event, NULL);
-    }
+    if (fifo_buffer_empty(sb->output))
+        event_del(&sb->send_event);
 }
 
 
@@ -290,6 +280,8 @@ void
 sock_buff_append(struct sock_buff *sb, size_t length)
 {
     fifo_buffer_append(sb->output, length);
+
+    event_add(&sb->send_event, NULL);
     flush_add(&sb->flush);
 }
 
@@ -309,5 +301,6 @@ sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
 
     fifo_buffer_append(sb->output, length);
 
+    event_add(&sb->send_event, NULL);
     flush_add(&sb->flush);
 }
