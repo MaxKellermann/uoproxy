@@ -312,6 +312,7 @@ world_mobile_incoming(struct world *world,
 
         world->packet_mobile_update.body = p->body;
         world->packet_mobile_update.hue = p->hue;
+        world->packet_mobile_update.flags = p->flags;
         world->packet_mobile_update.x = p->x;
         world->packet_mobile_update.y = p->y;
         world->packet_mobile_update.direction = p->direction;
@@ -379,6 +380,7 @@ world_mobile_update(struct world *world,
         m->packet_mobile_incoming->z = p->z;
         m->packet_mobile_incoming->direction = p->direction;
         m->packet_mobile_incoming->hue = p->hue;
+        m->packet_mobile_incoming->flags = p->flags;
     }
 }
 
@@ -398,6 +400,7 @@ world_mobile_moving(struct world *world,
 
         world->packet_mobile_update.body = p->body;
         world->packet_mobile_update.hue = p->hue;
+        world->packet_mobile_update.flags = p->flags;
         world->packet_mobile_update.x = p->x;
         world->packet_mobile_update.y = p->y;
         world->packet_mobile_update.direction = p->direction;

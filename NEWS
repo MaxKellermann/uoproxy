@@ -6,6 +6,7 @@ uoproxy (0.2.1) unstable; urgency=low
   * return PA_DROP instead of PA_DELETED after attach
   * don't re-query the login server for attaching secondary client
   * allow short version string
+  * remember mobile flags
 
  --
 

@@ -446,7 +446,7 @@ struct uo_packet_mobile_update {
     uint16_t body;
     uint8_t unknown0;
     uint16_t hue;
-    uint8_t packet_flags;
+    uint8_t flags;
     int16_t x, y;
     uint16_t unknown1;
     uint8_t direction;
