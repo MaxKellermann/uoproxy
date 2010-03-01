@@ -195,8 +195,6 @@ sock_buff_flush(struct sock_buff *sb)
     if (nbytes < 0)
         return false;
 
-    sock_buff_event_setup(sb);
-
     return true;
 }
 
@@ -205,7 +203,10 @@ sock_buff_flush_callback(struct pending_flush *flush)
 {
     struct sock_buff *sb = (struct sock_buff *)flush;
 
-    sock_buff_flush(sb);
+    if (!sock_buff_flush(sb))
+        return;
+
+    sock_buff_event_setup(sb);
 }
 
 
