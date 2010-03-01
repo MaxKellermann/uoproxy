@@ -26,6 +26,7 @@
 #include "poison.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,7 +124,10 @@ void sock_buff_dispose(struct sock_buff *sb) {
  *
  */
 
-static int
+/**
+ * @return false on error
+ */
+static bool
 sock_buff_invoke_data(struct sock_buff *sb)
 {
     const void *data;
@@ -135,16 +139,16 @@ sock_buff_invoke_data(struct sock_buff *sb)
 
     data = fifo_buffer_read(sb->input, &length);
     if (data == NULL)
-        return 0;
+        return true;
 
     flush_begin();
     nbytes = sb->handler->data(data, length, sb->handler_ctx);
     flush_end();
     if (nbytes < 0)
-        return -1;
+        return false;
 
     fifo_buffer_consume(sb->input, (size_t)nbytes);
-    return 0;
+    return true;
 }
 
 static void
@@ -178,23 +182,23 @@ sock_buff_invoke_free(struct sock_buff *sb, int error)
  * Try to flush the output buffer.  Note that this function will not
  * trigger the free() callback.
  *
- * @return 0 on success, -1 on i/o error (see errno)
+ * @return true on success, false on i/o error (see errno)
  */
-static int
+static bool
 sock_buff_flush(struct sock_buff *sb)
 {
     ssize_t nbytes;
 
     nbytes = write_from_buffer(sb->fd, sb->output);
     if (nbytes == -2)
-        return 0;
+        return true;
 
     if (nbytes < 0)
-        return -1;
+        return false;
 
     sock_buff_event_setup(sb);
 
-    return 0;
+    return true;
 }
 
 static void
@@ -224,8 +228,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
 
         nbytes = read_to_buffer(sb->fd, sb->input, 65536);
         if (nbytes > 0) {
-            ret = sock_buff_invoke_data(sb);
-            if (ret < 0)
+            if (!sock_buff_invoke_data(sb))
                 return;
         } else if (nbytes == 0) {
             sock_buff_invoke_free(sb, 0);
@@ -237,8 +240,7 @@ sock_buff_event_callback(int fd, short event, void *ctx)
     }
 
     if (event & EV_WRITE) {
-        ret = sock_buff_flush(sb);
-        if (ret < 0) {
+        if (!sock_buff_flush(sb)) {
             sock_buff_invoke_free(sb, errno);
             return;
         }
