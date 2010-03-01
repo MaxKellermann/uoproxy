@@ -3,7 +3,7 @@ Section: games
 Priority: extra
 Maintainer: Max Kellermann <max@duempel.org>
 Build-Depends: debhelper (>= 5), libevent-dev (>= 1.1), xmlto
-Standards-Version: 3.7.3
+Standards-Version: 3.8.4
 
 Package: uoproxy
 Architecture: any
