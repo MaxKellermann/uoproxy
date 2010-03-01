@@ -1,4 +1,4 @@
-uoproxy (0.2.1) unstable; urgency=low
+uoproxy (0.3) unstable; urgency=low
 
   * support binding on an IP address
   * fix typo in log message
@@ -9,7 +9,7 @@ uoproxy (0.2.1) unstable; urgency=low
   * remember mobile flags
   * added option "light"
 
- --
+ -- Max Kellermann <max@duempel.org>  Mon, 01 Mar 2010 22:44:33 +0100
 
 uoproxy (0.2) unstable; urgency=low
 

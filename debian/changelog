@@ -1,12 +1,13 @@
 uoproxy (0.3) unstable; urgency=low
 
+  * new upstream release
   * Standards-Version 3.8.4
   * init: complete the LSB section
   * copyright: refer to GPLv2
   * copyright: complete the copyright notice
   * control: depend on ${misc:Depends}
 
- --
+ -- Max Kellermann <max@duempel.org>  Mon, 01 Mar 2010 22:44:33 +0100
 
 uoproxy (0.2) unstable; urgency=low
 
