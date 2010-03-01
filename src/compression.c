@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005 Max Kellermann <max@duempel.org>
+ * (c) 2005-2010 Max Kellermann <max@duempel.org>
  *
  * based on code from "Ultimate Melange"
  * Copyright (C) 2000 Axel Kittenberger
