@@ -40,6 +40,16 @@ static inline bool
 verify_printable_asciiz(const char *p, size_t length)
 {
     size_t i;
+    for (i = 0; i < length && p[i] != 0; ++i)
+        if (!char_is_printable(p[i]))
+            return false;
+    return true;
+}
+
+static inline bool
+verify_printable_asciiz_n(const char *p, size_t length)
+{
+    size_t i;
     for (i = 0; i < length; ++i)
         if (!char_is_printable(p[i]))
             return false;
@@ -57,7 +67,7 @@ packet_verify_client_version(const struct uo_packet_client_version *p,
     assert(p->cmd == PCK_ClientVersion);
 
     return length > sizeof(*p) &&
-        verify_printable_asciiz(p->version, length - sizeof(*p));
+        verify_printable_asciiz(p->version, length - sizeof(*p) + 1);
 }
 
 /**
