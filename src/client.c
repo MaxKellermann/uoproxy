@@ -49,6 +49,7 @@ struct uo_client {
     const struct uo_client_handler *handler;
     void *handler_ctx;
 
+    bool aborted;
     struct event abort_event;
 };
 
@@ -72,12 +73,17 @@ uo_client_abort_event_callback(int fd __attr_unused,
 {
     struct uo_client *client = ctx;
 
+    assert(client->aborted);
+
     uo_client_invoke_free(client);
 }
 
 static void
 uo_client_abort(struct uo_client *client)
 {
+    if (client->aborted)
+        return;
+
     struct timeval tv = {
         .tv_sec = 0,
         .tv_usec = 0,
@@ -88,12 +94,14 @@ uo_client_abort(struct uo_client *client)
     evtimer_set(&client->abort_event,
                 uo_client_abort_event_callback, client);
     evtimer_add(&client->abort_event, &tv);
+
+    client->aborted = true;
 }
 
 static int
 uo_client_is_aborted(struct uo_client *client)
 {
-    return client->abort_event.ev_events != 0;
+    return client->aborted;
 }
 
 static ssize_t

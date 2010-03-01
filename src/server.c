@@ -43,6 +43,7 @@ struct uo_server {
     const struct uo_server_handler *handler;
     void *handler_ctx;
 
+    bool aborted;
     struct event abort_event;
 };
 
@@ -66,12 +67,17 @@ uo_server_abort_event_callback(int fd __attr_unused,
 {
     struct uo_server *server = ctx;
 
+    assert(server->aborted);
+
     uo_server_invoke_free(server);
 }
 
 static void
 uo_server_abort(struct uo_server *server)
 {
+    if (server->aborted)
+        return;
+
     struct timeval tv = {
         .tv_sec = 0,
         .tv_usec = 0,
@@ -82,12 +88,14 @@ uo_server_abort(struct uo_server *server)
     evtimer_set(&server->abort_event,
                 uo_server_abort_event_callback, server);
     evtimer_add(&server->abort_event, &tv);
+
+    server->aborted = true;
 }
 
 static int
 uo_server_is_aborted(struct uo_server *server)
 {
-    return server->abort_event.ev_events != 0;
+    return server->aborted;
 }
 
 static ssize_t
