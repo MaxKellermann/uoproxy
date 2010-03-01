@@ -1,6 +1,5 @@
 # uoproxy Makefile
-# (c) 2005-2007 Max Kellermann <max@duempel.org>
-# $Id$
+# (c) 2005-2010 Max Kellermann <max@duempel.org>
 
 CC := gcc
 PREFIX = /usr/local
