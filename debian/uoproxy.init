@@ -15,7 +15,7 @@
 ### END INIT INFO
 
 #includes lsb functions 
-source /lib/lsb/init-functions
+. /lib/lsb/init-functions
 
 DESC="Ultima Online proxy"
 NAME=uoproxy
