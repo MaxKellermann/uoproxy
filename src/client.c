@@ -19,6 +19,7 @@
  */
 
 #include "client.h"
+#include "socket_connect.h"
 #include "socket_buffer.h"
 #include "compression.h"
 #include "packets.h"
@@ -229,24 +230,18 @@ int uo_client_create(const struct addrinfo *server_address,
                      const struct uo_client_handler *handler,
                      void *handler_ctx,
                      struct uo_client **clientp) {
-    int sockfd, ret;
+    int ret;
     struct uo_client *client;
 
     assert(handler != NULL);
     assert(handler->packet != NULL);
     assert(handler->free != NULL);
 
-    sockfd = socket(server_address->ai_family, SOCK_STREAM, 0);
+    int sockfd = socket_connect(server_address->ai_family, SOCK_STREAM, 0,
+                                server_address->ai_addr,
+                                server_address->ai_addrlen);
     if (sockfd < 0)
-        return errno;
-
-    ret = connect(sockfd, server_address->ai_addr,
-                  server_address->ai_addrlen);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(sockfd);
-        return save_errno;
-    }
+        return -sockfd;
 
     ret = socket_set_nonblock(sockfd, 1);
     if (ret < 0) {
