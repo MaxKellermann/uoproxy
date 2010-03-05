@@ -1,4 +1,5 @@
 *~
 .#*
 *.o
+doc/*.html
 src/uoproxy
