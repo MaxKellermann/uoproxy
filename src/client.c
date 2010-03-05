@@ -92,8 +92,6 @@ uo_client_abort(struct uo_client *client)
 
     /* this is a trick to delay the destruction of this object until
        everything is done */
-    evtimer_set(&client->abort_event,
-                uo_client_abort_event_callback, client);
     evtimer_add(&client->abort_event, &tv);
 
     client->aborted = true;
@@ -282,6 +280,9 @@ int uo_client_create(const struct addrinfo *server_address,
     client->handler = handler;
     client->handler_ctx = handler_ctx;
 
+    evtimer_set(&client->abort_event,
+                uo_client_abort_event_callback, client);
+
     *clientp = client;
 
     /* seed must be the first 4 bytes, and it must be flushed */
@@ -299,8 +300,7 @@ void uo_client_dispose(struct uo_client *client) {
     if (client->sock != NULL)
         sock_buff_dispose(client->sock);
 
-    if (uo_client_is_aborted(client))
-        evtimer_del(&client->abort_event);
+    evtimer_del(&client->abort_event);
 
     free(client);
 }
