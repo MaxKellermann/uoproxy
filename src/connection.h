@@ -32,7 +32,6 @@
 #define MAX_WALK_QUEUE 4
 
 struct instance;
-struct addrinfo;
 
 struct stateful_client {
     bool reconnecting, version_requested;
@@ -179,7 +178,8 @@ void connection_walk_ack(struct connection *c,
 
 int
 connection_client_connect(struct connection *c,
-                          const struct addrinfo *server_address,
+                          const struct sockaddr *server_address,
+                          size_t server_address_length,
                           uint32_t seed);
 
 void

@@ -488,25 +488,6 @@ static packet_action_t handle_account_login_reject(struct connection *c,
     return PA_ACCEPT;
 }
 
-static struct addrinfo *make_addrinfo(uint32_t ip, in_port_t port) {
-    struct sockaddr_in sin;
-    struct addrinfo *ai = calloc(1, sizeof(*ai) + sizeof(sin));
-
-    if (ai == NULL)
-        return NULL;
-
-    sin.sin_family = AF_INET;
-    sin.sin_port = port;
-    sin.sin_addr.s_addr = ip;
-
-    ai->ai_family = AF_INET;
-    ai->ai_addrlen = sizeof(sin);
-    ai->ai_addr = (struct sockaddr*)(ai + 1);
-    memcpy(ai->ai_addr, &sin, sizeof(sin));
-
-    return ai;
-}
-
 static packet_action_t handle_relay(struct connection *c,
                                     const void *data, size_t length) {
     /* this packet tells the UO client where to connect; uoproxy hides
@@ -514,7 +495,6 @@ static packet_action_t handle_relay(struct connection *c,
        the new server */
     const struct uo_packet_relay *p = data;
     struct uo_packet_relay relay;
-    struct addrinfo *server_address;
     int ret;
     struct uo_packet_game_login login;
 
@@ -540,19 +520,19 @@ static packet_action_t handle_relay(struct connection *c,
     c->client.reconnecting = c->in_game;
 
     /* extract new server's address */
-    server_address = make_addrinfo(relay.ip, relay.port);
-    if (server_address == NULL) {
-        log_oom();
-        return PA_DISCONNECT;
-    }
+
+    struct sockaddr_in sin;
+    sin.sin_family = AF_INET;
+    sin.sin_port = relay.port;
+    sin.sin_addr.s_addr = relay.ip;
 
     /* connect to new server */
 
     if (c->client_version.seed != NULL)
         c->client_version.seed->seed = relay.auth_id;
 
-    ret = connection_client_connect(c, server_address, relay.auth_id);
-    free(server_address);
+    ret = connection_client_connect(c, (const struct sockaddr *)&sin,
+                                    sizeof(sin), relay.auth_id);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
         return PA_DISCONNECT;

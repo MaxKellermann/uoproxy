@@ -27,7 +27,6 @@
 #include "compiler.h"
 
 #include <assert.h>
-#include <netdb.h>
 #include <unistd.h>
 
 static int
@@ -120,7 +119,8 @@ connection_ping_event_callback(int fd __attr_unused,
 
 int
 connection_client_connect(struct connection *c,
-                          const struct addrinfo *server_address,
+                          const struct sockaddr *server_address,
+                          size_t server_address_length,
                           uint32_t seed)
 {
     int ret;
@@ -128,9 +128,8 @@ connection_client_connect(struct connection *c,
 
     assert(c->client.client == NULL);
 
-    int fd = socket_connect(server_address->ai_family, SOCK_STREAM, 0,
-                            server_address->ai_addr,
-                            server_address->ai_addrlen);
+    int fd = socket_connect(server_address->sa_family, SOCK_STREAM, 0,
+                            server_address, server_address_length);
     if (fd < 0)
         return -fd;
 

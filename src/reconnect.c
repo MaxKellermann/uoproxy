@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <time.h>
+#include <netdb.h>
 
 void connection_disconnect(struct connection *c) {
     if (c->client.client == NULL)
@@ -60,7 +61,8 @@ connection_try_reconnect(struct connection *c)
         assert(config->game_servers != NULL);
         assert(c->server_index < config->num_game_servers);
 
-        ret = connection_client_connect(c, server_address, seed);
+        ret = connection_client_connect(c, server_address->ai_addr,
+                                        server_address->ai_addrlen, seed);
         if (ret == 0) {
             struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
@@ -80,7 +82,9 @@ connection_try_reconnect(struct connection *c)
         }
     } else {
         /* connect to login server */
-        ret = connection_client_connect(c, config->login_address, seed);
+        ret = connection_client_connect(c, config->login_address->ai_addr,
+                                        config->login_address->ai_addrlen,
+                                        seed);
         if (ret == 0) {
             struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,

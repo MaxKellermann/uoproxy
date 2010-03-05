@@ -381,7 +381,9 @@ handle_account_login(struct linked_server *ls,
         else
             seed = uo_server_seed(ls->server);
 
-        ret = connection_client_connect(c, config->login_address, seed);
+        ret = connection_client_connect(c, config->login_address->ai_addr,
+                                        config->login_address->ai_addrlen,
+                                        seed);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
 
@@ -490,7 +492,8 @@ handle_play_server(struct linked_server *ls,
         else
             seed = htonl(0xc0a80102); /* 192.168.1.2 */
 
-        ret = connection_client_connect(c, config->address, seed);
+        ret = connection_client_connect(c, config->address->ai_addr,
+                                        config->address->ai_addrlen, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PA_DISCONNECT;
