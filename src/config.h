@@ -30,7 +30,15 @@ struct game_server_config {
 };
 
 struct config {
-    struct addrinfo *bind_address, *login_address;
+    struct addrinfo *bind_address;
+
+    /**
+     * The address of the SOCKS4 proxy server.
+     */
+    struct addrinfo *socks4_address;
+
+    struct addrinfo *login_address;
+
     unsigned num_game_servers;
     struct game_server_config *game_servers;
     bool background, autoreconnect, antispy;

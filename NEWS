@@ -1,6 +1,6 @@
 uoproxy (0.3.1) unstable; urgency=low
 
-  * 
+  * added SOCKS4 proxy support
 
  --
 

@@ -20,14 +20,18 @@
 
 #include "connection.h"
 #include "socket_connect.h"
+#include "proxy_socks.h"
 #include "client.h"
 #include "server.h"
 #include "handler.h"
 #include "log.h"
 #include "compiler.h"
+#include "instance.h"
+#include "config.h"
 
 #include <assert.h>
 #include <unistd.h>
+#include <netdb.h>
 
 static int
 client_packet(const void *data, size_t length, void *ctx)
@@ -128,10 +132,24 @@ connection_client_connect(struct connection *c,
 
     assert(c->client.client == NULL);
 
-    int fd = socket_connect(server_address->sa_family, SOCK_STREAM, 0,
+    int fd;
+
+    const struct addrinfo *socks4_address =
+        c->instance->config->socks4_address;
+    if (socks4_address != NULL) {
+        fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
+                            socks4_address->ai_addr, socks4_address->ai_addrlen);
+        if (fd < 0)
+            return -fd;
+
+        if (!socks_connect(fd, server_address))
+            return -1;
+    } else {
+        fd = socket_connect(server_address->sa_family, SOCK_STREAM, 0,
                             server_address, server_address_length);
-    if (fd < 0)
-        return -fd;
+        if (fd < 0)
+            return -fd;
+    }
 
     ret = uo_client_create(fd, seed,
                            c->client_version.seed,

@@ -456,6 +456,23 @@ int config_read_file(struct config *config, const char *path) {
                 freeaddrinfo(config->bind_address);
 
             config->bind_address = parse_address(value);
+        } else if (strcmp(key, "socks4") == 0) {
+            struct addrinfo hints;
+
+            if (config->socks4_address != NULL)
+                freeaddrinfo(config->socks4_address);
+
+            memset(&hints, 0, sizeof(hints));
+            hints.ai_family = PF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+
+            ret = getaddrinfo_helper(value, 9050, &hints,
+                                     &config->socks4_address);
+            if (ret < 0) {
+                fprintf(stderr, "failed to resolve '%s': %s\n",
+                        value, gai_strerror(ret));
+                exit(1);
+            }
         } else if (strcmp(key, "server") == 0) {
             struct addrinfo hints;
 
@@ -576,6 +593,11 @@ void config_dispose(struct config *config) {
     if (config->bind_address != NULL) {
         freeaddrinfo(config->bind_address);
         config->bind_address = NULL;
+    }
+
+    if (config->socks4_address != NULL) {
+        freeaddrinfo(config->socks4_address);
+        config->socks4_address = NULL;
     }
 
     if (config->login_address != NULL) {
