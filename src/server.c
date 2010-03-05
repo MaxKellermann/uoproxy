@@ -24,7 +24,7 @@
 #include "packets.h"
 #include "log.h"
 #include "compiler.h"
-#include "socket-util.h"
+#include "socket_util.h"
 
 #include <assert.h>
 #include <errno.h>

@@ -23,10 +23,10 @@
 #include "compression.h"
 #include "packets.h"
 #include "pversion.h"
-#include "fifo-buffer.h"
+#include "fifo_buffer.h"
 #include "log.h"
 #include "compiler.h"
-#include "socket-util.h"
+#include "socket_util.h"
 
 #include <sys/socket.h>
 #include <assert.h>

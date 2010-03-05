@@ -28,8 +28,8 @@ endif
 
 SOURCES = src/uoproxy.c src/config.c src/instance.c \
 	src/daemon.c src/log.c \
-	src/fifo-buffer.c src/flush.c src/sockbuff.c \
-	src/buffered-io.c src/socket-util.c \
+	src/fifo_buffer.c src/flush.c src/sockbuff.c \
+	src/buffered_io.c src/socket_util.c \
 	src/netutil.c \
 	src/server.c src/client.c \
 	src/packets.c src/compression.c \

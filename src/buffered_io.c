@@ -18,8 +18,8 @@
  *
  */
 
-#include "buffered-io.h"
-#include "fifo-buffer.h"
+#include "buffered_io.h"
+#include "fifo_buffer.h"
 
 #include <assert.h>
 #include <unistd.h>

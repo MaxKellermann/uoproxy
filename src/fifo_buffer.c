@@ -17,7 +17,7 @@
  * 02110-1301 USA
  */
 
-#include "fifo-buffer.h"
+#include "fifo_buffer.h"
 
 #include <assert.h>
 #include <stdlib.h>

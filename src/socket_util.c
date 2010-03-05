@@ -18,7 +18,7 @@
  *
  */
 
-#include "socket-util.h"
+#include "socket_util.h"
 
 #include <assert.h>
 #include <sys/socket.h>

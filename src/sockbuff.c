@@ -20,8 +20,8 @@
 
 #include "sockbuff.h"
 #include "compiler.h"
-#include "buffered-io.h"
-#include "fifo-buffer.h"
+#include "buffered_io.h"
+#include "fifo_buffer.h"
 #include "flush.h"
 #include "poison.h"
 
