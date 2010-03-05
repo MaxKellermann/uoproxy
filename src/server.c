@@ -19,7 +19,7 @@
  */
 
 #include "server.h"
-#include "sockbuff.h"
+#include "socket_buffer.h"
 #include "compression.h"
 #include "packets.h"
 #include "log.h"

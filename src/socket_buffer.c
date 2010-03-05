@@ -18,7 +18,7 @@
  *
  */
 
-#include "sockbuff.h"
+#include "socket_buffer.h"
 #include "compiler.h"
 #include "buffered_io.h"
 #include "fifo_buffer.h"

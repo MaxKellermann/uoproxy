@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef __SOCKBUFF_H
-#define __SOCKBUFF_H
+#ifndef UOPROXY_SOCKET_BUFFER_H
+#define UOPROXY_SOCKET_BUFFER_H
 
 #include <sys/types.h>
 #include <event.h>
