@@ -213,18 +213,14 @@ sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
     void *dest;
     size_t max_length;
 
-    dest = fifo_buffer_write(sb->output, &max_length);
+    dest = sock_buff_write(sb, &max_length);
     if (dest == NULL || length > max_length) {
         sock_buff_invoke_free(sb, ENOSPC);
         return;
     }
 
     memcpy(dest, data, length);
-
-    fifo_buffer_append(sb->output, length);
-
-    event_add(&sb->send_event, NULL);
-    flush_add(&sb->flush);
+    sock_buff_append(sb, length);
 }
 
 
