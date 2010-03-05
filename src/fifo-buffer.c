@@ -131,13 +131,13 @@ fifo_buffer_append(struct fifo_buffer *buffer, size_t length)
 }
 
 int
-fifo_buffer_empty(struct fifo_buffer *buffer)
+fifo_buffer_empty(const struct fifo_buffer *buffer)
 {
     return buffer->start == buffer->end;
 }
 
 int
-fifo_buffer_full(struct fifo_buffer *buffer)
+fifo_buffer_full(const struct fifo_buffer *buffer)
 {
     return buffer->start == 0 && buffer->end == buffer->size;
 }

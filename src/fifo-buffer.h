@@ -50,10 +50,10 @@ void
 fifo_buffer_append(struct fifo_buffer *buffer, size_t length);
 
 int
-fifo_buffer_empty(struct fifo_buffer *buffer);
+fifo_buffer_empty(const struct fifo_buffer *buffer);
 
 int
-fifo_buffer_full(struct fifo_buffer *buffer);
+fifo_buffer_full(const struct fifo_buffer *buffer);
 
 #ifdef __cplusplus
 }
