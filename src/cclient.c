@@ -19,6 +19,7 @@
  */
 
 #include "connection.h"
+#include "socket_connect.h"
 #include "client.h"
 #include "server.h"
 #include "handler.h"
@@ -26,6 +27,8 @@
 #include "compiler.h"
 
 #include <assert.h>
+#include <netdb.h>
+#include <unistd.h>
 
 static int
 client_packet(const void *data, size_t length, void *ctx)
@@ -125,12 +128,20 @@ connection_client_connect(struct connection *c,
 
     assert(c->client.client == NULL);
 
-    ret = uo_client_create(server_address, seed,
+    int fd = socket_connect(server_address->ai_family, SOCK_STREAM, 0,
+                            server_address->ai_addr,
+                            server_address->ai_addrlen);
+    if (fd < 0)
+        return -fd;
+
+    ret = uo_client_create(fd, seed,
                            c->client_version.seed,
                            &client_handler, c,
                            &c->client.client);
-    if (ret != 0)
+    if (ret != 0) {
+        close(fd);
         return ret;
+    }
 
     if (client_version_defined(&c->client_version))
         uo_client_set_protocol(c->client.client,

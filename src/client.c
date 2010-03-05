@@ -19,7 +19,6 @@
  */
 
 #include "client.h"
-#include "socket_connect.h"
 #include "socket_buffer.h"
 #include "compression.h"
 #include "packets.h"
@@ -32,9 +31,7 @@
 #include <sys/socket.h>
 #include <assert.h>
 #include <errno.h>
-#include <netdb.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdbool.h>
 
 #include <event.h>
@@ -222,12 +219,13 @@ struct sock_buff_handler client_sock_buff_handler = {
     .free = client_sock_buff_free,
 };
 
-int uo_client_create(const struct addrinfo *server_address,
-                     uint32_t seed,
-                     const struct uo_packet_seed *seed6,
-                     const struct uo_client_handler *handler,
-                     void *handler_ctx,
-                     struct uo_client **clientp) {
+int
+uo_client_create(int fd, uint32_t seed,
+                 const struct uo_packet_seed *seed6,
+                 const struct uo_client_handler *handler,
+                 void *handler_ctx,
+                 struct uo_client **clientp)
+{
     int ret;
     struct uo_client *client;
 
@@ -235,39 +233,23 @@ int uo_client_create(const struct addrinfo *server_address,
     assert(handler->packet != NULL);
     assert(handler->free != NULL);
 
-    int sockfd = socket_connect(server_address->ai_family, SOCK_STREAM, 0,
-                                server_address->ai_addr,
-                                server_address->ai_addrlen);
-    if (sockfd < 0)
-        return -sockfd;
+    ret = socket_set_nonblock(fd, 1);
+    if (ret < 0)
+        return errno;
 
-    ret = socket_set_nonblock(sockfd, 1);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(sockfd);
-        return save_errno;
-    }
-
-    ret = socket_set_nodelay(sockfd, 1);
-    if (ret < 0) {
-        int save_errno = errno;
-        close(sockfd);
-        return save_errno;
-    }
+    ret = socket_set_nodelay(fd, 1);
+    if (ret < 0)
+        return errno;
 
     client = (struct uo_client*)calloc(1, sizeof(*client));
-    if (client == NULL) {
-        close(sockfd);
+    if (client == NULL)
         return ENOMEM;
-    }
 
-    client->sock = sock_buff_create(sockfd, 8192, 65536,
+    client->sock = sock_buff_create(fd, 8192, 65536,
                                     &client_sock_buff_handler, client);
     if (client->sock == NULL) {
-        int save_errno = errno;
         free(client);
-        close(sockfd);
-        return save_errno;
+        return errno;
     }
 
     uo_decompression_init(&client->decompression);
