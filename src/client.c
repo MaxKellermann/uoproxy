@@ -42,7 +42,7 @@ struct uo_client {
     struct sock_buff *sock;
     bool compression_enabled;
     struct uo_decompression decompression;
-    fifo_buffer_t decompressed_buffer;
+    struct fifo_buffer *decompressed_buffer;
 
     enum protocol_version protocol_version;
 

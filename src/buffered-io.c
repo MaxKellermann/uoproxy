@@ -19,13 +19,14 @@
  */
 
 #include "buffered-io.h"
+#include "fifo-buffer.h"
 
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
 
 ssize_t
-read_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
+read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 {
     void *dest;
     size_t max_length;
@@ -49,7 +50,7 @@ read_to_buffer(int fd, fifo_buffer_t buffer, size_t length)
 }
 
 ssize_t
-write_from_buffer(int fd, fifo_buffer_t buffer)
+write_from_buffer(int fd, struct fifo_buffer *buffer)
 {
     const void *data;
     size_t length;
@@ -71,7 +72,7 @@ write_from_buffer(int fd, fifo_buffer_t buffer)
 }
 
 ssize_t
-buffered_quick_write(int fd, fifo_buffer_t output_buffer,
+buffered_quick_write(int fd, struct fifo_buffer *output_buffer,
                      const void *data, size_t length) {
     if (fifo_buffer_empty(output_buffer)) {
         /* to save time, we handle a special but very common case

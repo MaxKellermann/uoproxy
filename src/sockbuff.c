@@ -39,7 +39,7 @@ struct sock_buff {
 
     struct event recv_event, send_event;
 
-    fifo_buffer_t input, output;
+    struct fifo_buffer *input, *output;
 
     const struct sock_buff_handler *handler;
     void *handler_ctx;
