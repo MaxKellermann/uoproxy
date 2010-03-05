@@ -29,21 +29,12 @@ socket_set_nonblock(int fd, int value);
 int
 socket_set_nodelay(int fd, int value);
 
-int
-socket_set_cork(int fd, int value);
-
 #else
 
 #include "compiler.h"
 
 static inline int
 socket_set_nodelay(int fd __attr_unused, int value __attr_unused)
-{
-    return 0;
-}
-
-static inline int
-socket_set_cork(int fd __attr_unused, int value __attr_unused)
 {
     return 0;
 }

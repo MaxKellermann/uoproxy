@@ -57,11 +57,4 @@ socket_set_nodelay(int fd, int value)
                       &value, sizeof(value));
 }
 
-int
-socket_set_cork(int fd, int value)
-{
-    return setsockopt(fd, IPPROTO_TCP, TCP_CORK,
-                      &value, sizeof(value));
-}
-
 #endif
