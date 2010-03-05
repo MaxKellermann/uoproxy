@@ -21,6 +21,7 @@
 #define __FIFO_BUFFER_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 struct fifo_buffer;
 
@@ -49,10 +50,10 @@ fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r);
 void
 fifo_buffer_append(struct fifo_buffer *buffer, size_t length);
 
-int
+bool
 fifo_buffer_empty(const struct fifo_buffer *buffer);
 
-int
+bool
 fifo_buffer_full(const struct fifo_buffer *buffer);
 
 #ifdef __cplusplus
