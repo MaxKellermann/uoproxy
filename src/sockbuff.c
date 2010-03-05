@@ -45,84 +45,6 @@ struct sock_buff {
     void *handler_ctx;
 };
 
-static void
-sock_buff_flush_callback(struct pending_flush *flush);
-
-static void
-sock_buff_recv_callback(int fd, short event, void *ctx);
-
-static void
-sock_buff_send_callback(int fd, short event, void *ctx);
-
-
-/*
- * constructor and destructor
- *
- */
-
-struct sock_buff *
-sock_buff_create(int fd, size_t input_max,
-                 size_t output_max,
-                 const struct sock_buff_handler *handler,
-                 void *handler_ctx)
-{
-    struct sock_buff *sb;
-
-    assert(handler != NULL);
-    assert(handler->data != NULL);
-    assert(handler->free != NULL);
-
-    sb = (struct sock_buff*)malloc(sizeof(*sb));
-    if (sb == NULL)
-        return NULL;
-
-    flush_init(&sb->flush, sock_buff_flush_callback);
-
-    sb->fd = fd;
-
-    event_set(&sb->recv_event, fd, EV_READ|EV_PERSIST,
-              sock_buff_recv_callback, sb);
-    event_set(&sb->send_event, fd, EV_WRITE|EV_PERSIST,
-              sock_buff_send_callback, sb);
-
-    sb->input = fifo_buffer_new(input_max);
-    if (sb->input == NULL) {
-        free(sb);
-        return NULL;
-    }
-
-    sb->output = fifo_buffer_new(output_max);
-    if (sb->output == NULL) {
-        fifo_buffer_free(sb->input);
-        free(sb);
-        return NULL;
-    }
-
-    sb->handler = handler;
-    sb->handler_ctx = handler_ctx;
-
-    event_add(&sb->recv_event, NULL);
-
-    return sb;
-}
-
-void sock_buff_dispose(struct sock_buff *sb) {
-    assert(sb->fd >= 0);
-
-    event_del(&sb->recv_event);
-    event_del(&sb->send_event);
-
-    flush_del(&sb->flush);
-
-    close(sb->fd);
-
-    fifo_buffer_free(sb->input);
-    fifo_buffer_free(sb->output);
-
-    poison(sb, sizeof(*sb));
-    free(sb);
-}
-
 
 /*
  * invoke wrappers
@@ -303,4 +225,73 @@ sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
 
     event_add(&sb->send_event, NULL);
     flush_add(&sb->flush);
+}
+
+
+/*
+ * constructor and destructor
+ *
+ */
+
+struct sock_buff *
+sock_buff_create(int fd, size_t input_max,
+                 size_t output_max,
+                 const struct sock_buff_handler *handler,
+                 void *handler_ctx)
+{
+    struct sock_buff *sb;
+
+    assert(handler != NULL);
+    assert(handler->data != NULL);
+    assert(handler->free != NULL);
+
+    sb = (struct sock_buff*)malloc(sizeof(*sb));
+    if (sb == NULL)
+        return NULL;
+
+    flush_init(&sb->flush, sock_buff_flush_callback);
+
+    sb->fd = fd;
+
+    event_set(&sb->recv_event, fd, EV_READ|EV_PERSIST,
+              sock_buff_recv_callback, sb);
+    event_set(&sb->send_event, fd, EV_WRITE|EV_PERSIST,
+              sock_buff_send_callback, sb);
+
+    sb->input = fifo_buffer_new(input_max);
+    if (sb->input == NULL) {
+        free(sb);
+        return NULL;
+    }
+
+    sb->output = fifo_buffer_new(output_max);
+    if (sb->output == NULL) {
+        fifo_buffer_free(sb->input);
+        free(sb);
+        return NULL;
+    }
+
+    sb->handler = handler;
+    sb->handler_ctx = handler_ctx;
+
+    event_add(&sb->recv_event, NULL);
+
+    return sb;
+}
+
+void sock_buff_dispose(struct sock_buff *sb) {
+    assert(sb->fd >= 0);
+
+    event_del(&sb->recv_event);
+    event_del(&sb->send_event);
+
+    flush_del(&sb->flush);
+
+    close(sb->fd);
+
+    fifo_buffer_free(sb->input);
+    fifo_buffer_free(sb->output);
+
+    poison(sb, sizeof(*sb));
+    free(sb);
 }
