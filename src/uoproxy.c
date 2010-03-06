@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
 
     /* set up */
 
-    event_init();
+    struct event_base *event_base = event_init();
 
     setup_signal_handlers(&instance);
 
@@ -140,6 +140,8 @@ int main(int argc, char **argv) {
     event_dispatch();
 
     /* cleanup */
+
+    event_base_free(event_base);
 
     config_dispose(&config);
 
