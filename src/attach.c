@@ -42,41 +42,6 @@ struct connection *find_attach_connection(struct connection *c) {
     return NULL;
 }
 
-void attach_after_play_server(struct connection *c,
-                              struct linked_server *ls) {
-    struct uo_packet_supported_features supported_features;
-    struct uo_packet_simple_character_list character_list;
-
-    assert(c->in_game);
-    connection_check(c);
-
-    log(2, "attaching connection\n");
-
-    connection_server_add(c, ls);
-
-    ls->attaching = true;
-
-    supported_features.cmd = PCK_SupportedFeatures;
-    supported_features.flags = c->client.supported_features_flags;
-    uo_server_send(ls->server, &supported_features,
-                   sizeof(supported_features));
-
-    memset(&character_list, 0, sizeof(character_list));
-    character_list.cmd = PCK_CharList;
-    character_list.length = htons(sizeof(character_list));
-    character_list.character_count = 1;
-    character_list.character_info[0] = c->client.characters[c->character_index];
-    character_list.city_count = 0;
-    character_list.flags = htonl(0x14);
-    uo_server_send(ls->server, &character_list,
-                   sizeof(character_list));
-
-    /*
-      uo_server_send(c2->server, &c2->packet_start,
-      sizeof(c2->packet_start));
-    */
-}
-
 static void
 attach_item(struct linked_server *ls,
             struct item *item)
@@ -121,16 +86,20 @@ attach_item(struct linked_server *ls,
 }
 
 void
-attach_after_play_character(struct linked_server *ls)
+attach_after_play_server(struct connection *c, struct linked_server *ls)
 {
+    assert(c->in_game);
+    connection_check(c);
+
+    log(2, "attaching connection\n");
+
+    connection_server_add(c, ls);
+
     struct world *world = &ls->connection->client.world;
     struct uo_packet_supported_features supported_features;
     struct uo_packet_login_complete login_complete;
     struct mobile *mobile;
     struct item *item;
-
-    assert(ls->server != NULL);
-    assert(ls->attaching);
 
     /* 0x1b LoginConfirm */
     if (world->packet_start.cmd == PCK_Start)
@@ -206,6 +175,4 @@ attach_after_play_character(struct linked_server *ls)
     login_complete.cmd = PCK_ReDrawAll;
     uo_server_send(ls->server, &login_complete,
                    sizeof(login_complete));
-
-    ls->attaching = false;
 }

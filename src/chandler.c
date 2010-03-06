@@ -428,12 +428,6 @@ handle_play_character(struct linked_server *ls,
 
     assert(length == sizeof(*p));
 
-    if (ls->attaching) {
-        log(2, "attaching connection, stage II\n");
-        attach_after_play_character(ls);
-        return PA_DROP;
-    }
-
     ls->connection->character_index = ntohl(p->slot);
 
     return PA_ACCEPT;
