@@ -25,6 +25,7 @@
 #include "flush.h"
 #include "poison.h"
 
+#include <event.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <unistd.h>

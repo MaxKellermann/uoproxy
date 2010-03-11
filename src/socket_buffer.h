@@ -22,7 +22,6 @@
 #define UOPROXY_SOCKET_BUFFER_H
 
 #include <sys/types.h>
-#include <event.h>
 
 struct sock_buff_handler {
     /**
