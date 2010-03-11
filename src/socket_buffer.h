@@ -21,6 +21,7 @@
 #ifndef UOPROXY_SOCKET_BUFFER_H
 #define UOPROXY_SOCKET_BUFFER_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 struct sock_buff_handler {
@@ -56,7 +57,11 @@ sock_buff_write(struct sock_buff *sb, size_t *max_length_r);
 void
 sock_buff_append(struct sock_buff *sb, size_t length);
 
-void
+/**
+ * @return true on success, false if there is no more room in the
+ * output buffer
+ */
+bool
 sock_buff_send(struct sock_buff *sb, const void *data, size_t length);
 
 #endif

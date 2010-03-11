@@ -299,6 +299,9 @@ void uo_server_send(struct uo_server *server,
 
         sock_buff_append(server->sock, (size_t)nbytes);
     } else {
-        sock_buff_send(server->sock, src, length);
+        if (!sock_buff_send(server->sock, src, length)) {
+            log(1, "output buffer full in uo_server_send()\n");
+            uo_server_abort(server);
+        }
     }
 }

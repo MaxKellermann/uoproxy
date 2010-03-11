@@ -208,20 +208,19 @@ sock_buff_append(struct sock_buff *sb, size_t length)
     flush_add(&sb->flush);
 }
 
-void
+bool
 sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
 {
     void *dest;
     size_t max_length;
 
     dest = sock_buff_write(sb, &max_length);
-    if (dest == NULL || length > max_length) {
-        sock_buff_invoke_free(sb, ENOSPC);
-        return;
-    }
+    if (dest == NULL || length > max_length)
+        return false;
 
     memcpy(dest, data, length);
     sock_buff_append(sb, length);
+    return true;
 }
 
 

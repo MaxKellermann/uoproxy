@@ -314,5 +314,8 @@ void uo_client_send(struct uo_client *client,
     if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = true;
 
-    sock_buff_send(client->sock, src, length);
+    if (!sock_buff_send(client->sock, src, length)) {
+        log(1, "output buffer full in uo_client_send()\n");
+        uo_client_abort(client);
+    }
 }
