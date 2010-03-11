@@ -53,7 +53,7 @@ struct sock_buff {
  */
 
 /**
- * @return false on error
+ * @return false on error or if nothing was consumed
  */
 static bool
 sock_buff_invoke_data(struct sock_buff *sb)
@@ -72,7 +72,7 @@ sock_buff_invoke_data(struct sock_buff *sb)
     flush_begin();
     nbytes = sb->handler->data(data, length, sb->handler_ctx);
     flush_end();
-    if (nbytes < 0)
+    if (nbytes == 0)
         return false;
 
     fifo_buffer_consume(sb->input, (size_t)nbytes);

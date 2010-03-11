@@ -167,7 +167,7 @@ client_packets_from_buffer(struct uo_client *client,
     return (ssize_t)consumed;
 }
 
-static ssize_t
+static size_t
 client_sock_buff_data(const void *data0, size_t length, void *ctx)
 {
     struct uo_client *client = ctx;
@@ -188,13 +188,17 @@ client_sock_buff_data(const void *data0, size_t length, void *ctx)
 
         nbytes = client_packets_from_buffer(client, data, length);
         if (nbytes < 0)
-            return nbytes;
+            return 0;
 
         fifo_buffer_consume(client->decompressed_buffer, (size_t)nbytes);
 
         return consumed;
     } else {
-        return client_packets_from_buffer(client, data, length);
+        ssize_t nbytes = client_packets_from_buffer(client, data, length);
+        if (nbytes < 0)
+            return 0;
+
+        return nbytes;
     }
 }
 

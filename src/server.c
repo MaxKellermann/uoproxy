@@ -136,7 +136,7 @@ server_packets_from_buffer(struct uo_server *server,
     return (ssize_t)consumed;
 }
 
-static ssize_t
+static size_t
 server_sock_buff_data(const void *data0, size_t length, void *ctx)
 {
     const unsigned char *data = data0;
@@ -179,7 +179,7 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
     nbytes = server_packets_from_buffer(server,
                                         data + consumed, length - consumed);
     if (nbytes < 0)
-        return nbytes;
+        return 0;
 
     return consumed + (size_t)nbytes;
 }

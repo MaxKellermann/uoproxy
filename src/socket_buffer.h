@@ -21,16 +21,16 @@
 #ifndef UOPROXY_SOCKET_BUFFER_H
 #define UOPROXY_SOCKET_BUFFER_H
 
-#include <sys/types.h>
+#include <stddef.h>
 
 struct sock_buff_handler {
     /**
      * Data is available.
      *
-     * @return the number of bytes consumed, or -1 if the sock_buff
+     * @return the number of bytes consumed, or 0 if the sock_buff
      * has been closed within the function
      */
-    ssize_t (*data)(const void *data, size_t length, void *ctx);
+    size_t (*data)(const void *data, size_t length, void *ctx);
 
     /**
      * The socket has been closed due to an error or because the peer
