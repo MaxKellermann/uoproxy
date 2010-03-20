@@ -73,7 +73,7 @@ static void walk_clear(struct connection_walk_state *state) {
 }
 
 static void
-walk_cancel(struct world *world,
+walk_cancel(const struct world *world,
             struct uo_server *server,
             const struct uo_packet_walk *old)
 {
