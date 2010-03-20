@@ -122,4 +122,8 @@ void
 world_walked(struct world *world, uint16_t x, uint16_t y,
              uint8_t direction, uint8_t notoriety);
 
+void
+world_walk_cancel(struct world *world, uint16_t x, uint16_t y,
+                  uint8_t direction);
+
 #endif

@@ -3,6 +3,7 @@ uoproxy (0.3.1) unstable; urgency=low
   * added SOCKS4 proxy support
   * no character list on attach
   * fixed crash when output buffer is full
+  * walk: take position from walk_cancel packet
 
  --
 

@@ -507,3 +507,25 @@ world_walked(struct world *world, uint16_t x, uint16_t y,
         m->packet_mobile_incoming->notoriety = notoriety;
     }
 }
+
+void
+world_walk_cancel(struct world *world, uint16_t x, uint16_t y,
+                  uint8_t direction)
+{
+    struct mobile *m;
+
+    world->packet_start.x = x;
+    world->packet_start.y = y;
+    world->packet_start.direction = direction;
+
+    world->packet_mobile_update.x = x;
+    world->packet_mobile_update.y = y;
+    world->packet_mobile_update.direction = direction;
+
+    m = find_mobile(world, world->packet_start.serial);
+    if (m != NULL && m->packet_mobile_incoming != NULL) {
+        m->packet_mobile_incoming->x = x;
+        m->packet_mobile_incoming->y = y;
+        m->packet_mobile_incoming->direction = direction;
+    }
+}

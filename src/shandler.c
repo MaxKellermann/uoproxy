@@ -172,8 +172,6 @@ static packet_action_t handle_walk_cancel(struct connection *c,
     if (!c->in_game)
         return PA_DISCONNECT;
 
-    /* XXX: grab p->x/y/z etc. */
-
     connection_walk_cancel(c, p);
 
     return PA_DROP;
