@@ -135,6 +135,20 @@ connection_walk_request(struct linked_server *server,
         state->seq_next = 1;
 }
 
+static void
+connection_resync(struct connection *c)
+{
+    walk_clear(&c->walk);
+
+    struct uo_packet_walk_ack packet = {
+        .cmd = PCK_Resynchronize,
+        .seq = 0,
+        .notoriety = 0,
+    };
+
+    uo_client_send(c->client.client, &packet, sizeof(packet));
+}
+
 void connection_walk_cancel(struct connection *c,
                             const struct uo_packet_walk_cancel *p) {
     struct connection_walk_state *state = &c->walk;
@@ -145,12 +159,14 @@ void connection_walk_cancel(struct connection *c,
 
     if (state->server == NULL) {
         log(1, "WalkCancel out of sync II\n");
+        connection_resync(c);
         return;
     }
 
     i = find_by_seq(state, p->seq);
     if (i == NULL) {
         log(1, "WalkCancel out of sync\n");
+        connection_resync(c);
         return;
     }
 
@@ -176,12 +192,14 @@ void connection_walk_ack(struct connection *c,
 
     if (state->server == NULL) {
         log(1, "WalkAck out of sync II\n");
+        connection_resync(c);
         return;
     }
 
     i = find_by_seq(state, p->seq);
     if (i == NULL) {
         log(1, "WalkAck out of sync\n");
+        connection_resync(c);
         return;
     }
 

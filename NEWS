@@ -4,6 +4,7 @@ uoproxy (0.3.1) unstable; urgency=low
   * no character list on attach
   * fixed crash when output buffer is full
   * walk: take position from walk_cancel packet
+  * walk: resync if walk packets are out of sync
 
  --
 
