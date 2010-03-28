@@ -33,8 +33,8 @@ struct connection *find_attach_connection(struct connection *c) {
     list_for_each_entry(c2, &c->instance->connections, siblings)
         if (c2 != c && c2->in_game &&
             c2->client.world.packet_start.serial != 0 &&
-            memcmp(c->username, c2->username, sizeof(c->username)) == 0 &&
-            memcmp(c->password, c2->password, sizeof(c->password)) == 0 &&
+            strncmp(c->username, c2->username, sizeof(c->username)) == 0 &&
+            strncmp(c->password, c2->password, sizeof(c->password)) == 0 &&
             c->server_index == c2->server_index &&
             c2->client.num_characters > 0)
             return c2;
