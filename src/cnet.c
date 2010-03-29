@@ -36,6 +36,17 @@ void connection_speak_console(struct connection *c, const char *msg) {
     }
 }
 
+void
+connection_broadcast_servers(struct connection *c,
+                             const void *data, size_t length)
+{
+    struct linked_server *ls;
+
+    list_for_each_entry(ls, &c->servers, siblings)
+        if (!ls->attaching)
+            uo_server_send(ls->server, data, length);
+}
+
 void connection_broadcast_servers_except(struct connection *c,
                                          const void *data, size_t length,
                                          struct uo_server *except) {

@@ -5,6 +5,7 @@ uoproxy (0.3.1) unstable; urgency=low
   * fixed crash when output buffer is full
   * walk: take position from walk_cancel packet
   * walk: resync if walk packets are out of sync
+  * walk: don't clear queue when client disconnects
   * attach: ignore undefined bytes in username/password
 
  --

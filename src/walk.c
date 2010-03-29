@@ -95,7 +95,6 @@ void connection_walk_server_removed(struct connection_walk_state *state,
         return;
 
     state->server = NULL;
-    state->queue_size = 0;
 }
 
 void
@@ -105,9 +104,7 @@ connection_walk_request(struct linked_server *server,
     struct connection_walk_item *i;
     struct uo_packet_walk walk;
 
-    assert(state->server != NULL || state->queue_size == 0);
-
-    if (state->server != NULL && state->server != server) {
+    if (state->queue_size > 0 && server != state->server) {
         log(2, "rejecting walk\n");
         walk_cancel(&server->connection->client.world, server->server, p);
         return;
@@ -153,15 +150,8 @@ void connection_walk_cancel(struct connection *c,
                             const struct uo_packet_walk_cancel *p) {
     struct connection_walk_state *state = &c->walk;
     const struct connection_walk_item *i;
-    struct uo_packet_walk_cancel cancel;
 
     state->seq_next = 0;
-
-    if (state->server == NULL) {
-        log(1, "WalkCancel out of sync II\n");
-        connection_resync(c);
-        return;
-    }
 
     i = find_by_seq(state, p->seq);
     if (i == NULL) {
@@ -176,9 +166,12 @@ void connection_walk_cancel(struct connection *c,
                       p->direction);
 
     /* only send to requesting client */
-    cancel = *p;
-    cancel.seq = i->packet.seq;
-    uo_server_send(state->server->server, &cancel, sizeof(cancel));
+
+    if (state->server != NULL) {
+        struct uo_packet_walk_cancel cancel = *p;
+        cancel.seq = i->packet.seq;
+        uo_server_send(state->server->server, &cancel, sizeof(cancel));
+    }
 
     walk_clear(state);
 }
@@ -188,13 +181,6 @@ void connection_walk_ack(struct connection *c,
     struct connection_walk_state *state = &c->walk;
     const struct connection_walk_item *i;
     unsigned x, y;
-    struct uo_packet_walk_ack ack;
-
-    if (state->server == NULL) {
-        log(1, "WalkAck out of sync II\n");
-        connection_resync(c);
-        return;
-    }
 
     i = find_by_seq(state, p->seq);
     if (i == NULL) {
@@ -245,21 +231,24 @@ void connection_walk_ack(struct connection *c,
                  i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */
-    ack = *p;
-    ack.seq = i->packet.seq;
-    uo_server_send(state->server->server, &ack, sizeof(ack));
+    if (state->server != NULL) {
+        struct uo_packet_walk_ack ack = *p;
+        ack.seq = i->packet.seq;
+        uo_server_send(state->server->server, &ack, sizeof(ack));
+    }
 
     /* send WalkForce to all other clients */
-    if (!list_empty(&c->servers) &&
-        c->servers.next->next != &c->servers) {
-        struct uo_packet_walk_force force = {
-            .cmd = PCK_WalkForce,
-            .direction = i->packet.direction & 0x7,
-        };
 
+    struct uo_packet_walk_force force = {
+        .cmd = PCK_WalkForce,
+        .direction = i->packet.direction & 0x7,
+    };
+
+    if (state->server != NULL)
         connection_broadcast_servers_except(c, &force, sizeof(force),
                                             state->server->server);
-    }
+    else
+        connection_broadcast_servers(c, &force, sizeof(force));
 
     remove_item(state, i);
 }
