@@ -62,7 +62,14 @@ struct linked_server {
 };
 
 struct connection_walk_item {
+    /**
+     * The walk packet sent by the client.
+     */
     struct uo_packet_walk packet;
+
+    /**
+     * The walk sequence number which was sent to the server.
+     */
     uint8_t seq;
 };
 
