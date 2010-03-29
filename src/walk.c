@@ -161,8 +161,7 @@ void connection_walk_cancel(struct connection *c,
     else
         log(7, "walk_cancel seq_from_server=%u\n", p->seq);
 
-    world_walk_cancel(&c->client.world, htons(p->x), htons(p->y),
-                      p->direction);
+    world_walk_cancel(&c->client.world, p->x, p->y, p->direction);
 
     /* only send to requesting client */
 
