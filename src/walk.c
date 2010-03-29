@@ -154,20 +154,19 @@ void connection_walk_cancel(struct connection *c,
     state->seq_next = 0;
 
     i = find_by_seq(state, p->seq);
-    if (i == NULL) {
-        log(1, "WalkCancel out of sync\n");
-        connection_resync(c);
-        return;
-    }
 
-    log(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
+    if (i != NULL)
+        log(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n",
+            i->packet.seq, p->seq);
+    else
+        log(7, "walk_cancel seq_from_server=%u\n", p->seq);
 
     world_walk_cancel(&c->client.world, htons(p->x), htons(p->y),
                       p->direction);
 
     /* only send to requesting client */
 
-    if (state->server != NULL) {
+    if (i != NULL && state->server != NULL) {
         struct uo_packet_walk_cancel cancel = *p;
         cancel.seq = i->packet.seq;
         uo_server_send(state->server->server, &cancel, sizeof(cancel));
