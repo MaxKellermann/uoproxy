@@ -32,7 +32,7 @@ connection_delete_items(struct connection *c)
         p.serial = i->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
-            if (!ls->attaching)
+            if (!ls->attaching && !ls->is_zombie)
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
@@ -51,7 +51,7 @@ connection_delete_mobiles(struct connection *c)
         p.serial = m->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
-            if (!ls->attaching)
+            if (!ls->attaching && !ls->is_zombie)
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 

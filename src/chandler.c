@@ -37,6 +37,8 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <time.h>
+#include <arpa/inet.h>
 
 #define TALK_MAX 128
 
@@ -415,8 +417,81 @@ handle_game_login(struct linked_server *ls,
     assert(sizeof(p->username) == sizeof(ls->connection->username));
     assert(sizeof(p->password) == sizeof(ls->connection->password));
 
-    /* valid uoproxy clients will never send this packet, as we're
-       hiding the Relay packets from them */
+    if (ls->connection->instance->config->razor_workaround) {
+        struct connection *c = ls->connection;
+        bool was_attach = false;
+
+        /* I have observed the Razor client ignoring the redirect if the IP
+           address differs from what it connected to.  (I guess this is a bug in
+           RunUO & Razor).  In that case it does a gamelogin on the old
+           linked_server without reconnecting to us.
+
+           So we apply the zombie-lookup only if the remote UO client actually
+           did bother to reconnet to us. */
+        if (!ls->connection->client.client) {
+            struct connection *reuse_conn = NULL;
+            struct instance *instance = ls->connection->instance;
+            struct linked_server *ls2;
+
+            /* this should only happen in redirect mode.. so look for the
+               correct zombie so that we can re-use its connection to the UO
+               server. */
+            list_for_each_entry(c, &instance->connections, siblings) {
+                list_for_each_entry(ls2, &c->servers, siblings) {
+                    if (ls2->is_zombie
+                        && ls2->auth_id == p->auth_id
+                        && !strcmp(c->username, p->username)
+                        && !strcmp(c->password, p->password)) {
+                        /* found it! Eureka! */
+                        reuse_conn = c;
+                        ls2->expecting_reconnect = false;
+                        // copy over charlist (if any)..
+                        ls->enqueued_charlist = ls2->enqueued_charlist;
+                        ls2->enqueued_charlist = NULL;
+                        was_attach = ls2->attaching;
+                        ls2->attaching = false;
+                        break;
+                    }
+                }
+                if (reuse_conn) break;
+            }
+            if (reuse_conn) {
+                c = ls->connection;
+                /* remove the object from the old connection */
+                connection_server_remove(c, ls);
+                connection_delete(c);
+
+                log(2, "attaching redirected client to its previous connection\n");
+
+                connection_server_add(reuse_conn, ls);
+            } else {
+                /* houston, we have a problem -- reject the game login -- it
+                   either came in too slowly (and so we already reaped the
+                   zombie) or it was a hack attempt (wrong password) */
+                log(2, "could not find previous connection for redirected client"
+                    " -- disconnecting client!\n");
+                return PA_DISCONNECT;
+            }
+        } else
+            was_attach = ls->attaching;
+        /* after GameLogin, must enable compression. */
+        uo_server_set_compression(ls->server, true);
+        ls->got_gamelogin = true;
+        ls->attaching = false;
+        if (c->in_game && was_attach) {
+            /* already in game .. this was likely an attach connection */
+            attach_send_world(ls);
+        } else if (ls->enqueued_charlist) {
+            uo_server_send(ls->server, ls->enqueued_charlist,
+                           htons(ls->enqueued_charlist->length));
+        }
+        free(ls->enqueued_charlist), ls->enqueued_charlist = NULL;
+        ls->expecting_reconnect = false;
+        return PA_DROP;
+    }
+
+    /* Unless we're in razor workaround mode, valid UO clients will never send
+       this packet since we're hiding redirects from them. */
     return PA_DISCONNECT;
 }
 
@@ -433,12 +508,33 @@ handle_play_character(struct linked_server *ls,
     return PA_ACCEPT;
 }
 
+static void
+redirect_to_self(struct linked_server *ls, struct connection *c __attr_unused)
+{
+    struct uo_packet_relay relay;
+    static uint32_t authid = 0;
+    struct in_addr addr;
+
+    if (!authid) authid = time(0);
+
+    relay.cmd = PCK_Relay;
+    relay.port = uo_server_getsockport(ls->server);
+    relay.ip = uo_server_getsockname(ls->server);
+    addr.s_addr = relay.ip;
+    log(8, "redirecting to: %s:%hu\n", inet_ntoa(addr), htons(relay.port));;
+    relay.auth_id = ls->auth_id = authid++;
+    ls->expecting_reconnect = true;
+    uo_server_send(ls->server, &relay, sizeof(relay));
+    return;
+}
+
 static packet_action_t
 handle_play_server(struct linked_server *ls,
                    const void *data, size_t length)
 {
     const struct uo_packet_play_server *p = data;
     struct connection *c = ls->connection, *c2;
+    packet_action_t retaction = PA_DROP;
 
     assert(length == sizeof(*p));
 
@@ -455,15 +551,20 @@ handle_play_server(struct linked_server *ls,
         connection_server_remove(c, ls);
         connection_delete(c);
 
-        /* attach it to the new connection */
-        attach_after_play_server(c2, ls);
+        if (c2->instance->config->razor_workaround) { ///< need to send redirect
+            /* attach it to the new connection and send redirect (below) */
+            ls->attaching = true;
+            connection_server_add(c2, ls);
+        }  else {
+            /* attach it to the new connection and begin playing right away */
+            attach_after_play_server(c2, ls);
+        }
 
-        return PA_DROP;
-    }
-
-    if (c->instance->config->login_address == NULL &&
-        c->instance->config->game_servers != NULL &&
-        c->instance->config->num_game_servers > 0) {
+        retaction = PA_DROP;
+        c = c2;
+    } else if (c->instance->config->login_address == NULL &&
+               c->instance->config->game_servers != NULL &&
+               c->instance->config->num_game_servers > 0) {
         unsigned i, num_game_servers = c->instance->config->num_game_servers;
         struct game_server_config *config;
         int ret;
@@ -502,10 +603,20 @@ handle_play_server(struct linked_server *ls,
 
         uo_client_send(c->client.client, &login, sizeof(login));
 
-        return PA_DROP;
+        retaction = PA_DROP;
+    } else
+        retaction = PA_ACCEPT;
+
+    if (c->instance->config->razor_workaround) {
+        /* Razor workaround -> send the redirect packet to the client and tell
+           them to redirect to self!  This is because Razor refuses to work if
+           it doesn't see a redirect packet.  Note that after the redirect,
+           the client immediately sends 'GameLogin' which means we turn
+           compression on. */
+        redirect_to_self(ls, c);
     }
 
-    return PA_ACCEPT;
+    return retaction;
 }
 
 static packet_action_t

@@ -86,15 +86,8 @@ attach_item(struct linked_server *ls,
 }
 
 void
-attach_after_play_server(struct connection *c, struct linked_server *ls)
+attach_send_world(struct linked_server *ls)
 {
-    assert(c->in_game);
-    connection_check(c);
-
-    log(2, "attaching connection\n");
-
-    connection_server_add(c, ls);
-
     struct world *world = &ls->connection->client.world;
     struct uo_packet_supported_features supported_features;
     struct uo_packet_login_complete login_complete;
@@ -175,4 +168,18 @@ attach_after_play_server(struct connection *c, struct linked_server *ls)
     login_complete.cmd = PCK_ReDrawAll;
     uo_server_send(ls->server, &login_complete,
                    sizeof(login_complete));
+
+}
+
+void
+attach_after_play_server(struct connection *c, struct linked_server *ls)
+{
+    assert(c->in_game);
+    connection_check(c);
+
+    log(2, "attaching connection\n");
+
+    connection_server_add(c, ls);
+
+    attach_send_world(ls);
 }

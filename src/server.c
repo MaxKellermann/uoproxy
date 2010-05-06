@@ -257,6 +257,10 @@ uint32_t uo_server_seed(const struct uo_server *server) {
     return server->seed;
 }
 
+void uo_server_set_compression(struct uo_server *server, bool comp) {
+    server->compression_enabled = comp;
+}
+
 void
 uo_server_set_protocol(struct uo_server *server,
                        enum protocol_version protocol_version)

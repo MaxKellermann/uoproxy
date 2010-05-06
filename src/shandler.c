@@ -42,7 +42,7 @@ static void welcome(struct connection *c) {
     struct linked_server *ls;
 
     list_for_each_entry(ls, &c->servers, siblings) {
-        if (!ls->attaching && !ls->welcome) {
+        if (!ls->attaching && !ls->is_zombie && !ls->welcome) {
             uo_server_speak_console(ls->server, "Welcome to uoproxy v" VERSION "!  "
                                     "http://max.kellermann.name/projects/uoproxy/");
             ls->welcome = true;
@@ -460,6 +460,22 @@ static packet_action_t handle_char_list(struct connection *c,
 
         uo_client_send(c->client.client, &p2, sizeof(p2));
 
+        return PA_DROP;
+    } else if (c->instance->config->razor_workaround) {
+        /* razor workaround -- we don't send the char list right away necessarily until they sent us GameLogin.. */
+        struct linked_server *ls;
+        list_for_each_entry(ls, &c->servers, siblings) {
+            if (ls->got_gamelogin && !ls->attaching && !ls->is_zombie)
+                uo_server_send(ls->server, data, length);
+            else {
+                if (ls->enqueued_charlist) free(ls->enqueued_charlist);
+                ls->enqueued_charlist = calloc(1,length);
+                if (ls->enqueued_charlist) {
+                    memcpy(ls->enqueued_charlist, data, length);
+                } else
+                    log_oom();
+            }
+        }
         return PA_DROP;
     }
 

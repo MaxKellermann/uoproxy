@@ -573,6 +573,8 @@ int config_read_file(struct config *config, const char *path) {
             config->autoreconnect = parse_bool(path, no, value);
         } else if (strcmp(key, "antispy") == 0) {
             config->antispy = parse_bool(path, no, value);
+        } else if (strcmp(key, "razor_workaround") == 0) {
+            config->razor_workaround = parse_bool(path, no, value);
         } else if (strcmp(key, "light") == 0) {
             config->light = parse_bool(path, no, value);
         } else if (strcmp(key, "client_version") == 0) {

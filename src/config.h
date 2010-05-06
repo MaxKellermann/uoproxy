@@ -41,7 +41,7 @@ struct config {
 
     unsigned num_game_servers;
     struct game_server_config *game_servers;
-    bool background, autoreconnect, antispy;
+    bool background, autoreconnect, antispy, razor_workaround;
 
     /**
      * Always full light level?

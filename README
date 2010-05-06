@@ -89,10 +89,14 @@ and to add the uoproxy server to your Login.cfg.
 Running with Razor
 ------------------
 
-Razor 1.0.12 is not compatible with uoproxy, due to a bug in Razor
-(uncaught NullReferenceException).  Unfortunately, I cannot report
-this bug to the Razor authors, because I have been banned for life
-from the runuo.com forums.  Sorry!
+As of version 0.3.1, uoproxy is once again compatible with Razor,
+thanks to patches from Calin Culianu.  Tested and works with Razor
+1.0.12.  You need to set the 'razor_workaround yes' configuration
+option in the config file to enable compatibility with Razor.  The
+Razor workaround involves telling the UO client to reconnect to
+uoproxy on login (which is what Razor expects).  This has the added
+side-effect of enabling server-side compression, which is also what
+Razor seems to expect.
 
 
 Credits

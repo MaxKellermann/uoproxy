@@ -59,6 +59,19 @@ struct linked_server {
     bool welcome, attaching;
 
     struct client_version client_version;
+
+    /** Razor_workaround support here: we save the charlist until
+        the client says gamelogin, at which point we turn compression on in our
+        emulated server and send a charlist. */
+    bool expecting_reconnect, got_gamelogin;
+    struct uo_packet_simple_character_list *enqueued_charlist;
+
+    bool is_zombie; /**< zombie handling */
+    struct event zombie_timeout; /**< zombies time out and auto-reap themselves
+                                      after 5 seconds using this timer */
+    uint32_t auth_id; /**< unique identifier for this linked_server used in
+                           redirect handling to locate the zombied
+                           linked_server */
 };
 
 struct connection_walk_item {
@@ -163,6 +176,8 @@ connection_server_new(struct connection *c, int fd);
 void
 connection_server_dispose(struct connection *c, struct linked_server *ls);
 
+void
+connection_server_zombify(struct connection *c, struct linked_server *ls);
 
 /* world */
 
@@ -209,6 +224,9 @@ struct connection *find_attach_connection(struct connection *c);
 
 void attach_after_play_server(struct connection *c,
                               struct linked_server *ls);
+
+void
+attach_send_world(struct linked_server *ls);
 
 /* command */
 

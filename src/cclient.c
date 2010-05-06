@@ -48,7 +48,7 @@ client_packet(const void *data, size_t length, void *ctx)
     case PA_ACCEPT:
         if (!c->client.reconnecting)
             list_for_each_entry(ls, &c->servers, siblings)
-                if (!ls->attaching)
+                if (!ls->attaching && !ls->is_zombie)
                     uo_server_send(ls->server, data, length);
         break;
 

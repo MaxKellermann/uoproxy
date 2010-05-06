@@ -101,9 +101,12 @@ void connection_check(const struct connection *c) {
     assert(c->instance != NULL);
 
     if (!c->in_game) {
-        /* when not yet in-game, there can only be one connection */
+        /* when not yet in-game, there can only be one connection
+           unless we are doing the razor workaround, in which case we keep
+           zombies around that we later delete*/
         assert(list_empty(&c->servers) ||
-               c->servers.next->next == &c->servers);
+               c->servers.next->next == &c->servers ||
+               c->instance->config->razor_workaround);
     }
 }
 #endif

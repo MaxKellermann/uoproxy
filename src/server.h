@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 struct uo_server;
 
@@ -56,6 +57,8 @@ uint32_t uo_server_seed(const struct uo_server *server);
 void
 uo_server_set_protocol(struct uo_server *server,
                        enum protocol_version protocol_version);
+
+void uo_server_set_compression(struct uo_server *server, bool compression);
 
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);
