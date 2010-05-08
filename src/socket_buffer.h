@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 struct sock_buff_handler {
     /**
@@ -63,5 +64,17 @@ sock_buff_append(struct sock_buff *sb, size_t length);
  */
 bool
 sock_buff_send(struct sock_buff *sb, const void *data, size_t length);
+
+/**
+ * @return the 32-bit internet address of the socket buffer's fd, in
+ * network byte order
+ */
+uint32_t sock_buff_sockname(const struct sock_buff *sb);
+
+/**
+ * @return the 16-bit port ofthe socket buffer's fd, in network byte
+ * order
+ */
+uint16_t sock_buff_port(const struct sock_buff *sb);
 
 #endif

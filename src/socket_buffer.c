@@ -24,6 +24,7 @@
 #include "fifo_buffer.h"
 #include "flush.h"
 #include "poison.h"
+#include "log.h"
 
 #include <event.h>
 #include <assert.h>
@@ -32,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <netdb.h>
 
 struct sock_buff {
     struct pending_flush flush;
@@ -223,6 +225,29 @@ sock_buff_send(struct sock_buff *sb, const void *data, size_t length)
     return true;
 }
 
+uint32_t sock_buff_sockname(const struct sock_buff *sb)
+{
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(addr);
+    int ret = getsockname(sb->fd, (struct sockaddr *)&addr, &len);
+    if (ret) {
+        log_errno("getsockname()");
+        return 0;
+    }
+    return addr.sin_addr.s_addr;
+}
+
+uint16_t sock_buff_port(const struct sock_buff *sb)
+{
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(addr);
+    int ret = getsockname(sb->fd, (struct sockaddr *)&addr, &len);
+    if (ret) {
+        log_errno("getsockname()");
+        return 0;
+    }
+    return addr.sin_port;
+}
 
 /*
  * constructor and destructor

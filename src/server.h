@@ -61,6 +61,13 @@ void uo_server_send(struct uo_server *server,
                     const void *src, size_t length);
 
 
+/** @return ip address, in network byte order, of our uo server socket
+            (= connection to client) */
+uint32_t uo_server_getsockname(const struct uo_server *server);
+/** @return port, in network byte order, of our uo server socket
+            (= connection to client) */
+uint16_t uo_server_getsockport(const struct uo_server *server);
+
 /* utilities */
 
 void uo_server_speak_ascii(struct uo_server *server,

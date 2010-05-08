@@ -266,6 +266,16 @@ uo_server_set_protocol(struct uo_server *server,
     server->protocol_version = protocol_version;
 }
 
+uint32_t uo_server_getsockname(const struct uo_server *server)
+{
+    return sock_buff_sockname(server->sock);
+}
+
+uint16_t uo_server_getsockport(const struct uo_server *server)
+{
+    return sock_buff_port(server->sock);
+}
+
 void uo_server_send(struct uo_server *server,
                     const void *src, size_t length) {
     assert(server->sock != NULL || uo_server_is_aborted(server));
