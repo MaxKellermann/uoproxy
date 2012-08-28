@@ -279,10 +279,12 @@ uo_client_create(int fd, uint32_t seed,
     *clientp = client;
 
     /* seed must be the first 4 bytes, and it must be flushed */
-    if (seed6 == NULL)
+    if (seed6 != NULL) {
+        struct uo_packet_seed p = *seed6;
+        p.seed = seed;
+        uo_client_send(client, &p, sizeof(p));
+    } else
         uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
-    else
-        uo_client_send(client, seed6, sizeof(*seed6));
 
     return 0;
 }
