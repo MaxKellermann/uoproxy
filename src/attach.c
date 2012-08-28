@@ -94,9 +94,18 @@ attach_item(struct linked_server *ls,
         break;
     }
 
-    if (item->packet_container_open.cmd == PCK_ContainerOpen)
-        uo_server_send(ls->server, &item->packet_container_open,
-                       sizeof(item->packet_container_open));
+    if (item->packet_container_open.cmd == PCK_ContainerOpen) {
+        if (ls->client_version.protocol >= PROTOCOL_7) {
+            struct uo_packet_container_open_7 p7 = {
+                .base = item->packet_container_open,
+                .num = 0,
+            };
+
+            uo_server_send(ls->server, &p7, sizeof(p7));
+        } else
+            uo_server_send(ls->server, &item->packet_container_open,
+                           sizeof(item->packet_container_open));
+    }
 }
 
 void

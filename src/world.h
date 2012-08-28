@@ -103,6 +103,10 @@ world_container_open(struct world *world,
                      const struct uo_packet_container_open *p);
 
 void
+world_container_open_7(struct world *world,
+                       const struct uo_packet_container_open_7 *p);
+
+void
 world_container_update(struct world *world,
                        const struct uo_packet_container_update_6 *p);
 

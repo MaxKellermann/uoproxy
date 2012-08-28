@@ -146,6 +146,64 @@ world_container_open(struct world *world,
     i->packet_container_open = *p;
 }
 
+static void
+world_sweep_container_update_inside(struct world *world,
+                                    uint32_t parent_serial)
+{
+    const unsigned attach_sequence = world->item_attach_sequence;
+
+    struct item *item, *n;
+    list_for_each_entry_safe(item, n, &world->items, siblings)
+        if (is_parent(item, parent_serial) &&
+            item->attach_sequence != attach_sequence)
+            world_remove_item(item);
+}
+
+void
+world_container_open_7(struct world *world,
+                       const struct uo_packet_container_open_7 *p)
+{
+    assert(p->base.cmd == PCK_ContainerOpen);
+
+    const unsigned attach_sequence = ++world->item_attach_sequence;
+
+    const uint32_t container_serial = p->base.serial;
+    struct item *i = make_item(world, container_serial);
+    if (i == NULL) {
+        log_oom();
+        return;
+    }
+
+    i->packet_container_open = p->base;
+
+    const struct uo_packet_fragment_container_item_6 *pi =
+        (const struct uo_packet_fragment_container_item_6 *)(p + 1);
+
+    const struct uo_packet_fragment_container_item_6 *const end =
+        pi + ntohs(p->num);
+    for (; pi != end; ++pi) {
+        if (pi->parent_serial != container_serial)
+            /* malformed packet */
+            return;
+
+        struct item *j = make_item(world, pi->serial);
+        if (j == NULL) {
+            log_oom();
+            return;
+        }
+
+        j->socket.container = (const struct uo_packet_container_update_6){
+            .cmd = PCK_ContainerUpdate,
+            .item = *pi,
+        };
+
+        j->attach_sequence = attach_sequence;
+    }
+
+    /* delete obsolete items */
+    world_sweep_container_update_inside(world, container_serial);
+}
+
 void
 world_container_update(struct world *world,
                        const struct uo_packet_container_update_6 *p)

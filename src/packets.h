@@ -455,6 +455,18 @@ struct uo_packet_container_open {
     uint16_t gump_id;
 } __attribute__ ((packed));
 
+/* 0x24 ContainerOpen (protocol v7) */
+struct uo_packet_container_open_7 {
+    struct uo_packet_container_open base;
+
+    uint8_t unknown[5];
+
+    uint16_t num;
+
+    /* followed by "num" times struct
+       uo_packet_fragment_container_item_6 */
+} __attribute__ ((packed));
+
 /* for 0x25 ContainerUpdate */
 struct uo_packet_fragment_container_item {
     uint32_t serial;

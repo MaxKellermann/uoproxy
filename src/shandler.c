@@ -198,13 +198,33 @@ static packet_action_t handle_walk_ack(struct connection *c,
 
 static packet_action_t handle_container_open(struct connection *c,
                                              const void *data, size_t length) {
-    const struct uo_packet_container_open *p = data;
+    if (client_version_defined(&c->client_version) &&
+        c->client_version.protocol >= PROTOCOL_7) {
+        const struct uo_packet_container_open_7 *p = data;
 
-    assert(length == sizeof(*p));
+        world_container_open_7(&c->client.world, p);
 
-    world_container_open(&c->client.world, p);
+        connection_broadcast_divert(c, PROTOCOL_7,
+                                    &p->base, sizeof(p->base),
+                                    data, length);
+        return PA_DROP;
+    } else {
+        const struct uo_packet_container_open *p = data;
+        assert(length == sizeof(*p));
 
-    return PA_ACCEPT;
+        world_container_open(&c->client.world, p);
+
+        const struct uo_packet_container_open_7 p7 = {
+            .base = *p,
+            .num = 0,
+        };
+
+        connection_broadcast_divert(c, PROTOCOL_7,
+                                    p, sizeof(*p),
+                                    &p7, sizeof(p7));
+
+        return PA_DROP;
+    }
 }
 
 static packet_action_t handle_container_update(struct connection *c,
