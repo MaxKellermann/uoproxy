@@ -68,7 +68,9 @@ client_version_compare(const char *a, const char *b)
 static enum protocol_version
 determine_protocol_version(const char *version)
 {
-    if (client_version_compare(version, "6.0.14") >= 0)
+    if (client_version_compare(version, "7") >= 0)
+        return PROTOCOL_7;
+    else if (client_version_compare(version, "6.0.14") >= 0)
         return PROTOCOL_6_0_14;
     else if (client_version_compare(version, "6.0.5") >= 0)
         return PROTOCOL_6_0_5;
@@ -135,6 +137,10 @@ client_version_seed(struct client_version *cv,
 
     /* this packet is only know to 6.0.5.0 clients, so we don't check
        the packet contents here */
-    cv->protocol = PROTOCOL_6_0_5;
+    if (seed->client_major >= 7)
+        cv->protocol = PROTOCOL_7;
+    else
+        cv->protocol = PROTOCOL_6_0_5;
+
     return 1;
 }

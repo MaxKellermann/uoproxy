@@ -28,7 +28,7 @@ struct item {
     struct list_head siblings;
 
     uint32_t serial;
-    struct uo_packet_world_item packet_world_item;
+    struct uo_packet_world_item_7 packet_world_item;
     struct uo_packet_equip packet_equip;
     struct uo_packet_container_open packet_container_open;
     struct uo_packet_container_update_6 packet_container_update;
@@ -72,6 +72,10 @@ world_find_item(struct world *world, uint32_t serial);
 void
 world_world_item(struct world *world,
                  const struct uo_packet_world_item *p);
+
+void
+world_world_item_7(struct world *world,
+                   const struct uo_packet_world_item_7 *p);
 
 void
 world_equip(struct world *world,

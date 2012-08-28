@@ -165,10 +165,19 @@ connection_client_connect(struct connection *c,
         c->client_version.protocol >= PROTOCOL_6_0_14) {
         seed_buffer.cmd = PCK_Seed;
         seed_buffer.seed = seed;
-        seed_buffer.client_major = 6;
-        seed_buffer.client_minor = 0;
-        seed_buffer.client_revision = 14;
-        seed_buffer.client_patch = 2;
+
+        if (c->client_version.protocol >= PROTOCOL_7) {
+            seed_buffer.client_major = 7;
+            seed_buffer.client_minor = 0;
+            seed_buffer.client_revision = 10;
+            seed_buffer.client_patch = 3;
+        } else {
+            seed_buffer.client_major = 6;
+            seed_buffer.client_minor = 0;
+            seed_buffer.client_revision = 14;
+            seed_buffer.client_patch = 2;
+        }
+
         seed_packet = &seed_buffer;
     }
 

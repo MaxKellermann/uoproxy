@@ -77,9 +77,18 @@ attach_item(struct linked_server *ls,
         uo_server_send(ls->server, &item->packet_container_open,
                        sizeof(item->packet_container_open));
 
-    if (item->packet_world_item.cmd == PCK_WorldItem)
-        uo_server_send(ls->server, &item->packet_world_item,
-                       ntohs(item->packet_world_item.length));
+    if (item->packet_world_item.cmd == PCK_WorldItem) {
+        if (client_version_defined(&ls->client_version) &&
+            ls->client_version.protocol >= PROTOCOL_7) {
+            uo_server_send(ls->server, &item->packet_world_item,
+                           sizeof(item->packet_world_item));
+        } else {
+            struct uo_packet_world_item p;
+            world_item_from_7(&p, &item->packet_world_item);
+            uo_server_send(ls->server, &p, ntohs(p.length));
+        }
+    }
+
     if (item->packet_equip.cmd == PCK_Equip)
         uo_server_send(ls->server, &item->packet_equip,
                        sizeof(item->packet_equip));

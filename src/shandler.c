@@ -717,6 +717,24 @@ static packet_action_t handle_extended(struct connection *c,
     return PA_ACCEPT;
 }
 
+static packet_action_t
+handle_world_item_7(struct connection *c,
+                    const void *data, size_t length)
+{
+    const struct uo_packet_world_item_7 *p = data;
+    assert(length == sizeof(*p));
+
+    struct uo_packet_world_item old;
+    world_item_from_7(&old, p);
+
+    world_world_item_7(&c->client.world, p);
+
+    connection_broadcast_divert(c, PROTOCOL_7,
+                                &old, ntohs(old.length),
+                                data, length);
+    return PA_DROP;
+}
+
 struct client_packet_binding server_packet_bindings[] = {
     { .cmd = PCK_MobileStatus, /* 0x11 */
       .handler = handle_mobile_status,
@@ -816,6 +834,9 @@ struct client_packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_Extended, /* 0xbf */
       .handler = handle_extended,
+    },
+    { .cmd = PCK_WorldItem7, /* 0xf3*/
+      .handler = handle_world_item_7,
     },
     { .handler = NULL }
 };

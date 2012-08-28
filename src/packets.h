@@ -244,6 +244,7 @@ enum uo_packet_type_t {
     PCK_AOSObjProp = 0xdc,
     PCK_DisplayGumpPacked = 0xdd,
     PCK_Seed = 0xef,
+    PCK_WorldItem7 = 0xf3,
 };
 
 extern const size_t packet_lengths[0x100];
@@ -847,6 +848,30 @@ struct uo_packet_seed {
     uint32_t client_minor;
     uint32_t client_revision;
     uint32_t client_patch;
+} __attribute__ ((packed));
+
+/* 0xf3 WorldItem7 */
+struct uo_packet_world_item_7 {
+    uint8_t cmd;
+    uint16_t one;
+
+    /**
+     * 0x00 = tiledata; 0x01 = bodyvalue; 0x02 = multidata.
+     */
+    uint8_t type;
+
+    uint32_t serial;
+    uint16_t item_id;
+    uint8_t direction;
+    uint16_t amount;
+    uint16_t amount2;
+    uint16_t x, y;
+    int8_t z;
+    uint8_t light_level;
+    uint16_t hue;
+    uint8_t flags;
+    uint8_t zero;
+    uint8_t function;
 } __attribute__ ((packed));
 
 #endif

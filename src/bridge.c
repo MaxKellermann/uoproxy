@@ -28,7 +28,9 @@
 #include "packets.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void
 container_item_5_to_6(struct uo_packet_fragment_container_item_6 *dest,
@@ -186,4 +188,106 @@ supported_features_6014_to_6(struct uo_packet_supported_features *dest,
 {
     dest->cmd = PCK_SupportedFeatures;
     dest->flags = htons(ntohl(src->flags));
+}
+
+void
+world_item_to_7(struct uo_packet_world_item_7 *dest,
+                const struct uo_packet_world_item *src)
+{
+    memset(dest, 0, sizeof(*dest));
+
+    bool have_amount = false;
+
+    uint32_t serial = ntohl(src->serial);
+    if (serial & 0x80000000) {
+        serial &= ~0x80000000;
+        have_amount = true;
+    }
+
+    const uint8_t *p = (const uint8_t *)&src->amount;
+
+    if (have_amount) {
+        dest->amount = dest->amount2 = *(const uint16_t *)p;
+        p += 2;
+    }
+
+    uint16_t x = *(const uint16_t *)p;
+    p += 2;
+    uint16_t y = *(const uint16_t *)p;
+    p += 2;
+
+    const bool have_direction = (x & 0x8000) != 0;
+    x &= ~0x8000;
+
+    const bool have_hue = (y & 0x8000) != 0;
+    const bool have_flags = (y & 0x4000) != 0;
+    y &= ~0xc000;
+
+    if (have_direction)
+        dest->direction = *p++;
+
+    dest->z = *p++;
+
+    if (have_hue) {
+        dest->hue = *(const uint16_t *)p;
+        p += 2;
+    }
+
+    if (have_flags)
+        dest->flags = *p++;
+
+    dest->cmd = PCK_WorldItem7;
+    dest->one = htons(0x0001);
+    dest->type = 0x00;
+    dest->serial = serial;
+    dest->item_id = src->item_id;
+}
+
+void
+world_item_from_7(struct uo_packet_world_item *dest,
+                  const struct uo_packet_world_item_7 *src)
+{
+    dest->cmd = PCK_WorldItem;
+    dest->serial = src->serial;
+    dest->item_id = src->item_id;
+
+    uint8_t *p = (uint8_t *)&dest->amount;
+
+    if (src->amount != 0) {
+        *(uint16_t *)p = src->amount;
+        p += 2;
+
+        dest->serial |= htonl(0x80000000);
+    }
+
+    uint16_t x = ntohs(src->x);
+    if (src->direction != 0)
+        x |= 0x8000;
+
+    *(uint16_t *)p = htons(x);
+    p += 2;
+
+    uint16_t y = ntohs(src->y);
+    if (src->hue != 0)
+        y |= 0x8000;
+    if (src->flags != 0)
+        y |= 0x4000;
+
+    *(uint16_t *)p = htons(y);
+    p += 2;
+
+    if (src->direction != 0)
+        *p++ = src->direction;
+
+    *p++ = src->z;
+
+    if (src->hue != 0) {
+        *(uint16_t *)p = src->hue;
+        p += 2;
+    }
+
+    if (src->flags != 0)
+        *p++ = src->flags;
+
+    dest->length = htons(p - (const uint8_t *)dest);
 }

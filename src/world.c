@@ -21,6 +21,7 @@
 #include "world.h"
 #include "poison.h"
 #include "log.h"
+#include "bridge.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -70,6 +71,23 @@ world_world_item(struct world *world,
     assert(ntohs(p->length) <= sizeof(*p));
 
     i = make_item(world, p->serial & htonl(0x7fffffff));
+    if (i == NULL) {
+        log_oom();
+        return;
+    }
+
+    world_item_to_7(&i->packet_world_item, p);
+}
+
+void
+world_world_item_7(struct world *world,
+                   const struct uo_packet_world_item_7 *p)
+{
+    struct item *i;
+
+    assert(p->cmd == PCK_WorldItem7);
+
+    i = make_item(world, p->serial);
     if (i == NULL) {
         log_oom();
         return;

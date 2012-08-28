@@ -73,4 +73,15 @@ void
 supported_features_6014_to_6(struct uo_packet_supported_features *dest,
                              const struct uo_packet_supported_features_6014 *src);
 
+struct uo_packet_world_item;
+struct uo_packet_world_item_7;
+
+void
+world_item_to_7(struct uo_packet_world_item_7 *dest,
+                const struct uo_packet_world_item *src);
+
+void
+world_item_from_7(struct uo_packet_world_item *dest,
+                  const struct uo_packet_world_item_7 *src);
+
 #endif
