@@ -157,8 +157,23 @@ connection_client_connect(struct connection *c,
             return -fd;
     }
 
+    const struct uo_packet_seed *seed_packet = c->client_version.seed;
+    struct uo_packet_seed seed_buffer;
+
+    if (seed_packet == NULL &&
+        client_version_defined(&c->client_version) &&
+        c->client_version.protocol >= PROTOCOL_6_0_5) {
+        seed_buffer.cmd = PCK_Seed;
+        seed_buffer.seed = seed;
+        seed_buffer.client_major = 6;
+        seed_buffer.client_minor = 0;
+        seed_buffer.client_revision = 5;
+        seed_buffer.client_patch = 0;
+        seed_packet = &seed_buffer;
+    }
+
     ret = uo_client_create(fd, seed,
-                           c->client_version.seed,
+                           seed_packet,
                            &client_handler, c,
                            &c->client.client);
     if (ret != 0) {
