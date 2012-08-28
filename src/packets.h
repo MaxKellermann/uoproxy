@@ -353,7 +353,7 @@ struct uo_packet_lift_request {
 struct uo_packet_drop {
     unsigned char cmd;
     uint32_t serial;
-    int16_t x, y;
+    uint16_t x, y;
     int8_t z;
     uint32_t dest_serial;
 } __attribute__ ((packed));
@@ -362,7 +362,7 @@ struct uo_packet_drop {
 struct uo_packet_drop_6 {
     unsigned char cmd;
     uint32_t serial;
-    int16_t x, y;
+    uint16_t x, y;
     int8_t z;
     uint8_t unknown0;
     uint32_t dest_serial;
@@ -410,7 +410,7 @@ struct uo_packet_world_item {
     uint16_t item_id;
     /* warning: the following properties may be optional */
     uint16_t amount;
-    int16_t x, y;
+    uint16_t x, y;
     uint8_t direction;
     int8_t z;
     uint16_t hue;
@@ -423,7 +423,8 @@ struct uo_packet_start {
     uint32_t serial;
     uint32_t unknown0;
     uint16_t body;
-    int16_t x, y, z;
+    uint16_t x, y;
+    int16_t z;
     uint8_t direction;
     uint8_t unknown1;
     uint32_t unknown2;
@@ -459,7 +460,7 @@ struct uo_packet_mobile_update {
     uint8_t unknown0;
     uint16_t hue;
     uint8_t flags;
-    int16_t x, y;
+    uint16_t x, y;
     uint16_t unknown1;
     uint8_t direction;
     int8_t z;
@@ -469,7 +470,7 @@ struct uo_packet_mobile_update {
 struct uo_packet_walk_cancel {
     unsigned char cmd;
     uint8_t seq;
-    int16_t x, y;
+    uint16_t x, y;
     uint8_t direction;
     int8_t z;
 } __attribute__ ((packed));
@@ -493,7 +494,7 @@ struct uo_packet_fragment_container_item {
     uint16_t item_id;
     uint8_t unknown0;
     uint16_t amount;
-    int16_t x, y;
+    uint16_t x, y;
     uint32_t parent_serial;
     uint16_t hue;
 } __attribute__ ((packed));
@@ -504,7 +505,7 @@ struct uo_packet_fragment_container_item_6 {
     uint16_t item_id;
     uint8_t unknown0;
     uint16_t amount;
-    int16_t x, y;
+    uint16_t x, y;
     uint8_t unknown1;
     uint32_t parent_serial;
     uint16_t hue;
@@ -617,7 +618,8 @@ struct uo_packet_ping {
 /* 0x76 ZoneChange */
 struct uo_packet_zone_change {
     unsigned char cmd;
-    int16_t x, y, z;
+    uint16_t x, y;
+    int16_t z;
     uint8_t unknown0;
     uint16_t unknown1, unknown2;
     uint16_t map_width, map_height;
@@ -628,7 +630,7 @@ struct uo_packet_mobile_moving {
     unsigned char cmd;
     uint32_t serial;
     uint16_t body;
-    int16_t x, y;
+    uint16_t x, y;
     int8_t z;
     uint8_t direction;
     uint16_t hue;
@@ -650,7 +652,7 @@ struct uo_packet_mobile_incoming {
     uint16_t length;
     uint32_t serial;
     uint16_t body;
-    int16_t x, y;
+    uint16_t x, y;
     int8_t z;
     uint8_t direction;
     uint16_t hue;
