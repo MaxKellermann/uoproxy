@@ -8,6 +8,7 @@ uoproxy (0.3.1) unstable; urgency=low
   * walk: don't clear queue when client disconnects
   * walk: accept out-of-sync "cancel" packets
   * attach: ignore undefined bytes in username/password
+  * packets: support packet 0xf0 (ProtocolExtension)
   * port to mingw32 (Windows)
 
  --
