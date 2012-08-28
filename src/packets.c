@@ -60,3 +60,7 @@ const size_t packet_lengths_6[0x100] = {
     [PCK_Drop] = sizeof(struct uo_packet_drop_6),
     [PCK_ContainerUpdate] = sizeof(struct uo_packet_container_update_6),
 };
+
+const size_t packet_lengths_6014[0x100] = {
+    [PCK_SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014),
+};

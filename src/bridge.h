@@ -62,4 +62,15 @@ void
 drop_6_to_5(struct uo_packet_drop *dest,
             const struct uo_packet_drop_6 *src);
 
+struct uo_packet_supported_features;
+struct uo_packet_supported_features_6014;
+
+void
+supported_features_6_to_6014(struct uo_packet_supported_features_6014 *dest,
+                             const struct uo_packet_supported_features *src);
+
+void
+supported_features_6014_to_6(struct uo_packet_supported_features *dest,
+                             const struct uo_packet_supported_features_6014 *src);
+
 #endif

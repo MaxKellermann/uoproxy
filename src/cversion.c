@@ -68,7 +68,9 @@ client_version_compare(const char *a, const char *b)
 static enum protocol_version
 determine_protocol_version(const char *version)
 {
-    if (client_version_compare(version, "6.0.5") >= 0)
+    if (client_version_compare(version, "6.0.14") >= 0)
+        return PROTOCOL_6_0_14;
+    else if (client_version_compare(version, "6.0.5") >= 0)
         return PROTOCOL_6_0_5;
     else if (client_version_compare(version, "6.0.1.7") >= 0)
         return PROTOCOL_6;

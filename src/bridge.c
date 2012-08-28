@@ -171,3 +171,19 @@ drop_6_to_5(struct uo_packet_drop *dest,
     dest->z = src->z;
     dest->dest_serial = src->dest_serial;
 }
+
+void
+supported_features_6_to_6014(struct uo_packet_supported_features_6014 *dest,
+                             const struct uo_packet_supported_features *src)
+{
+    dest->cmd = PCK_SupportedFeatures;
+    dest->flags = htonl(ntohs(src->flags));
+}
+
+void
+supported_features_6014_to_6(struct uo_packet_supported_features *dest,
+                             const struct uo_packet_supported_features_6014 *src)
+{
+    dest->cmd = PCK_SupportedFeatures;
+    dest->flags = htons(ntohl(src->flags));
+}

@@ -162,13 +162,13 @@ connection_client_connect(struct connection *c,
 
     if (seed_packet == NULL &&
         client_version_defined(&c->client_version) &&
-        c->client_version.protocol >= PROTOCOL_6_0_5) {
+        c->client_version.protocol >= PROTOCOL_6_0_14) {
         seed_buffer.cmd = PCK_Seed;
         seed_buffer.seed = seed;
         seed_buffer.client_major = 6;
         seed_buffer.client_minor = 0;
-        seed_buffer.client_revision = 5;
-        seed_buffer.client_patch = 0;
+        seed_buffer.client_revision = 14;
+        seed_buffer.client_patch = 2;
         seed_packet = &seed_buffer;
     }
 

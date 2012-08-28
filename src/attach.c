@@ -89,7 +89,6 @@ void
 attach_send_world(struct linked_server *ls)
 {
     struct world *world = &ls->connection->client.world;
-    struct uo_packet_supported_features supported_features;
     struct uo_packet_login_complete login_complete;
     struct mobile *mobile;
     struct item *item;
@@ -123,10 +122,19 @@ attach_send_world(struct linked_server *ls)
                        sizeof(world->packet_season));
 
     /* 0xb9 SupportedFeatures */
-    supported_features.cmd = PCK_SupportedFeatures;
-    supported_features.flags = ls->connection->client.supported_features_flags;
-    uo_server_send(ls->server, &supported_features,
-                   sizeof(supported_features));
+    if (ls->client_version.protocol >= PROTOCOL_6_0_14) {
+        struct uo_packet_supported_features_6014 supported_features;
+        supported_features.cmd = PCK_SupportedFeatures;
+        supported_features.flags = htonl(ls->connection->client.supported_features_flags);
+        uo_server_send(ls->server, &supported_features,
+                       sizeof(supported_features));
+    } else {
+        struct uo_packet_supported_features supported_features;
+        supported_features.cmd = PCK_SupportedFeatures;
+        supported_features.flags = htons(ls->connection->client.supported_features_flags);
+        uo_server_send(ls->server, &supported_features,
+                       sizeof(supported_features));
+    }
 
     /* 0x4f GlobalLightLevel */
     if (world->packet_global_light_level.cmd == PCK_GlobalLightLevel)

@@ -633,13 +633,31 @@ static packet_action_t handle_speak_unicode(struct connection *c,
 
 static packet_action_t handle_supported_features(struct connection *c,
                                                  const void *data, size_t length) {
-    const struct uo_packet_supported_features *p = data;
+    if (c->client_version.protocol >= PROTOCOL_6_0_14) {
+        const struct uo_packet_supported_features_6014 *p = data;
+        assert(length == sizeof(*p));
 
-    assert(length == sizeof(*p));
+        c->client.supported_features_flags = ntohl(p->flags);
 
-    c->client.supported_features_flags = p->flags;
+        struct uo_packet_supported_features p6;
+        supported_features_6014_to_6(&p6, p);
+        connection_broadcast_divert(c, PROTOCOL_6_0_14,
+                                    &p6, sizeof(p6),
+                                    data, length);
+    } else {
+        const struct uo_packet_supported_features *p = data;
+        assert(length == sizeof(*p));
 
-    return PA_ACCEPT;
+        c->client.supported_features_flags = ntohs(p->flags);
+
+        struct uo_packet_supported_features_6014 p7;
+        supported_features_6_to_6014(&p7, p);
+        connection_broadcast_divert(c, PROTOCOL_6_0_14,
+                                    data, length,
+                                    &p7, sizeof(p7));
+    }
+
+    return PA_DROP;
 }
 
 static packet_action_t handle_season(struct connection *c,

@@ -43,7 +43,7 @@ struct stateful_client {
     struct uo_fragment_character_info characters[MAX_CHARACTERS];
     unsigned num_characters;
 
-    uint16_t supported_features_flags;
+    uint32_t supported_features_flags;
 
     unsigned char ping_request, ping_ack;
 

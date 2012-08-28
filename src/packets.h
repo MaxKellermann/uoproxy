@@ -248,6 +248,7 @@ enum uo_packet_type_t {
 
 extern const size_t packet_lengths[0x100];
 extern const size_t packet_lengths_6[0x100];
+extern const size_t packet_lengths_6014[0x100];
 
 #define PACKET_LENGTH_INVALID ((size_t)-1)
 
@@ -266,6 +267,12 @@ static inline size_t get_packet_length(enum protocol_version protocol,
 
     if (max_length == 0)
         return 0;
+
+    if (protocol >= PROTOCOL_6_0_14) {
+        length = packet_lengths_6014[p[0]];
+        if (length > 0)
+            return length;
+    }
 
     if (protocol >= PROTOCOL_6) {
         length = packet_lengths_6[p[0]];
@@ -733,6 +740,12 @@ struct uo_packet_simple_character_list {
 struct uo_packet_supported_features {
     unsigned char cmd;
     uint16_t flags;
+} __attribute__ ((packed));
+
+/* 0xb9 SupportedFeatures (protocol 6.0.14.2) */
+struct uo_packet_supported_features_6014 {
+    unsigned char cmd;
+    uint32_t flags;
 } __attribute__ ((packed));
 
 /* 0xad TalkUnicode */
