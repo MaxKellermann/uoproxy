@@ -109,7 +109,7 @@ server_packets_from_buffer(struct uo_server *server,
         packet_length = get_packet_length(server->protocol_version,
                                           data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
-            log(1, "malformed packet from server\n");
+            log(1, "malformed packet from client\n");
             log_hexdump(5, data, length);
             uo_server_abort(server);
             return 0;
