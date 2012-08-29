@@ -23,9 +23,17 @@
 #include "log.h"
 #include "bridge.h"
 
+#include <stdbool.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+
+static bool
+is_parent(const struct item *item, uint32_t parent_serial)
+{
+    return item->packet_container_update.item.parent_serial == parent_serial ||
+        item->packet_equip.parent_serial == parent_serial;
+}
 
 struct item *
 world_find_item(struct world *world,
@@ -196,8 +204,7 @@ remove_item_tree(struct world *world, uint32_t parent_serial) {
 
     /* move all direct children to the temporary list */
     list_for_each_entry_safe(i, n, &world->items, siblings) {
-        if (i->packet_container_update.item.parent_serial == parent_serial ||
-            i->packet_equip.parent_serial == parent_serial) {
+        if (is_parent(i, parent_serial)) {
             /* move to temp list */
             list_del(&i->siblings);
             list_add(&i->siblings, &temp);
