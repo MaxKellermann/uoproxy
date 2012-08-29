@@ -11,6 +11,7 @@ uoproxy (0.4) unstable; urgency=low
   * packets: support packet 0xf0 (ProtocolExtension)
   * support client 6.0.14.2
   * fake Razor handshake
+  * support encrypted clients
   * port to mingw32 (Windows)
 
  --

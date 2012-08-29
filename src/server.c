@@ -25,6 +25,7 @@
 #include "log.h"
 #include "compiler.h"
 #include "socket_util.h"
+#include "encryption.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -37,6 +38,8 @@ struct uo_server {
     struct sock_buff *sock;
     uint32_t seed;
     bool compression_enabled;
+
+    struct encryption *encryption;
 
     enum protocol_version protocol_version;
 
@@ -138,8 +141,14 @@ server_packets_from_buffer(struct uo_server *server,
 static size_t
 server_sock_buff_data(const void *data0, size_t length, void *ctx)
 {
-    const unsigned char *data = data0;
     struct uo_server *server = ctx;
+
+    data0 = encryption_from_client(server->encryption, data0, length);
+    if (data0 == NULL)
+        /* need more data */
+        return 0;
+
+    const unsigned char *data = data0;
     size_t consumed = 0;
 
     if (server->seed == 0 && data[0] == 0xef) {
@@ -226,6 +235,8 @@ int uo_server_create(int sockfd,
         return errno;
     }
 
+    server->encryption = encryption_new();
+
     server->handler = handler;
     server->handler_ctx = handler_ctx;
 
@@ -235,6 +246,8 @@ int uo_server_create(int sockfd,
 }
 
 void uo_server_dispose(struct uo_server *server) {
+    encryption_free(server->encryption);
+
     if (server->sock != NULL)
         sock_buff_dispose(server->sock);
 

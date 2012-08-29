@@ -33,6 +33,7 @@ SOURCES = src/uoproxy.c src/config.c src/instance.c \
 	src/buffered_io.c src/socket_util.c \
 	src/proxy_socks.c \
 	src/netutil.c \
+	src/encryption.c \
 	src/server.c src/client.c \
 	src/packets.c src/compression.c \
 	src/pversion.c \
