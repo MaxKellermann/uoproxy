@@ -98,7 +98,8 @@ client_version_copy(struct client_version *cv,
 
     memcpy(cv->packet, packet, length);
 
-    cv->protocol = determine_protocol_version(packet->version);
+    if (cv->protocol == PROTOCOL_UNKNOWN)
+        cv->protocol = determine_protocol_version(packet->version);
     return 1;
 }
 

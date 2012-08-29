@@ -710,9 +710,13 @@ handle_client_version(struct linked_server *ls,
     const struct uo_packet_client_version *p = data;
 
     if (!client_version_defined(&ls->client_version)) {
+        bool was_unkown = ls->client_version.protocol == PROTOCOL_UNKNOWN;
         int ret = client_version_copy(&ls->client_version, p, length);
         if (ret > 0) {
-            uo_server_set_protocol(ls->server, ls->client_version.protocol);
+            if (was_unkown)
+                uo_server_set_protocol(ls->server,
+                                       ls->client_version.protocol);
+
             log(2, "client version '%s', protocol '%s'\n",
                 ls->client_version.packet->version,
                 protocol_name(ls->client_version.protocol));
@@ -776,6 +780,8 @@ handle_seed(struct linked_server *ls,
 
     if (ls->client_version.seed == NULL) {
         client_version_seed(&ls->client_version, p);
+        uo_server_set_protocol(ls->server, ls->client_version.protocol);
+
         log(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
             (unsigned)ntohl(p->client_major),
             (unsigned)ntohl(p->client_minor),
