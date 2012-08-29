@@ -102,12 +102,11 @@ static ssize_t
 server_packets_from_buffer(struct uo_server *server,
                            const unsigned char *data, size_t length)
 {
-    size_t consumed = 0, packet_length;
-    int ret;
+    size_t consumed = 0;
 
     while (length > 0) {
-        packet_length = get_packet_length(server->protocol_version,
-                                          data, length);
+        size_t packet_length = get_packet_length(server->protocol_version,
+                                                 data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
             log(1, "malformed packet from client\n");
             log_hexdump(5, data, length);
@@ -123,8 +122,8 @@ server_packets_from_buffer(struct uo_server *server,
 
         log_hexdump(10, data, packet_length);
 
-        ret = server->handler->packet(data, packet_length,
-                                      server->handler_ctx);
+        int ret = server->handler->packet(data, packet_length,
+                                          server->handler_ctx);
         if (ret < 0)
             return ret;
 
@@ -142,7 +141,6 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
     const unsigned char *data = data0;
     struct uo_server *server = ctx;
     size_t consumed = 0;
-    ssize_t nbytes;
 
     if (server->seed == 0 && data[0] == 0xef) {
         /* client 6.0.5.0 sends a "0xef" seed packet instead of the
@@ -176,8 +174,8 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
         consumed += sizeof(uint32_t);
     }
 
-    nbytes = server_packets_from_buffer(server,
-                                        data + consumed, length - consumed);
+    ssize_t nbytes = server_packets_from_buffer(server, data + consumed,
+                                                length - consumed);
     if (nbytes < 0)
         return 0;
 
@@ -209,22 +207,15 @@ int uo_server_create(int sockfd,
                      const struct uo_server_handler *handler,
                      void *handler_ctx,
                      struct uo_server **serverp) {
-    int ret;
-    struct uo_server *server;
-
     assert(handler != NULL);
     assert(handler->packet != NULL);
     assert(handler->free != NULL);
 
-    ret = socket_set_nonblock(sockfd, 1);
-    if (ret < 0)
+    if (socket_set_nonblock(sockfd, 1) < 0 ||
+        socket_set_nodelay(sockfd, 1) < 0)
         return errno;
 
-    ret = socket_set_nodelay(sockfd, 1);
-    if (ret < 0)
-        return errno;
-
-    server = (struct uo_server*)calloc(1, sizeof(*server));
+    struct uo_server *server = (struct uo_server*)calloc(1, sizeof(*server));
     if (server == NULL)
         return ENOMEM;
 
@@ -293,18 +284,15 @@ void uo_server_send(struct uo_server *server,
     log_hexdump(10, src, length);
 
     if (server->compression_enabled) {
-        void *dest;
         size_t max_length;
-        ssize_t nbytes;
-
-        dest = sock_buff_write(server->sock, &max_length);
+        void *dest = sock_buff_write(server->sock, &max_length);
         if (dest == NULL) {
             log(1, "output buffer full in uo_server_send()\n");
             uo_server_abort(server);
             return;
         }
 
-        nbytes = uo_compress(dest, max_length, src, length);
+        ssize_t nbytes = uo_compress(dest, max_length, src, length);
         if (nbytes < 0) {
             log(1, "uo_compress() failed\n");
             uo_server_abort(server);
