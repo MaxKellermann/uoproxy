@@ -54,8 +54,7 @@ attach_item(struct linked_server *ls,
         uint32_t parent_serial;
 
     case PCK_WorldItem:
-        if (client_version_defined(&ls->client_version) &&
-            ls->client_version.protocol >= PROTOCOL_7) {
+        if (ls->client_version.protocol >= PROTOCOL_7) {
             uo_server_send(ls->server, &item->socket.ground,
                            sizeof(item->socket.ground));
         } else {
