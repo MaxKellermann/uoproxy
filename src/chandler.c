@@ -732,9 +732,11 @@ handle_client_version(struct linked_server *ls,
 
         return PA_DROP;
     } else {
+        const bool was_unkown = c->client_version.protocol == PROTOCOL_UNKNOWN;
+
         int ret = client_version_copy(&c->client_version, p, length);
         if (ret > 0) {
-            if (c->client.client != NULL)
+            if (was_unkown && c->client.client != NULL)
                 uo_client_set_protocol(c->client.client,
                                        c->client_version.protocol);
             log(2, "emulating client version '%s', protocol '%s'\n",
