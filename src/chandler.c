@@ -790,8 +790,13 @@ handle_seed(struct linked_server *ls,
     }
 
     if (!client_version_defined(&ls->connection->client_version) &&
-        ls->connection->client_version.seed == NULL)
+        ls->connection->client_version.seed == NULL) {
         client_version_seed(&ls->connection->client_version, p);
+
+        if (ls->connection->client.client != NULL)
+            uo_client_set_protocol(ls->connection->client.client,
+                                   ls->connection->client_version.protocol);
+    }
 
     return PA_DROP;
 }
