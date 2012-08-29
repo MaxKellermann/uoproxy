@@ -64,3 +64,42 @@ const size_t packet_lengths_6[0x100] = {
 const size_t packet_lengths_6014[0x100] = {
     [PCK_SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014),
 };
+
+size_t
+get_packet_length(enum protocol_version protocol,
+                  const void *q, size_t max_length)
+{
+    const unsigned char *p = q;
+    size_t length;
+
+    if (max_length == 0)
+        return 0;
+
+    if (protocol >= PROTOCOL_6_0_14) {
+        length = packet_lengths_6014[p[0]];
+        if (length > 0)
+            return length;
+    }
+
+    if (protocol >= PROTOCOL_6) {
+        length = packet_lengths_6[p[0]];
+        if (length > 0)
+            return length;
+    }
+
+    length = packet_lengths[p[0]];
+    if (length == 0xffff)
+        return PACKET_LENGTH_INVALID;
+
+    if (length > 0)
+        return length;
+
+    if (max_length < 3)
+        return 0;
+
+    length = ntohs(*(const uint16_t*)(p + 1));
+    if (length < 3 || length >= 0x8000)
+        return PACKET_LENGTH_INVALID;
+
+    return length;
+}
