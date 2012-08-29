@@ -244,6 +244,7 @@ enum uo_packet_type_t {
     PCK_AOSObjProp = 0xdc,
     PCK_DisplayGumpPacked = 0xdd,
     PCK_Seed = 0xef,
+    PCK_ProtocolExtension = 0xf0,
     PCK_WorldItem7 = 0xf3,
 };
 
@@ -848,6 +849,13 @@ struct uo_packet_seed {
     uint32_t client_minor;
     uint32_t client_revision;
     uint32_t client_patch;
+} __attribute__ ((packed));
+
+/* 0xf0 ProtocolExtension */
+struct uo_packet_protocol_extension {
+    uint8_t cmd;
+    uint16_t length;
+    uint8_t extension;
 } __attribute__ ((packed));
 
 /* 0xf3 WorldItem7 */

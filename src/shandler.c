@@ -735,6 +735,31 @@ handle_world_item_7(struct connection *c,
     return PA_DROP;
 }
 
+static packet_action_t
+handle_protocol_extension(struct connection *c,
+                          const void *data, size_t length)
+{
+    const struct uo_packet_protocol_extension *p = data;
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    if (p->extension == 0xfe) {
+        /* BeginRazorHandshake; fake a response to avoid getting
+           kicked */
+
+        struct uo_packet_protocol_extension response = {
+            .cmd = PCK_ProtocolExtension,
+            .length = htons(sizeof(response)),
+            .extension = 0xff,
+        };
+
+        uo_client_send(c->client.client, &response, sizeof(response));
+        return PA_DROP;
+    }
+
+    return PA_ACCEPT;
+}
+
 struct client_packet_binding server_packet_bindings[] = {
     { .cmd = PCK_MobileStatus, /* 0x11 */
       .handler = handle_mobile_status,
@@ -837,6 +862,9 @@ struct client_packet_binding server_packet_bindings[] = {
     },
     { .cmd = PCK_WorldItem7, /* 0xf3*/
       .handler = handle_world_item_7,
+    },
+    { .cmd = PCK_ProtocolExtension, /* 0xf0 */
+      .handler = handle_protocol_extension,
     },
     { .handler = NULL }
 };
