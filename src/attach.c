@@ -50,10 +50,25 @@ attach_item(struct linked_server *ls,
 
     item->attach_sequence = world->item_attach_sequence;
 
-    if (item->packet_container_update.cmd == PCK_ContainerUpdate) {
+    switch (item->socket.cmd) {
+        uint32_t parent_serial;
+
+    case PCK_WorldItem:
+        if (client_version_defined(&ls->client_version) &&
+            ls->client_version.protocol >= PROTOCOL_7) {
+            uo_server_send(ls->server, &item->socket.ground,
+                           sizeof(item->socket.ground));
+        } else {
+            struct uo_packet_world_item p;
+            world_item_from_7(&p, &item->socket.ground);
+            uo_server_send(ls->server, &p, ntohs(p.length));
+        }
+
+        break;
+
+    case PCK_ContainerUpdate:
         /* attach parent first */
-        uint32_t parent_serial
-            = item->packet_container_update.item.parent_serial;
+        parent_serial = item->socket.container.item.parent_serial;
         struct item *parent = world_find_item(world, parent_serial);
         if (parent != NULL &&
             parent->attach_sequence != world->item_attach_sequence)
@@ -65,33 +80,24 @@ attach_item(struct linked_server *ls,
             /* convert to v5 packet */
             struct uo_packet_container_update p5;
 
-            container_update_6_to_5(&p5, &item->packet_container_update);
+            container_update_6_to_5(&p5, &item->socket.container);
             uo_server_send(ls->server, &p5, sizeof(p5));
         } else {
-            uo_server_send(ls->server, &item->packet_container_update,
-                           sizeof(item->packet_container_update));
+            uo_server_send(ls->server, &item->socket.container,
+                           sizeof(item->socket.container));
         }
+
+        break;
+
+    case PCK_Equip:
+        uo_server_send(ls->server, &item->socket.mobile,
+                       sizeof(item->socket.mobile));
+        break;
     }
 
     if (item->packet_container_open.cmd == PCK_ContainerOpen)
         uo_server_send(ls->server, &item->packet_container_open,
                        sizeof(item->packet_container_open));
-
-    if (item->packet_world_item.cmd == PCK_WorldItem) {
-        if (client_version_defined(&ls->client_version) &&
-            ls->client_version.protocol >= PROTOCOL_7) {
-            uo_server_send(ls->server, &item->packet_world_item,
-                           sizeof(item->packet_world_item));
-        } else {
-            struct uo_packet_world_item p;
-            world_item_from_7(&p, &item->packet_world_item);
-            uo_server_send(ls->server, &p, ntohs(p.length));
-        }
-    }
-
-    if (item->packet_equip.cmd == PCK_Equip)
-        uo_server_send(ls->server, &item->packet_equip,
-                       sizeof(item->packet_equip));
 }
 
 void

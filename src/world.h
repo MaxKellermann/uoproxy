@@ -28,10 +28,27 @@ struct item {
     struct list_head siblings;
 
     uint32_t serial;
-    struct uo_packet_world_item_7 packet_world_item;
-    struct uo_packet_equip packet_equip;
+
+    union {
+        uint8_t cmd;
+
+        /**
+         * Item on the ground.
+         */
+        struct uo_packet_world_item_7 ground;
+
+        /**
+         * Item inside a container item.
+         */
+        struct uo_packet_container_update_6 container;
+
+        /**
+         * Item equipped by a mobile.
+         */
+        struct uo_packet_equip mobile;
+    } socket;
+
     struct uo_packet_container_open packet_container_open;
-    struct uo_packet_container_update_6 packet_container_update;
     unsigned attach_sequence;
 };
 

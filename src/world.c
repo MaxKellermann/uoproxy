@@ -31,8 +31,16 @@
 static bool
 is_parent(const struct item *item, uint32_t parent_serial)
 {
-    return item->packet_container_update.item.parent_serial == parent_serial ||
-        item->packet_equip.parent_serial == parent_serial;
+    switch (item->socket.cmd) {
+    case PCK_ContainerUpdate:
+        return item->socket.container.item.parent_serial == parent_serial;
+
+    case PCK_Equip:
+        return item->socket.mobile.parent_serial == parent_serial;
+
+    default:
+        return false;
+    }
 }
 
 struct item *
@@ -84,7 +92,7 @@ world_world_item(struct world *world,
         return;
     }
 
-    world_item_to_7(&i->packet_world_item, p);
+    world_item_to_7(&i->socket.ground, p);
 }
 
 void
@@ -101,7 +109,7 @@ world_world_item_7(struct world *world,
         return;
     }
 
-    i->packet_world_item = *p;
+    i->socket.ground = *p;
 }
 
 void
@@ -118,7 +126,7 @@ world_equip(struct world *world,
         return;
     }
 
-    i->packet_equip = *p;
+    i->socket.mobile = *p;
 }
 
 void
@@ -152,7 +160,7 @@ world_container_update(struct world *world,
         return;
     }
 
-    i->packet_container_update = *p;
+    i->socket.container = *p;
 }
 
 void
@@ -171,8 +179,8 @@ world_container_content(struct world *world,
             return;
         }
 
-        i->packet_container_update.cmd = PCK_ContainerUpdate;
-        i->packet_container_update.item = p->items[t];
+        i->socket.container.cmd = PCK_ContainerUpdate;
+        i->socket.container.item = p->items[t];
     }
 }
 
