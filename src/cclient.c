@@ -190,9 +190,8 @@ connection_client_connect(struct connection *c,
         return ret;
     }
 
-    if (client_version_defined(&c->client_version))
-        uo_client_set_protocol(c->client.client,
-                               c->client_version.protocol);
+    uo_client_set_protocol(c->client.client,
+                           c->client_version.protocol);
 
     tv.tv_sec = 30;
     tv.tv_usec = 0;
