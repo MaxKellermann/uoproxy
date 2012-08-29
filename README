@@ -89,7 +89,7 @@ and to add the uoproxy server to your Login.cfg.
 Running with Razor
 ------------------
 
-As of version 0.3.1, uoproxy is once again compatible with Razor,
+As of version 0.4, uoproxy is once again compatible with Razor,
 thanks to patches from Calin Culianu.  Tested and works with Razor
 1.0.12.  You need to set the 'razor_workaround yes' configuration
 option in the config file to enable compatibility with Razor.  The
