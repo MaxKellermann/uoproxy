@@ -215,15 +215,18 @@ world_container_content(struct world *world,
 {
     assert(p->cmd == PCK_ContainerContent);
 
-    for (unsigned t = 0; t < ntohs(p->num); t++) {
-        struct item *i = make_item(world, p->items[t].serial);
+    const struct uo_packet_fragment_container_item_6 *pi = p->items,
+        *const end = pi + ntohs(p->num);
+
+    for (; pi != end; ++pi) {
+        struct item *i = make_item(world, pi->serial);
         if (i == NULL) {
             log_oom();
             return;
         }
 
         i->socket.container.cmd = PCK_ContainerUpdate;
-        i->socket.container.item = p->items[t];
+        i->socket.container.item = *pi;
     }
 }
 
