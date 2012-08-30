@@ -60,9 +60,7 @@ world_find_item(struct world *world,
 static struct item *
 make_item(struct world *world, uint32_t serial)
 {
-    struct item *i;
-
-    i = world_find_item(world, serial);
+    struct item *i = world_find_item(world, serial);
     if (i != NULL)
         return i;
 
@@ -81,12 +79,10 @@ void
 world_world_item(struct world *world,
                  const struct uo_packet_world_item *p)
 {
-    struct item *i;
-
     assert(p->cmd == PCK_WorldItem);
     assert(ntohs(p->length) <= sizeof(*p));
 
-    i = make_item(world, p->serial & htonl(0x7fffffff));
+    struct item *i = make_item(world, p->serial & htonl(0x7fffffff));
     if (i == NULL) {
         log_oom();
         return;
@@ -99,11 +95,9 @@ void
 world_world_item_7(struct world *world,
                    const struct uo_packet_world_item_7 *p)
 {
-    struct item *i;
-
     assert(p->cmd == PCK_WorldItem7);
 
-    i = make_item(world, p->serial);
+    struct item *i = make_item(world, p->serial);
     if (i == NULL) {
         log_oom();
         return;
@@ -116,11 +110,9 @@ void
 world_equip(struct world *world,
             const struct uo_packet_equip *p)
 {
-    struct item *i;
-
     assert(p->cmd == PCK_Equip);
 
-    i = make_item(world, p->serial);
+    struct item *i = make_item(world, p->serial);
     if (i == NULL) {
         log_oom();
         return;
@@ -133,11 +125,9 @@ void
 world_container_open(struct world *world,
                      const struct uo_packet_container_open *p)
 {
-    struct item *i;
-
     assert(p->cmd == PCK_ContainerOpen);
 
-    i = make_item(world, p->serial);
+    struct item *i = make_item(world, p->serial);
     if (i == NULL) {
         log_oom();
         return;
@@ -208,11 +198,9 @@ void
 world_container_update(struct world *world,
                        const struct uo_packet_container_update_6 *p)
 {
-    struct item *i;
-
     assert(p->cmd == PCK_ContainerUpdate);
 
-    i = make_item(world, p->item.serial);
+    struct item *i = make_item(world, p->item.serial);
     if (i == NULL) {
         log_oom();
         return;
@@ -225,13 +213,10 @@ void
 world_container_content(struct world *world,
                         const struct uo_packet_container_content_6 *p)
 {
-    struct item *i;
-    unsigned t;
-
     assert(p->cmd == PCK_ContainerContent);
 
-    for (t = 0; t < ntohs(p->num); t++) {
-        i = make_item(world, p->items[t].serial);
+    for (unsigned t = 0; t < ntohs(p->num); t++) {
+        struct item *i = make_item(world, p->items[t].serial);
         if (i == NULL) {
             log_oom();
             return;
@@ -288,10 +273,8 @@ remove_item_tree(struct world *world, uint32_t parent_serial) {
 static void
 world_remove_item_serial(struct world *world, uint32_t serial)
 {
-    struct item *i;
-
     /* remove this entity */
-    i = world_find_item(world, serial);
+    struct item *i = world_find_item(world, serial);
     if (i != NULL)
         world_remove_item(i);
 
@@ -314,9 +297,7 @@ find_mobile(struct world *world, uint32_t serial)
 
 static struct mobile *
 add_mobile(struct world *world, uint32_t serial) {
-    struct mobile *m;
-
-    m = find_mobile(world, serial);
+    struct mobile *m = find_mobile(world, serial);
     if (m != NULL)
         return m;
 
@@ -353,17 +334,15 @@ static void
 read_equipped(struct world *world,
               const struct uo_packet_mobile_incoming *p)
 {
-    const char *p0, *i, *end;
-    const struct uo_packet_fragment_mobile_item *item;
     struct uo_packet_equip equip = {
         .cmd = PCK_Equip,
         .parent_serial = p->serial,
     };
 
-    p0 = (const char*)(const void*)p;
-    end = p0 + ntohs(p->length);
-    item = p->items;
-    i = (const char*)(const void*)item;
+    const char *const p0 = (const char*)(const void*)p;
+    const char *const end = p0 + ntohs(p->length);
+    const struct uo_packet_fragment_mobile_item *item = p->items;
+    const char *i = (const char*)(const void*)item;
 
     while ((const char*)(const void*)(item + 1) <= end) {
         if (item->serial == 0)
@@ -389,8 +368,6 @@ void
 world_mobile_incoming(struct world *world,
                       const struct uo_packet_mobile_incoming *p)
 {
-    struct mobile *m;
-
     assert(p->cmd == PCK_MobileIncoming);
 
     if (p->serial == world->packet_start.serial) {
@@ -410,7 +387,7 @@ world_mobile_incoming(struct world *world,
         world->packet_mobile_update.z = p->z;
     }
 
-    m = add_mobile(world, p->serial);
+    struct mobile *m = add_mobile(world, p->serial);
     if (m == NULL)
         return;
 
@@ -424,11 +401,9 @@ void
 world_mobile_status(struct world *world,
                     const struct uo_packet_mobile_status *p)
 {
-    struct mobile *m;
-
     assert(p->cmd == PCK_MobileStatus);
 
-    m = add_mobile(world, p->serial);
+    struct mobile *m = add_mobile(world, p->serial);
     if (m == NULL)
         return;
 
@@ -443,8 +418,6 @@ void
 world_mobile_update(struct world *world,
                     const struct uo_packet_mobile_update *p)
 {
-    struct mobile *m;
-
     if (world->packet_start.serial == p->serial) {
         /* update player's mobile */
         world->packet_mobile_update = *p;
@@ -456,7 +429,7 @@ world_mobile_update(struct world *world,
         world->packet_start.direction = p->direction;
     }
 
-    m = find_mobile(world, p->serial);
+    struct mobile *m = find_mobile(world, p->serial);
     if (m == NULL) {
         log(3, "warning in connection_mobile_update: no such mobile 0x%x\n",
             (unsigned)ntohl(p->serial));
@@ -479,8 +452,6 @@ void
 world_mobile_moving(struct world *world,
                     const struct uo_packet_mobile_moving *p)
 {
-    struct mobile *m;
-
     if (world->packet_start.serial == p->serial) {
         /* update player's mobile */
         world->packet_start.body = p->body;
@@ -498,7 +469,7 @@ world_mobile_moving(struct world *world,
         world->packet_mobile_update.z = p->z;
     }
 
-    m = find_mobile(world, p->serial);
+    struct mobile *m = find_mobile(world, p->serial);
     if (m == NULL) {
         log(3, "warning in connection_mobile_moving: no such mobile 0x%x\n",
             (unsigned)ntohl(p->serial));
@@ -556,10 +527,8 @@ world_remove_mobile(struct mobile *mobile) {
 
 static void
 world_remove_mobile_serial(struct world *world, uint32_t serial) {
-    struct mobile *m;
-
     /* remove this entity */
-    m = find_mobile(world, serial);
+    struct mobile *m = find_mobile(world, serial);
     if (m != NULL)
         world_remove_mobile(m);
 
@@ -580,8 +549,6 @@ world_remove_serial(struct world *world, uint32_t serial) {
 void
 world_walked(struct world *world, uint16_t x, uint16_t y,
              uint8_t direction, uint8_t notoriety) {
-    struct mobile *m;
-
     world->packet_start.x = x;
     world->packet_start.y = y;
     world->packet_start.direction = direction;
@@ -590,7 +557,7 @@ world_walked(struct world *world, uint16_t x, uint16_t y,
     world->packet_mobile_update.y = y;
     world->packet_mobile_update.direction = direction;
 
-    m = find_mobile(world, world->packet_start.serial);
+    struct mobile *m = find_mobile(world, world->packet_start.serial);
     if (m != NULL && m->packet_mobile_incoming != NULL) {
         m->packet_mobile_incoming->x = x;
         m->packet_mobile_incoming->y = y;
@@ -603,8 +570,6 @@ void
 world_walk_cancel(struct world *world, uint16_t x, uint16_t y,
                   uint8_t direction)
 {
-    struct mobile *m;
-
     world->packet_start.x = x;
     world->packet_start.y = y;
     world->packet_start.direction = direction;
@@ -613,7 +578,7 @@ world_walk_cancel(struct world *world, uint16_t x, uint16_t y,
     world->packet_mobile_update.y = y;
     world->packet_mobile_update.direction = direction;
 
-    m = find_mobile(world, world->packet_start.serial);
+    struct mobile *m = find_mobile(world, world->packet_start.serial);
     if (m != NULL && m->packet_mobile_incoming != NULL) {
         m->packet_mobile_incoming->x = x;
         m->packet_mobile_incoming->y = y;
