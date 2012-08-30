@@ -98,7 +98,8 @@ attach_item(struct linked_server *ls,
         if (ls->client_version.protocol >= PROTOCOL_7) {
             struct uo_packet_container_open_7 p7 = {
                 .base = item->packet_container_open,
-                .num = 0,
+                .zero = 0x00,
+                .x7d = 0x7d,
             };
 
             uo_server_send(ls->server, &p7, sizeof(p7));

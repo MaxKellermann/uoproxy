@@ -216,7 +216,8 @@ static packet_action_t handle_container_open(struct connection *c,
 
         const struct uo_packet_container_open_7 p7 = {
             .base = *p,
-            .num = 0,
+            .zero = 0x00,
+            .x7d = 0x7d,
         };
 
         connection_broadcast_divert(c, PROTOCOL_7,

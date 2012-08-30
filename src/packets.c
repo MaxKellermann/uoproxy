@@ -65,6 +65,10 @@ const size_t packet_lengths_6014[0x100] = {
     [PCK_SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014),
 };
 
+const size_t packet_lengths_7[0x100] = {
+    [PCK_ContainerOpen] = sizeof(struct uo_packet_container_open_7),
+};
+
 size_t
 get_packet_length(enum protocol_version protocol,
                   const void *q, size_t max_length)
@@ -75,21 +79,10 @@ get_packet_length(enum protocol_version protocol,
     if (max_length == 0)
         return 0;
 
-    if (protocol >= PROTOCOL_7 && p[0] == PCK_ContainerOpen) {
-        const struct uo_packet_container_open_7 *packet = q;
-
-        if (max_length < sizeof(*packet))
-            /* need more data */
-            return 0;
-
-        unsigned num = ntohs(packet->num);
-        length = sizeof(*packet) +
-            num * sizeof(struct uo_packet_fragment_container_item_6);
-
-        if (length < sizeof(*packet) || length >= 0x8000)
-            return PACKET_LENGTH_INVALID;
-
-        return length;
+    if (protocol >= PROTOCOL_7) {
+        length = packet_lengths_7[p[0]];
+        if (length > 0)
+            return length;
     }
 
     if (protocol >= PROTOCOL_6_0_14) {

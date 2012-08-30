@@ -459,12 +459,8 @@ struct uo_packet_container_open {
 struct uo_packet_container_open_7 {
     struct uo_packet_container_open base;
 
-    uint8_t unknown[5];
-
-    uint16_t num;
-
-    /* followed by "num" times struct
-       uo_packet_fragment_container_item_6 */
+    uint8_t zero;
+    uint8_t x7d;
 } __attribute__ ((packed));
 
 /* for 0x25 ContainerUpdate */
