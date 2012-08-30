@@ -215,6 +215,8 @@ world_container_content(struct world *world,
 {
     assert(p->cmd == PCK_ContainerContent);
 
+    const unsigned attach_sequence = ++world->item_attach_sequence;
+
     const struct uo_packet_fragment_container_item_6 *pi = p->items,
         *const end = pi + ntohs(p->num);
 
@@ -227,7 +229,13 @@ world_container_content(struct world *world,
 
         i->socket.container.cmd = PCK_ContainerUpdate;
         i->socket.container.item = *pi;
+        i->attach_sequence = attach_sequence;
     }
+
+    /* delete obsolete items; assuming that all parent_serials are the
+       same, we use only the first one */
+    if (p->num != 0)
+        world_sweep_container_update_inside(world, p->items[0].parent_serial);
 }
 
 static void free_item(struct item *i) {

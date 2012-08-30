@@ -12,6 +12,7 @@ uoproxy (0.4) unstable; urgency=low
   * support client 6.0.14.2
   * fake Razor handshake
   * support encrypted clients
+  * fix phantom items in open containers after attaching
   * port to mingw32 (Windows)
 
  --
