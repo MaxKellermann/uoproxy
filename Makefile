@@ -76,11 +76,11 @@ tiny: CFLAGS += -DDISABLE_DAEMON_CODE -DDISABLE_LOGGING
 tiny: src/uoproxy strip
 
 dist: VERSION := $(shell perl -ne 'print "$$1\n" if /^uoproxy \((.*?)\)/' NEWS |head -1)
+dist: BASE := uoproxy-$(VERSION)
 dist:
-	rm -rf /tmp/uoproxy
-	mkdir -p /tmp/uoproxy
-	svn export . /tmp/uoproxy/uoproxy-$(VERSION)
-	cd /tmp/uoproxy && fakeroot tar cjf uoproxy-$(VERSION).tar.bz2 uoproxy-$(VERSION)
+	rm -f $(BASE).tar $(BASE).tar.bz2
+	git archive --format tar --prefix $(BASE)/ -o $(BASE).tar HEAD
+	bzip2 --best $(BASE).tar
 
 upload: doc/uoproxy.html
 	scp README NEWS doc/uoproxy.html max@squirrel:/var/www/gzipped/download/uoproxy/doc/
