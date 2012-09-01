@@ -274,13 +274,11 @@ static packet_action_t handle_equip(struct connection *c,
 
 static packet_action_t handle_container_content(struct connection *c,
                                                 const void *data, size_t length) {
-    if (c->client_version.protocol < PROTOCOL_6) {
+    if (packet_verify_container_content(data, length)) {
+        /* protocol v5 */
         const struct uo_packet_container_content *p = data;
         struct uo_packet_container_content_6 *p6;
         size_t length6;
-
-        if (!packet_verify_container_content(p, length))
-            return PA_DISCONNECT;
 
         p6 = container_content_5_to_6(p, &length6);
         if (p6 == NULL) {
@@ -295,13 +293,11 @@ static packet_action_t handle_container_content(struct connection *c,
                                     p6, length6);
 
         free(p6);
-    } else {
+    } else if (packet_verify_container_content_6(data, length)) {
+        /* protocol v6 */
         const struct uo_packet_container_content_6 *p = data;
         struct uo_packet_container_content *p5;
         size_t length5;
-
-        if (!packet_verify_container_content_6(p, length))
-            return PA_DISCONNECT;
 
         world_container_content(&c->client.world, p);
 
@@ -316,7 +312,8 @@ static packet_action_t handle_container_content(struct connection *c,
                                     data, length);
 
         free(p5);
-    }
+    } else
+        return PA_DISCONNECT;
 
     return PA_DROP;
 }
