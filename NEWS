@@ -15,7 +15,7 @@ uoproxy (0.4) unstable; urgency=low
   * fix phantom items in open containers after attaching
   * port to mingw32 (Windows)
 
- --
+ -- Max Kellermann <max@duempel.org>  Sat, 01 Sep 2012 09:59:39 +0200
 
 uoproxy (0.3) unstable; urgency=low
 
