@@ -1,3 +1,9 @@
+uoproxy (0.4.1) unstable; urgency=low
+
+  * 
+
+ --
+
 uoproxy (0.4) unstable; urgency=low
 
   * added SOCKS4 proxy support

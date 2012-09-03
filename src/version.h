@@ -1,7 +1,7 @@
 /*
  * uoproxy
  *
- * (c) 2005-2010 Max Kellermann <max@duempel.org>
+ * (c) 2005-2012 Max Kellermann <max@duempel.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,6 @@
 #ifndef __VERSION_H
 #define __VERSION_H
 
-#define VERSION "0.4"
+#define VERSION "0.4.1"
 
 #endif
