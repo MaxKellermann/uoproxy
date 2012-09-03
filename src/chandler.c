@@ -118,13 +118,11 @@ handle_talk_ascii(struct linked_server *ls,
                   const void *data, size_t length)
 {
     const struct uo_packet_talk_ascii *p = data;
-    size_t text_length;
 
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
-    text_length = length - sizeof(*p);
-
+    const size_t text_length = length - sizeof(*p);
     if (p->text[text_length] != 0)
         return PA_DISCONNECT;
 
@@ -220,24 +218,24 @@ handle_drop(struct linked_server *ls,
 
     if (ls->client_version.protocol < PROTOCOL_6) {
         const struct uo_packet_drop *p = data;
-        struct uo_packet_drop_6 p6;
 
         assert(length == sizeof(*p));
 
         if (ls->connection->client_version.protocol < PROTOCOL_6)
             return PA_ACCEPT;
 
+        struct uo_packet_drop_6 p6;
         drop_5_to_6(&p6, p);
         uo_client_send(client->client, &p6, sizeof(p6));
     } else {
         const struct uo_packet_drop_6 *p = data;
-        struct uo_packet_drop p5;
 
         assert(length == sizeof(*p));
 
         if (ls->connection->client_version.protocol >= PROTOCOL_6)
             return PA_ACCEPT;
 
+        struct uo_packet_drop p5;
         drop_6_to_5(&p5, p);
         uo_client_send(client->client, &p5, sizeof(p5));
     }
@@ -297,7 +295,6 @@ handle_account_login(struct linked_server *ls,
     const struct uo_packet_account_login *p = data;
     struct connection *c = ls->connection;
     const struct config *config = c->instance->config;
-    int ret;
 
     assert(length == sizeof(*p));
     assert(sizeof(p->username) == sizeof(ls->connection->username));
@@ -390,9 +387,9 @@ handle_account_login(struct linked_server *ls,
         else
             seed = uo_server_seed(ls->server);
 
-        ret = connection_client_connect(c, config->login_address->ai_addr,
-                                        config->login_address->ai_addrlen,
-                                        seed);
+        int ret = connection_client_connect(c, config->login_address->ai_addr,
+                                            config->login_address->ai_addrlen,
+                                            seed);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
 
@@ -685,17 +682,18 @@ handle_gump_response(struct linked_server *ls,
                      const void *data, size_t length)
 {
     const struct uo_packet_gump_response *p = data;
-    struct uo_packet_close_gump close = {
+
+    if (length < sizeof(*p))
+        return PA_DISCONNECT;
+
+    /* close the gump on all other clients */
+    const struct uo_packet_close_gump close = {
         .cmd = PCK_Extended,
         .length = htons(sizeof(close)),
         .extended_cmd = htons(0x0004),
         .button_id = 0,
     };
 
-    if (length < sizeof(*p))
-        return PA_DISCONNECT;
-
-    /* close the gump on all other clients */
     connection_broadcast_servers_except(ls->connection, &close, sizeof(close),
                                         ls->server);
 
