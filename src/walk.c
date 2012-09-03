@@ -237,16 +237,22 @@ void connection_walk_ack(struct connection *c,
 
     /* send WalkForce to all other clients */
 
+#if 0
+    /* unfortunately, this doesn't work anymore with client v7 */
     struct uo_packet_walk_force force = {
         .cmd = PCK_WalkForce,
         .direction = i->packet.direction & 0x7,
     };
+#endif
+
+    const struct uo_packet_mobile_update *mu =
+        &c->client.world.packet_mobile_update;
 
     if (state->server != NULL)
-        connection_broadcast_servers_except(c, &force, sizeof(force),
+        connection_broadcast_servers_except(c, mu, sizeof(*mu),
                                             state->server->server);
     else
-        connection_broadcast_servers(c, &force, sizeof(force));
+        connection_broadcast_servers(c, mu, sizeof(*mu));
 
     remove_item(state, i);
 }
