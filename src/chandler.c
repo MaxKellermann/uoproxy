@@ -80,6 +80,22 @@ handle_talk(struct linked_server *ls,
 }
 
 static packet_action_t
+handle_create_character(struct linked_server *ls,
+                        const void *data, size_t length)
+{
+    const struct uo_packet_create_character *p = data;
+    assert(length == sizeof(*p));
+
+    if (ls->connection->instance->config->antispy) {
+        struct uo_packet_create_character q = *p;
+        q.client_ip = htonl(0xc0a80102);
+        uo_server_send(ls->server, &q, sizeof(q));
+        return PA_DROP;
+    } else
+        return PA_ACCEPT;
+}
+
+static packet_action_t
 handle_walk(struct linked_server *ls,
             const void *data, size_t length)
 {
@@ -803,6 +819,9 @@ handle_seed(struct linked_server *ls,
 }
 
 struct server_packet_binding client_packet_bindings[] = {
+    { .cmd = PCK_CreateCharacter,
+      .handler = handle_create_character,
+    },
     { .cmd = PCK_Walk,
       .handler = handle_walk,
     },
