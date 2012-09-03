@@ -1,6 +1,6 @@
 uoproxy (0.4.1) unstable; urgency=low
 
-  * 
+  * fix auto-closing gumps in multi client mode
 
  --
 

@@ -691,6 +691,7 @@ handle_gump_response(struct linked_server *ls,
         .cmd = PCK_Extended,
         .length = htons(sizeof(close)),
         .extended_cmd = htons(0x0004),
+        .type_id = p->type_id,
         .button_id = 0,
     };
 
