@@ -67,6 +67,7 @@ const size_t packet_lengths_6014[0x100] = {
 
 const size_t packet_lengths_7[0x100] = {
     [PCK_ContainerOpen] = sizeof(struct uo_packet_container_open_7),
+    [PCK_CreateCharacter7] = sizeof(struct uo_packet_create_character_7),
 };
 
 size_t

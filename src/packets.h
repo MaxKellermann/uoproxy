@@ -246,6 +246,7 @@ enum uo_packet_type_t {
     PCK_Seed = 0xef,
     PCK_ProtocolExtension = 0xf0,
     PCK_WorldItem7 = 0xf3,
+    PCK_CreateCharacter7 = 0xf8,
 };
 
 extern const size_t packet_lengths[0x100];
@@ -853,6 +854,29 @@ struct uo_packet_world_item_7 {
     uint8_t flags;
     uint8_t zero;
     uint8_t function;
+} __attribute__ ((packed));
+
+/* 0xF8 CreateCharacter7 */
+struct uo_packet_create_character_7 {
+    unsigned char cmd;
+    uint32_t unknown0, unknown1;
+    uint8_t unknown2;
+    char name[30];
+    uint8_t unknown3[2];
+    uint32_t flags;
+    uint8_t unknown4[8];
+    uint8_t profession;
+    uint8_t unknown5[15];
+    uint8_t female;
+    uint8_t strength, dexterity, intelligence;
+    uint8_t is1, vs1, is2, vs2, is3, vs3, is4, vs4;
+    uint16_t hue;
+    uint16_t hair_val, hair_hue;
+    uint16_t hair_valf, hair_huef;
+    uint8_t unknown6;
+    uint8_t city_index;
+    uint32_t char_slot, client_ip;
+    uint16_t shirt_hue, pants_hue;
 } __attribute__ ((packed));
 
 #endif
