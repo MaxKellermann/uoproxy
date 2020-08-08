@@ -89,7 +89,7 @@ handle_create_character(struct linked_server *ls,
     if (ls->connection->instance->config->antispy) {
         struct uo_packet_create_character q = *p;
         q.client_ip = htonl(0xc0a80102);
-        uo_server_send(ls->server, &q, sizeof(q));
+        uo_client_send(ls->connection->client.client, &q, sizeof(q));
         return PA_DROP;
     } else
         return PA_ACCEPT;

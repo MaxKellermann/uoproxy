@@ -1,6 +1,7 @@
 uoproxy (0.5) unstable; urgency=medium
 
   * fix libevent API breakage
+  * fix character creation with antispy
 
  --
 
