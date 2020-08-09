@@ -58,13 +58,12 @@ operating system, including Solaris, FreeBSD, MacOS X.  You need the
 following to compile it:
 
 - gcc
-- Meson 0.47 and Ninja
+- `Meson 0.47 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 - libevent development files (package "libevent-dev" or "libevent-devel")
 
-Type:
+Type::
 
  meson . output
-
  ninja -C output install
 
 Edit the file /etc/uoproxy.conf, and fill in the 'server' and 'port'
