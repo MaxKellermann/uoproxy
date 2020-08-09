@@ -480,7 +480,8 @@ handle_game_login(struct linked_server *ls,
                 c = ls->connection;
 
                 /* copy the previously detected protocol version */
-                reuse_conn->client_version.protocol = c->client_version.protocol;
+                if (!was_attach)
+                    reuse_conn->client_version.protocol = c->client_version.protocol;
 
                 /* remove the object from the old connection */
                 connection_server_remove(c, ls);
