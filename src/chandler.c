@@ -337,6 +337,7 @@ handle_account_login(struct linked_server *ls,
         /* attaching to an existing connection, fake the server
            list */
         struct uo_packet_server_list p2;
+        memset(&p2, 0, sizeof(p2));
 
         p2.cmd = PCK_ServerList;
         p2.length = htons(sizeof(p2));
