@@ -6,3 +6,6 @@ src/uoproxy
 
 *.tar
 *.tar.bz2
+
+/output
+/obj-*/

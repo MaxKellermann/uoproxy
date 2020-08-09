@@ -58,17 +58,14 @@ operating system, including Solaris, FreeBSD, MacOS X.  You need the
 following to compile it:
 
 - gcc
-- GNU make
+- Meson 0.47 and Ninja
 - libevent development files (package "libevent-dev" or "libevent-devel")
 
 Type:
 
- make
+ meson . output
 
-(Or "gmake" if you are not on Linux).  This will result in the binary
-named "src/uoproxy".  Install the files on your system:
-
- make install
+ ninja -C output install
 
 Edit the file /etc/uoproxy.conf, and fill in the 'server' and 'port'
 variables.

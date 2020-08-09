@@ -2,8 +2,10 @@ Source: uoproxy
 Section: games
 Priority: extra
 Maintainer: Max Kellermann <max@duempel.org>
-Build-Depends: debhelper (>= 5), libevent-dev (>= 1.1), xmlto
-Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 12~),
+ meson (>= 0.47),
+ libevent-dev (>= 1.1)
+Standards-Version: 4.0.0
 
 Package: uoproxy
 Architecture: any
