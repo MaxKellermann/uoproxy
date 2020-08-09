@@ -1,7 +1,7 @@
 uoproxy README
 ==============
 
-(c) 2005-2012 Max Kellermann <max@duempel.org>
+Copyright 2005-2020 Max Kellermann <max@blarg.de>
 
 
 What is uoproxy?
@@ -66,20 +66,20 @@ Type::
  meson . output
  ninja -C output install
 
-Edit the file /etc/uoproxy.conf, and fill in the 'server' and 'port'
-variables.
+Edit the file ``/etc/uoproxy.conf``, and fill in the ``server`` and
+``port`` variables.
 
 
 Running
 -------
 
-Type
+Type::
 
  uoproxy
 
 Now point your Ultima Online client (encryption disabled) at the
 machine running uoproxy.  UOGateway can be used to remove encryption
-and to add the uoproxy server to your Login.cfg.
+and to add the uoproxy server to your ``Login.cfg``.
 
 
 Running with Razor
@@ -87,7 +87,7 @@ Running with Razor
 
 As of version 0.4, uoproxy is once again compatible with Razor,
 thanks to patches from Calin Culianu.  Tested and works with Razor
-1.0.12.  You need to set the 'razor_workaround yes' configuration
+1.0.12.  You need to set the ``razor_workaround yes`` configuration
 option in the config file to enable compatibility with Razor.  The
 Razor workaround involves telling the UO client to reconnect to
 uoproxy on login (which is what Razor expects).  This has the added
@@ -106,7 +106,7 @@ development, namely: RunUO, UOX3, Wolfpack, Iris and others.
 Legal
 -----
 
-Copyright 2005-2010 Max Kellermann <max@duempel.org>
+Copyright 2005-2020 Max Kellermann <max@blarg.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
