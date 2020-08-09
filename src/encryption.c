@@ -254,7 +254,7 @@ encryption_from_client(struct encryption *e,
             e->state = STATE_LOGIN;
         } else if (p + sizeof(*game_login) == end) {
             if (game_login->cmd == PCK_GameLogin &&
-                game_login->auth_id == e->seed) {
+                ntohl(game_login->auth_id) == e->seed) {
                 /* unencrypted game login */
                 e->state = STATE_DISABLED;
                 return data;
