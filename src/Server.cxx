@@ -30,7 +30,6 @@
 #include <utility>
 
 #include <assert.h>
-#include <errno.h>
 #include <stdlib.h>
 
 #include <event.h>
@@ -226,23 +225,18 @@ static constexpr SocketBufferHandler server_sock_buff_handler = {
     .free = server_sock_buff_free,
 };
 
-int
+UO::Server *
 uo_server_create(int sockfd,
-                 UO::ServerHandler &handler,
-                 UO::Server **serverp)
+                 UO::ServerHandler &handler)
 {
     socket_set_nodelay(sockfd, 1);
 
     auto *server = new UO::Server(handler);
-    if (server == nullptr)
-        return ENOMEM;
 
     server->sock = sock_buff_create(sockfd, 8192, 65536,
                                     &server_sock_buff_handler, server);
 
-    *serverp = server;
-
-    return 0;
+    return server;
 }
 
 void uo_server_dispose(UO::Server *server) {

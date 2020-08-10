@@ -31,7 +31,6 @@
 #include <utility>
 
 #include <assert.h>
-#include <errno.h>
 #include <stdlib.h>
 
 #ifdef WIN32
@@ -251,28 +250,19 @@ static constexpr SocketBufferHandler client_sock_buff_handler = {
     .free = client_sock_buff_free,
 };
 
-int
+UO::Client *
 uo_client_create(int fd, uint32_t seed,
                  const struct uo_packet_seed *seed6,
-                 UO::ClientHandler &handler,
-                 UO::Client **clientp)
+                 UO::ClientHandler &handler)
 {
     socket_set_nodelay(fd, 1);
 
     auto *client = new UO::Client(handler);
-    if (client == nullptr)
-        return ENOMEM;
 
     client->sock = sock_buff_create(fd, 8192, 65536,
                                     &client_sock_buff_handler, client);
 
     client->decompressed_buffer = fifo_buffer_new(65536);
-    if (client->decompressed_buffer == nullptr) {
-        uo_client_dispose(client);
-        return ENOMEM;
-    }
-
-    *clientp = client;
 
     /* seed must be the first 4 bytes, and it must be flushed */
     if (seed6 != nullptr) {
@@ -282,7 +272,7 @@ uo_client_create(int fd, uint32_t seed,
     } else
         uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
 
-    return 0;
+    return client;
 }
 
 void uo_client_dispose(UO::Client *client) {

@@ -50,9 +50,9 @@ public:
 
 } // namespace UO
 
-int uo_server_create(int sockfd,
-                     UO::ServerHandler &handler,
-                     UO::Server **serverp);
+UO::Server *
+uo_server_create(int sockfd,
+                 UO::ServerHandler &handler);
 void uo_server_dispose(UO::Server *server);
 
 uint32_t uo_server_seed(const UO::Server *server);

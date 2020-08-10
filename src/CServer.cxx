@@ -26,7 +26,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <errno.h>
 
 bool
 LinkedServer::OnServerPacket(const void *data, size_t length)
@@ -123,18 +122,8 @@ connection_server_remove(Connection *c, LinkedServer *ls)
 LinkedServer *
 connection_server_new(Connection *c, int fd)
 {
-    int ret;
-
     auto *ls = new LinkedServer();
-
-    ret = uo_server_create(fd, *ls,
-                           &ls->server);
-    if (ret != 0) {
-        delete ls;
-        errno = ret;
-        return nullptr;
-    }
-
+    ls->server = uo_server_create(fd, *ls);
     connection_server_add(c, ls);
     return ls;
 }

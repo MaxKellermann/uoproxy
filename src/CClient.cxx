@@ -126,7 +126,6 @@ connection_client_connect(Connection *c,
                           size_t server_address_length,
                           uint32_t seed)
 {
-    int ret;
     struct timeval tv;
 
     assert(c->client.client == nullptr);
@@ -174,14 +173,9 @@ connection_client_connect(Connection *c,
         seed_packet = &seed_buffer;
     }
 
-    ret = uo_client_create(fd, seed,
-                           seed_packet,
-                           *c,
-                           &c->client.client);
-    if (ret != 0) {
-        close(fd);
-        return ret;
-    }
+    c->client.client = uo_client_create(fd, seed,
+                                        seed_packet,
+                                        *c);
 
     uo_client_set_protocol(c->client.client,
                            c->client_version.protocol);

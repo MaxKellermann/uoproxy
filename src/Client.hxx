@@ -52,11 +52,10 @@ public:
 
 } // namespace UO
 
-int
+UO::Client *
 uo_client_create(int fd, uint32_t seed,
                  const struct uo_packet_seed *seed6,
-                 UO::ClientHandler &handler,
-                 UO::Client **clientp);
+                 UO::ClientHandler &handler);
 
 void uo_client_dispose(UO::Client *client);
 
