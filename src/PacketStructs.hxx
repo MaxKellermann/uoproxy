@@ -30,7 +30,7 @@
 
 /* 0x00 CreateCharacter */
 struct uo_packet_create_character {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t unknown0, unknown1;
     uint8_t unknown2;
     char name[30];
@@ -53,14 +53,14 @@ struct uo_packet_create_character {
 
 /* 0x02 Walk */
 struct uo_packet_walk {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t direction, seq;
     uint32_t key;
 } __attribute__ ((packed));
 
 /* 0x03 TalkAscii */
 struct uo_packet_talk_ascii {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint8_t type;
     uint16_t hue, font;
@@ -69,20 +69,20 @@ struct uo_packet_talk_ascii {
 
 /* 0x06 Use */
 struct uo_packet_use {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
 } __attribute__ ((packed));
 
 /* 0x07 LiftRequest */
 struct uo_packet_lift_request {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t amount;
 } __attribute__ ((packed));
 
 /* 0x08 Drop */
 struct uo_packet_drop {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t x, y;
     int8_t z;
@@ -91,7 +91,7 @@ struct uo_packet_drop {
 
 /* 0x08 Drop (protocol v6) */
 struct uo_packet_drop_6 {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t x, y;
     int8_t z;
@@ -101,7 +101,7 @@ struct uo_packet_drop_6 {
 
 /* 0x11 MobileStatus */
 struct uo_packet_mobile_status {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint32_t serial;
     char name[30];
@@ -127,7 +127,7 @@ struct uo_packet_mobile_status {
 
 /* 0x12 Action */
 struct uo_packet_action {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint8_t type;
     char command[1];
@@ -135,7 +135,7 @@ struct uo_packet_action {
 
 /* 0x1a WorldItem */
 struct uo_packet_world_item {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint32_t serial;
     uint16_t item_id;
@@ -150,7 +150,7 @@ struct uo_packet_world_item {
 
 /* 0x1b Start */
 struct uo_packet_start {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint32_t unknown0;
     uint16_t body;
@@ -161,12 +161,12 @@ struct uo_packet_start {
     uint32_t unknown2;
     uint16_t unknown3, unknown4;
     uint16_t map_width, map_height;
-    unsigned char unknown5[6];
+    uint8_t unknown5[6];
 } __attribute__ ((packed));
 
 /* 0x1c SpeakAscii */
 struct uo_packet_speak_ascii {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint32_t serial;
     int16_t graphic;
@@ -179,13 +179,13 @@ struct uo_packet_speak_ascii {
 
 /* 0x1d Delete */
 struct uo_packet_delete {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
 } __attribute__ ((packed));
 
 /* 0x20 MobileUpdate */
 struct uo_packet_mobile_update {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t body;
     uint8_t unknown0;
@@ -199,7 +199,7 @@ struct uo_packet_mobile_update {
 
 /* 0x21 WalkCancel */
 struct uo_packet_walk_cancel {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t seq;
     uint16_t x, y;
     uint8_t direction;
@@ -208,13 +208,13 @@ struct uo_packet_walk_cancel {
 
 /* 0x22 WalkAck */
 struct uo_packet_walk_ack {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t seq, notoriety;
 } __attribute__ ((packed));
 
 /* 0x24 ContainerOpen */
 struct uo_packet_container_open {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t gump_id;
 } __attribute__ ((packed));
@@ -252,25 +252,25 @@ struct uo_packet_fragment_container_item_6 {
 
 /* 0x25 ContainerUpdate */
 struct uo_packet_container_update {
-    unsigned char cmd;
+    uint8_t cmd;
     struct uo_packet_fragment_container_item item;
 } __attribute__ ((packed));
 
 /* 0x25 ContainerUpdate (protocol v6) */
 struct uo_packet_container_update_6 {
-    unsigned char cmd;
+    uint8_t cmd;
     struct uo_packet_fragment_container_item_6 item;
 } __attribute__ ((packed));
 
 /* 0x27 LiftReject */
 struct uo_packet_lift_reject {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t reason;
 } __attribute__ ((packed));
 
 /* 0x2e Equip */
 struct uo_packet_equip {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t item_id;
     uint8_t unknown0;
@@ -281,7 +281,7 @@ struct uo_packet_equip {
 
 /* 0x3c ContainerContent */
 struct uo_packet_container_content {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint16_t num;
     struct uo_packet_fragment_container_item items[1];
@@ -289,7 +289,7 @@ struct uo_packet_container_content {
 
 /* 0x3c ContainerContent (protocol v6) */
 struct uo_packet_container_content_6 {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint16_t num;
     struct uo_packet_fragment_container_item_6 items[1];
@@ -297,31 +297,31 @@ struct uo_packet_container_content_6 {
 
 /* 0x4f GlobalLightLevel */
 struct uo_packet_global_light_level {
-    unsigned char cmd;
+    uint8_t cmd;
     int8_t level;
 } __attribute__ ((packed));
 
 /* 0x4e PersonalLightLevel */
 struct uo_packet_personal_light_level {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     int8_t level;
 } __attribute__ ((packed));
 
 /* 0x53 PopupMessage */
 struct uo_packet_popup_message {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t msg;
 };
 
 /* 0x55 ReDrawAll */
 struct uo_packet_login_complete {
-    unsigned char cmd;
+    uint8_t cmd;
 } __attribute__ ((packed));
 
 /* 0x5d PlayCharacter */
 struct uo_packet_play_character {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t unknown0;
     char name[30];
     uint16_t unknown1;
@@ -332,7 +332,7 @@ struct uo_packet_play_character {
 
 /* 0x6c Target */
 struct uo_packet_target {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t allow_ground;
     uint32_t target_id;
     uint8_t flags;
@@ -343,20 +343,20 @@ struct uo_packet_target {
 
 /* 0x72 WarMode */
 struct uo_packet_war_mode {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t war_mode;
     uint8_t unknown0[3];
 } __attribute__ ((packed));
 
 /* 0x73 Ping */
 struct uo_packet_ping {
-    unsigned char cmd;
-    unsigned char id;
+    uint8_t cmd;
+    uint8_t id;
 } __attribute__ ((packed));
 
 /* 0x76 ZoneChange */
 struct uo_packet_zone_change {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t x, y;
     int16_t z;
     uint8_t unknown0;
@@ -366,7 +366,7 @@ struct uo_packet_zone_change {
 
 /* 0x77 MobileMoving */
 struct uo_packet_mobile_moving {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t serial;
     uint16_t body;
     uint16_t x, y;
@@ -387,7 +387,7 @@ struct uo_packet_fragment_mobile_item {
 
 /* 0x78 MobileIncoming */
 struct uo_packet_mobile_incoming {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint32_t serial;
     uint16_t body;
@@ -403,21 +403,21 @@ struct uo_packet_mobile_incoming {
 
 /* 0x80 AccountLogin */
 struct uo_packet_account_login {
-    unsigned char cmd;
+    uint8_t cmd;
     char username[30];
     char password[30];
-    unsigned char unknown1;
+    uint8_t unknown1;
 } __attribute__ ((packed));
 
 /* 0x82 AccountLoginReject */
 struct uo_packet_account_login_reject {
-    unsigned char cmd;
-    unsigned char reason;
+    uint8_t cmd;
+    uint8_t reason;
 } __attribute__ ((packed));
 
 /* 0x8c Relay */
 struct uo_packet_relay {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t ip;
     uint16_t port;
     uint32_t auth_id;
@@ -425,7 +425,7 @@ struct uo_packet_relay {
 
 /* 0x91 GameLogin */
 struct uo_packet_game_login {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t auth_id;
     char username[30];
     char password[30];
@@ -433,13 +433,13 @@ struct uo_packet_game_login {
 
 /* 0x97 WalkForce */
 struct uo_packet_walk_force {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t direction;
 } __attribute__ ((packed));
 
 /* for 0xa0 PlayServer */
 struct uo_packet_play_server {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t index;
 } __attribute__ ((packed));
 
@@ -448,13 +448,13 @@ struct uo_fragment_server_info {
     uint16_t index;
     char name[32];
     char full;
-    unsigned char timezone;
+    uint8_t timezone;
     uint32_t address;
 } __attribute__ ((packed));
 
 /* 0xa8 ServerList */
 struct uo_packet_server_list {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint8_t unknown_0x5d;
     uint16_t num_game_servers;
@@ -469,7 +469,7 @@ struct uo_fragment_character_info {
 
 /* 0xa9 CharList */
 struct uo_packet_simple_character_list {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint8_t character_count;
     struct uo_fragment_character_info character_info[1];
@@ -479,19 +479,19 @@ struct uo_packet_simple_character_list {
 
 /* 0xb9 SupportedFeatures */
 struct uo_packet_supported_features {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t flags;
 } __attribute__ ((packed));
 
 /* 0xb9 SupportedFeatures (protocol 6.0.14.2) */
 struct uo_packet_supported_features_6014 {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t flags;
 } __attribute__ ((packed));
 
 /* 0xad TalkUnicode */
 struct uo_packet_talk_unicode {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint8_t type;
     uint16_t hue, font;
@@ -501,7 +501,7 @@ struct uo_packet_talk_unicode {
 
 /* 0xb1 GumpResponse */
 struct uo_packet_gump_response {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint32_t serial, type_id, button_id;
     uint8_t rest[];
@@ -509,20 +509,20 @@ struct uo_packet_gump_response {
 
 /* 0xbc Season */
 struct uo_packet_season {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t season, play_sound;
 } __attribute__ ((packed));
 
 /* 0xbd ClientVersion */
 struct uo_packet_client_version {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     char version[1];
 } __attribute__ ((packed));
 
 /* 0xbf 0x0004 CloseGump */
 struct uo_packet_close_gump {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint16_t extended_cmd; /* 0x0004 */
     uint32_t type_id, button_id;
@@ -530,7 +530,7 @@ struct uo_packet_close_gump {
 
 /* 0xbf 0x0008 MapChange */
 struct uo_packet_map_change {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint16_t extended_cmd; /* 0x0008 */
     uint8_t map_id;
@@ -544,7 +544,7 @@ struct uo_fragment_map_patch {
 
 /* 0xbf 0x0018 MapPatch */
 struct uo_packet_map_patches {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint16_t extended_cmd; /* 0x0018 */
     uint32_t map_count;
@@ -553,14 +553,14 @@ struct uo_packet_map_patches {
 
 /* 0xbf Extended */
 struct uo_packet_extended {
-    unsigned char cmd;
+    uint8_t cmd;
     uint16_t length;
     uint16_t extended_cmd;
 } __attribute__ ((packed));
 
 /* 0xd9 Hardware */
 struct uo_packet_hardware {
-    unsigned char cmd;
+    uint8_t cmd;
     uint8_t unknown0;
     uint32_t instance_id;
     uint32_t os_major, os_minor, os_revision;
@@ -580,7 +580,7 @@ struct uo_packet_hardware {
 
 /* 0xef Seed */
 struct uo_packet_seed {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t seed;
     uint32_t client_major;
     uint32_t client_minor;
@@ -621,7 +621,7 @@ struct uo_packet_world_item_7 {
 
 /* 0xF8 CreateCharacter7 */
 struct uo_packet_create_character_7 {
-    unsigned char cmd;
+    uint8_t cmd;
     uint32_t unknown0, unknown1;
     uint8_t unknown2;
     char name[30];
