@@ -29,7 +29,6 @@ ping_event_callback(int, short, void *ctx) noexcept
 {
     auto client = (StatefulClient *)ctx;
     struct uo_packet_ping ping;
-    struct timeval tv;
 
     assert(client->client != nullptr);
 
@@ -40,9 +39,7 @@ ping_event_callback(int, short, void *ctx) noexcept
     uo_client_send(client->client, &ping, sizeof(ping));
 
     /* schedule next ping */
-    tv.tv_sec = 30;
-    tv.tv_usec = 0;
-    event_add(&client->ping_event, &tv);
+    client->SchedulePing();
 }
 
 StatefulClient::StatefulClient() noexcept

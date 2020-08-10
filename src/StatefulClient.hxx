@@ -57,4 +57,9 @@ struct StatefulClient {
     StatefulClient &operator=(const StatefulClient &) = delete;
 
     void Disconnect() noexcept;
+
+    void SchedulePing() noexcept {
+        static constexpr struct timeval tv{30, 0};
+        event_add(&ping_event, &tv);
+    }
 };

@@ -96,8 +96,6 @@ connection_client_connect(Connection *c,
                           size_t server_address_length,
                           uint32_t seed)
 {
-    struct timeval tv;
-
     assert(c->client.client == nullptr);
 
     int fd;
@@ -150,9 +148,7 @@ connection_client_connect(Connection *c,
     uo_client_set_protocol(c->client.client,
                            c->client_version.protocol);
 
-    tv.tv_sec = 30;
-    tv.tv_usec = 0;
-    evtimer_add(&c->client.ping_event, &tv);
+    c->client.SchedulePing();
 
     return 0;
 }
