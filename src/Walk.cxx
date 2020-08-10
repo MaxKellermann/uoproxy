@@ -19,6 +19,7 @@
  */
 
 #include "Connection.hxx"
+#include "LinkedServer.hxx"
 #include "packets.h"
 #include "Server.hxx"
 #include "Client.hxx"

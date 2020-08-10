@@ -23,6 +23,7 @@
 #include "packets.h"
 #include "VerifyPacket.hxx"
 #include "Connection.hxx"
+#include "LinkedServer.hxx"
 #include "Server.hxx"
 #include "Client.hxx"
 #include "Config.hxx"

@@ -23,6 +23,7 @@
 #include "Handler.hxx"
 #include "CVersion.hxx"
 #include "Connection.hxx"
+#include "LinkedServer.hxx"
 #include "Client.hxx"
 #include "Server.hxx"
 #include "Config.hxx"

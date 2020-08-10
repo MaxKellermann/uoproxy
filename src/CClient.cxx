@@ -19,6 +19,7 @@
  */
 
 #include "Connection.hxx"
+#include "LinkedServer.hxx"
 #include "SocketConnect.hxx"
 #include "ProxySocks.hxx"
 #include "Client.hxx"

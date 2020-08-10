@@ -18,6 +18,7 @@
  *
  */
 
+#include "LinkedServer.hxx"
 #include "Connection.hxx"
 #include "Server.hxx"
 #include "Client.hxx"

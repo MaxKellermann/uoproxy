@@ -19,6 +19,7 @@
  */
 
 #include "Connection.hxx"
+#include "LinkedServer.hxx"
 #include "Instance.hxx"
 #include "Server.hxx"
 #include "Bridge.hxx"

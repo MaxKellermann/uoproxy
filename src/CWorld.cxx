@@ -19,6 +19,7 @@
  */
 
 #include "Connection.hxx"
+#include "LinkedServer.hxx"
 #include "Server.hxx"
 
 static void
