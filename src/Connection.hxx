@@ -146,11 +146,6 @@ connection_broadcast_divert(Connection *c,
                             const void *new_data, size_t new_length);
 
 
-/* server list */
-
-void
-connection_server_dispose(Connection *c, LinkedServer *ls);
-
 /* world */
 
 void

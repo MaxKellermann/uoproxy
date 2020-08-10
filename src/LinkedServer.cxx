@@ -78,7 +78,9 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
-        connection_server_dispose(c, this);
+        c->Remove(*this);
+        delete this;
+
         if (c->servers.empty()) {
             if (c->background)
                 LogFormat(1, "backgrounding\n");
@@ -101,21 +103,22 @@ LinkedServer::OnServerDisconnect() noexcept
 
     assert(c != nullptr);
 
-    connection_walk_server_removed(&c->walk, this);
-
     if (expecting_reconnect) {
         LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
         Zombify();
-    } else if (c->servers.iterator_to(*this) != c->servers.begin() ||
-               std::next(c->servers.iterator_to(*this)) != c->servers.end()) {
+        return;
+    }
+
+    c->Remove(*this);
+
+    if (!c->servers.empty()) {
         LogFormat(2, "client disconnected, server connection still in use\n");
-        connection_server_dispose(c, this);
     } else if (c->background && c->in_game) {
         LogFormat(1, "client disconnected, backgrounding\n");
-        connection_server_dispose(c, this);
     } else {
         LogFormat(1, "last client disconnected, removing connection\n");
-        connection_server_dispose(c, this);
         connection_delete(c);
     }
+
+    delete this;
 }

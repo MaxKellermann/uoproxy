@@ -20,11 +20,8 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
-#include "Handler.hxx"
-#include "Log.hxx"
 
 #include <assert.h>
-#include <stdlib.h>
 
 void
 Connection::Add(LinkedServer &ls) noexcept
@@ -44,11 +41,4 @@ Connection::Remove(LinkedServer &ls) noexcept
 
     ls.connection = nullptr;
     ls.unlink();
-}
-
-void
-connection_server_dispose(Connection *c, LinkedServer *ls)
-{
-    c->Remove(*ls);
-    delete ls;
 }
