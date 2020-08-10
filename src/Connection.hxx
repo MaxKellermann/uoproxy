@@ -104,6 +104,11 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     Connection(const Connection &) = delete;
     Connection &operator=(const Connection &) = delete;
 
+    bool CanAttach() const noexcept {
+        return in_game && client.world.packet_start.serial != 0 &&
+            client.num_characters > 0;
+    }
+
     int Connect(const struct sockaddr *server_address,
                 size_t server_address_length,
                 uint32_t seed);

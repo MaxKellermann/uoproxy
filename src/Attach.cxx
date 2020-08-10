@@ -32,12 +32,10 @@ Connection *
 find_attach_connection(Connection *c)
 {
     for (auto &i : c->instance->connections)
-        if (&i != c && i.in_game &&
-            i.client.world.packet_start.serial != 0 &&
+        if (&i != c && i.CanAttach() &&
             strncmp(c->username, i.username, sizeof(c->username)) == 0 &&
             strncmp(c->password, i.password, sizeof(c->password)) == 0 &&
-            c->server_index == i.server_index &&
-            i.client.num_characters > 0)
+            c->server_index == i.server_index)
             return &i;
 
     return nullptr;
