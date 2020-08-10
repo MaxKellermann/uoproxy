@@ -21,7 +21,7 @@
 #ifndef __UOPROXY_LOG_H
 #define __UOPROXY_LOG_H
 
-#include "compiler.h"
+#include "util/Compiler.h"
 
 #include <string.h>
 #include <errno.h>

@@ -29,6 +29,7 @@
 #include "Config.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
+#include "util/Compiler.h"
 
 #include <assert.h>
 #include <stdio.h>
