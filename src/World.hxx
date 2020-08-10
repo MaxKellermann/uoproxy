@@ -113,15 +113,15 @@ struct Mobile {
 struct World {
     /* a lot of packets needed to attach a client*/
 
-    struct uo_packet_start packet_start;
-    struct uo_packet_map_change packet_map_change;
-    struct uo_packet_map_patches packet_map_patches;
-    struct uo_packet_season packet_season;
-    struct uo_packet_mobile_update packet_mobile_update;
-    struct uo_packet_global_light_level packet_global_light_level;
-    struct uo_packet_personal_light_level packet_personal_light_level;
-    struct uo_packet_war_mode packet_war_mode;
-    struct uo_packet_target packet_target;
+    struct uo_packet_start packet_start{};
+    struct uo_packet_map_change packet_map_change{};
+    struct uo_packet_map_patches packet_map_patches{};
+    struct uo_packet_season packet_season{};
+    struct uo_packet_mobile_update packet_mobile_update{};
+    struct uo_packet_global_light_level packet_global_light_level{};
+    struct uo_packet_personal_light_level packet_personal_light_level{};
+    struct uo_packet_war_mode packet_war_mode{};
+    struct uo_packet_target packet_target{};
 
     /* mobiles in the world */
 
@@ -130,7 +130,12 @@ struct World {
     /* items in the world */
 
     struct list_head items;
-    unsigned item_attach_sequence;
+    unsigned item_attach_sequence = 0;
+
+    World() noexcept {
+        INIT_LIST_HEAD(&items);
+        INIT_LIST_HEAD(&mobiles);
+    }
 
     Item *FindItem(uint32_t serial) noexcept;
     Item &MakeItem(uint32_t serial) noexcept;

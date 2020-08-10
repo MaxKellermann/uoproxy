@@ -28,25 +28,14 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static void
-connection_free(Connection *c);
-
 int connection_new(Instance *instance,
                    int server_socket,
                    Connection **connectionp) {
     int ret;
 
-    Connection *c = (Connection *)calloc(1, sizeof(*c));
-    if (c == nullptr)
-        return ENOMEM;
-
-    c->instance = instance;
-    c->background = instance->config->background;
-    c->autoreconnect = instance->config->autoreconnect;
-
-    INIT_LIST_HEAD(&c->client.world.items);
-    INIT_LIST_HEAD(&c->client.world.mobiles);
-    INIT_LIST_HEAD(&c->servers);
+    auto *c = new Connection(*instance,
+                             instance->config->background,
+                             instance->config->autoreconnect);
 
     if (instance->config->client_version != nullptr) {
         ret = client_version_set(&c->client_version,
@@ -60,7 +49,7 @@ int connection_new(Instance *instance,
     auto *ls = connection_server_new(c, server_socket);
     if (ls == nullptr) {
         ret = errno;
-        connection_free(c);
+        delete c;
         return ret;
     }
 
@@ -71,24 +60,18 @@ int connection_new(Instance *instance,
     return 0;
 }
 
-static void
-connection_free(Connection *c)
+Connection::~Connection() noexcept
 {
+    connection_check(this);
+
     LinkedServer *ls, *n;
+    list_for_each_entry_safe(ls, n, &servers, siblings)
+        connection_server_dispose(this, ls);
 
-    connection_check(c);
+    connection_disconnect(this);
 
-    list_for_each_entry_safe(ls, n, &c->servers, siblings)
-        connection_server_dispose(c, ls);
-
-    connection_disconnect(c);
-
-    if (c->client.reconnecting)
-        event_del(&c->client.reconnect_event);
-
-    client_version_free(&c->client_version);
-
-    free(c);
+    if (client.reconnecting)
+        event_del(&client.reconnect_event);
 }
 
 #ifndef NDEBUG
@@ -111,5 +94,5 @@ void
 connection_delete(Connection *c)
 {
     list_del(&c->siblings);
-    connection_free(c);
+    delete c;
 }

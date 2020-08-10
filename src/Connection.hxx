@@ -34,20 +34,32 @@ struct Instance;
 struct Connection;
 
 struct StatefulClient {
-    bool reconnecting, version_requested;
+    bool reconnecting = false, version_requested = false;
     struct event reconnect_event;
 
-    struct uo_client *client;
+    struct uo_client *client = nullptr;
     struct event ping_event;
 
     struct uo_fragment_character_info characters[MAX_CHARACTERS];
-    unsigned num_characters;
+    unsigned num_characters = 0;
 
-    uint32_t supported_features_flags;
+    uint32_t supported_features_flags = 0;
 
-    unsigned char ping_request, ping_ack;
+    unsigned char ping_request = 0, ping_ack = 0;
 
     World world;
+
+    StatefulClient() noexcept {
+        evtimer_set(&ping_event, nullptr, nullptr);
+    }
+
+    ~StatefulClient() noexcept {
+        if (reconnecting)
+            event_del(&reconnect_event);
+    }
+
+    StatefulClient(const StatefulClient &) = delete;
+    StatefulClient &operator=(const StatefulClient &) = delete;
 };
 
 struct LinkedServer {
@@ -55,8 +67,8 @@ struct LinkedServer {
 
     Connection *connection;
 
-    struct uo_server *server;
-    bool welcome, attaching;
+    struct uo_server *server = nullptr;
+    bool welcome = false, attaching = false;
 
     struct client_version client_version;
 
@@ -72,6 +84,12 @@ struct LinkedServer {
     uint32_t auth_id; /**< unique identifier for this linked_server used in
                            redirect handling to locate the zombied
                            linked_server */
+
+    LinkedServer() = default;
+    ~LinkedServer() noexcept;
+
+    LinkedServer(const LinkedServer &) = delete;
+    LinkedServer &operator=(const LinkedServer &) = delete;
 };
 
 struct WalkState {
@@ -87,36 +105,36 @@ struct WalkState {
         uint8_t seq;
     };
 
-    LinkedServer *server;
+    LinkedServer *server = nullptr;
     Item queue[MAX_WALK_QUEUE];
-    unsigned queue_size;
-    uint8_t seq_next;
+    unsigned queue_size = 0;
+    uint8_t seq_next = 0;
 };
 
 struct Connection {
     /* linked list and parent */
     struct list_head siblings;
 
-    Instance *instance;
+    Instance *const instance;
 
     /* flags */
-    bool background;
+    const bool background;
 
-    bool in_game;
+    bool in_game = false;
 
     /* reconnect */
-    bool autoreconnect;
+    const bool autoreconnect;
 
     /* client stuff (= connection to server) */
 
     StatefulClient client;
 
     /* state */
-    char username[30], password[30];
+    char username[30]{}, password[30]{};
 
-    unsigned server_index;
+    unsigned server_index = 0;
 
-    unsigned character_index;
+    unsigned character_index = 0;
 
     WalkState walk;
 
@@ -127,6 +145,19 @@ struct Connection {
     /* sub-objects */
 
     struct list_head servers;
+
+    Connection(Instance &_instance, bool _background,
+               bool _autoreconnect)
+        :instance(&_instance), background(_background),
+         autoreconnect(_autoreconnect)
+    {
+        INIT_LIST_HEAD(&servers);
+    }
+
+    ~Connection() noexcept;
+
+    Connection(const Connection &) = delete;
+    Connection &operator=(const Connection &) = delete;
 };
 
 int connection_new(Instance *instance,

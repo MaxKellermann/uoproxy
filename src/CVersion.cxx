@@ -25,13 +25,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void
-client_version_free(struct client_version *cv)
+client_version::~client_version() noexcept
 {
-    if (cv->packet != nullptr)
-        free(cv->packet);
-    if (cv->seed != nullptr)
-        free(cv->seed);
+    free(packet);
+    free(seed);
 }
 
 static int

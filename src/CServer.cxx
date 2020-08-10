@@ -130,15 +130,13 @@ connection_server_new(Connection *c, int fd)
 {
     int ret;
 
-    LinkedServer *ls = (LinkedServer *)calloc(1, sizeof(*ls));
-    if (ls == nullptr)
-        return nullptr;
+    auto *ls = new LinkedServer();
 
     ret = uo_server_create(fd,
                            &server_handler, ls,
                            &ls->server);
     if (ret != 0) {
-        free(ls);
+        delete ls;
         errno = ret;
         return nullptr;
     }
@@ -172,15 +170,19 @@ connection_server_zombify(Connection *c, LinkedServer *ls)
     evtimer_add(&ls->zombie_timeout, &tv);
 }
 
+LinkedServer::~LinkedServer() noexcept
+{
+    if (is_zombie)
+        evtimer_del(&zombie_timeout);
+
+    if (server != nullptr)
+        uo_server_dispose(server);
+}
+
 void
 connection_server_dispose(Connection *c, LinkedServer *ls)
 {
     connection_server_remove(c, ls);
 
-    if (ls->server != nullptr)
-        uo_server_dispose(ls->server);
-
-    client_version_free(&ls->client_version);
-
-    free(ls);
+    delete ls;
 }
