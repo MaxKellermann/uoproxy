@@ -253,10 +253,6 @@ enum uo_packet_type_t {
 extern "C" {
 #endif
 
-extern const size_t packet_lengths[0x100];
-extern const size_t packet_lengths_6[0x100];
-extern const size_t packet_lengths_6014[0x100];
-
 #define PACKET_LENGTH_INVALID ((size_t)-1)
 
 /**

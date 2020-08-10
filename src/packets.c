@@ -21,7 +21,7 @@
 #include "packets.h"
 
 /* packet length table borrowed from wolfpack */
-const size_t packet_lengths[0x100] = {
+static const size_t packet_lengths[0x100] = {
     0x0068, 0x0005, 0x0007, 0x0000, 0x0002, 0x0005, 0x0005, 0x0007, // 0x00
     0x000e, 0x0005, 0x0007, 0x0007, 0x0000, 0x0003, 0x0000, 0x003d, // 0x08
     0x00d7, 0x0000, 0x0000, 0x000a, 0x0006, 0x0009, 0x0001, 0x0000, // 0x10
@@ -56,16 +56,16 @@ const size_t packet_lengths[0x100] = {
     0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, // 0xF8
 };
 
-const size_t packet_lengths_6[0x100] = {
+static const size_t packet_lengths_6[0x100] = {
     [PCK_Drop] = sizeof(struct uo_packet_drop_6),
     [PCK_ContainerUpdate] = sizeof(struct uo_packet_container_update_6),
 };
 
-const size_t packet_lengths_6014[0x100] = {
+static const size_t packet_lengths_6014[0x100] = {
     [PCK_SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014),
 };
 
-const size_t packet_lengths_7[0x100] = {
+static const size_t packet_lengths_7[0x100] = {
     [PCK_ContainerOpen] = sizeof(struct uo_packet_container_open_7),
     [PCK_CreateCharacter7] = sizeof(struct uo_packet_create_character_7),
 };
