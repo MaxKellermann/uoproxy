@@ -20,8 +20,35 @@
 
 #include "StatefulClient.hxx"
 #include "Client.hxx"
+#include "Log.hxx"
 
 #include <assert.h>
+
+static void
+ping_event_callback(int, short, void *ctx) noexcept
+{
+    auto client = (StatefulClient *)ctx;
+    struct uo_packet_ping ping;
+    struct timeval tv;
+
+    assert(client->client != nullptr);
+
+    ping.cmd = PCK_Ping;
+    ping.id = ++client->ping_request;
+
+    LogFormat(2, "sending ping\n");
+    uo_client_send(client->client, &ping, sizeof(ping));
+
+    /* schedule next ping */
+    tv.tv_sec = 30;
+    tv.tv_usec = 0;
+    event_add(&client->ping_event, &tv);
+}
+
+StatefulClient::StatefulClient() noexcept
+{
+    evtimer_set(&ping_event, ping_event_callback, this);
+}
 
 void
 StatefulClient::Disconnect() noexcept

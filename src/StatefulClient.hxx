@@ -46,9 +46,7 @@ struct StatefulClient {
 
     World world;
 
-    StatefulClient() noexcept {
-        evtimer_set(&ping_event, nullptr, nullptr);
-    }
+    StatefulClient() noexcept;
 
     ~StatefulClient() noexcept {
         if (reconnecting)

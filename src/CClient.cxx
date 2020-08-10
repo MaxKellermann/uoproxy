@@ -90,28 +90,6 @@ Connection::OnClientDisconnect() noexcept
     }
 }
 
-static void
-connection_ping_event_callback(int fd __attr_unused,
-                               short event __attr_unused, void *ctx)
-{
-    auto client = (StatefulClient *)ctx;
-    struct uo_packet_ping ping;
-    struct timeval tv;
-
-    assert(client->client != nullptr);
-
-    ping.cmd = PCK_Ping;
-    ping.id = ++client->ping_request;
-
-    LogFormat(2, "sending ping\n");
-    uo_client_send(client->client, &ping, sizeof(ping));
-
-    /* schedule next ping */
-    tv.tv_sec = 30;
-    tv.tv_usec = 0;
-    event_add(&client->ping_event, &tv);
-}
-
 int
 connection_client_connect(Connection *c,
                           const struct sockaddr *server_address,
@@ -174,8 +152,6 @@ connection_client_connect(Connection *c,
 
     tv.tv_sec = 30;
     tv.tv_usec = 0;
-    evtimer_set(&c->client.ping_event, connection_ping_event_callback,
-                &c->client);
     evtimer_add(&c->client.ping_event, &tv);
 
     return 0;
