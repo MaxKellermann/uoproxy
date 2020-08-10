@@ -259,10 +259,6 @@ uo_client_create(int fd, uint32_t seed,
 {
     int ret;
 
-    ret = socket_set_nonblock(fd, 1);
-    if (ret < 0)
-        return errno;
-
     ret = socket_set_nodelay(fd, 1);
     if (ret < 0)
         return errno;

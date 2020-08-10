@@ -21,9 +21,6 @@
 #ifndef __SOCKET_UTIL_H
 #define __SOCKET_UTIL_H
 
-int
-socket_set_nonblock(int fd, int value);
-
 #ifdef __linux
 
 int

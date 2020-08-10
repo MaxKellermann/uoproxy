@@ -231,8 +231,7 @@ uo_server_create(int sockfd,
                  UO::ServerHandler &handler,
                  UO::Server **serverp)
 {
-    if (socket_set_nonblock(sockfd, 1) < 0 ||
-        socket_set_nodelay(sockfd, 1) < 0)
+    if (socket_set_nodelay(sockfd, 1) < 0)
         return errno;
 
     auto *server = new UO::Server(handler);

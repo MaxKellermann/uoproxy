@@ -20,9 +20,6 @@
 
 #include "SocketUtil.hxx"
 
-#include <assert.h>
-#include <fcntl.h>
-
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -34,30 +31,6 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #endif
-
-int
-socket_set_nonblock(int fd, int value)
-{
-#ifdef WIN32
-    u_long val = value;
-    return ioctlsocket(fd, FIONBIO, &val);
-#else
-    int ret;
-
-    assert(fd >= 0);
-
-    ret = fcntl(fd, F_GETFL, 0);
-    if (ret < 0)
-        return ret;
-
-    if (value)
-        ret |= O_NONBLOCK;
-    else
-        ret &= ~O_NONBLOCK;
-
-    return fcntl(fd, F_SETFL, ret);
-#endif
-}
 
 #ifdef __linux
 
