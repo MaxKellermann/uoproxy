@@ -580,7 +580,7 @@ handle_play_server(LinkedServer *ls,
             c2->Add(*ls);
         }  else {
             /* attach it to the new connection and begin playing right away */
-            c2->Add(*ls);
+            attach_after_play_server(c2, ls);
         }
 
         retaction = PacketAction::DROP;
