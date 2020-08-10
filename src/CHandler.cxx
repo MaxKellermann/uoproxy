@@ -67,7 +67,7 @@ static char *simple_unicode_to_ascii(char *dest, const uint16_t *src,
 }
 
 static packet_action_t
-handle_talk(struct linked_server *ls,
+handle_talk(LinkedServer *ls,
             const char *text)
 {
     /* the percent sign introduces an uoproxy command */
@@ -80,7 +80,7 @@ handle_talk(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_create_character(struct linked_server *ls,
+handle_create_character(LinkedServer *ls,
                         const void *data, size_t length)
 {
     auto p = (const struct uo_packet_create_character *)data;
@@ -96,7 +96,7 @@ handle_create_character(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_walk(struct linked_server *ls,
+handle_walk(LinkedServer *ls,
             const void *data, size_t length)
 {
     auto p = (const struct uo_packet_walk *)data;
@@ -130,7 +130,7 @@ handle_walk(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_talk_ascii(struct linked_server *ls,
+handle_talk_ascii(LinkedServer *ls,
                   const void *data, size_t length)
 {
     auto p = (const struct uo_packet_talk_ascii *)data;
@@ -146,7 +146,7 @@ handle_talk_ascii(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_use(struct linked_server *ls,
+handle_use(LinkedServer *ls,
            const void *data, size_t length)
 {
     auto p = (const struct uo_packet_use *)data;
@@ -187,7 +187,7 @@ handle_use(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_action(struct linked_server *ls,
+handle_action(LinkedServer *ls,
               const void *data __attr_unused, size_t length __attr_unused)
 {
     if (ls->connection->client.reconnecting) {
@@ -200,7 +200,7 @@ handle_action(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_lift_request(struct linked_server *ls,
+handle_lift_request(LinkedServer *ls,
                     const void *data, size_t length)
 {
     auto p = (const struct uo_packet_lift_request *)data;
@@ -223,10 +223,10 @@ handle_lift_request(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_drop(struct linked_server *ls,
+handle_drop(LinkedServer *ls,
             const void *data, size_t length)
 {
-    struct stateful_client *client = &ls->connection->client;
+    auto *client = &ls->connection->client;
 
     if (!ls->connection->in_game || client->reconnecting ||
         client->client == nullptr)
@@ -260,7 +260,7 @@ handle_drop(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_resynchronize(struct linked_server *ls,
+handle_resynchronize(LinkedServer *ls,
                      const void *data __attr_unused,
                      size_t length __attr_unused)
 {
@@ -272,7 +272,7 @@ handle_resynchronize(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_target(struct linked_server *ls,
+handle_target(LinkedServer *ls,
               const void *data, size_t length)
 {
     auto p = (const struct uo_packet_target *)data;
@@ -298,7 +298,7 @@ handle_target(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_ping(struct linked_server *ls,
+handle_ping(LinkedServer *ls,
             const void *data, size_t length)
 {
     uo_server_send(ls->server, data, length);
@@ -306,11 +306,11 @@ handle_ping(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_account_login(struct linked_server *ls,
+handle_account_login(LinkedServer *ls,
                      const void *data, size_t length)
 {
     auto p = (const struct uo_packet_account_login *)data;
-    struct connection *c = ls->connection;
+    Connection *c = ls->connection;
     const Config *config = c->instance->config;
 
     assert(length == sizeof(*p));
@@ -333,7 +333,7 @@ handle_account_login(struct linked_server *ls,
     memcpy(c->username, p->username, sizeof(c->username));
     memcpy(c->password, p->password, sizeof(c->password));
 
-    struct connection *other = find_attach_connection(c);
+    Connection *other = find_attach_connection(c);
     if (other != nullptr) {
         /* attaching to an existing connection, fake the server
            list */
@@ -430,7 +430,7 @@ handle_account_login(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_game_login(struct linked_server *ls,
+handle_game_login(LinkedServer *ls,
                   const void *data, size_t length)
 {
     auto p = (const struct uo_packet_game_login *)data;
@@ -440,7 +440,7 @@ handle_game_login(struct linked_server *ls,
     assert(sizeof(p->password) == sizeof(ls->connection->password));
 
     if (ls->connection->instance->config->razor_workaround) {
-        struct connection *c = ls->connection;
+        Connection *c = ls->connection;
         bool was_attach = false;
 
         /* I have observed the Razor client ignoring the redirect if the IP
@@ -451,9 +451,9 @@ handle_game_login(struct linked_server *ls,
            So we apply the zombie-lookup only if the remote UO client actually
            did bother to reconnet to us. */
         if (!ls->connection->client.client) {
-            struct connection *reuse_conn = nullptr;
+            Connection *reuse_conn = nullptr;
             Instance *instance = ls->connection->instance;
-            struct linked_server *ls2;
+            LinkedServer *ls2;
 
             /* this should only happen in redirect mode.. so look for the
                correct zombie so that we can re-use its connection to the UO
@@ -525,7 +525,7 @@ handle_game_login(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_play_character(struct linked_server *ls,
+handle_play_character(LinkedServer *ls,
                       const void *data, size_t length)
 {
     auto p = (const struct uo_packet_play_character *)data;
@@ -538,7 +538,7 @@ handle_play_character(struct linked_server *ls,
 }
 
 static void
-redirect_to_self(struct linked_server *ls, struct connection *c __attr_unused)
+redirect_to_self(LinkedServer *ls, Connection *c __attr_unused)
 {
     struct uo_packet_relay relay;
     static uint32_t authid = 0;
@@ -558,11 +558,11 @@ redirect_to_self(struct linked_server *ls, struct connection *c __attr_unused)
 }
 
 static packet_action_t
-handle_play_server(struct linked_server *ls,
+handle_play_server(LinkedServer *ls,
                    const void *data, size_t length)
 {
     auto p = (const struct uo_packet_play_server *)data;
-    struct connection *c = ls->connection, *c2;
+    Connection *c = ls->connection, *c2;
     packet_action_t retaction = PA_DROP;
 
     assert(length == sizeof(*p));
@@ -649,7 +649,7 @@ handle_play_server(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_spy(struct linked_server *ls,
+handle_spy(LinkedServer *ls,
            const void *data, size_t length)
 {
     (void)data;
@@ -662,7 +662,7 @@ handle_spy(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_talk_unicode(struct linked_server *ls,
+handle_talk_unicode(LinkedServer *ls,
                     const void *data, size_t length)
 {
     auto p = (const struct uo_packet_talk_unicode *)data;
@@ -703,7 +703,7 @@ handle_talk_unicode(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_gump_response(struct linked_server *ls,
+handle_gump_response(LinkedServer *ls,
                      const void *data, size_t length)
 {
     auto p = (const struct uo_packet_gump_response *)data;
@@ -727,10 +727,10 @@ handle_gump_response(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_client_version(struct linked_server *ls,
+handle_client_version(LinkedServer *ls,
                       const void *data, size_t length)
 {
-    struct connection *c = ls->connection;
+    Connection *c = ls->connection;
     auto p = (const struct uo_packet_client_version *)data;
 
     if (!client_version_defined(&ls->client_version)) {
@@ -773,7 +773,7 @@ handle_client_version(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_extended(struct linked_server *ls __attr_unused,
+handle_extended(LinkedServer *ls __attr_unused,
                 const void *data, size_t length)
 {
     auto p = (const struct uo_packet_extended *)data;
@@ -787,7 +787,7 @@ handle_extended(struct linked_server *ls __attr_unused,
 }
 
 static packet_action_t
-handle_hardware(struct linked_server *ls,
+handle_hardware(LinkedServer *ls,
                 const void *data __attr_unused, size_t length __attr_unused)
 {
     if (ls->connection->instance->config->antispy)
@@ -797,7 +797,7 @@ handle_hardware(struct linked_server *ls,
 }
 
 static packet_action_t
-handle_seed(struct linked_server *ls,
+handle_seed(LinkedServer *ls,
             const void *data, size_t length __attr_unused)
 {
     auto p = (const struct uo_packet_seed *)data;

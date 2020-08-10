@@ -42,7 +42,7 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
     struct sockaddr_storage sa;
     socklen_t sa_len;
     int remote_fd, ret;
-    struct connection *c;
+    Connection *c;
 
     sa_len = sizeof(sa);
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);

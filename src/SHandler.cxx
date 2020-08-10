@@ -44,8 +44,8 @@
 #include <netdb.h>
 #endif
 
-static void welcome(struct connection *c) {
-    struct linked_server *ls;
+static void welcome(Connection *c) {
+    LinkedServer *ls;
 
     list_for_each_entry(ls, &c->servers, siblings) {
         if (!ls->attaching && !ls->is_zombie && !ls->welcome) {
@@ -97,7 +97,7 @@ static void send_antispy(struct uo_client *client) {
     uo_client_send(client, &p, sizeof(p));
 }
 
-static packet_action_t handle_mobile_status(struct connection *c,
+static packet_action_t handle_mobile_status(Connection *c,
                                             const void *data, size_t length) {
     auto p = (const struct uo_packet_mobile_status *)data;
 
@@ -107,7 +107,7 @@ static packet_action_t handle_mobile_status(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_world_item(struct connection *c,
+static packet_action_t handle_world_item(Connection *c,
                                          const void *data, size_t length) {
     auto p = (const struct uo_packet_world_item *)data;
 
@@ -117,7 +117,7 @@ static packet_action_t handle_world_item(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_start(struct connection *c,
+static packet_action_t handle_start(Connection *c,
                                     const void *data, size_t length) {
     auto p = (const struct uo_packet_start *)data;
 
@@ -135,7 +135,7 @@ static packet_action_t handle_start(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_speak_ascii(struct connection *c,
+static packet_action_t handle_speak_ascii(Connection *c,
                                           const void *data, size_t length) {
     (void)data;
     (void)length;
@@ -145,7 +145,7 @@ static packet_action_t handle_speak_ascii(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_delete(struct connection *c,
+static packet_action_t handle_delete(Connection *c,
                                      const void *data, size_t length) {
     auto p = (const struct uo_packet_delete *)data;
 
@@ -155,7 +155,7 @@ static packet_action_t handle_delete(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_mobile_update(struct connection *c,
+static packet_action_t handle_mobile_update(Connection *c,
                                             const void *data, size_t length) {
     auto p = (const struct uo_packet_mobile_update *)data;
 
@@ -165,7 +165,7 @@ static packet_action_t handle_mobile_update(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_walk_cancel(struct connection *c,
+static packet_action_t handle_walk_cancel(Connection *c,
                                           const void *data, size_t length) {
     auto p = (const struct uo_packet_walk_cancel *)data;
 
@@ -179,7 +179,7 @@ static packet_action_t handle_walk_cancel(struct connection *c,
     return PA_DROP;
 }
 
-static packet_action_t handle_walk_ack(struct connection *c,
+static packet_action_t handle_walk_ack(Connection *c,
                                        const void *data, size_t length) {
     auto p = (const struct uo_packet_walk_ack *)data;
 
@@ -192,7 +192,7 @@ static packet_action_t handle_walk_ack(struct connection *c,
     return PA_DROP;
 }
 
-static packet_action_t handle_container_open(struct connection *c,
+static packet_action_t handle_container_open(Connection *c,
                                              const void *data, size_t length) {
     if (client_version_defined(&c->client_version) &&
         c->client_version.protocol >= PROTOCOL_7) {
@@ -224,7 +224,7 @@ static packet_action_t handle_container_open(struct connection *c,
     }
 }
 
-static packet_action_t handle_container_update(struct connection *c,
+static packet_action_t handle_container_update(Connection *c,
                                                const void *data, size_t length) {
     if (c->client_version.protocol < PROTOCOL_6) {
         auto p = (const struct uo_packet_container_update *)data;
@@ -257,7 +257,7 @@ static packet_action_t handle_container_update(struct connection *c,
     return PA_DROP;
 }
 
-static packet_action_t handle_equip(struct connection *c,
+static packet_action_t handle_equip(Connection *c,
                                     const void *data, size_t length) {
     auto p = (const struct uo_packet_equip *)data;
 
@@ -268,7 +268,7 @@ static packet_action_t handle_equip(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_container_content(struct connection *c,
+static packet_action_t handle_container_content(Connection *c,
                                                 const void *data, size_t length) {
     if (packet_verify_container_content((const uo_packet_container_content *)data, length)) {
         /* protocol v5 */
@@ -314,7 +314,7 @@ static packet_action_t handle_container_content(struct connection *c,
     return PA_DROP;
 }
 
-static packet_action_t handle_personal_light_level(struct connection *c,
+static packet_action_t handle_personal_light_level(Connection *c,
                                                    const void *data, size_t length) {
     auto p = (const struct uo_packet_personal_light_level *)data;
 
@@ -329,7 +329,7 @@ static packet_action_t handle_personal_light_level(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_global_light_level(struct connection *c,
+static packet_action_t handle_global_light_level(Connection *c,
                                                  const void *data, size_t length) {
     auto p = (const struct uo_packet_global_light_level *)data;
 
@@ -343,7 +343,7 @@ static packet_action_t handle_global_light_level(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_popup_message(struct connection *c,
+static packet_action_t handle_popup_message(Connection *c,
                                             const void *data, size_t length) {
     auto p = (const struct uo_packet_popup_message *)data;
 
@@ -363,7 +363,7 @@ static packet_action_t handle_popup_message(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_login_complete(struct connection *c,
+static packet_action_t handle_login_complete(Connection *c,
                                              const void *data, size_t length) {
     (void)data;
     (void)length;
@@ -374,7 +374,7 @@ static packet_action_t handle_login_complete(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_target(struct connection *c,
+static packet_action_t handle_target(Connection *c,
                                      const void *data, size_t length) {
     auto p = (const struct uo_packet_target *)data;
 
@@ -385,7 +385,7 @@ static packet_action_t handle_target(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_war_mode(struct connection *c,
+static packet_action_t handle_war_mode(Connection *c,
                                        const void *data, size_t length) {
     auto p = (const struct uo_packet_war_mode *)data;
 
@@ -396,7 +396,7 @@ static packet_action_t handle_war_mode(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_ping(struct connection *c,
+static packet_action_t handle_ping(Connection *c,
                                    const void *data, size_t length) {
     auto p = (const struct uo_packet_ping *)data;
 
@@ -407,7 +407,7 @@ static packet_action_t handle_ping(struct connection *c,
     return PA_DROP;
 }
 
-static packet_action_t handle_zone_change(struct connection *c,
+static packet_action_t handle_zone_change(Connection *c,
                                           const void *data, size_t length) {
     auto p = (const struct uo_packet_zone_change *)data;
 
@@ -417,7 +417,7 @@ static packet_action_t handle_zone_change(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_mobile_moving(struct connection *c,
+static packet_action_t handle_mobile_moving(Connection *c,
                                             const void *data, size_t length) {
     auto p = (const struct uo_packet_mobile_moving *)data;
 
@@ -427,7 +427,7 @@ static packet_action_t handle_mobile_moving(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_mobile_incoming(struct connection *c,
+static packet_action_t handle_mobile_incoming(Connection *c,
                                               const void *data, size_t length) {
     auto p = (const struct uo_packet_mobile_incoming *)data;
 
@@ -438,7 +438,7 @@ static packet_action_t handle_mobile_incoming(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_char_list(struct connection *c,
+static packet_action_t handle_char_list(Connection *c,
                                         const void *data, size_t length) {
     auto p = (const struct uo_packet_simple_character_list *)data;
     const void *data_end = ((const char*)data) + length;
@@ -480,7 +480,7 @@ static packet_action_t handle_char_list(struct connection *c,
         return PA_DROP;
     } else if (c->instance->config->razor_workaround) {
         /* razor workaround -- we don't send the char list right away necessarily until they sent us GameLogin.. */
-        struct linked_server *ls;
+        LinkedServer *ls;
         list_for_each_entry(ls, &c->servers, siblings) {
             if (ls->got_gamelogin && !ls->attaching && !ls->is_zombie)
                 uo_server_send(ls->server, data, length);
@@ -499,7 +499,7 @@ static packet_action_t handle_char_list(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_account_login_reject(struct connection *c,
+static packet_action_t handle_account_login_reject(Connection *c,
                                                    const void *data, size_t length) {
     auto p = (const struct uo_packet_account_login_reject *)data;
 
@@ -519,7 +519,7 @@ static packet_action_t handle_account_login_reject(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_relay(struct connection *c,
+static packet_action_t handle_relay(Connection *c,
                                     const void *data, size_t length) {
     /* this packet tells the UO client where to connect; uoproxy hides
        this packet from the client, and only internally connects to
@@ -583,7 +583,7 @@ static packet_action_t handle_relay(struct connection *c,
     return PA_DELETED;
 }
 
-static packet_action_t handle_server_list(struct connection *c,
+static packet_action_t handle_server_list(Connection *c,
                                           const void *data, size_t length) {
     /* this packet tells the UO client where to connect; what
        we do here is replace the server IP with our own one */
@@ -632,7 +632,7 @@ static packet_action_t handle_server_list(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_speak_unicode(struct connection *c,
+static packet_action_t handle_speak_unicode(Connection *c,
                                             const void *data, size_t length) {
     (void)data;
     (void)length;
@@ -642,7 +642,7 @@ static packet_action_t handle_speak_unicode(struct connection *c,
     return PA_ACCEPT;
 }
 
-static packet_action_t handle_supported_features(struct connection *c,
+static packet_action_t handle_supported_features(Connection *c,
                                                  const void *data, size_t length) {
     if (c->client_version.protocol >= PROTOCOL_6_0_14) {
         auto p = (const struct uo_packet_supported_features_6014 *)data;
@@ -671,7 +671,7 @@ static packet_action_t handle_supported_features(struct connection *c,
     return PA_DROP;
 }
 
-static packet_action_t handle_season(struct connection *c,
+static packet_action_t handle_season(Connection *c,
                                      const void *data, size_t length) {
     auto p = (const struct uo_packet_season *)data;
 
@@ -683,7 +683,7 @@ static packet_action_t handle_season(struct connection *c,
 }
 
 static packet_action_t
-handle_client_version(struct connection *c,
+handle_client_version(Connection *c,
                       const void *data __attr_unused,
                       size_t length __attr_unused) {
     if (client_version_defined(&c->client_version)) {
@@ -703,7 +703,7 @@ handle_client_version(struct connection *c,
     }
 }
 
-static packet_action_t handle_extended(struct connection *c,
+static packet_action_t handle_extended(Connection *c,
                                        const void *data, size_t length) {
     auto p = (const struct uo_packet_extended *)data;
 
@@ -729,7 +729,7 @@ static packet_action_t handle_extended(struct connection *c,
 }
 
 static packet_action_t
-handle_world_item_7(struct connection *c,
+handle_world_item_7(Connection *c,
                     const void *data, size_t length)
 {
     auto p = (const struct uo_packet_world_item_7 *)data;
@@ -747,7 +747,7 @@ handle_world_item_7(struct connection *c,
 }
 
 static packet_action_t
-handle_protocol_extension(struct connection *c,
+handle_protocol_extension(Connection *c,
                           const void *data, size_t length)
 {
     auto p = (const struct uo_packet_protocol_extension *)data;

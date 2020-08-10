@@ -22,7 +22,7 @@
 
 packet_action_t
 handle_packet_from_server(struct client_packet_binding *bindings,
-                          struct connection *c,
+                          Connection *c,
                           const void *data, size_t length)
 {
     const unsigned char cmd
@@ -38,7 +38,7 @@ handle_packet_from_server(struct client_packet_binding *bindings,
 
 packet_action_t
 handle_packet_from_client(struct server_packet_binding *bindings,
-                          struct linked_server *ls,
+                          LinkedServer *ls,
                           const void *data, size_t length)
 {
     const unsigned char cmd

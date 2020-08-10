@@ -27,8 +27,10 @@
 #include <assert.h>
 #include <string.h>
 
-struct connection *find_attach_connection(struct connection *c) {
-    struct connection *c2;
+Connection *
+find_attach_connection(Connection *c)
+{
+    Connection *c2;
 
     list_for_each_entry(c2, &c->instance->connections, siblings)
         if (c2 != c && c2->in_game &&
@@ -43,7 +45,7 @@ struct connection *find_attach_connection(struct connection *c) {
 }
 
 static void
-attach_item(struct linked_server *ls,
+attach_item(LinkedServer *ls,
             Item *item)
 {
     World *world = &ls->connection->client.world;
@@ -111,7 +113,7 @@ attach_item(struct linked_server *ls,
 }
 
 void
-attach_send_world(struct linked_server *ls)
+attach_send_world(LinkedServer *ls)
 {
     World *world = &ls->connection->client.world;
     struct uo_packet_login_complete login_complete;
@@ -205,7 +207,7 @@ attach_send_world(struct linked_server *ls)
 }
 
 void
-attach_after_play_server(struct connection *c, struct linked_server *ls)
+attach_after_play_server(Connection *c, LinkedServer *ls)
 {
     assert(c->in_game);
     connection_check(c);

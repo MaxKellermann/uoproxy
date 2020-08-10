@@ -22,16 +22,16 @@
 #include "Server.hxx"
 
 static void
-connection_delete_items(struct connection *c)
+connection_delete_items(Connection *c)
 {
     auto &world = c->client.world;
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     Item *i, *n;
-    struct linked_server *ls;
 
     list_for_each_entry_safe(i, n, &world.items, siblings) {
         p.serial = i->serial;
 
+        LinkedServer *ls;
         list_for_each_entry(ls, &c->servers, siblings) {
             if (!ls->attaching && !ls->is_zombie)
                 uo_server_send(ls->server, &p, sizeof(p));
@@ -42,16 +42,16 @@ connection_delete_items(struct connection *c)
 }
 
 static void
-connection_delete_mobiles(struct connection *c)
+connection_delete_mobiles(Connection *c)
 {
     auto &world = c->client.world;
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     Mobile *m, *n;
-    struct linked_server *ls;
 
     list_for_each_entry_safe(m, n, &world.mobiles, siblings) {
         p.serial = m->serial;
 
+        LinkedServer *ls;
         list_for_each_entry(ls, &c->servers, siblings) {
             if (!ls->attaching && !ls->is_zombie)
                 uo_server_send(ls->server, &p, sizeof(p));
@@ -62,7 +62,7 @@ connection_delete_mobiles(struct connection *c)
 }
 
 void
-connection_world_clear(struct connection *c)
+connection_world_clear(Connection *c)
 {
     connection_delete_items(c);
     connection_delete_mobiles(c);

@@ -23,8 +23,8 @@
 
 #include <stddef.h>
 
-struct connection;
-struct linked_server;
+struct Connection;
+struct LinkedServer;
 
 /** what to do with the packet? */
 typedef enum {
@@ -43,13 +43,13 @@ typedef enum {
 
 struct client_packet_binding {
     unsigned char cmd;
-    packet_action_t (*handler)(struct connection *c,
+    packet_action_t (*handler)(Connection *c,
                                const void *data, size_t length);
 };
 
 struct server_packet_binding {
     unsigned char cmd;
-    packet_action_t (*handler)(struct linked_server *ls,
+    packet_action_t (*handler)(LinkedServer *ls,
                                const void *data, size_t length);
 };
 
@@ -58,12 +58,12 @@ extern struct server_packet_binding client_packet_bindings[];
 
 packet_action_t
 handle_packet_from_server(struct client_packet_binding *bindings,
-                          struct connection *c,
+                          Connection *c,
                           const void *data, size_t length);
 
 packet_action_t
 handle_packet_from_client(struct server_packet_binding *bindings,
-                          struct linked_server *ls,
+                          LinkedServer *ls,
                           const void *data, size_t length);
 
 #endif

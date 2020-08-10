@@ -42,9 +42,8 @@
 static int
 client_packet(const void *data, size_t length, void *ctx)
 {
-    auto c = (struct connection *)ctx;
+    auto c = (Connection *)ctx;
     packet_action_t action;
-    struct linked_server *ls;
 
     assert(c->client.client != nullptr);
 
@@ -52,10 +51,13 @@ client_packet(const void *data, size_t length, void *ctx)
                                        c, data, length);
     switch (action) {
     case PA_ACCEPT:
-        if (!c->client.reconnecting)
+        if (!c->client.reconnecting) {
+            LinkedServer *ls;
             list_for_each_entry(ls, &c->servers, siblings)
                 if (!ls->attaching && !ls->is_zombie)
                     uo_server_send(ls->server, data, length);
+        }
+
         break;
 
     case PA_DROP:
@@ -85,7 +87,7 @@ client_packet(const void *data, size_t length, void *ctx)
 static void
 client_free(void *ctx)
 {
-    auto c = (struct connection *)ctx;
+    auto c = (Connection *)ctx;
 
     assert(c->client.client != nullptr);
 
@@ -109,7 +111,7 @@ static void
 connection_ping_event_callback(int fd __attr_unused,
                                short event __attr_unused, void *ctx)
 {
-    auto client = (struct stateful_client *)ctx;
+    auto client = (StatefulClient *)ctx;
     struct uo_packet_ping ping;
     struct timeval tv;
 
@@ -128,7 +130,7 @@ connection_ping_event_callback(int fd __attr_unused,
 }
 
 int
-connection_client_connect(struct connection *c,
+connection_client_connect(Connection *c,
                           const struct sockaddr *server_address,
                           size_t server_address_length,
                           uint32_t seed)
@@ -203,7 +205,7 @@ connection_client_connect(struct connection *c,
 }
 
 void
-connection_client_disconnect(struct stateful_client *client)
+connection_client_disconnect(StatefulClient *client)
 {
     assert(client->client != nullptr);
 

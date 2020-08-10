@@ -24,8 +24,10 @@
 #include <assert.h>
 
 /** broadcast a message to all clients */
-void connection_speak_console(struct connection *c, const char *msg) {
-    struct linked_server *ls;
+void
+connection_speak_console(Connection *c, const char *msg)
+{
+    LinkedServer *ls;
 
     list_for_each_entry(ls, &c->servers, siblings) {
         if (!ls->attaching && !ls->is_zombie) {
@@ -37,20 +39,22 @@ void connection_speak_console(struct connection *c, const char *msg) {
 }
 
 void
-connection_broadcast_servers(struct connection *c,
+connection_broadcast_servers(Connection *c,
                              const void *data, size_t length)
 {
-    struct linked_server *ls;
+    LinkedServer *ls;
 
     list_for_each_entry(ls, &c->servers, siblings)
         if (!ls->attaching && !ls->is_zombie)
             uo_server_send(ls->server, data, length);
 }
 
-void connection_broadcast_servers_except(struct connection *c,
-                                         const void *data, size_t length,
-                                         struct uo_server *except) {
-    struct linked_server *ls;
+void
+connection_broadcast_servers_except(Connection *c,
+                                    const void *data, size_t length,
+                                    struct uo_server *except)
+{
+    LinkedServer *ls;
 
     assert(except != nullptr);
 
@@ -60,19 +64,18 @@ void connection_broadcast_servers_except(struct connection *c,
 }
 
 void
-connection_broadcast_divert(struct connection *c,
+connection_broadcast_divert(Connection *c,
                             enum protocol_version new_protocol,
                             const void *old_data, size_t old_length,
                             const void *new_data, size_t new_length)
 {
-    struct linked_server *ls;
-
     assert(new_protocol > PROTOCOL_UNKNOWN);
     assert(old_data != nullptr);
     assert(old_length > 0);
     assert(new_data != nullptr);
     assert(new_length > 0);
 
+    LinkedServer *ls;
     list_for_each_entry(ls, &c->servers, siblings) {
         if (!ls->attaching && !ls->is_zombie) {
             if (ls->client_version.protocol >= new_protocol)

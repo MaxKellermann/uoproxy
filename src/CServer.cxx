@@ -31,8 +31,8 @@
 static int
 server_packet(const void *data, size_t length, void *ctx)
 {
-    auto ls = (struct linked_server *)ctx;
-    struct connection *c = ls->connection;
+    auto ls = (LinkedServer *)ctx;
+    Connection *c = ls->connection;
     packet_action_t action;
 
     assert(c != nullptr);
@@ -75,8 +75,8 @@ server_packet(const void *data, size_t length, void *ctx)
 static void
 server_free(void *ctx)
 {
-    auto ls = (struct linked_server *)ctx;
-    struct connection *c = ls->connection;
+    auto ls = (LinkedServer *)ctx;
+    Connection *c = ls->connection;
 
     assert(c != nullptr);
 
@@ -104,7 +104,7 @@ static const struct uo_server_handler server_handler = {
 };
 
 void
-connection_server_add(struct connection *c, struct linked_server *ls)
+connection_server_add(Connection *c, LinkedServer *ls)
 {
     assert(ls->connection == nullptr);
 
@@ -113,7 +113,7 @@ connection_server_add(struct connection *c, struct linked_server *ls)
 }
 
 void
-connection_server_remove(struct connection *c, struct linked_server *ls)
+connection_server_remove(Connection *c, LinkedServer *ls)
 {
     connection_check(c);
     assert(ls != nullptr);
@@ -125,12 +125,12 @@ connection_server_remove(struct connection *c, struct linked_server *ls)
     list_del(&ls->siblings);
 }
 
-struct linked_server *
-connection_server_new(struct connection *c, int fd)
+LinkedServer *
+connection_server_new(Connection *c, int fd)
 {
     int ret;
 
-    struct linked_server *ls = (struct linked_server *)calloc(1, sizeof(*ls));
+    LinkedServer *ls = (LinkedServer *)calloc(1, sizeof(*ls));
     if (ls == nullptr)
         return nullptr;
 
@@ -152,13 +152,13 @@ zombie_timeout_event_callback(int fd __attr_unused,
                               short event __attr_unused,
                               void *ctx)
 {
-    struct linked_server *ls = (struct linked_server *)ctx;
+    LinkedServer *ls = (LinkedServer *)ctx;
     ls->expecting_reconnect = false;
     server_free(ls);
 }
 
 void
-connection_server_zombify(struct connection *c, struct linked_server *ls)
+connection_server_zombify(Connection *c, LinkedServer *ls)
 {
     struct timeval tv;
     connection_check(c);
@@ -173,7 +173,7 @@ connection_server_zombify(struct connection *c, struct linked_server *ls)
 }
 
 void
-connection_server_dispose(struct connection *c, struct linked_server *ls)
+connection_server_dispose(Connection *c, LinkedServer *ls)
 {
     connection_server_remove(c, ls);
 

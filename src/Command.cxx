@@ -27,9 +27,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void change_character(struct connection *c,
-                             struct linked_server *server,
-                             unsigned idx) {
+static void
+change_character(Connection *c,
+                 LinkedServer *server,
+                 unsigned idx)
+{
     if (idx >= MAX_CHARACTERS || c->client.characters[idx].name[0] == 0) {
         uo_server_speak_console(server->server,
                                 "uoproxy: no character in slot");
@@ -44,9 +46,9 @@ static void change_character(struct connection *c,
 }
 
 void
-connection_handle_command(struct linked_server *server, const char *command)
+connection_handle_command(LinkedServer *server, const char *command)
 {
-    struct connection *c = server->connection;
+    Connection *c = server->connection;
 
     connection_check(c);
 

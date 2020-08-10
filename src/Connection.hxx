@@ -31,8 +31,9 @@
 #define MAX_WALK_QUEUE 4
 
 struct Instance;
+struct Connection;
 
-struct stateful_client {
+struct StatefulClient {
     bool reconnecting, version_requested;
     struct event reconnect_event;
 
@@ -49,10 +50,10 @@ struct stateful_client {
     World world;
 };
 
-struct linked_server {
+struct LinkedServer {
     struct list_head siblings;
 
-    struct connection *connection;
+    Connection *connection;
 
     struct uo_server *server;
     bool welcome, attaching;
@@ -73,26 +74,26 @@ struct linked_server {
                            linked_server */
 };
 
-struct connection_walk_item {
-    /**
-     * The walk packet sent by the client.
-     */
-    struct uo_packet_walk packet;
+struct WalkState {
+    struct Item {
+        /**
+         * The walk packet sent by the client.
+         */
+        struct uo_packet_walk packet;
 
-    /**
-     * The walk sequence number which was sent to the server.
-     */
-    uint8_t seq;
-};
+        /**
+         * The walk sequence number which was sent to the server.
+         */
+        uint8_t seq;
+    };
 
-struct connection_walk_state {
-    struct linked_server *server;
-    struct connection_walk_item queue[MAX_WALK_QUEUE];
+    LinkedServer *server;
+    Item queue[MAX_WALK_QUEUE];
     unsigned queue_size;
     uint8_t seq_next;
 };
 
-struct connection {
+struct Connection {
     /* linked list and parent */
     struct list_head siblings;
 
@@ -108,7 +109,7 @@ struct connection {
 
     /* client stuff (= connection to server) */
 
-    struct stateful_client client;
+    StatefulClient client;
 
     /* state */
     char username[30], password[30];
@@ -117,7 +118,7 @@ struct connection {
 
     unsigned character_index;
 
-    struct connection_walk_state walk;
+    WalkState walk;
 
     /* client version */
 
@@ -130,32 +131,32 @@ struct connection {
 
 int connection_new(Instance *instance,
                    int server_socket,
-                   struct connection **connectionp);
+                   Connection **connectionp);
 
 #ifdef NDEBUG
 static inline void
-connection_check(const struct connection *c)
+connection_check(const Connection *c)
 {
     (void)c;
 }
 #else
-void connection_check(const struct connection *c);
+void connection_check(const Connection *c);
 #endif
 
-void connection_delete(struct connection *c);
+void connection_delete(Connection *c);
 
-void connection_speak_console(struct connection *c, const char *msg);
+void connection_speak_console(Connection *c, const char *msg);
 
 void
-connection_broadcast_servers(struct connection *c,
+connection_broadcast_servers(Connection *c,
                              const void *data, size_t length);
 
-void connection_broadcast_servers_except(struct connection *c,
+void connection_broadcast_servers_except(Connection *c,
                                          const void *data, size_t length,
                                          struct uo_server *except);
 
 void
-connection_broadcast_divert(struct connection *c,
+connection_broadcast_divert(Connection *c,
                             enum protocol_version new_protocol,
                             const void *old_data, size_t old_length,
                             const void *new_data, size_t new_length);
@@ -164,72 +165,72 @@ connection_broadcast_divert(struct connection *c,
 /* server list */
 
 void
-connection_server_add(struct connection *c, struct linked_server *ls);
+connection_server_add(Connection *c, LinkedServer *ls);
 
 void
-connection_server_remove(struct connection *c, struct linked_server *ls);
+connection_server_remove(Connection *c, LinkedServer *ls);
 
-struct linked_server *
-connection_server_new(struct connection *c, int fd);
-
-void
-connection_server_dispose(struct connection *c, struct linked_server *ls);
+LinkedServer *
+connection_server_new(Connection *c, int fd);
 
 void
-connection_server_zombify(struct connection *c, struct linked_server *ls);
+connection_server_dispose(Connection *c, LinkedServer *ls);
+
+void
+connection_server_zombify(Connection *c, LinkedServer *ls);
 
 /* world */
 
 void
-connection_world_clear(struct connection *c);
+connection_world_clear(Connection *c);
 
 
 /* walk */
 
-void connection_walk_server_removed(struct connection_walk_state *state,
-                                    struct linked_server *server);
+void connection_walk_server_removed(WalkState *state,
+                                    LinkedServer *server);
 
 void
-connection_walk_request(struct linked_server *server,
+connection_walk_request(LinkedServer *server,
                         const struct uo_packet_walk *p);
 
-void connection_walk_cancel(struct connection *c,
+void connection_walk_cancel(Connection *c,
                             const struct uo_packet_walk_cancel *p);
 
-void connection_walk_ack(struct connection *c,
+void connection_walk_ack(Connection *c,
                          const struct uo_packet_walk_ack *p);
 
 /* reconnect */
 
 int
-connection_client_connect(struct connection *c,
+connection_client_connect(Connection *c,
                           const struct sockaddr *server_address,
                           size_t server_address_length,
                           uint32_t seed);
 
 void
-connection_client_disconnect(struct stateful_client *client);
+connection_client_disconnect(StatefulClient *client);
 
-void connection_disconnect(struct connection *c);
+void connection_disconnect(Connection *c);
 
-void connection_reconnect(struct connection *c);
+void connection_reconnect(Connection *c);
 
 void
-connection_reconnect_delayed(struct connection *c);
+connection_reconnect_delayed(Connection *c);
 
 /* attach */
 
-struct connection *find_attach_connection(struct connection *c);
+Connection *find_attach_connection(Connection *c);
 
-void attach_after_play_server(struct connection *c,
-                              struct linked_server *ls);
+void attach_after_play_server(Connection *c,
+                              LinkedServer *ls);
 
 void
-attach_send_world(struct linked_server *ls);
+attach_send_world(LinkedServer *ls);
 
 /* command */
 
 void
-connection_handle_command(struct linked_server *server, const char *command);
+connection_handle_command(LinkedServer *server, const char *command);
 
 #endif

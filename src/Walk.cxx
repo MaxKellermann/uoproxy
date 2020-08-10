@@ -27,7 +27,9 @@
 #include <assert.h>
 #include <string.h>
 
-static void walk_shift(struct connection_walk_state *state) {
+static void
+walk_shift(WalkState *state)
+{
     assert(state->queue_size > 0);
 
     --state->queue_size;
@@ -39,8 +41,8 @@ static void walk_shift(struct connection_walk_state *state) {
                 state->queue_size * sizeof(*state->queue));
 }
 
-static const struct connection_walk_item *
-find_by_seq(struct connection_walk_state *state,
+static const WalkState::Item *
+find_by_seq(WalkState *state,
             uint8_t seq)
 {
     unsigned i;
@@ -52,8 +54,10 @@ find_by_seq(struct connection_walk_state *state,
     return nullptr;
 }
 
-static void remove_item(struct connection_walk_state *state,
-                        const struct connection_walk_item *item) {
+static void
+remove_item(WalkState *state,
+            const WalkState::Item *item)
+{
     unsigned i = item - state->queue;
 
     assert(i < state->queue_size);
@@ -67,7 +71,9 @@ static void remove_item(struct connection_walk_state *state,
         state->server = nullptr;
 }
 
-static void walk_clear(struct connection_walk_state *state) {
+static void
+walk_clear(WalkState *state)
+{
     state->server = nullptr;
     state->queue_size = 0;
 }
@@ -89,8 +95,10 @@ walk_cancel(const World *world,
     uo_server_send(server, &p, sizeof(p));
 }
 
-void connection_walk_server_removed(struct connection_walk_state *state,
-                                    struct linked_server *server) {
+void
+connection_walk_server_removed(WalkState *state,
+                               LinkedServer *server)
+{
     if (state->server != server)
         return;
 
@@ -98,10 +106,10 @@ void connection_walk_server_removed(struct connection_walk_state *state,
 }
 
 void
-connection_walk_request(struct linked_server *server,
-                        const struct uo_packet_walk *p) {
-    struct connection_walk_state *state = &server->connection->walk;
-    struct connection_walk_item *i;
+connection_walk_request(LinkedServer *server,
+                        const struct uo_packet_walk *p)
+{
+    WalkState *state = &server->connection->walk;
     struct uo_packet_walk walk;
 
     if (state->queue_size > 0 && server != state->server) {
@@ -119,7 +127,7 @@ connection_walk_request(struct linked_server *server,
     }
 
     state->server = server;
-    i = &state->queue[state->queue_size++];
+    auto *i = &state->queue[state->queue_size++];
     i->packet = *p;
 
     LogFormat(7, "walk seq_from_client=%u seq_to_server=%u\n", p->seq, state->seq_next);
@@ -133,7 +141,7 @@ connection_walk_request(struct linked_server *server,
 }
 
 static void
-connection_resync(struct connection *c)
+connection_resync(Connection *c)
 {
     walk_clear(&c->walk);
 
@@ -146,14 +154,15 @@ connection_resync(struct connection *c)
     uo_client_send(c->client.client, &packet, sizeof(packet));
 }
 
-void connection_walk_cancel(struct connection *c,
-                            const struct uo_packet_walk_cancel *p) {
-    struct connection_walk_state *state = &c->walk;
-    const struct connection_walk_item *i;
+void
+connection_walk_cancel(Connection *c,
+                       const struct uo_packet_walk_cancel *p)
+{
+    WalkState *state = &c->walk;
 
     state->seq_next = 0;
 
-    i = find_by_seq(state, p->seq);
+    auto *i = find_by_seq(state, p->seq);
 
     if (i != nullptr)
         LogFormat(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n",
@@ -174,13 +183,14 @@ void connection_walk_cancel(struct connection *c,
     walk_clear(state);
 }
 
-void connection_walk_ack(struct connection *c,
-                         const struct uo_packet_walk_ack *p) {
-    struct connection_walk_state *state = &c->walk;
-    const struct connection_walk_item *i;
+void
+connection_walk_ack(Connection *c,
+                    const struct uo_packet_walk_ack *p)
+{
+    WalkState *state = &c->walk;
     unsigned x, y;
 
-    i = find_by_seq(state, p->seq);
+    auto *i = find_by_seq(state, p->seq);
     if (i == nullptr) {
         LogFormat(1, "WalkAck out of sync\n");
         connection_resync(c);

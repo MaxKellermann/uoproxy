@@ -53,7 +53,7 @@ deinit_signals(Instance *instance)
 static void
 delete_all_connections(struct list_head *head)
 {
-    struct connection *c, *n;
+    Connection *c, *n;
 
     list_for_each_entry_safe(c, n, head, siblings)
         connection_delete(c);

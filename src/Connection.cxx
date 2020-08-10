@@ -29,15 +29,14 @@
 #include <errno.h>
 
 static void
-connection_free(struct connection *c);
+connection_free(Connection *c);
 
 int connection_new(Instance *instance,
                    int server_socket,
-                   struct connection **connectionp) {
-    struct linked_server *ls;
+                   Connection **connectionp) {
     int ret;
 
-    struct connection *c = (struct connection *)calloc(1, sizeof(*c));
+    Connection *c = (Connection *)calloc(1, sizeof(*c));
     if (c == nullptr)
         return ENOMEM;
 
@@ -58,7 +57,7 @@ int connection_new(Instance *instance,
                       protocol_name(c->client_version.protocol));
     }
 
-    ls = connection_server_new(c, server_socket);
+    auto *ls = connection_server_new(c, server_socket);
     if (ls == nullptr) {
         ret = errno;
         connection_free(c);
@@ -73,9 +72,9 @@ int connection_new(Instance *instance,
 }
 
 static void
-connection_free(struct connection *c)
+connection_free(Connection *c)
 {
-    struct linked_server *ls, *n;
+    LinkedServer *ls, *n;
 
     connection_check(c);
 
@@ -93,7 +92,7 @@ connection_free(struct connection *c)
 }
 
 #ifndef NDEBUG
-void connection_check(const struct connection *c) {
+void connection_check(const Connection *c) {
     assert(c != nullptr);
     assert(c->instance != nullptr);
 
@@ -109,7 +108,7 @@ void connection_check(const struct connection *c) {
 #endif
 
 void
-connection_delete(struct connection *c)
+connection_delete(Connection *c)
 {
     list_del(&c->siblings);
     connection_free(c);

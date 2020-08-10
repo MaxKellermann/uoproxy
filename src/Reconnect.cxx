@@ -35,7 +35,9 @@
 #include <netdb.h>
 #endif
 
-void connection_disconnect(struct connection *c) {
+void
+connection_disconnect(Connection *c)
+{
     if (c->client.client == nullptr)
         return;
 
@@ -44,7 +46,7 @@ void connection_disconnect(struct connection *c) {
 }
 
 static void
-connection_try_reconnect(struct connection *c)
+connection_try_reconnect(Connection *c)
 {
     Config *config = c->instance->config;
     uint32_t seed;
@@ -114,12 +116,14 @@ static void
 connection_reconnect_event_callback(int fd __attr_unused,
                                     short event __attr_unused, void *ctx)
 {
-    auto c = (struct connection *)ctx;
+    auto c = (Connection *)ctx;
 
     connection_try_reconnect(c);
 }
 
-void connection_reconnect(struct connection *c) {
+void
+connection_reconnect(Connection *c)
+{
     if (c->client.reconnecting)
         return;
 
@@ -134,7 +138,7 @@ void connection_reconnect(struct connection *c) {
 }
 
 void
-connection_reconnect_delayed(struct connection *c)
+connection_reconnect_delayed(Connection *c)
 {
     struct timeval tv;
 
