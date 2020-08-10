@@ -157,9 +157,6 @@ connection_server_new(Connection *c, int fd);
 void
 connection_server_dispose(Connection *c, LinkedServer *ls);
 
-void
-connection_server_zombify(Connection *c, LinkedServer *ls);
-
 /* world */
 
 void

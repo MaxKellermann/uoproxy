@@ -34,6 +34,24 @@ LinkedServer::~LinkedServer() noexcept
         uo_server_dispose(server);
 }
 
+static void
+zombie_timeout_event_callback(int, short, void *ctx) noexcept
+{
+    auto &ls = *(LinkedServer *)ctx;
+    ls.expecting_reconnect = false;
+    ls.OnServerDisconnect();
+}
+
+inline void
+LinkedServer::Zombify() noexcept
+{
+    is_zombie = true;
+    evtimer_set(&zombie_timeout, zombie_timeout_event_callback, this);
+
+    static constexpr struct timeval tv{5, 0};
+    evtimer_add(&zombie_timeout, &tv);
+}
+
 bool
 LinkedServer::OnServerPacket(const void *data, size_t length)
 {
@@ -87,7 +105,7 @@ LinkedServer::OnServerDisconnect() noexcept
 
     if (expecting_reconnect) {
         LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
-        connection_server_zombify(c, this);
+        Zombify();
     } else if (c->servers.iterator_to(*this) != c->servers.begin() ||
                std::next(c->servers.iterator_to(*this)) != c->servers.end()) {
         LogFormat(2, "client disconnected, server connection still in use\n");

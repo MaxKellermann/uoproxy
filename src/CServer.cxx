@@ -56,29 +56,6 @@ connection_server_new(Connection *c, int fd)
     return ls;
 }
 
-static void
-zombie_timeout_event_callback(int, short, void *ctx) noexcept
-{
-    LinkedServer *ls = (LinkedServer *)ctx;
-    ls->expecting_reconnect = false;
-    ls->OnServerDisconnect();
-}
-
-void
-connection_server_zombify(Connection *c, LinkedServer *ls)
-{
-    struct timeval tv;
-    connection_check(c);
-    assert(ls != nullptr);
-    assert(c == ls->connection);
-
-    ls->is_zombie = true;
-    evtimer_set(&ls->zombie_timeout, zombie_timeout_event_callback, ls);
-    tv.tv_sec = 5;
-    tv.tv_usec = 0;
-    evtimer_add(&ls->zombie_timeout, &tv);
-}
-
 void
 connection_server_dispose(Connection *c, LinkedServer *ls)
 {

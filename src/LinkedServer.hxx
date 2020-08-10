@@ -80,6 +80,8 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
         return !attaching && !is_zombie;
     }
 
+    void Zombify() noexcept;
+
     /* virtual methods from UO::ServerHandler */
     bool OnServerPacket(const void *data, size_t length) override;
     void OnServerDisconnect() noexcept override;
