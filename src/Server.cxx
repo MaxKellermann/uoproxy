@@ -37,19 +37,34 @@ namespace UO {
 
 class Server {
 public:
-    struct sock_buff *sock;
-    uint32_t seed;
-    bool compression_enabled;
+    struct sock_buff *sock = nullptr;
+    uint32_t seed = 0;
+    bool compression_enabled = false;
 
-    struct encryption *encryption;
+    struct encryption *encryption = encryption_new();
 
-    enum protocol_version protocol_version;
+    enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
-    const UO::ServerHandler *handler;
-    void *handler_ctx;
+    const ServerHandler *handler;
+    void *const handler_ctx;
 
-    bool aborted;
+    bool aborted = false;
     struct event abort_event;
+
+    Server(const ServerHandler &_handler, void *_handler_ctx) noexcept
+        :handler(&_handler), handler_ctx(_handler_ctx)
+    {
+    }
+
+    ~Server() noexcept {
+        encryption_free(encryption);
+
+        if (sock != nullptr)
+            sock_buff_dispose(sock);
+
+        if (aborted)
+            evtimer_del(&abort_event);
+    }
 };
 
 } // namespace UO
@@ -228,21 +243,16 @@ int uo_server_create(int sockfd,
         socket_set_nodelay(sockfd, 1) < 0)
         return errno;
 
-    UO::Server *server = (UO::Server*)calloc(1, sizeof(*server));
+    auto *server = new UO::Server(*handler, handler_ctx);
     if (server == nullptr)
         return ENOMEM;
 
     server->sock = sock_buff_create(sockfd, 8192, 65536,
                                     &server_sock_buff_handler, server);
     if (server->sock == nullptr) {
-        free(server);
+        delete server;
         return errno;
     }
-
-    server->encryption = encryption_new();
-
-    server->handler = handler;
-    server->handler_ctx = handler_ctx;
 
     *serverp = server;
 
@@ -250,15 +260,7 @@ int uo_server_create(int sockfd,
 }
 
 void uo_server_dispose(UO::Server *server) {
-    encryption_free(server->encryption);
-
-    if (server->sock != nullptr)
-        sock_buff_dispose(server->sock);
-
-    if (uo_server_is_aborted(server))
-        evtimer_del(&server->abort_event);
-
-    free(server);
+    delete server;
 }
 
 uint32_t uo_server_seed(const UO::Server *server) {

@@ -42,22 +42,46 @@
 
 #include <event.h>
 
+static void
+uo_client_abort_event_callback(int fd,
+                               short event,
+                               void *ctx);
+
 namespace UO {
 
 class Client {
 public:
-    struct sock_buff *sock;
-    bool compression_enabled;
+    struct sock_buff *sock = nullptr;
+    bool compression_enabled = false;
     struct uo_decompression decompression;
-    struct fifo_buffer *decompressed_buffer;
+    struct fifo_buffer *decompressed_buffer = nullptr;
 
-    enum protocol_version protocol_version;
+    enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
     const ClientHandler *handler;
-    void *handler_ctx;
+    void *const handler_ctx;
 
-    bool aborted;
+    bool aborted = false;
     struct event abort_event;
+
+    Client(const ClientHandler &_handler, void *_handler_ctx) noexcept
+        :handler(&_handler), handler_ctx(_handler_ctx)
+    {
+        uo_decompression_init(&decompression);
+
+        evtimer_set(&abort_event,
+                    uo_client_abort_event_callback, this);
+    }
+
+    ~Client() noexcept {
+        if (decompressed_buffer != nullptr)
+            fifo_buffer_free(decompressed_buffer);
+
+        if (sock != nullptr)
+            sock_buff_dispose(sock);
+
+        evtimer_del(&abort_event);
+    }
 };
 
 } // namespace UO
@@ -241,7 +265,6 @@ uo_client_create(int fd, uint32_t seed,
                  UO::Client **clientp)
 {
     int ret;
-    UO::Client *client;
 
     assert(handler != nullptr);
     assert(handler->packet != nullptr);
@@ -255,29 +278,22 @@ uo_client_create(int fd, uint32_t seed,
     if (ret < 0)
         return errno;
 
-    client = (UO::Client*)calloc(1, sizeof(*client));
+    auto *client = new UO::Client(*handler, handler_ctx);
     if (client == nullptr)
         return ENOMEM;
 
     client->sock = sock_buff_create(fd, 8192, 65536,
                                     &client_sock_buff_handler, client);
     if (client->sock == nullptr) {
-        free(client);
+        delete client;
         return errno;
     }
 
-    uo_decompression_init(&client->decompression);
     client->decompressed_buffer = fifo_buffer_new(65536);
     if (client->decompressed_buffer == nullptr) {
         uo_client_dispose(client);
         return ENOMEM;
     }
-
-    client->handler = handler;
-    client->handler_ctx = handler_ctx;
-
-    evtimer_set(&client->abort_event,
-                uo_client_abort_event_callback, client);
 
     *clientp = client;
 
@@ -293,14 +309,7 @@ uo_client_create(int fd, uint32_t seed,
 }
 
 void uo_client_dispose(UO::Client *client) {
-    fifo_buffer_free(client->decompressed_buffer);
-
-    if (client->sock != nullptr)
-        sock_buff_dispose(client->sock);
-
-    evtimer_del(&client->abort_event);
-
-    free(client);
+    delete client;
 }
 
 void
