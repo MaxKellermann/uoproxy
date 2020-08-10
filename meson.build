@@ -1,13 +1,15 @@
-project('uoproxy', 'c', version: '0.5',
+project('uoproxy', ['cpp', 'c'], version: '0.5',
   meson_version: '>= 0.47',
   default_options: [
     'c_std=gnu99',
+    'cpp_std=gnu++17',
     'warning_level=3',
   ],
   license: 'GPLv2+',
 )
 
-compiler = meson.get_compiler('c')
+compiler = meson.get_compiler('cpp')
+c_compiler = meson.get_compiler('c')
 
 common_cppflags = [
   '-D_GNU_SOURCE',
@@ -35,11 +37,41 @@ test_cflags = test_common_flags + [
   '-pedantic',
 ]
 
+test_cxxflags = test_common_flags + [
+  '-fno-threadsafe-statics',
+  '-fmerge-all-constants',
+
+  '-Wmissing-declarations',
+  '-Wshadow',
+  '-Wpointer-arith',
+  '-Wcast-qual',
+  '-Wwrite-strings',
+  '-Wsign-compare',
+  '-Wcomma',
+  '-Wextra-semi',
+  '-Wheader-hygiene',
+  '-Winconsistent-missing-destructor-override',
+  '-Wunreachable-code-break',
+  '-Wunused',
+  '-Wused-but-marked-unused',
+
+  '-Wno-non-virtual-dtor',
+
+  # TODO: remove those after the C++ transition is complete
+  '-Wno-pedantic',
+  '-Wno-error=missing-field-initializers',
+
+  # TODO: fix these
+  '-Wno-error=address-of-packed-member',
+  '-Wno-error=sizeof-pointer-memaccess',
+  '-Wno-error=used-but-marked-unused',
+]
+
 test_ldflags = [
 ]
 
 if get_option('buildtype') != 'debug'
-  test_cflags += [
+  test_cxxflags += [
     '-ffunction-sections',
     '-fdata-sections',
   ]
@@ -48,7 +80,8 @@ if get_option('buildtype') != 'debug'
   ]
 endif
 
-add_global_arguments(common_cflags + compiler.get_supported_arguments(test_cflags), language: 'c')
+add_global_arguments(common_cppflags + c_compiler.get_supported_arguments(test_cflags), language: 'c')
+add_global_arguments(common_cppflags + compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
 add_global_link_arguments(compiler.get_supported_link_arguments(test_ldflags), language: 'cpp')
 
 libevent = dependency('libevent')
@@ -59,26 +92,28 @@ inc = include_directories(
 
 executable(
   'uoproxy',
-  'src/uoproxy.c',
-  'src/config.c',
-  'src/instance.c',
-  'src/daemon.c', 'src/log.c',
-  'src/socket_connect.c',
-  'src/fifo_buffer.c', 'src/flush.c', 'src/socket_buffer.c',
-  'src/buffered_io.c', 'src/socket_util.c',
-  'src/proxy_socks.c',
-  'src/netutil.c',
-  'src/encryption.c',
-  'src/server.c', 'src/client.c',
-  'src/packets.c', 'src/compression.c',
+  'src/Main.cxx',
+  'src/Config.cxx',
+  'src/Instance.cxx',
+  'src/Daemon.cxx',
+  'src/Log.cxx',
+  'src/SocketConnect.cxx',
+  'src/FifoBuffer.cxx', 'src/Flush.cxx', 'src/SocketBuffer.cxx',
+  'src/BufferedIO.cxx', 'src/SocketUtil.cxx',
+  'src/ProxySocks.cxx',
+  'src/NetUtil.cxx',
+  'src/Encryption.cxx',
+  'src/Server.cxx', 'src/Client.cxx',
+  'src/packets.c', 'src/Compression.cxx',
   'src/pversion.c',
-  'src/cversion.c', 'src/bridge.c',
-  'src/connection.c', 'src/cclient.c', 'src/cserver.c', 'src/cnet.c', 'src/world.c', 'src/cworld.c', 'src/walk.c',
-  'src/handler.c', 'src/shandler.c', 'src/chandler.c',
-  'src/attach.c', 'src/reconnect.c',
-  'src/dump.c',
-  'src/sutil.c',
-  'src/command.c',
+  'src/CVersion.cxx', 'src/Bridge.cxx',
+  'src/Connection.cxx', 'src/CClient.cxx', 'src/CServer.cxx', 'src/CNet.cxx',
+  'src/World.cxx', 'src/CWorld.cxx', 'src/Walk.cxx',
+  'src/Handler.cxx', 'src/SHandler.cxx', 'src/CHandler.cxx',
+  'src/Attach.cxx', 'src/Reconnect.cxx',
+  'src/Dump.cxx',
+  'src/SUtil.cxx',
+  'src/Command.cxx',
   include_directories: inc,
   dependencies: [
     libevent,

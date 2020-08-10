@@ -18,28 +18,25 @@
  *
  */
 
-#ifndef __UOPROXY_PVERSION_H
-#define __UOPROXY_PVERSION_H
+#ifndef DISABLE_DAEMON_CODE
 
-enum protocol_version {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_5,
-    PROTOCOL_6,
-    PROTOCOL_6_0_5,
-    PROTOCOL_6_0_14,
-    PROTOCOL_7,
-    PROTOCOL_COUNT
-};
+#include "Log.hxx"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdio.h>
+#include <stdarg.h>
 
-const char *
-protocol_name(enum protocol_version protocol);
+int verbose = 1;
 
-#ifdef __cplusplus
+void
+do_log(const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+
+    fflush(stdout);
 }
-#endif
 
 #endif

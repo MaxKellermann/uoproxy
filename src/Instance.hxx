@@ -18,28 +18,50 @@
  *
  */
 
-#ifndef __UOPROXY_PVERSION_H
-#define __UOPROXY_PVERSION_H
+#ifndef __INSTANCE_H
+#define __INSTANCE_H
 
-enum protocol_version {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_5,
-    PROTOCOL_6,
-    PROTOCOL_6_0_5,
-    PROTOCOL_6_0_14,
-    PROTOCOL_7,
-    PROTOCOL_COUNT
-};
+#include "list.h"
 
-#ifdef __cplusplus
-extern "C" {
+#include <event.h>
+
+#ifdef WIN32
+#define DISABLE_DAEMON_CODE
 #endif
 
-const char *
-protocol_name(enum protocol_version protocol);
+struct Config;
 
-#ifdef __cplusplus
+struct Instance {
+    /* configuration */
+    Config *config;
+
+    /* state */
+
+    struct event sigterm_event, sigint_event, sigquit_event;
+    bool should_exit;
+
+    int server_socket;
+    struct event server_socket_event;
+
+    struct list_head connections;
+
+    struct timeval tv;
+
+    explicit Instance(Config &_config) noexcept
+        :config(&_config) {}
+};
+
+void
+instance_setup_server_socket(Instance *instance);
+
+#ifdef DISABLE_DAEMON_CODE
+static inline void
+instance_daemonize(Instance *instance)
+{
+    (void)instance;
 }
+#else
+void instance_daemonize(Instance *instance);
 #endif
 
 #endif

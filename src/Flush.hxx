@@ -18,28 +18,44 @@
  *
  */
 
-#ifndef __UOPROXY_PVERSION_H
-#define __UOPROXY_PVERSION_H
+/*
+ * Collect all objects which have to be flushed, wait until
+ * flush_end() is called an then flush them all at once.
+ *
+ * This is useful for buffering data being sent.
+ */
 
-enum protocol_version {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_5,
-    PROTOCOL_6,
-    PROTOCOL_6_0_5,
-    PROTOCOL_6_0_14,
-    PROTOCOL_7,
-    PROTOCOL_COUNT
+#ifndef __UOPROXY_FLUSH_H
+#define __UOPROXY_FLUSH_H
+
+#include "list.h"
+
+/**
+ * An operation that has to be flushed.
+ */
+struct pending_flush {
+    struct list_head siblings;
+    void (*flush)(struct pending_flush *flush);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-const char *
-protocol_name(enum protocol_version protocol);
-
-#ifdef __cplusplus
+static inline void
+flush_init(struct pending_flush *flush,
+           void (*callback)(struct pending_flush *flush))
+{
+    flush->siblings.next = nullptr;
+    flush->flush = callback;
 }
-#endif
+
+void
+flush_begin();
+
+void
+flush_end();
+
+void
+flush_add(struct pending_flush *flush);
+
+void
+flush_del(struct pending_flush *flush);
 
 #endif

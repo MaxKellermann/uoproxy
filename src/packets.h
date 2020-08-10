@@ -249,6 +249,10 @@ enum uo_packet_type_t {
     PCK_CreateCharacter7 = 0xf8,
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const size_t packet_lengths[0x100];
 extern const size_t packet_lengths_6[0x100];
 extern const size_t packet_lengths_6014[0x100];
@@ -264,6 +268,10 @@ extern const size_t packet_lengths_6014[0x100];
 size_t
 get_packet_length(enum protocol_version protocol,
                   const void *q, size_t max_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* 0x00 CreateCharacter */
 struct uo_packet_create_character {

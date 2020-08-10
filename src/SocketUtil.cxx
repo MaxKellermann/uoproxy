@@ -18,28 +18,54 @@
  *
  */
 
-#ifndef __UOPROXY_PVERSION_H
-#define __UOPROXY_PVERSION_H
+#include "SocketUtil.hxx"
 
-enum protocol_version {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_5,
-    PROTOCOL_6,
-    PROTOCOL_6_0_5,
-    PROTOCOL_6_0_14,
-    PROTOCOL_7,
-    PROTOCOL_COUNT
-};
+#include <assert.h>
+#include <fcntl.h>
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
 #endif
 
-const char *
-protocol_name(enum protocol_version protocol);
+#ifdef __linux
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#endif
 
-#ifdef __cplusplus
+int
+socket_set_nonblock(int fd, int value)
+{
+#ifdef WIN32
+    u_long val = value;
+    return ioctlsocket(fd, FIONBIO, &val);
+#else
+    int ret;
+
+    assert(fd >= 0);
+
+    ret = fcntl(fd, F_GETFL, 0);
+    if (ret < 0)
+        return ret;
+
+    if (value)
+        ret |= O_NONBLOCK;
+    else
+        ret &= ~O_NONBLOCK;
+
+    return fcntl(fd, F_SETFL, ret);
+#endif
 }
-#endif
+
+#ifdef __linux
+
+int
+socket_set_nodelay(int fd, int value)
+{
+    return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY,
+                      &value, sizeof(value));
+}
 
 #endif

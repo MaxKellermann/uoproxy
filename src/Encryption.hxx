@@ -18,28 +18,25 @@
  *
  */
 
-#ifndef __UOPROXY_PVERSION_H
-#define __UOPROXY_PVERSION_H
+#ifndef UOPROXY_ENCRYPTION_H
+#define UOPROXY_ENCRYPTION_H
 
-enum protocol_version {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_5,
-    PROTOCOL_6,
-    PROTOCOL_6_0_5,
-    PROTOCOL_6_0_14,
-    PROTOCOL_7,
-    PROTOCOL_COUNT
-};
+#include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct encryption;
 
-const char *
-protocol_name(enum protocol_version protocol);
+struct encryption *
+encryption_new();
 
-#ifdef __cplusplus
-}
-#endif
+void
+encryption_free(struct encryption *e);
+
+/**
+ * @return encrypted data (may be the original #data pointer if the
+ * connection is not encrypted), or nullptr if more data is necessary
+ */
+const void *
+encryption_from_client(struct encryption *e,
+                       const void *data, size_t length);
 
 #endif
