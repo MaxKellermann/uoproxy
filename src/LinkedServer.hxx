@@ -46,7 +46,7 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     bool expecting_reconnect, got_gamelogin;
     struct uo_packet_simple_character_list *enqueued_charlist;
 
-    bool is_zombie; /**< zombie handling */
+    bool is_zombie = false; /**< zombie handling */
     struct event zombie_timeout; /**< zombies time out and auto-reap themselves
                                       after 5 seconds using this timer */
     uint32_t auth_id; /**< unique identifier for this linked_server used in
