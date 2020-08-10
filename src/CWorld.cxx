@@ -24,11 +24,12 @@
 static void
 connection_delete_items(struct connection *c)
 {
+    auto &world = c->client.world;
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     Item *i, *n;
     struct linked_server *ls;
 
-    list_for_each_entry_safe(i, n, &c->client.world.items, siblings) {
+    list_for_each_entry_safe(i, n, &world.items, siblings) {
         p.serial = i->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -36,18 +37,19 @@ connection_delete_items(struct connection *c)
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
-        world_remove_item(i);
+        world.RemoveItem(*i);
     }
 }
 
 static void
 connection_delete_mobiles(struct connection *c)
 {
+    auto &world = c->client.world;
     struct uo_packet_delete p = { .cmd = PCK_Delete };
     Mobile *m, *n;
     struct linked_server *ls;
 
-    list_for_each_entry_safe(m, n, &c->client.world.mobiles, siblings) {
+    list_for_each_entry_safe(m, n, &world.mobiles, siblings) {
         p.serial = m->serial;
 
         list_for_each_entry(ls, &c->servers, siblings) {
@@ -55,7 +57,7 @@ connection_delete_mobiles(struct connection *c)
                 uo_server_send(ls->server, &p, sizeof(p));
         }
 
-        world_remove_mobile(m);
+        world.RemoveMobile(*m);
     }
 }
 

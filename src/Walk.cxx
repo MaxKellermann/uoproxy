@@ -161,7 +161,7 @@ void connection_walk_cancel(struct connection *c,
     else
         LogFormat(7, "walk_cancel seq_from_server=%u\n", p->seq);
 
-    world_walk_cancel(&c->client.world, p->x, p->y, p->direction);
+    c->client.world.WalkCancel(p->x, p->y, p->direction);
 
     /* only send to requesting client */
 
@@ -225,8 +225,8 @@ void connection_walk_ack(struct connection *c,
         }
     }
 
-    world_walked(&c->client.world, htons(x), htons(y),
-                 i->packet.direction, p->notoriety);
+    c->client.world.Walked(htons(x), htons(y),
+                           i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */
     if (state->server != nullptr) {

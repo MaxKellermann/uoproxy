@@ -69,7 +69,7 @@ attach_item(struct linked_server *ls,
     case PCK_ContainerUpdate:
         /* attach parent first */
         parent_serial = item->socket.container.item.parent_serial;
-        parent = world_find_item(world, parent_serial);
+        parent = world->FindItem(parent_serial);
         if (parent != nullptr &&
             parent->attach_sequence != world->item_attach_sequence)
             attach_item(ls, parent);

@@ -59,6 +59,37 @@ struct Item {
 
     Item(const Item &) = delete;
     Item &operator=(const Item &) = delete;
+
+    uint32_t GetParentSerial() const noexcept {
+        switch (socket.cmd) {
+        case PCK_ContainerUpdate:
+            return socket.container.item.parent_serial;
+
+        case PCK_Equip:
+            return socket.mobile.parent_serial;
+
+        default:
+            return 0;
+        }
+    }
+
+    void Apply(const struct uo_packet_world_item_7 &p) noexcept {
+        socket.ground = p;
+    }
+
+    void Apply(const struct uo_packet_world_item &p) noexcept;
+
+    void Apply(const struct uo_packet_equip &p) noexcept {
+        socket.mobile = p;
+    }
+
+    void Apply(const struct uo_packet_container_update_6 &p) noexcept {
+        socket.container = p;
+    }
+
+    void Apply(const struct uo_packet_container_open &p) noexcept {
+        packet_container_open = p;
+    }
 };
 
 struct Mobile {
@@ -100,74 +131,47 @@ struct World {
 
     struct list_head items;
     unsigned item_attach_sequence;
+
+    Item *FindItem(uint32_t serial) noexcept;
+    Item &MakeItem(uint32_t serial) noexcept;
+
+    void RemoveItem(Item &item) noexcept;
+
+    /** deep-delete all items contained in the specified serial */
+    void RemoveItemTree(uint32_t parent_serial) noexcept;
+
+    void RemoveItemSerial(uint32_t serial) noexcept;
+
+    void SweepAfterContainerUpdate(uint32_t parent_serial) noexcept;
+
+    void Apply(const struct uo_packet_world_item &p) noexcept;
+    void Apply(const struct uo_packet_world_item_7 &p) noexcept;
+    void Apply(const struct uo_packet_equip &p) noexcept;
+
+    void Apply(const struct uo_packet_container_open &p) noexcept;
+    void Apply(const struct uo_packet_container_open_7 &p) noexcept;
+    void Apply(const struct uo_packet_container_update_6 &p) noexcept;
+    void Apply(const struct uo_packet_container_content_6 &p) noexcept;
+
+    Mobile *FindMobile(uint32_t serial) noexcept;
+    Mobile &MakeMobile(uint32_t serial) noexcept;
+
+    void RemoveMobile(Mobile &mobile) noexcept;
+    void RemoveMobileSerial(uint32_t serial) noexcept;
+
+    void Apply(const struct uo_packet_mobile_incoming &p) noexcept;
+
+    void Apply(const struct uo_packet_mobile_status &p) noexcept;
+    void Apply(const struct uo_packet_mobile_update &p) noexcept;
+    void Apply(const struct uo_packet_mobile_moving &p) noexcept;
+    void Apply(const struct uo_packet_zone_change &p) noexcept;
+
+    void RemoveSerial(uint32_t serial) noexcept;
+
+    void Walked(uint16_t x, uint16_t y,
+                uint8_t direction, uint8_t notoriety) noexcept;
+
+    void WalkCancel(uint16_t x, uint16_t y, uint8_t direction) noexcept;
 };
-
-Item *
-world_find_item(World *world, uint32_t serial);
-
-void
-world_world_item(World *world,
-                 const struct uo_packet_world_item *p);
-
-void
-world_world_item_7(World *world,
-                   const struct uo_packet_world_item_7 *p);
-
-void
-world_equip(World *world,
-            const struct uo_packet_equip *p);
-
-void
-world_container_open(World *world,
-                     const struct uo_packet_container_open *p);
-
-void
-world_container_open_7(World *world,
-                       const struct uo_packet_container_open_7 *p);
-
-void
-world_container_update(World *world,
-                       const struct uo_packet_container_update_6 *p);
-
-void
-world_container_content(World *world,
-                        const struct uo_packet_container_content_6 *p);
-
-void
-world_remove_item(Item *item);
-
-void
-world_mobile_incoming(World *world,
-                      const struct uo_packet_mobile_incoming *p);
-
-void
-world_mobile_status(World *world,
-                    const struct uo_packet_mobile_status *p);
-
-void
-world_mobile_update(World *world,
-                    const struct uo_packet_mobile_update *p);
-
-void
-world_mobile_moving(World *world,
-                    const struct uo_packet_mobile_moving *p);
-
-void
-world_mobile_zone(World *world,
-                  const struct uo_packet_zone_change *p);
-
-void
-world_remove_mobile(Mobile *mobile);
-
-void
-world_remove_serial(World *world, uint32_t serial);
-
-void
-world_walked(World *world, uint16_t x, uint16_t y,
-             uint8_t direction, uint8_t notoriety);
-
-void
-world_walk_cancel(World *world, uint16_t x, uint16_t y,
-                  uint8_t direction);
 
 #endif

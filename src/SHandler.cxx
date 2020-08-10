@@ -103,8 +103,7 @@ static packet_action_t handle_mobile_status(struct connection *c,
 
     (void)length;
 
-    world_mobile_status(&c->client.world, p);
-
+    c->client.world.Apply(*p);
     return PA_ACCEPT;
 }
 
@@ -114,8 +113,7 @@ static packet_action_t handle_world_item(struct connection *c,
 
     assert(length <= sizeof(*p));
 
-    world_world_item(&c->client.world, p);
-
+    c->client.world.Apply(*p);
     return PA_ACCEPT;
 }
 
@@ -153,8 +151,7 @@ static packet_action_t handle_delete(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    world_remove_serial(&c->client.world, p->serial);
-
+    c->client.world.RemoveSerial(p->serial);
     return PA_ACCEPT;
 }
 
@@ -164,8 +161,7 @@ static packet_action_t handle_mobile_update(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    world_mobile_update(&c->client.world, p);
-
+    c->client.world.Apply(*p);
     return PA_ACCEPT;
 }
 
@@ -202,7 +198,7 @@ static packet_action_t handle_container_open(struct connection *c,
         c->client_version.protocol >= PROTOCOL_7) {
         auto p = (const struct uo_packet_container_open_7 *)data;
 
-        world_container_open_7(&c->client.world, p);
+        c->client.world.Apply(*p);
 
         connection_broadcast_divert(c, PROTOCOL_7,
                                     &p->base, sizeof(p->base),
@@ -212,7 +208,7 @@ static packet_action_t handle_container_open(struct connection *c,
         auto p = (const struct uo_packet_container_open *)data;
         assert(length == sizeof(*p));
 
-        world_container_open(&c->client.world, p);
+        c->client.world.Apply(*p);
 
         const struct uo_packet_container_open_7 p7 = {
             .base = *p,
@@ -238,7 +234,7 @@ static packet_action_t handle_container_update(struct connection *c,
 
         container_update_5_to_6(&p6, p);
 
-        world_container_update(&c->client.world, &p6);
+        c->client.world.Apply(p6);
 
         connection_broadcast_divert(c, PROTOCOL_6,
                                     data, length,
@@ -251,7 +247,7 @@ static packet_action_t handle_container_update(struct connection *c,
 
         container_update_6_to_5(&p5, p);
 
-        world_container_update(&c->client.world, p);
+        c->client.world.Apply(*p);
 
         connection_broadcast_divert(c, PROTOCOL_6,
                                     &p5, sizeof(p5),
@@ -267,7 +263,7 @@ static packet_action_t handle_equip(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    world_equip(&c->client.world, p);
+    c->client.world.Apply(*p);
 
     return PA_ACCEPT;
 }
@@ -286,7 +282,7 @@ static packet_action_t handle_container_content(struct connection *c,
             return PA_DROP;
         }
 
-        world_container_content(&c->client.world, p6);
+        c->client.world.Apply(*p6);
 
         connection_broadcast_divert(c, PROTOCOL_6,
                                     data, length,
@@ -299,7 +295,7 @@ static packet_action_t handle_container_content(struct connection *c,
         struct uo_packet_container_content *p5;
         size_t length5;
 
-        world_container_content(&c->client.world, p);
+        c->client.world.Apply(*p);
 
         p5 = container_content_6_to_5(p, &length5);
         if (p5 == nullptr) {
@@ -417,8 +413,7 @@ static packet_action_t handle_zone_change(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    world_mobile_zone(&c->client.world, p);
-
+    c->client.world.Apply(*p);
     return PA_ACCEPT;
 }
 
@@ -428,8 +423,7 @@ static packet_action_t handle_mobile_moving(struct connection *c,
 
     assert(length == sizeof(*p));
 
-    world_mobile_moving(&c->client.world, p);
-
+    c->client.world.Apply(*p);
     return PA_ACCEPT;
 }
 
@@ -440,8 +434,7 @@ static packet_action_t handle_mobile_incoming(struct connection *c,
     if (length < sizeof(*p) - sizeof(p->items))
         return PA_DISCONNECT;
 
-    world_mobile_incoming(&c->client.world, p);
-
+    c->client.world.Apply(*p);
     return PA_ACCEPT;
 }
 
@@ -745,7 +738,7 @@ handle_world_item_7(struct connection *c,
     struct uo_packet_world_item old;
     world_item_from_7(&old, p);
 
-    world_world_item_7(&c->client.world, p);
+    c->client.world.Apply(*p);
 
     connection_broadcast_divert(c, PROTOCOL_7,
                                 &old, ntohs(old.length),
