@@ -95,28 +95,31 @@ static void send_antispy(UO::Client *client) {
     uo_client_send(client, &p, sizeof(p));
 }
 
-static packet_action_t handle_mobile_status(Connection *c,
-                                            const void *data, size_t length) {
+static PacketAction
+handle_mobile_status(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_mobile_status *)data;
 
     (void)length;
 
     c->client.world.Apply(*p);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_world_item(Connection *c,
-                                         const void *data, size_t length) {
+static PacketAction
+handle_world_item(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_world_item *)data;
 
     assert(length <= sizeof(*p));
 
     c->client.world.Apply(*p);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_start(Connection *c,
-                                    const void *data, size_t length) {
+static PacketAction
+handle_start(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_start *)data;
 
     assert(length == sizeof(*p));
@@ -130,55 +133,60 @@ static packet_action_t handle_start(Connection *c,
 
     c->walk.seq_next = 0;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_speak_ascii(Connection *c,
-                                          const void *data, size_t length) {
+static PacketAction
+handle_speak_ascii(Connection *c, const void *data, size_t length)
+{
     (void)data;
     (void)length;
 
     welcome(c);
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_delete(Connection *c,
-                                     const void *data, size_t length) {
+static PacketAction
+handle_delete(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_delete *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.RemoveSerial(p->serial);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_mobile_update(Connection *c,
-                                            const void *data, size_t length) {
+static PacketAction
+handle_mobile_update(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_mobile_update *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.Apply(*p);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_walk_cancel(Connection *c,
-                                          const void *data, size_t length) {
+static PacketAction
+handle_walk_cancel(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_walk_cancel *)data;
 
     assert(length == sizeof(*p));
 
     if (!c->in_game)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     connection_walk_cancel(c, p);
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t handle_walk_ack(Connection *c,
-                                       const void *data, size_t length) {
+static PacketAction
+handle_walk_ack(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_walk_ack *)data;
 
     assert(length == sizeof(*p));
@@ -187,11 +195,12 @@ static packet_action_t handle_walk_ack(Connection *c,
 
     /* XXX: x/y/z etc. */
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t handle_container_open(Connection *c,
-                                             const void *data, size_t length) {
+static PacketAction
+handle_container_open(Connection *c, const void *data, size_t length)
+{
     if (client_version_defined(&c->client_version) &&
         c->client_version.protocol >= PROTOCOL_7) {
         auto p = (const struct uo_packet_container_open_7 *)data;
@@ -201,7 +210,7 @@ static packet_action_t handle_container_open(Connection *c,
         connection_broadcast_divert(c, PROTOCOL_7,
                                     &p->base, sizeof(p->base),
                                     data, length);
-        return PA_DROP;
+        return PacketAction::DROP;
     } else {
         auto p = (const struct uo_packet_container_open *)data;
         assert(length == sizeof(*p));
@@ -218,12 +227,13 @@ static packet_action_t handle_container_open(Connection *c,
                                     p, sizeof(*p),
                                     &p7, sizeof(p7));
 
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 }
 
-static packet_action_t handle_container_update(Connection *c,
-                                               const void *data, size_t length) {
+static PacketAction
+handle_container_update(Connection *c, const void *data, size_t length)
+{
     if (c->client_version.protocol < PROTOCOL_6) {
         auto p = (const struct uo_packet_container_update *)data;
         struct uo_packet_container_update_6 p6;
@@ -252,22 +262,24 @@ static packet_action_t handle_container_update(Connection *c,
                                     data, length);
     }
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t handle_equip(Connection *c,
-                                    const void *data, size_t length) {
+static PacketAction
+handle_equip(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_equip *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.Apply(*p);
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_container_content(Connection *c,
-                                                const void *data, size_t length) {
+static PacketAction
+handle_container_content(Connection *c, const void *data, size_t length)
+{
     if (packet_verify_container_content((const uo_packet_container_content *)data, length)) {
         /* protocol v5 */
         auto p = (const struct uo_packet_container_content *)data;
@@ -277,7 +289,7 @@ static packet_action_t handle_container_content(Connection *c,
         p6 = container_content_5_to_6(p, &length6);
         if (p6 == nullptr) {
             log_oom();
-            return PA_DROP;
+            return PacketAction::DROP;
         }
 
         c->client.world.Apply(*p6);
@@ -298,7 +310,7 @@ static packet_action_t handle_container_content(Connection *c,
         p5 = container_content_6_to_5(p, &length5);
         if (p5 == nullptr) {
             log_oom();
-            return PA_DROP;
+            return PacketAction::DROP;
         }
 
         connection_broadcast_divert(c, PROTOCOL_6,
@@ -307,42 +319,45 @@ static packet_action_t handle_container_content(Connection *c,
 
         free(p5);
     } else
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t handle_personal_light_level(Connection *c,
-                                                   const void *data, size_t length) {
+static PacketAction
+handle_personal_light_level(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_personal_light_level *)data;
 
     assert(length == sizeof(*p));
 
     if (c->instance->config->light)
-        return PA_DROP;
+        return PacketAction::DROP;
 
     if (c->client.world.packet_start.serial == p->serial)
         c->client.world.packet_personal_light_level = *p;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_global_light_level(Connection *c,
-                                                 const void *data, size_t length) {
+static PacketAction
+handle_global_light_level(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_global_light_level *)data;
 
     assert(length == sizeof(*p));
 
     if (c->instance->config->light)
-        return PA_DROP;
+        return PacketAction::DROP;
 
     c->client.world.packet_global_light_level = *p;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_popup_message(Connection *c,
-                                            const void *data, size_t length) {
+static PacketAction
+handle_popup_message(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_popup_message *)data;
 
     assert(length == sizeof(*p));
@@ -355,89 +370,97 @@ static packet_action_t handle_popup_message(Connection *c,
         }
 
         connection_reconnect_delayed(c);
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_login_complete(Connection *c,
-                                             const void *data, size_t length) {
+static PacketAction
+handle_login_complete(Connection *c, const void *data, size_t length)
+{
     (void)data;
     (void)length;
 
     if (c->instance->config->antispy)
         send_antispy(c->client.client);
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_target(Connection *c,
-                                     const void *data, size_t length) {
+static PacketAction
+handle_target(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_target *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.packet_target = *p;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_war_mode(Connection *c,
-                                       const void *data, size_t length) {
+static PacketAction
+handle_war_mode(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_war_mode *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.packet_war_mode = *p;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_ping(Connection *c,
-                                   const void *data, size_t length) {
+static PacketAction
+handle_ping(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_ping *)data;
 
     assert(length == sizeof(*p));
 
     c->client.ping_ack = p->id;
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t handle_zone_change(Connection *c,
-                                          const void *data, size_t length) {
+static PacketAction
+handle_zone_change(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_zone_change *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.Apply(*p);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_mobile_moving(Connection *c,
-                                            const void *data, size_t length) {
+static PacketAction
+handle_mobile_moving(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_mobile_moving *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.Apply(*p);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_mobile_incoming(Connection *c,
-                                              const void *data, size_t length) {
+static PacketAction
+handle_mobile_incoming(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_mobile_incoming *)data;
 
     if (length < sizeof(*p) - sizeof(p->items))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     c->client.world.Apply(*p);
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_char_list(Connection *c,
-                                        const void *data, size_t length) {
+static PacketAction
+handle_char_list(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_simple_character_list *)data;
     const void *data_end = ((const char*)data) + length;
 
@@ -475,7 +498,7 @@ static packet_action_t handle_char_list(Connection *c,
 
         uo_client_send(c->client.client, &p2, sizeof(p2));
 
-        return PA_DROP;
+        return PacketAction::DROP;
     } else if (c->instance->config->razor_workaround) {
         /* razor workaround -- we don't send the char list right away necessarily until they sent us GameLogin.. */
         for (auto &ls : c->servers) {
@@ -490,14 +513,15 @@ static packet_action_t handle_char_list(Connection *c,
                     log_oom();
             }
         }
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_account_login_reject(Connection *c,
-                                                   const void *data, size_t length) {
+static PacketAction
+handle_account_login_reject(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_account_login_reject *)data;
 
     assert(length == sizeof(*p));
@@ -507,17 +531,18 @@ static packet_action_t handle_account_login_reject(Connection *c,
                   p->reason);
 
         connection_reconnect_delayed(c);
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
     if (c->in_game)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_relay(Connection *c,
-                                    const void *data, size_t length) {
+static PacketAction
+handle_relay(Connection *c, const void *data, size_t length)
+{
     /* this packet tells the UO client where to connect; uoproxy hides
        this packet from the client, and only internally connects to
        the new server */
@@ -529,7 +554,7 @@ static packet_action_t handle_relay(Connection *c,
     assert(length == sizeof(*p));
 
     if (c->in_game && !c->client.reconnecting)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     LogFormat(2, "changing to game connection\n");
 
@@ -563,7 +588,7 @@ static packet_action_t handle_relay(Connection *c,
                                     sizeof(sin), relay.auth_id);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
     }
 
     /* send game login to new server */
@@ -577,11 +602,12 @@ static packet_action_t handle_relay(Connection *c,
 
     uo_client_send(c->client.client, &login, sizeof(login));
 
-    return PA_DELETED;
+    return PacketAction::DELETED;
 }
 
-static packet_action_t handle_server_list(Connection *c,
-                                          const void *data, size_t length) {
+static PacketAction
+handle_server_list(Connection *c, const void *data, size_t length)
+{
     /* this packet tells the UO client where to connect; what
        we do here is replace the server IP with our own one */
     const unsigned char *p = (const unsigned char *)data;
@@ -593,7 +619,7 @@ static packet_action_t handle_server_list(Connection *c,
     assert(length > 0);
 
     if (length < 6 || p[3] != 0x5d)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     if (c->instance->config->antispy)
         send_antispy(c->client.client);
@@ -606,19 +632,19 @@ static packet_action_t handle_server_list(Connection *c,
 
         uo_client_send(c->client.client, &p2, sizeof(p2));
 
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
     count = ntohs(*(const uint16_t*)(p + 4));
     LogFormat(5, "serverlist: %u servers\n", count);
     if (length != 6 + count * sizeof(*server_info))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     server_info = (const struct uo_fragment_server_info*)(p + 6);
     for (i = 0; i < count; i++, server_info++) {
         k = ntohs(server_info->index);
         if (k != i)
-            return PA_DISCONNECT;
+            return PacketAction::DISCONNECT;
 
         LogFormat(6, "server %u: name=%s address=0x%08x\n",
                   ntohs(server_info->index),
@@ -626,21 +652,20 @@ static packet_action_t handle_server_list(Connection *c,
                   (unsigned)ntohl(server_info->address));
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_speak_unicode(Connection *c,
-                                            const void *data, size_t length) {
-    (void)data;
-    (void)length;
-
+static PacketAction
+handle_speak_unicode(Connection *c, const void *, size_t)
+{
     welcome(c);
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t handle_supported_features(Connection *c,
-                                                 const void *data, size_t length) {
+static PacketAction
+handle_supported_features(Connection *c, const void *data, size_t length)
+{
     if (c->client_version.protocol >= PROTOCOL_6_0_14) {
         auto p = (const struct uo_packet_supported_features_6014 *)data;
         assert(length == sizeof(*p));
@@ -665,21 +690,22 @@ static packet_action_t handle_supported_features(Connection *c,
                                     &p7, sizeof(p7));
     }
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t handle_season(Connection *c,
-                                     const void *data, size_t length) {
+static PacketAction
+handle_season(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_season *)data;
 
     assert(length == sizeof(*p));
 
     c->client.world.packet_season = *p;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_client_version(Connection *c, const void *, size_t)
 {
     if (client_version_defined(&c->client_version)) {
@@ -690,21 +716,22 @@ handle_client_version(Connection *c, const void *, size_t)
            number */
         uo_client_send(c->client.client, c->client_version.packet,
                        c->client_version.packet_length);
-        return PA_DROP;
+        return PacketAction::DROP;
     } else {
         /* we don't know the version - forward the request to all
            clients */
         c->client.version_requested = true;
-        return PA_ACCEPT;
+        return PacketAction::ACCEPT;
     }
 }
 
-static packet_action_t handle_extended(Connection *c,
-                                       const void *data, size_t length) {
+static PacketAction
+handle_extended(Connection *c, const void *data, size_t length)
+{
     auto p = (const struct uo_packet_extended *)data;
 
     if (length < sizeof(*p))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     LogFormat(8, "from server: extended 0x%04x\n", ntohs(p->extended_cmd));
 
@@ -721,12 +748,11 @@ static packet_action_t handle_extended(Connection *c,
         break;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
-handle_world_item_7(Connection *c,
-                    const void *data, size_t length)
+static PacketAction
+handle_world_item_7(Connection *c, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_world_item_7 *)data;
     assert(length == sizeof(*p));
@@ -739,16 +765,15 @@ handle_world_item_7(Connection *c,
     connection_broadcast_divert(c, PROTOCOL_7,
                                 &old, ntohs(old.length),
                                 data, length);
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t
-handle_protocol_extension(Connection *c,
-                          const void *data, size_t length)
+static PacketAction
+handle_protocol_extension(Connection *c, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_protocol_extension *)data;
     if (length < sizeof(*p))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     if (p->extension == 0xfe) {
         /* BeginRazorHandshake; fake a response to avoid getting
@@ -761,10 +786,10 @@ handle_protocol_extension(Connection *c,
         };
 
         uo_client_send(c->client.client, &response, sizeof(response));
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
 struct client_packet_binding server_packet_bindings[] = {

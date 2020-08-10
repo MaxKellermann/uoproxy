@@ -39,25 +39,23 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
 {
     Connection *c = connection;
 
-    packet_action_t action;
-
     assert(c != nullptr);
     assert(!is_zombie);
 
-    action = handle_packet_from_client(client_packet_bindings,
-                                       this, data, length);
+    const auto action = handle_packet_from_client(client_packet_bindings,
+                                                  this, data, length);
     switch (action) {
-    case PA_ACCEPT:
+    case PacketAction::ACCEPT:
         if (c->client.client != nullptr &&
             (!c->client.reconnecting ||
              *(const unsigned char*)data == PCK_ClientVersion))
             uo_client_send(c->client.client, data, length);
         break;
 
-    case PA_DROP:
+    case PacketAction::DROP:
         break;
 
-    case PA_DISCONNECT:
+    case PacketAction::DISCONNECT:
         LogFormat(2, "aborting connection to client after packet 0x%x\n",
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
@@ -71,7 +69,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
         }
         return false;
 
-    case PA_DELETED:
+    case PacketAction::DELETED:
         return false;
     }
 

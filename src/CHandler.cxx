@@ -67,20 +67,20 @@ static char *simple_unicode_to_ascii(char *dest, const uint16_t *src,
     return dest;
 }
 
-static packet_action_t
+static PacketAction
 handle_talk(LinkedServer *ls,
             const char *text)
 {
     /* the percent sign introduces an uoproxy command */
     if (text[0] == '%') {
         connection_handle_command(ls, text + 1);
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_create_character(LinkedServer *ls,
                         const void *data, size_t length)
 {
@@ -91,12 +91,12 @@ handle_create_character(LinkedServer *ls,
         struct uo_packet_create_character q = *p;
         q.client_ip = htonl(0xc0a80102);
         uo_client_send(ls->connection->client.client, &q, sizeof(q));
-        return PA_DROP;
+        return PacketAction::DROP;
     } else
-        return PA_ACCEPT;
+        return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_walk(LinkedServer *ls,
             const void *data, size_t length)
 {
@@ -105,7 +105,7 @@ handle_walk(LinkedServer *ls,
     assert(length == sizeof(*p));
 
     if (!ls->connection->in_game)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     if (ls->connection->client.reconnecting) {
         World *world = &ls->connection->client.world;
@@ -122,31 +122,31 @@ handle_walk(LinkedServer *ls,
 
         uo_server_send(ls->server, &p2, sizeof(p2));
 
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
     connection_walk_request(ls, p);
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t
+static PacketAction
 handle_talk_ascii(LinkedServer *ls,
                   const void *data, size_t length)
 {
     auto p = (const struct uo_packet_talk_ascii *)data;
 
     if (length < sizeof(*p))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     const size_t text_length = length - sizeof(*p);
     if (p->text[text_length] != 0)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     return handle_talk(ls, p->text);
 }
 
-static packet_action_t
+static PacketAction
 handle_use(LinkedServer *ls,
            const void *data, size_t length)
 {
@@ -157,7 +157,7 @@ handle_use(LinkedServer *ls,
     if (ls->connection->client.reconnecting) {
         uo_server_speak_console(ls->server,
                                 "please wait until uoproxy finishes reconnecting");
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
 #ifdef DUMP_USE
@@ -184,22 +184,22 @@ handle_use(LinkedServer *ls,
     } while (0);
 #endif
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_action(LinkedServer *ls, const void *, size_t)
 {
     if (ls->connection->client.reconnecting) {
         uo_server_speak_console(ls->server,
                                 "please wait until uoproxy finishes reconnecting");
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_lift_request(LinkedServer *ls,
                     const void *data, size_t length)
 {
@@ -216,13 +216,13 @@ handle_lift_request(LinkedServer *ls,
 
         uo_server_send(ls->server, &p2, sizeof(p2));
 
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_drop(LinkedServer *ls,
             const void *data, size_t length)
 {
@@ -230,7 +230,7 @@ handle_drop(LinkedServer *ls,
 
     if (!ls->connection->in_game || client->reconnecting ||
         client->client == nullptr)
-        return PA_DROP;
+        return PacketAction::DROP;
 
     if (ls->client_version.protocol < PROTOCOL_6) {
         auto p = (const struct uo_packet_drop *)data;
@@ -238,7 +238,7 @@ handle_drop(LinkedServer *ls,
         assert(length == sizeof(*p));
 
         if (ls->connection->client_version.protocol < PROTOCOL_6)
-            return PA_ACCEPT;
+            return PacketAction::ACCEPT;
 
         struct uo_packet_drop_6 p6;
         drop_5_to_6(&p6, p);
@@ -249,27 +249,27 @@ handle_drop(LinkedServer *ls,
         assert(length == sizeof(*p));
 
         if (ls->connection->client_version.protocol >= PROTOCOL_6)
-            return PA_ACCEPT;
+            return PacketAction::ACCEPT;
 
         struct uo_packet_drop p5;
         drop_6_to_5(&p5, p);
         uo_client_send(client->client, &p5, sizeof(p5));
     }
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t
+static PacketAction
 handle_resynchronize(LinkedServer *ls, const void *, size_t)
 {
     LogFormat(3, "Resync!\n");
 
     ls->connection->walk.seq_next = 0;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_target(LinkedServer *ls,
               const void *data, size_t length)
 {
@@ -292,18 +292,18 @@ handle_target(LinkedServer *ls,
                                             ls->server);
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_ping(LinkedServer *ls,
             const void *data, size_t length)
 {
     uo_server_send(ls->server, data, length);
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
-static packet_action_t
+static PacketAction
 handle_account_login(LinkedServer *ls,
                      const void *data, size_t length)
 {
@@ -316,7 +316,7 @@ handle_account_login(LinkedServer *ls,
     assert(sizeof(p->password) == sizeof(ls->connection->password));
 
     if (c->in_game)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
 #ifdef DUMP_LOGIN
     LogFormat(7, "account_login: username=%s password=%s\n",
@@ -325,7 +325,7 @@ handle_account_login(LinkedServer *ls,
 
     if (c->client.client != nullptr) {
         LogFormat(2, "already logged in\n");
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
     }
 
     memcpy(c->username, p->username, sizeof(c->username));
@@ -348,7 +348,7 @@ handle_account_login(LinkedServer *ls,
         p2.game_servers[0].address = 0xdeadbeef;
 
         uo_server_send(ls->server, &p2, sizeof(p2));
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
     if (config->num_game_servers > 0) {
@@ -366,7 +366,7 @@ handle_account_login(LinkedServer *ls,
         p2 = (struct uo_packet_server_list *)calloc(1, length);
         if (p2 == nullptr) {
             log_oom();
-            return PA_DISCONNECT;
+            return PacketAction::DISCONNECT;
         }
 
         p2->cmd = PCK_ServerList;
@@ -389,7 +389,7 @@ handle_account_login(LinkedServer *ls,
         uo_server_send(ls->server, p2, length);
         free(p2);
 
-        return PA_DROP;
+        return PacketAction::DROP;
     } else if (config->login_address != nullptr) {
         /* connect to the real login server */
         uint32_t seed;
@@ -416,18 +416,18 @@ handle_account_login(LinkedServer *ls,
 
             uo_server_send(ls->server, &response,
                            sizeof(response));
-            return PA_DROP;
+            return PacketAction::DROP;
         }
 
-        return PA_ACCEPT;
+        return PacketAction::ACCEPT;
     } else {
         /* should not happen */
 
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
     }
 }
 
-static packet_action_t
+static PacketAction
 handle_game_login(LinkedServer *ls,
                   const void *data, size_t length)
 {
@@ -493,7 +493,7 @@ handle_game_login(LinkedServer *ls,
                    zombie) or it was a hack attempt (wrong password) */
                 LogFormat(2, "could not find previous connection for redirected client"
                           " -- disconnecting client!\n");
-                return PA_DISCONNECT;
+                return PacketAction::DISCONNECT;
             }
         } else
             was_attach = ls->attaching;
@@ -511,15 +511,15 @@ handle_game_login(LinkedServer *ls,
         free(ls->enqueued_charlist);
         ls->enqueued_charlist = nullptr;
         ls->expecting_reconnect = false;
-        return PA_DROP;
+        return PacketAction::DROP;
     }
 
     /* Unless we're in razor workaround mode, valid UO clients will never send
        this packet since we're hiding redirects from them. */
-    return PA_DISCONNECT;
+    return PacketAction::DISCONNECT;
 }
 
-static packet_action_t
+static PacketAction
 handle_play_character(LinkedServer *ls,
                       const void *data, size_t length)
 {
@@ -529,7 +529,7 @@ handle_play_character(LinkedServer *ls,
 
     ls->connection->character_index = ntohl(p->slot);
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
 static void
@@ -552,18 +552,18 @@ redirect_to_self(LinkedServer *ls, Connection *)
     return;
 }
 
-static packet_action_t
+static PacketAction
 handle_play_server(LinkedServer *ls,
                    const void *data, size_t length)
 {
     auto p = (const struct uo_packet_play_server *)data;
     Connection *c = ls->connection, *c2;
-    packet_action_t retaction = PA_DROP;
+    PacketAction retaction = PacketAction::DROP;
 
     assert(length == sizeof(*p));
 
     if (c->in_game)
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     assert(std::next(c->servers.iterator_to(*ls)) == c->servers.end());
 
@@ -584,7 +584,7 @@ handle_play_server(LinkedServer *ls,
             attach_after_play_server(c2, ls);
         }
 
-        retaction = PA_DROP;
+        retaction = PacketAction::DROP;
         c = c2;
     } else if (c->instance->config->login_address == nullptr &&
                c->instance->config->game_servers != nullptr &&
@@ -600,7 +600,7 @@ handle_play_server(LinkedServer *ls,
         /* locate the selected game server */
         i = ntohs(p->index);
         if (i >= num_game_servers)
-            return PA_DISCONNECT;
+            return PacketAction::DISCONNECT;
 
         config = c->instance->config->game_servers + i;
 
@@ -615,7 +615,7 @@ handle_play_server(LinkedServer *ls,
                                         config->address->ai_addrlen, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
-            return PA_DISCONNECT;
+            return PacketAction::DISCONNECT;
         }
 
         /* send game login to new server */
@@ -627,9 +627,9 @@ handle_play_server(LinkedServer *ls,
 
         uo_client_send(c->client.client, &login, sizeof(login));
 
-        retaction = PA_DROP;
+        retaction = PacketAction::DROP;
     } else
-        retaction = PA_ACCEPT;
+        retaction = PacketAction::ACCEPT;
 
     if (c->instance->config->razor_workaround) {
         /* Razor workaround -> send the redirect packet to the client and tell
@@ -643,7 +643,7 @@ handle_play_server(LinkedServer *ls,
     return retaction;
 }
 
-static packet_action_t
+static PacketAction
 handle_spy(LinkedServer *ls,
            const void *data, size_t length)
 {
@@ -651,19 +651,19 @@ handle_spy(LinkedServer *ls,
     (void)length;
 
     if (ls->connection->instance->config->antispy)
-        return PA_DROP;
+        return PacketAction::DROP;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_talk_unicode(LinkedServer *ls,
                     const void *data, size_t length)
 {
     auto p = (const struct uo_packet_talk_unicode *)data;
 
     if (length < sizeof(*p))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     if (p->type == 0xc0) {
         uint16_t value = ntohs(p->text[0]);
@@ -675,10 +675,10 @@ handle_talk_unicode(LinkedServer *ls,
         size_t text_length = length - skip_bytes - 1;
 
         if (skip_bytes >= length)
-            return PA_DISCONNECT;
+            return PacketAction::DISCONNECT;
 
         if (t[0] == 0 || t[text_length] != 0)
-            return PA_DISCONNECT;
+            return PacketAction::DISCONNECT;
 
         /* the text may be UTF-8, but we ignore that for now */
         return handle_talk(ls, t);
@@ -694,17 +694,17 @@ handle_talk_unicode(LinkedServer *ls,
         }
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_gump_response(LinkedServer *ls,
                      const void *data, size_t length)
 {
     auto p = (const struct uo_packet_gump_response *)data;
 
     if (length < sizeof(*p))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     /* close the gump on all other clients */
     const struct uo_packet_close_gump close = {
@@ -718,10 +718,10 @@ handle_gump_response(LinkedServer *ls,
     connection_broadcast_servers_except(ls->connection, &close, sizeof(close),
                                         ls->server);
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_client_version(LinkedServer *ls,
                       const void *data, size_t length)
 {
@@ -749,7 +749,7 @@ handle_client_version(LinkedServer *ls,
             c->client.version_requested = false;
         }
 
-        return PA_DROP;
+        return PacketAction::DROP;
     } else {
         const bool was_unkown = c->client_version.protocol == PROTOCOL_UNKNOWN;
 
@@ -763,33 +763,33 @@ handle_client_version(LinkedServer *ls,
                       protocol_name(c->client_version.protocol));
         } else if (ret == 0)
             LogFormat(2, "invalid client version\n");
-        return PA_ACCEPT;
+        return PacketAction::ACCEPT;
     }
 }
 
-static packet_action_t
+static PacketAction
 handle_extended(LinkedServer *, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_extended *)data;
 
     if (length < sizeof(*p))
-        return PA_DISCONNECT;
+        return PacketAction::DISCONNECT;
 
     LogFormat(8, "from client: extended 0x%04x\n", ntohs(p->extended_cmd));
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_hardware(LinkedServer *ls, const void *, size_t)
 {
     if (ls->connection->instance->config->antispy)
-        return PA_DROP;
+        return PacketAction::DROP;
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-static packet_action_t
+static PacketAction
 handle_seed(LinkedServer *ls, const void *data, gcc_unused size_t length)
 {
     auto p = (const struct uo_packet_seed *)data;
@@ -816,7 +816,7 @@ handle_seed(LinkedServer *ls, const void *data, gcc_unused size_t length)
                                    ls->connection->client_version.protocol);
     }
 
-    return PA_DROP;
+    return PacketAction::DROP;
 }
 
 struct server_packet_binding client_packet_bindings[] = {

@@ -34,14 +34,12 @@
 bool
 Connection::OnClientPacket(const void *data, size_t length)
 {
-    packet_action_t action;
-
     assert(client.client != nullptr);
 
-    action = handle_packet_from_server(server_packet_bindings,
-                                       this, data, length);
+    const auto action = handle_packet_from_server(server_packet_bindings,
+                                                  this, data, length);
     switch (action) {
-    case PA_ACCEPT:
+    case PacketAction::ACCEPT:
         if (!client.reconnecting) {
             for (auto &ls : servers)
                 if (ls.IsInGame())
@@ -50,10 +48,10 @@ Connection::OnClientPacket(const void *data, size_t length)
 
         break;
 
-    case PA_DROP:
+    case PacketAction::DROP:
         break;
 
-    case PA_DISCONNECT:
+    case PacketAction::DISCONNECT:
         LogFormat(2, "aborting connection to server after packet 0x%x\n",
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
@@ -67,7 +65,7 @@ Connection::OnClientPacket(const void *data, size_t length)
         }
         return false;
 
-    case PA_DELETED:
+    case PacketAction::DELETED:
         return false;
     }
 

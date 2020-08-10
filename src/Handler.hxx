@@ -27,41 +27,41 @@ struct Connection;
 struct LinkedServer;
 
 /** what to do with the packet? */
-typedef enum {
+enum class PacketAction {
     /** forward the packet to the other communication partner */
-    PA_ACCEPT = 0,
+    ACCEPT,
 
     /** drop the packet */
-    PA_DROP,
+    DROP,
 
     /** disconnect the endpoint from which this packet was received */
-    PA_DISCONNECT,
+    DISCONNECT,
 
     /** the endpoint has been deleted */
-    PA_DELETED,
-} packet_action_t;
+    DELETED,
+};
 
 struct client_packet_binding {
     unsigned char cmd;
-    packet_action_t (*handler)(Connection *c,
-                               const void *data, size_t length);
+    PacketAction (*handler)(Connection *c,
+                            const void *data, size_t length);
 };
 
 struct server_packet_binding {
     unsigned char cmd;
-    packet_action_t (*handler)(LinkedServer *ls,
-                               const void *data, size_t length);
+    PacketAction (*handler)(LinkedServer *ls,
+                            const void *data, size_t length);
 };
 
 extern struct client_packet_binding server_packet_bindings[];
 extern struct server_packet_binding client_packet_bindings[];
 
-packet_action_t
+PacketAction
 handle_packet_from_server(struct client_packet_binding *bindings,
                           Connection *c,
                           const void *data, size_t length);
 
-packet_action_t
+PacketAction
 handle_packet_from_client(struct server_packet_binding *bindings,
                           LinkedServer *ls,
                           const void *data, size_t length);

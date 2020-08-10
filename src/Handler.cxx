@@ -20,7 +20,7 @@
 
 #include "Handler.hxx"
 
-packet_action_t
+PacketAction
 handle_packet_from_server(struct client_packet_binding *bindings,
                           Connection *c,
                           const void *data, size_t length)
@@ -33,10 +33,10 @@ handle_packet_from_server(struct client_packet_binding *bindings,
             return bindings->handler(c, data, length);
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
 
-packet_action_t
+PacketAction
 handle_packet_from_client(struct server_packet_binding *bindings,
                           LinkedServer *ls,
                           const void *data, size_t length)
@@ -49,5 +49,5 @@ handle_packet_from_client(struct server_packet_binding *bindings,
             return bindings->handler(ls, data, length);
     }
 
-    return PA_ACCEPT;
+    return PacketAction::ACCEPT;
 }
