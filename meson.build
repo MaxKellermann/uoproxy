@@ -63,7 +63,6 @@ test_cxxflags = test_common_flags + [
 
   # TODO: fix these
   '-Wno-error=address-of-packed-member',
-  '-Wno-error=sizeof-pointer-memaccess',
   '-Wno-error=used-but-marked-unused',
 ]
 

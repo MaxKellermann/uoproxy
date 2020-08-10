@@ -80,9 +80,8 @@ connection_handle_command(LinkedServer *server, const char *command)
 
         for (i = 0; i < MAX_CHARACTERS; i++) {
             if (c->client.characters[i].name[0]) {
-                sprintf(msg + strlen(msg), " %u=", i);
-                strncat(msg, c->client.characters[i].name,
-                        sizeof(c->client.characters[i].name));
+                snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg),
+                         " %u=%s", i, c->client.characters[i].name);
             }
         }
 
