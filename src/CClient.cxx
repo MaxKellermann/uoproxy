@@ -53,7 +53,7 @@ Connection::OnClientPacket(const void *data, size_t length)
     case PA_ACCEPT:
         if (!client.reconnecting) {
             for (auto &ls : servers)
-                if (!ls.attaching && !ls.is_zombie)
+                if (ls.IsInGame())
                     uo_server_send(ls.server, data, length);
         }
 

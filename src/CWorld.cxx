@@ -32,7 +32,7 @@ connection_delete_items(Connection *c)
         p.serial = i->serial;
 
         for (auto &ls : c->servers) {
-            if (!ls.attaching && !ls.is_zombie)
+            if (ls.IsInGame())
                 uo_server_send(ls.server, &p, sizeof(p));
         }
 
@@ -50,7 +50,7 @@ connection_delete_mobiles(Connection *c)
         p.serial = m->serial;
 
         for (auto &ls : c->servers) {
-            if (!ls.attaching && !ls.is_zombie)
+            if (ls.IsInGame())
                 uo_server_send(ls.server, &p, sizeof(p));
         }
 

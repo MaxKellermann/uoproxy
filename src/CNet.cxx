@@ -29,7 +29,7 @@ void
 connection_speak_console(Connection *c, const char *msg)
 {
     for (auto &ls : c->servers) {
-        if (!ls.attaching && !ls.is_zombie) {
+        if (ls.IsInGame()) {
             assert(ls.server != nullptr);
 
             uo_server_speak_console(ls.server, msg);
@@ -42,7 +42,7 @@ connection_broadcast_servers(Connection *c,
                              const void *data, size_t length)
 {
     for (auto &ls : c->servers)
-        if (!ls.attaching && !ls.is_zombie)
+        if (ls.IsInGame())
             uo_server_send(ls.server, data, length);
 }
 
@@ -54,7 +54,7 @@ connection_broadcast_servers_except(Connection *c,
     assert(except != nullptr);
 
     for (auto &ls : c->servers)
-        if (!ls.attaching && !ls.is_zombie && ls.server != except)
+        if (ls.IsInGame() && ls.server != except)
             uo_server_send(ls.server, data, length);
 }
 
@@ -71,7 +71,7 @@ connection_broadcast_divert(Connection *c,
     assert(new_length > 0);
 
     for (auto &ls : c->servers) {
-        if (!ls.attaching && !ls.is_zombie) {
+        if (ls.IsInGame()) {
             if (ls.client_version.protocol >= new_protocol)
                 uo_server_send(ls.server, new_data, new_length);
             else

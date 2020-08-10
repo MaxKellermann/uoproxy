@@ -63,6 +63,14 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     LinkedServer(const LinkedServer &) = delete;
     LinkedServer &operator=(const LinkedServer &) = delete;
 
+    /**
+     * Can we forward in-game packets to the client connected to this
+     * object?
+     */
+    bool IsInGame() const noexcept {
+        return !attaching && !is_zombie;
+    }
+
     /* virtual methods from UO::ServerHandler */
     bool OnServerPacket(const void *data, size_t length) override;
     void OnServerDisconnect() noexcept override;

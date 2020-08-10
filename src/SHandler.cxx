@@ -47,7 +47,7 @@
 
 static void welcome(Connection *c) {
     for (auto &ls : c->servers) {
-        if (!ls.attaching && !ls.is_zombie && !ls.welcome) {
+        if (ls.IsInGame() && !ls.welcome) {
             uo_server_speak_console(ls.server, "Welcome to uoproxy v" VERSION "!  "
                                     "http://max.kellermann.name/projects/uoproxy/");
             ls.welcome = true;
