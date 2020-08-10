@@ -28,7 +28,6 @@
 #include "Server.hxx"
 #include "Config.hxx"
 #include "Log.hxx"
-#include "compiler.h"
 #include "Bridge.hxx"
 
 #include <assert.h>
@@ -82,7 +81,7 @@ handle_talk(LinkedServer *ls,
 
 static PacketAction
 handle_create_character(LinkedServer *ls,
-                        const void *data, size_t length)
+                        const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_create_character *)data;
     assert(length == sizeof(*p));
@@ -98,7 +97,7 @@ handle_create_character(LinkedServer *ls,
 
 static PacketAction
 handle_walk(LinkedServer *ls,
-            const void *data, size_t length)
+            const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_walk *)data;
 
@@ -148,9 +147,9 @@ handle_talk_ascii(LinkedServer *ls,
 
 static PacketAction
 handle_use(LinkedServer *ls,
-           const void *data, size_t length)
+           const void *data, [[maybe_unused]] size_t length)
 {
-    auto p = (const struct uo_packet_use *)data;
+    [[maybe_unused]] auto p = (const struct uo_packet_use *)data;
 
     assert(length == sizeof(*p));
 
@@ -201,9 +200,9 @@ handle_action(LinkedServer *ls, const void *, size_t)
 
 static PacketAction
 handle_lift_request(LinkedServer *ls,
-                    const void *data, size_t length)
+                    const void *data, [[maybe_unused]] size_t length)
 {
-    auto p = (const struct uo_packet_lift_request *)data;
+    [[maybe_unused]] auto p = (const struct uo_packet_lift_request *)data;
 
     assert(length == sizeof(*p));
 
@@ -224,7 +223,7 @@ handle_lift_request(LinkedServer *ls,
 
 static PacketAction
 handle_drop(LinkedServer *ls,
-            const void *data, size_t length)
+            const void *data, [[maybe_unused]] size_t length)
 {
     auto *client = &ls->connection->client;
 
@@ -271,9 +270,9 @@ handle_resynchronize(LinkedServer *ls, const void *, size_t)
 
 static PacketAction
 handle_target(LinkedServer *ls,
-              const void *data, size_t length)
+              const void *data, [[maybe_unused]] size_t length)
 {
-    auto p = (const struct uo_packet_target *)data;
+    [[maybe_unused]] auto p = (const struct uo_packet_target *)data;
     World *world = &ls->connection->client.world;
 
     assert(length == sizeof(*p));
@@ -429,7 +428,7 @@ handle_account_login(LinkedServer *ls,
 
 static PacketAction
 handle_game_login(LinkedServer *ls,
-                  const void *data, size_t length)
+                  const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_game_login *)data;
 
@@ -521,7 +520,7 @@ handle_game_login(LinkedServer *ls,
 
 static PacketAction
 handle_play_character(LinkedServer *ls,
-                      const void *data, size_t length)
+                      const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_play_character *)data;
 
@@ -555,7 +554,7 @@ redirect_to_self(LinkedServer *ls, Connection *)
 
 static PacketAction
 handle_play_server(LinkedServer *ls,
-                   const void *data, size_t length)
+                   const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_play_server *)data;
     Connection *c = ls->connection, *c2;
@@ -791,7 +790,7 @@ handle_hardware(LinkedServer *ls, const void *, size_t)
 }
 
 static PacketAction
-handle_seed(LinkedServer *ls, const void *data, gcc_unused size_t length)
+handle_seed(LinkedServer *ls, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_seed *)data;
 

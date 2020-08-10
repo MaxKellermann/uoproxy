@@ -104,7 +104,7 @@ handle_mobile_status(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_world_item(Connection *c, const void *data, size_t length)
+handle_world_item(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_world_item *)data;
 
@@ -115,7 +115,7 @@ handle_world_item(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_start(Connection *c, const void *data, size_t length)
+handle_start(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_start *)data;
 
@@ -145,7 +145,7 @@ handle_speak_ascii(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_delete(Connection *c, const void *data, size_t length)
+handle_delete(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_delete *)data;
 
@@ -156,7 +156,7 @@ handle_delete(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_mobile_update(Connection *c, const void *data, size_t length)
+handle_mobile_update(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_mobile_update *)data;
 
@@ -167,7 +167,7 @@ handle_mobile_update(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_walk_cancel(Connection *c, const void *data, size_t length)
+handle_walk_cancel(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_walk_cancel *)data;
 
@@ -182,7 +182,7 @@ handle_walk_cancel(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_walk_ack(Connection *c, const void *data, size_t length)
+handle_walk_ack(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_walk_ack *)data;
 
@@ -263,7 +263,7 @@ handle_container_update(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_equip(Connection *c, const void *data, size_t length)
+handle_equip(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_equip *)data;
 
@@ -322,7 +322,7 @@ handle_container_content(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_personal_light_level(Connection *c, const void *data, size_t length)
+handle_personal_light_level(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_personal_light_level *)data;
 
@@ -338,7 +338,7 @@ handle_personal_light_level(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_global_light_level(Connection *c, const void *data, size_t length)
+handle_global_light_level(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_global_light_level *)data;
 
@@ -353,7 +353,7 @@ handle_global_light_level(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_popup_message(Connection *c, const void *data, size_t length)
+handle_popup_message(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_popup_message *)data;
 
@@ -386,7 +386,7 @@ handle_login_complete(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_target(Connection *c, const void *data, size_t length)
+handle_target(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_target *)data;
 
@@ -398,7 +398,7 @@ handle_target(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_war_mode(Connection *c, const void *data, size_t length)
+handle_war_mode(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_war_mode *)data;
 
@@ -410,7 +410,7 @@ handle_war_mode(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_ping(Connection *c, const void *data, size_t length)
+handle_ping(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_ping *)data;
 
@@ -422,7 +422,7 @@ handle_ping(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_zone_change(Connection *c, const void *data, size_t length)
+handle_zone_change(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_zone_change *)data;
 
@@ -433,7 +433,7 @@ handle_zone_change(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_mobile_moving(Connection *c, const void *data, size_t length)
+handle_mobile_moving(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_mobile_moving *)data;
 
@@ -522,7 +522,7 @@ handle_char_list(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_account_login_reject(Connection *c, const void *data, size_t length)
+handle_account_login_reject(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_account_login_reject *)data;
 
@@ -543,7 +543,7 @@ handle_account_login_reject(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_relay(Connection *c, const void *data, size_t length)
+handle_relay(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     /* this packet tells the UO client where to connect; uoproxy hides
        this packet from the client, and only internally connects to
@@ -695,7 +695,7 @@ handle_supported_features(Connection *c, const void *data, size_t length)
 }
 
 static PacketAction
-handle_season(Connection *c, const void *data, size_t length)
+handle_season(Connection *c, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_season *)data;
 
