@@ -44,15 +44,15 @@ struct connection *find_attach_connection(struct connection *c) {
 
 static void
 attach_item(struct linked_server *ls,
-            struct item *item)
+            Item *item)
 {
-    struct world *world = &ls->connection->client.world;
+    World *world = &ls->connection->client.world;
 
     item->attach_sequence = world->item_attach_sequence;
 
     switch (item->socket.cmd) {
         uint32_t parent_serial;
-        struct item *parent;
+        Item *parent;
 
     case PCK_WorldItem:
         if (ls->client_version.protocol >= PROTOCOL_7) {
@@ -113,10 +113,10 @@ attach_item(struct linked_server *ls,
 void
 attach_send_world(struct linked_server *ls)
 {
-    struct world *world = &ls->connection->client.world;
+    World *world = &ls->connection->client.world;
     struct uo_packet_login_complete login_complete;
-    struct mobile *mobile;
-    struct item *item;
+    Mobile *mobile;
+    Item *item;
 
     /* 0x1b LoginConfirm */
     if (world->packet_start.cmd == PCK_Start)

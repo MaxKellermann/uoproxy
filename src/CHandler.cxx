@@ -107,7 +107,7 @@ handle_walk(struct linked_server *ls,
         return PA_DISCONNECT;
 
     if (ls->connection->client.reconnecting) {
-        struct world *world = &ls->connection->client.world;
+        World *world = &ls->connection->client.world;
 
         /* while reconnecting, reject all walk requests */
         struct uo_packet_walk_cancel p2 = {
@@ -161,7 +161,7 @@ handle_use(struct linked_server *ls,
 
 #ifdef DUMP_USE
     do {
-        struct item *i = connection_find_item(c, p->serial);
+        Item *i = connection_find_item(c, p->serial);
         if (i == nullptr) {
             LogFormat(7, "Use 0x%x\n", ntohl(p->serial));
         } else {
@@ -276,7 +276,7 @@ handle_target(struct linked_server *ls,
               const void *data, size_t length)
 {
     auto p = (const struct uo_packet_target *)data;
-    struct world *world = &ls->connection->client.world;
+    World *world = &ls->connection->client.world;
 
     assert(length == sizeof(*p));
 

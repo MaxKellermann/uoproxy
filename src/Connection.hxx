@@ -46,7 +46,7 @@ struct stateful_client {
 
     unsigned char ping_request, ping_ack;
 
-    struct world world;
+    World world;
 };
 
 struct linked_server {

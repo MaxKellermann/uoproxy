@@ -24,7 +24,7 @@
 #include "packets.h"
 #include "list.h"
 
-struct item {
+struct Item {
     struct list_head siblings;
 
     uint32_t serial;
@@ -52,7 +52,7 @@ struct item {
     unsigned attach_sequence;
 };
 
-struct mobile {
+struct Mobile {
     struct list_head siblings;
 
     uint32_t serial;
@@ -60,7 +60,7 @@ struct mobile {
     struct uo_packet_mobile_status *packet_mobile_status;
 };
 
-struct world {
+struct World {
     /* a lot of packets needed to attach a client*/
 
     struct uo_packet_start packet_start;
@@ -83,72 +83,72 @@ struct world {
     unsigned item_attach_sequence;
 };
 
-struct item *
-world_find_item(struct world *world, uint32_t serial);
+Item *
+world_find_item(World *world, uint32_t serial);
 
 void
-world_world_item(struct world *world,
+world_world_item(World *world,
                  const struct uo_packet_world_item *p);
 
 void
-world_world_item_7(struct world *world,
+world_world_item_7(World *world,
                    const struct uo_packet_world_item_7 *p);
 
 void
-world_equip(struct world *world,
+world_equip(World *world,
             const struct uo_packet_equip *p);
 
 void
-world_container_open(struct world *world,
+world_container_open(World *world,
                      const struct uo_packet_container_open *p);
 
 void
-world_container_open_7(struct world *world,
+world_container_open_7(World *world,
                        const struct uo_packet_container_open_7 *p);
 
 void
-world_container_update(struct world *world,
+world_container_update(World *world,
                        const struct uo_packet_container_update_6 *p);
 
 void
-world_container_content(struct world *world,
+world_container_content(World *world,
                         const struct uo_packet_container_content_6 *p);
 
 void
-world_remove_item(struct item *item);
+world_remove_item(Item *item);
 
 void
-world_mobile_incoming(struct world *world,
+world_mobile_incoming(World *world,
                       const struct uo_packet_mobile_incoming *p);
 
 void
-world_mobile_status(struct world *world,
+world_mobile_status(World *world,
                     const struct uo_packet_mobile_status *p);
 
 void
-world_mobile_update(struct world *world,
+world_mobile_update(World *world,
                     const struct uo_packet_mobile_update *p);
 
 void
-world_mobile_moving(struct world *world,
+world_mobile_moving(World *world,
                     const struct uo_packet_mobile_moving *p);
 
 void
-world_mobile_zone(struct world *world,
+world_mobile_zone(World *world,
                   const struct uo_packet_zone_change *p);
 
 void
-world_remove_mobile(struct mobile *mobile);
+world_remove_mobile(Mobile *mobile);
 
 void
-world_remove_serial(struct world *world, uint32_t serial);
+world_remove_serial(World *world, uint32_t serial);
 
 void
-world_walked(struct world *world, uint16_t x, uint16_t y,
+world_walked(World *world, uint16_t x, uint16_t y,
              uint8_t direction, uint8_t notoriety);
 
 void
-world_walk_cancel(struct world *world, uint16_t x, uint16_t y,
+world_walk_cancel(World *world, uint16_t x, uint16_t y,
                   uint8_t direction);
 
 #endif

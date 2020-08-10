@@ -25,7 +25,7 @@ static void
 connection_delete_items(struct connection *c)
 {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
-    struct item *i, *n;
+    Item *i, *n;
     struct linked_server *ls;
 
     list_for_each_entry_safe(i, n, &c->client.world.items, siblings) {
@@ -44,7 +44,7 @@ static void
 connection_delete_mobiles(struct connection *c)
 {
     struct uo_packet_delete p = { .cmd = PCK_Delete };
-    struct mobile *m, *n;
+    Mobile *m, *n;
     struct linked_server *ls;
 
     list_for_each_entry_safe(m, n, &c->client.world.mobiles, siblings) {
