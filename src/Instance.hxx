@@ -38,7 +38,7 @@ struct Instance {
     /* state */
 
     struct event sigterm_event, sigint_event, sigquit_event;
-    bool should_exit;
+    bool should_exit = false;
 
     int server_socket;
     struct event server_socket_event;
