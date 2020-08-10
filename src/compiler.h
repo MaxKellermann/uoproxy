@@ -25,15 +25,15 @@
 
 /* GCC 4.x */
 
-#define __attr_unused __attribute__((unused))
-#define __attr_printf(string_index, first_to_check) __attribute__((format(printf, string_index, first_to_check)))
+#define gcc_unused __attribute__((unused))
+#define gcc_printf(string_index, first_to_check) __attribute__((format(printf, string_index, first_to_check)))
 
 #else
 
 /* generic C compiler */
 
-#define __attr_unused
-#define __attr_printf(string_index, first_to_check)
+#define gcc_unused
+#define gcc_printf(string_index, first_to_check)
 
 #endif
 

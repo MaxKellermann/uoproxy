@@ -20,7 +20,6 @@
 
 #include "Instance.hxx"
 #include "Connection.hxx"
-#include "compiler.h"
 #include "Log.hxx"
 #include "NetUtil.hxx"
 #include "Config.hxx"
@@ -36,7 +35,7 @@
 #endif
 
 static void
-listener_event_callback(int fd, short event __attr_unused, void *ctx)
+listener_event_callback(int fd, short, void *ctx)
 {
     auto instance = (Instance *)ctx;
     struct sockaddr_storage sa;

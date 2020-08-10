@@ -28,10 +28,8 @@ socket_set_nodelay(int fd, int value);
 
 #else
 
-#include "compiler.h"
-
 static inline int
-socket_set_nodelay(int fd __attr_unused, int value __attr_unused)
+socket_set_nodelay(int, int) noexcept
 {
     return 0;
 }

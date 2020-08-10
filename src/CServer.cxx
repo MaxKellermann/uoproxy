@@ -57,9 +57,7 @@ connection_server_new(Connection *c, int fd)
 }
 
 static void
-zombie_timeout_event_callback(int fd __attr_unused,
-                              short event __attr_unused,
-                              void *ctx)
+zombie_timeout_event_callback(int, short, void *ctx) noexcept
 {
     LinkedServer *ls = (LinkedServer *)ctx;
     ls->expecting_reconnect = false;

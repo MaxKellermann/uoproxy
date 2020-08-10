@@ -23,7 +23,6 @@
 #include "Compression.hxx"
 #include "PacketLengths.h"
 #include "Log.hxx"
-#include "compiler.h"
 #include "SocketUtil.hxx"
 #include "Encryption.hxx"
 
@@ -79,9 +78,7 @@ uo_server_invoke_free(UO::Server *server)
 }
 
 static void
-uo_server_abort_event_callback(int fd __attr_unused,
-                               short event __attr_unused,
-                               void *ctx)
+uo_server_abort_event_callback(int, short, void *ctx) noexcept
 {
     auto server = (UO::Server *)ctx;
 

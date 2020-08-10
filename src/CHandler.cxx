@@ -188,8 +188,7 @@ handle_use(LinkedServer *ls,
 }
 
 static packet_action_t
-handle_action(LinkedServer *ls,
-              const void *data __attr_unused, size_t length __attr_unused)
+handle_action(LinkedServer *ls, const void *, size_t)
 {
     if (ls->connection->client.reconnecting) {
         uo_server_speak_console(ls->server,
@@ -261,9 +260,7 @@ handle_drop(LinkedServer *ls,
 }
 
 static packet_action_t
-handle_resynchronize(LinkedServer *ls,
-                     const void *data __attr_unused,
-                     size_t length __attr_unused)
+handle_resynchronize(LinkedServer *ls, const void *, size_t)
 {
     LogFormat(3, "Resync!\n");
 
@@ -536,7 +533,7 @@ handle_play_character(LinkedServer *ls,
 }
 
 static void
-redirect_to_self(LinkedServer *ls, Connection *c __attr_unused)
+redirect_to_self(LinkedServer *ls, Connection *)
 {
     struct uo_packet_relay relay;
     static uint32_t authid = 0;
@@ -771,8 +768,7 @@ handle_client_version(LinkedServer *ls,
 }
 
 static packet_action_t
-handle_extended(LinkedServer *ls __attr_unused,
-                const void *data, size_t length)
+handle_extended(LinkedServer *, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_extended *)data;
 
@@ -785,8 +781,7 @@ handle_extended(LinkedServer *ls __attr_unused,
 }
 
 static packet_action_t
-handle_hardware(LinkedServer *ls,
-                const void *data __attr_unused, size_t length __attr_unused)
+handle_hardware(LinkedServer *ls, const void *, size_t)
 {
     if (ls->connection->instance->config->antispy)
         return PA_DROP;
@@ -795,8 +790,7 @@ handle_hardware(LinkedServer *ls,
 }
 
 static packet_action_t
-handle_seed(LinkedServer *ls,
-            const void *data, size_t length __attr_unused)
+handle_seed(LinkedServer *ls, const void *data, gcc_unused size_t length)
 {
     auto p = (const struct uo_packet_seed *)data;
 

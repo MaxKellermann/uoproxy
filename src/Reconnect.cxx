@@ -23,7 +23,6 @@
 #include "Client.hxx"
 #include "Config.hxx"
 #include "Log.hxx"
-#include "compiler.h"
 
 #include <assert.h>
 #include <time.h>
@@ -113,8 +112,7 @@ connection_try_reconnect(Connection *c)
 }
 
 static void
-connection_reconnect_event_callback(int fd __attr_unused,
-                                    short event __attr_unused, void *ctx)
+connection_reconnect_event_callback(int, short, void *ctx) noexcept
 {
     auto c = (Connection *)ctx;
 

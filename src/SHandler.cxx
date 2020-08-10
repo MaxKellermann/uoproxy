@@ -29,7 +29,6 @@
 #include "Config.hxx"
 #include "Log.hxx"
 #include "version.h"
-#include "compiler.h"
 #include "Bridge.hxx"
 
 #include <assert.h>
@@ -681,9 +680,8 @@ static packet_action_t handle_season(Connection *c,
 }
 
 static packet_action_t
-handle_client_version(Connection *c,
-                      const void *data __attr_unused,
-                      size_t length __attr_unused) {
+handle_client_version(Connection *c, const void *, size_t)
+{
     if (client_version_defined(&c->client_version)) {
         LogFormat(3, "sending cached client version '%s'\n",
                   c->client_version.packet->version);

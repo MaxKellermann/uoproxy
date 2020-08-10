@@ -19,7 +19,6 @@
  */
 
 #include "SocketBuffer.hxx"
-#include "compiler.h"
 #include "BufferedIO.hxx"
 #include "FifoBuffer.hxx"
 #include "Flush.hxx"

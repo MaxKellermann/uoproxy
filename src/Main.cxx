@@ -22,7 +22,6 @@
 #include "Connection.hxx"
 #include "Config.hxx"
 #include "version.h"
-#include "compiler.h"
 #include "Log.hxx"
 
 #ifndef WIN32
@@ -51,7 +50,7 @@ deinit_signals(Instance *instance)
 }
 
 static void
-exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
+exit_event_callback(int, short, void *ctx)
 {
     Instance *instance = (Instance *)ctx;
 

@@ -47,7 +47,7 @@
 static void
 uo_client_abort_event_callback(int fd,
                                short event,
-                               void *ctx);
+                               void *ctx) noexcept;
 
 namespace UO {
 
@@ -97,9 +97,7 @@ uo_client_invoke_free(UO::Client *client)
 }
 
 static void
-uo_client_abort_event_callback(int fd __attr_unused,
-                               short event __attr_unused,
-                               void *ctx)
+uo_client_abort_event_callback(int, short, void *ctx) noexcept
 {
     auto client = (UO::Client *)ctx;
 

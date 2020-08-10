@@ -39,7 +39,7 @@ extern int verbose;
 
 void
 do_log(const char *fmt, ...)
-    __attr_printf(1, 2);
+    gcc_printf(1, 2);
 
 #define LogFormat(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
 
