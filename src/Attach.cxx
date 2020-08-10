@@ -211,7 +211,7 @@ attach_after_play_server(Connection *c, LinkedServer *ls)
 
     LogFormat(2, "attaching connection\n");
 
-    connection_server_add(c, ls);
+    c->Add(*ls);
 
     attach_send_world(ls);
 }

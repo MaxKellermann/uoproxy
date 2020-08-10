@@ -104,6 +104,9 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     Connection(const Connection &) = delete;
     Connection &operator=(const Connection &) = delete;
 
+    void Add(LinkedServer &ls) noexcept;
+    void Remove(LinkedServer &ls) noexcept;
+
     /* virtual methods from UO::ClientHandler */
     bool OnClientPacket(const void *data, size_t length) override;
     void OnClientDisconnect() noexcept override;
@@ -144,15 +147,6 @@ connection_broadcast_divert(Connection *c,
 
 
 /* server list */
-
-void
-connection_server_add(Connection *c, LinkedServer *ls);
-
-void
-connection_server_remove(Connection *c, LinkedServer *ls);
-
-LinkedServer *
-connection_server_new(Connection *c, int fd);
 
 void
 connection_server_dispose(Connection *c, LinkedServer *ls);

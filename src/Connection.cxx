@@ -46,12 +46,8 @@ int connection_new(Instance *instance,
                       protocol_name(c->client_version.protocol));
     }
 
-    auto *ls = connection_server_new(c, server_socket);
-    if (ls == nullptr) {
-        ret = errno;
-        delete c;
-        return ret;
-    }
+    auto *ls = new LinkedServer(server_socket);
+    c->Add(*ls);
 
     connection_check(c);
 

@@ -27,39 +27,28 @@
 #include <stdlib.h>
 
 void
-connection_server_add(Connection *c, LinkedServer *ls)
+Connection::Add(LinkedServer &ls) noexcept
 {
-    assert(ls->connection == nullptr);
+    assert(ls.connection == nullptr);
 
-    c->servers.push_front(*ls);
-    ls->connection = c;
+    servers.push_front(ls);
+    ls.connection = this;
 }
 
 void
-connection_server_remove(Connection *c, LinkedServer *ls)
+Connection::Remove(LinkedServer &ls) noexcept
 {
-    connection_check(c);
-    assert(ls != nullptr);
-    assert(c == ls->connection);
+    assert(ls.connection == this);
 
-    connection_walk_server_removed(&c->walk, ls);
+    connection_walk_server_removed(&walk, &ls);
 
-    ls->connection = nullptr;
-    ls->unlink();
-}
-
-LinkedServer *
-connection_server_new(Connection *c, int fd)
-{
-    auto *ls = new LinkedServer(fd);
-    connection_server_add(c, ls);
-    return ls;
+    ls.connection = nullptr;
+    ls.unlink();
 }
 
 void
 connection_server_dispose(Connection *c, LinkedServer *ls)
 {
-    connection_server_remove(c, ls);
-
+    c->Remove(*ls);
     delete ls;
 }

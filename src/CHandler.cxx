@@ -480,12 +480,12 @@ handle_game_login(LinkedServer *ls,
                     reuse_conn->client_version.protocol = c->client_version.protocol;
 
                 /* remove the object from the old connection */
-                connection_server_remove(c, ls);
+                c->Remove(*ls);
                 connection_delete(c);
 
                 LogFormat(2, "attaching redirected client to its previous connection\n");
 
-                connection_server_add(reuse_conn, ls);
+                reuse_conn->Add(*ls);
             } else {
                 /* houston, we have a problem -- reject the game login -- it
                    either came in too slowly (and so we already reaped the
@@ -572,16 +572,16 @@ handle_play_server(LinkedServer *ls,
     c2 = find_attach_connection(c);
     if (c2 != nullptr) {
         /* remove the object from the old connection */
-        connection_server_remove(c, ls);
+        c->Remove(*ls);
         connection_delete(c);
 
         if (c2->instance->config->razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
             ls->attaching = true;
-            connection_server_add(c2, ls);
+            c2->Add(*ls);
         }  else {
             /* attach it to the new connection and begin playing right away */
-            attach_after_play_server(c2, ls);
+            c2->Add(*ls);
         }
 
         retaction = PacketAction::DROP;
