@@ -39,7 +39,7 @@ class Server;
  * real UO server.
  */
 struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
-    Connection *connection;
+    Connection *connection = nullptr;
 
     UO::Server *server = nullptr;
 
@@ -48,7 +48,7 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     /** Razor_workaround support here: we save the charlist until
         the client says gamelogin, at which point we turn compression on in our
         emulated server and send a charlist. */
-    struct uo_packet_simple_character_list *enqueued_charlist;
+    struct uo_packet_simple_character_list *enqueued_charlist = nullptr;
 
     struct event zombie_timeout; /**< zombies time out and auto-reap themselves
                                       after 5 seconds using this timer */
