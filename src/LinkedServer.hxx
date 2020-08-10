@@ -32,6 +32,12 @@ namespace UO {
 class Server;
 }
 
+/**
+ * This object manages one connection from a UO client to uoproxy
+ * (where uoproxy acts as a UO "server", therefore the class name).
+ * It may be one of of several clients sharing the connection to the
+ * real UO server.
+ */
 struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     Connection *connection;
 
