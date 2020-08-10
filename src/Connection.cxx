@@ -54,9 +54,9 @@ int connection_new(Instance *instance,
         ret = client_version_set(&c->client_version,
                                  instance->config->client_version);
         if (ret > 0)
-            log(2, "configured client version '%s', protocol '%s'\n",
-                c->client_version.packet->version,
-                protocol_name(c->client_version.protocol));
+            LogFormat(2, "configured client version '%s', protocol '%s'\n",
+                      c->client_version.packet->version,
+                      protocol_name(c->client_version.protocol));
     }
 
     ls = connection_server_new(c, server_socket);

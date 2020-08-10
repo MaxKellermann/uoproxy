@@ -90,7 +90,7 @@ log_hexdump(int level, const void *data, size_t length)
     for (row = 0; row < length; row += 0x10) {
         hexdump_line(line, row, p + row,
                      min_size_t(0x10, length - row));
-        log(level, "%s\n", line);
+        LogFormat(level, "%s\n", line);
     }
 }
 

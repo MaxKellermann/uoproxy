@@ -115,7 +115,7 @@ client_decompress(struct uo_client *client,
 
     auto dest = (unsigned char *)fifo_buffer_write(client->decompressed_buffer, &max_length);
     if (dest == nullptr) {
-        log(1, "decompression buffer full\n");
+        LogFormat(1, "decompression buffer full\n");
         uo_client_abort(client);
         return -1;
     }
@@ -124,7 +124,7 @@ client_decompress(struct uo_client *client,
                            dest, max_length,
                            data, length);
     if (nbytes < 0) {
-        log(1, "decompression failed\n");
+        LogFormat(1, "decompression failed\n");
         uo_client_abort(client);
         return -1;
     }
@@ -145,13 +145,13 @@ client_packets_from_buffer(struct uo_client *client,
         packet_length = get_packet_length(client->protocol_version,
                                           data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
-            log(1, "malformed packet from server\n");
+            LogFormat(1, "malformed packet from server\n");
             log_hexdump(5, data, length);
             uo_client_abort(client);
             return 0;
         }
 
-        log(9, "from server: 0x%02x length=%u\n",
+        LogFormat(9, "from server: 0x%02x length=%u\n",
             data[0], (unsigned)packet_length);
 
         if (packet_length == 0 || packet_length > length)
@@ -213,7 +213,7 @@ client_sock_buff_free(int error, void *ctx)
     auto client = (struct uo_client *)ctx;
 
     if (error == 0)
-        log(2, "server closed the connection\n");
+        LogFormat(2, "server closed the connection\n");
     else
         log_error("error during communication with server", error);
 
@@ -315,14 +315,14 @@ void uo_client_send(struct uo_client *client,
     if (uo_client_is_aborted(client))
         return;
 
-    log(9, "sending packet to server, length=%u\n", (unsigned)length);
+    LogFormat(9, "sending packet to server, length=%u\n", (unsigned)length);
     log_hexdump(10, src, length);
 
     if (*(const unsigned char*)src == PCK_GameLogin)
         client->compression_enabled = true;
 
     if (!sock_buff_send(client->sock, src, length)) {
-        log(1, "output buffer full in uo_client_send()\n");
+        LogFormat(1, "output buffer full in uo_client_send()\n");
         uo_client_abort(client);
     }
 }

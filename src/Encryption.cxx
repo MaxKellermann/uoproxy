@@ -184,7 +184,7 @@ encryption_login_init(struct login_encryption *e, uint32_t seed,
         struct uo_packet_account_login decrypted;
         login_decrypt(&tmp, data, &decrypted, sizeof(decrypted));
         if (account_login_valid(&decrypted)) {
-            log(2, "login encryption for client version %s\n", i->version);
+            LogFormat(2, "login encryption for client version %s\n", i->version);
             return true;
         }
     }
@@ -245,7 +245,7 @@ encryption_from_client(struct encryption *e,
             }
 
             if (!encryption_login_init(&e->login, e->seed, p)) {
-                log(2, "login encryption failure\n");
+                LogFormat(2, "login encryption failure\n");
                 e->state = STATE_DISABLED;
                 return data;
             }
@@ -262,7 +262,7 @@ encryption_from_client(struct encryption *e,
             e->state = STATE_GAME;
         } else {
             /* unrecognized; assume it's not encrypted */
-            log(2, "unrecognized encryption\n");
+            LogFormat(2, "unrecognized encryption\n");
             e->state = STATE_DISABLED;
             return data;
         }

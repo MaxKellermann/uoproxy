@@ -127,7 +127,7 @@ connection_handle_command(struct linked_server *server, const char *command)
 
             if (*endptr == 0) {
                 verbose = (int)new_verbose;
-                log(1, "verbose modified, new value=%d\n", verbose);
+                LogFormat(1, "verbose modified, new value=%d\n", verbose);
                 return;
             }
         }

@@ -62,12 +62,12 @@ client_packet(const void *data, size_t length, void *ctx)
         break;
 
     case PA_DISCONNECT:
-        log(2, "aborting connection to server after packet 0x%x\n",
-            *(const unsigned char*)data);
+        LogFormat(2, "aborting connection to server after packet 0x%x\n",
+                  *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
         if (c->autoreconnect && c->in_game) {
-            log(2, "auto-reconnecting\n");
+            LogFormat(2, "auto-reconnecting\n");
             connection_disconnect(c);
             connection_reconnect_delayed(c);
         } else {
@@ -90,12 +90,12 @@ client_free(void *ctx)
     assert(c->client.client != nullptr);
 
     if (c->autoreconnect && c->in_game) {
-        log(2, "server disconnected, auto-reconnecting\n");
+        LogFormat(2, "server disconnected, auto-reconnecting\n");
         connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
         connection_disconnect(c);
         connection_reconnect_delayed(c);
     } else {
-        log(1, "server disconnected\n");
+        LogFormat(1, "server disconnected\n");
         connection_delete(c);
     }
 }
@@ -118,7 +118,7 @@ connection_ping_event_callback(int fd __attr_unused,
     ping.cmd = PCK_Ping;
     ping.id = ++client->ping_request;
 
-    log(2, "sending ping\n");
+    LogFormat(2, "sending ping\n");
     uo_client_send(client->client, &ping, sizeof(ping));
 
     /* schedule next ping */

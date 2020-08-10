@@ -110,13 +110,13 @@ server_packets_from_buffer(struct uo_server *server,
         size_t packet_length = get_packet_length(server->protocol_version,
                                                  data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
-            log(1, "malformed packet from client\n");
+            LogFormat(1, "malformed packet from client\n");
             log_hexdump(5, data, length);
             uo_server_abort(server);
             return 0;
         }
 
-        log(9, "from client: 0x%02x length=%u\n",
+        LogFormat(9, "from client: 0x%02x length=%u\n",
             data[0], (unsigned)packet_length);
 
         if (packet_length == 0 || packet_length > length)
@@ -160,7 +160,7 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
 
         server->seed = p->seed;
         if (server->seed == 0) {
-            log(2, "zero seed from client\n");
+            LogFormat(2, "zero seed from client\n");
             uo_server_abort(server);
             return 0;
         }
@@ -174,7 +174,7 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
 
         server->seed = *(const uint32_t*)(data + consumed);
         if (server->seed == 0) {
-            log(2, "zero seed from client\n");
+            LogFormat(2, "zero seed from client\n");
             uo_server_abort(server);
             return 0;
         }
@@ -196,7 +196,7 @@ server_sock_buff_free(int error, void *ctx)
     auto server = (struct uo_server *)ctx;
 
     if (error == 0)
-        log(2, "client closed the connection\n");
+        LogFormat(2, "client closed the connection\n");
     else
         log_error("error during communication with client", error);
 
@@ -292,14 +292,14 @@ void uo_server_send(struct uo_server *server,
     if (uo_server_is_aborted(server))
         return;
 
-    log(9, "sending packet to client, length=%u\n", (unsigned)length);
+    LogFormat(9, "sending packet to client, length=%u\n", (unsigned)length);
     log_hexdump(10, src, length);
 
     if (server->compression_enabled) {
         size_t max_length;
         void *dest = sock_buff_write(server->sock, &max_length);
         if (dest == nullptr) {
-            log(1, "output buffer full in uo_server_send()\n");
+            LogFormat(1, "output buffer full in uo_server_send()\n");
             uo_server_abort(server);
             return;
         }
@@ -307,7 +307,7 @@ void uo_server_send(struct uo_server *server,
         ssize_t nbytes = uo_compress((unsigned char *)dest, max_length,
                                      (const unsigned char *)src, length);
         if (nbytes < 0) {
-            log(1, "uo_compress() failed\n");
+            LogFormat(1, "uo_compress() failed\n");
             uo_server_abort(server);
             return;
         }
@@ -315,7 +315,7 @@ void uo_server_send(struct uo_server *server,
         sock_buff_append(server->sock, (size_t)nbytes);
     } else {
         if (!sock_buff_send(server->sock, src, length)) {
-            log(1, "output buffer full in uo_server_send()\n");
+            LogFormat(1, "output buffer full in uo_server_send()\n");
             uo_server_abort(server);
         }
     }

@@ -42,7 +42,7 @@ bool
 socks_connect(int fd, const struct sockaddr *address)
 {
     if (address->sa_family != AF_INET) {
-        log(1, "Not an IPv4 address\n");
+        LogFormat(1, "Not an IPv4 address\n");
         return false;
     }
 
@@ -61,7 +61,7 @@ socks_connect(int fd, const struct sockaddr *address)
     }
 
     if (nbytes != sizeof(header)) {
-        log(1, "Failed to send SOCKS4 request\n");
+        LogFormat(1, "Failed to send SOCKS4 request\n");
         return false;
     }
 
@@ -79,12 +79,12 @@ socks_connect(int fd, const struct sockaddr *address)
     }
 
     if (nbytes != sizeof(header)) {
-        log(1, "Failed to receive SOCKS4 response\n");
+        LogFormat(1, "Failed to receive SOCKS4 response\n");
         return false;
     }
 
     if (header.command != 0x5a) {
-        log(2, "SOCKS4 request rejected: 0x%02x\n", header.command);
+        LogFormat(2, "SOCKS4 request rejected: 0x%02x\n", header.command);
         return false;
     }
 

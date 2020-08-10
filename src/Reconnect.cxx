@@ -75,7 +75,7 @@ connection_try_reconnect(struct connection *c)
                 .auth_id = seed,
             };
 
-            log(2, "connected, doing GameLogin\n");
+            LogFormat(2, "connected, doing GameLogin\n");
 
             memcpy(p.username, c->username, sizeof(p.username));
             memcpy(p.password, c->password, sizeof(p.password));
@@ -96,7 +96,7 @@ connection_try_reconnect(struct connection *c)
                 .cmd = PCK_AccountLogin,
             };
 
-            log(2, "connected, doing AccountLogin\n");
+            LogFormat(2, "connected, doing AccountLogin\n");
 
             memcpy(p.username, c->username, sizeof(p.username));
             memcpy(p.password, c->password, sizeof(p.password));

@@ -67,7 +67,7 @@ void instance_daemonize(Instance *instance) {
 
             close(fds[1]);
 
-            log(4, "waiting for daemon process %ld\n", (long)pid);
+            LogFormat(4, "waiting for daemon process %ld\n", (long)pid);
 
             do {
                 FD_ZERO(&rfds);
@@ -76,15 +76,15 @@ void instance_daemonize(Instance *instance) {
                 tv.tv_usec = 100000;
                 ret = select(fds[0] + 1, &rfds, nullptr, nullptr, &tv);
                 if (ret > 0 && read(fds[0], buffer, sizeof(buffer)) > 0) {
-                    log(2, "detaching %ld\n", (long)getpid());
+                    LogFormat(2, "detaching %ld\n", (long)getpid());
                     exit(0);
                 }
 
                 pid2 = waitpid(pid, &status, WNOHANG);
             } while (pid2 <= 0);
 
-            log(3, "daemon process exited with %d\n",
-                WEXITSTATUS(status));
+            LogFormat(3, "daemon process exited with %d\n",
+                      WEXITSTATUS(status));
             exit(WEXITSTATUS(status));
         }
 
@@ -99,7 +99,7 @@ void instance_daemonize(Instance *instance) {
         signal(SIGTTOU, SIG_IGN);
         signal(SIGTTIN, SIG_IGN);
 
-        log(3, "daemonized as pid %ld\n", (long)getpid());
+        LogFormat(3, "daemonized as pid %ld\n", (long)getpid());
     }
 
     /* write PID file */
@@ -121,7 +121,7 @@ void instance_daemonize(Instance *instance) {
     if (config->logger != nullptr) {
         int fds[2];
 
-        log(3, "starting logger '%s'\n", config->logger);
+        LogFormat(3, "starting logger '%s'\n", config->logger);
 
         ret = pipe(fds);
         if (ret < 0) {
@@ -151,12 +151,12 @@ void instance_daemonize(Instance *instance) {
             exit(1);
         }
 
-        log(2, "logger started as pid %ld\n", (long)logger_pid);
+        LogFormat(2, "logger started as pid %ld\n", (long)logger_pid);
 
         close(fds[0]);
         loggerfd = fds[1];
 
-        log(3, "logger %ld connected\n", (long)logger_pid);
+        LogFormat(3, "logger %ld connected\n", (long)logger_pid);
     }
 
     /* chroot */
@@ -197,7 +197,7 @@ void instance_daemonize(Instance *instance) {
 
     /* send parent process a signal */
     if (parentfd >= 0) {
-        log(4, "closing parent pipe %d\n", parentfd);
+        LogFormat(4, "closing parent pipe %d\n", parentfd);
         write(parentfd, &parentfd, sizeof(parentfd));
         close(parentfd);
     }

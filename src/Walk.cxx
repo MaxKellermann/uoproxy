@@ -105,14 +105,14 @@ connection_walk_request(struct linked_server *server,
     struct uo_packet_walk walk;
 
     if (state->queue_size > 0 && server != state->server) {
-        log(2, "rejecting walk\n");
+        LogFormat(2, "rejecting walk\n");
         walk_cancel(&server->connection->client.world, server->server, p);
         return;
     }
 
     if (state->queue_size >= MAX_WALK_QUEUE) {
         /* XXX */
-        log(2, "queue full\n");
+        LogFormat(2, "queue full\n");
         walk_cancel(&server->connection->client.world, server->server,
                     &state->queue[0].packet);
         walk_shift(state);
@@ -122,7 +122,7 @@ connection_walk_request(struct linked_server *server,
     i = &state->queue[state->queue_size++];
     i->packet = *p;
 
-    log(7, "walk seq_from_client=%u seq_to_server=%u\n", p->seq, state->seq_next);
+    LogFormat(7, "walk seq_from_client=%u seq_to_server=%u\n", p->seq, state->seq_next);
 
     walk = *p;
     walk.seq = i->seq = (uint8_t)state->seq_next++;
@@ -156,10 +156,10 @@ void connection_walk_cancel(struct connection *c,
     i = find_by_seq(state, p->seq);
 
     if (i != nullptr)
-        log(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n",
+        LogFormat(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n",
             i->packet.seq, p->seq);
     else
-        log(7, "walk_cancel seq_from_server=%u\n", p->seq);
+        LogFormat(7, "walk_cancel seq_from_server=%u\n", p->seq);
 
     world_walk_cancel(&c->client.world, p->x, p->y, p->direction);
 
@@ -182,12 +182,12 @@ void connection_walk_ack(struct connection *c,
 
     i = find_by_seq(state, p->seq);
     if (i == nullptr) {
-        log(1, "WalkAck out of sync\n");
+        LogFormat(1, "WalkAck out of sync\n");
         connection_resync(c);
         return;
     }
 
-    log(7, "walk_ack seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
+    LogFormat(7, "walk_ack seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
 
     x = ntohs(c->client.world.packet_start.x);
     y = ntohs(c->client.world.packet_start.y);

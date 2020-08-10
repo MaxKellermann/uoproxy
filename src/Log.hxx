@@ -28,7 +28,7 @@
 #include <stddef.h>
 
 #ifdef DISABLE_LOGGING
-#define log(level, ...)
+#define LogFormat(level, ...)
 #define log_oom()
 #define log_error(msg, error)
 #define log_errno(msg)
@@ -41,27 +41,27 @@ void
 do_log(const char *fmt, ...)
     __attr_printf(1, 2);
 
-#define log(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
+#define LogFormat(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
 
 static inline void
 log_oom()
 {
-    log(1, "Out of memory\n");
+    LogFormat(1, "Out of memory\n");
 }
 
 static inline void
 log_error(const char *msg, int error)
 {
     if (error <= 0)
-        log(1, "%s: %d\n", msg, error);
+        LogFormat(1, "%s: %d\n", msg, error);
     else
-        log(1, "%s: %s\n", msg, strerror(error));
+        LogFormat(1, "%s: %s\n", msg, strerror(error));
 }
 
 static inline void
 log_errno(const char *msg)
 {
-    log(1, "%s: %s\n", msg, strerror(errno));
+    LogFormat(1, "%s: %s\n", msg, strerror(errno));
 }
 
 void

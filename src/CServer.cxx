@@ -53,14 +53,14 @@ server_packet(const void *data, size_t length, void *ctx)
         break;
 
     case PA_DISCONNECT:
-        log(2, "aborting connection to client after packet 0x%x\n",
-            *(const unsigned char*)data);
+        LogFormat(2, "aborting connection to client after packet 0x%x\n",
+                  *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
         connection_server_dispose(c, ls);
         if (list_empty(&c->servers)) {
             if (c->background)
-                log(1, "backgrounding\n");
+                LogFormat(1, "backgrounding\n");
             else
                 connection_delete(c);
         }
@@ -84,16 +84,16 @@ server_free(void *ctx)
     connection_walk_server_removed(&c->walk, ls);
 
     if (ls->expecting_reconnect) {
-        log(2, "client disconnected, zombifying server connection for 5 seconds\n");
+        LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
         connection_server_zombify(c, ls);
     } else if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
-        log(2, "client disconnected, server connection still in use\n");
+        LogFormat(2, "client disconnected, server connection still in use\n");
         connection_server_dispose(c, ls);
     } else if (c->background && c->in_game) {
-        log(1, "client disconnected, backgrounding\n");
+        LogFormat(1, "client disconnected, backgrounding\n");
         connection_server_dispose(c, ls);
     } else {
-        log(1, "last client disconnected, removing connection\n");
+        LogFormat(1, "last client disconnected, removing connection\n");
         connection_server_dispose(c, ls);
         connection_delete(c);
     }

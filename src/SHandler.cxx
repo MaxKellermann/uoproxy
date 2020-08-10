@@ -480,7 +480,7 @@ static packet_action_t handle_char_list(struct connection *c,
             .client_ip = htonl(0xc0a80102), /* 192.168.1.2 */
         };
 
-        log(2, "sending PlayCharacter\n");
+        LogFormat(2, "sending PlayCharacter\n");
 
         uo_client_send(c->client.client, &p2, sizeof(p2));
 
@@ -513,8 +513,8 @@ static packet_action_t handle_account_login_reject(struct connection *c,
     assert(length == sizeof(*p));
 
     if (c->client.reconnecting) {
-        log(1, "reconnect failed: AccountLoginReject reason=0x%x\n",
-            p->reason);
+        LogFormat(1, "reconnect failed: AccountLoginReject reason=0x%x\n",
+                  p->reason);
 
         connection_reconnect_delayed(c);
         return PA_DROP;
@@ -541,7 +541,7 @@ static packet_action_t handle_relay(struct connection *c,
     if (c->in_game && !c->client.reconnecting)
         return PA_DISCONNECT;
 
-    log(2, "changing to game connection\n");
+    LogFormat(2, "changing to game connection\n");
 
     /* save the relay packet - its buffer will be freed soon */
     relay = *p;
@@ -577,7 +577,7 @@ static packet_action_t handle_relay(struct connection *c,
     }
 
     /* send game login to new server */
-    log(2, "connected, doing GameLogin\n");
+    LogFormat(2, "connected, doing GameLogin\n");
 
     login.cmd = PCK_GameLogin;
     login.auth_id = relay.auth_id;
@@ -620,7 +620,7 @@ static packet_action_t handle_server_list(struct connection *c,
     }
 
     count = ntohs(*(const uint16_t*)(p + 4));
-    log(5, "serverlist: %u servers\n", count);
+    LogFormat(5, "serverlist: %u servers\n", count);
     if (length != 6 + count * sizeof(*server_info))
         return PA_DISCONNECT;
 
@@ -630,10 +630,10 @@ static packet_action_t handle_server_list(struct connection *c,
         if (k != i)
             return PA_DISCONNECT;
 
-        log(6, "server %u: name=%s address=0x%08x\n",
-            ntohs(server_info->index),
-            server_info->name,
-            (unsigned)ntohl(server_info->address));
+        LogFormat(6, "server %u: name=%s address=0x%08x\n",
+                  ntohs(server_info->index),
+                  server_info->name,
+                  (unsigned)ntohl(server_info->address));
     }
 
     return PA_ACCEPT;
@@ -694,8 +694,8 @@ handle_client_version(struct connection *c,
                       const void *data __attr_unused,
                       size_t length __attr_unused) {
     if (client_version_defined(&c->client_version)) {
-        log(3, "sending cached client version '%s'\n",
-            c->client_version.packet->version);
+        LogFormat(3, "sending cached client version '%s'\n",
+                  c->client_version.packet->version);
 
         /* respond to this packet directly if we know the version
            number */
@@ -717,7 +717,7 @@ static packet_action_t handle_extended(struct connection *c,
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
-    log(8, "from server: extended 0x%04x\n", ntohs(p->extended_cmd));
+    LogFormat(8, "from server: extended 0x%04x\n", ntohs(p->extended_cmd));
 
     switch (ntohs(p->extended_cmd)) {
     case 0x0008:

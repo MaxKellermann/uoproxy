@@ -210,7 +210,7 @@ attach_after_play_server(struct connection *c, struct linked_server *ls)
     assert(c->in_game);
     connection_check(c);
 
-    log(2, "attaching connection\n");
+    LogFormat(2, "attaching connection\n");
 
     connection_server_add(c, ls);
 

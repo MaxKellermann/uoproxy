@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 
     config_get(&config, argc, argv);
 
-    log(1, "uoproxy v" VERSION
+    LogFormat(1, "uoproxy v" VERSION
         ", http://max.kellermann.name/projects/uoproxy/\n");
 
     /* set up */

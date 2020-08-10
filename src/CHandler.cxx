@@ -163,7 +163,7 @@ handle_use(struct linked_server *ls,
     do {
         struct item *i = connection_find_item(c, p->serial);
         if (i == nullptr) {
-            log(7, "Use 0x%x\n", ntohl(p->serial));
+            LogFormat(7, "Use 0x%x\n", ntohl(p->serial));
         } else {
             uint16_t item_id;
 
@@ -176,8 +176,8 @@ handle_use(struct linked_server *ls,
             else
                 item_id = 0xffff;
 
-            log(7, "Use 0x%x item_id=0x%x\n",
-                ntohl(p->serial), ntohs(item_id));
+            LogFormat(7, "Use 0x%x item_id=0x%x\n",
+                      ntohl(p->serial), ntohs(item_id));
         }
         fflush(stdout);
     } while (0);
@@ -264,7 +264,7 @@ handle_resynchronize(struct linked_server *ls,
                      const void *data __attr_unused,
                      size_t length __attr_unused)
 {
-    log(3, "Resync!\n");
+    LogFormat(3, "Resync!\n");
 
     ls->connection->walk.seq_next = 0;
 
@@ -321,12 +321,12 @@ handle_account_login(struct linked_server *ls,
         return PA_DISCONNECT;
 
 #ifdef DUMP_LOGIN
-    log(7, "account_login: username=%s password=%s\n",
-        p->username, p->password);
+    LogFormat(7, "account_login: username=%s password=%s\n",
+              p->username, p->password);
 #endif
 
     if (c->client.client != nullptr) {
-        log(2, "already logged in\n");
+        LogFormat(2, "already logged in\n");
         return PA_DISCONNECT;
     }
 
@@ -488,15 +488,15 @@ handle_game_login(struct linked_server *ls,
                 connection_server_remove(c, ls);
                 connection_delete(c);
 
-                log(2, "attaching redirected client to its previous connection\n");
+                LogFormat(2, "attaching redirected client to its previous connection\n");
 
                 connection_server_add(reuse_conn, ls);
             } else {
                 /* houston, we have a problem -- reject the game login -- it
                    either came in too slowly (and so we already reaped the
                    zombie) or it was a hack attempt (wrong password) */
-                log(2, "could not find previous connection for redirected client"
-                    " -- disconnecting client!\n");
+                LogFormat(2, "could not find previous connection for redirected client"
+                          " -- disconnecting client!\n");
                 return PA_DISCONNECT;
             }
         } else
@@ -549,7 +549,7 @@ redirect_to_self(struct linked_server *ls, struct connection *c __attr_unused)
     relay.port = uo_server_getsockport(ls->server);
     relay.ip = uo_server_getsockname(ls->server);
     addr.s_addr = relay.ip;
-    log(8, "redirecting to: %s:%hu\n", inet_ntoa(addr), htons(relay.port));;
+    LogFormat(8, "redirecting to: %s:%hu\n", inet_ntoa(addr), htons(relay.port));;
     relay.auth_id = ls->auth_id = authid++;
     ls->expecting_reconnect = true;
     uo_server_send(ls->server, &relay, sizeof(relay));
@@ -740,9 +740,9 @@ handle_client_version(struct linked_server *ls,
                 uo_server_set_protocol(ls->server,
                                        ls->client_version.protocol);
 
-            log(2, "client version '%s', protocol '%s'\n",
-                ls->client_version.packet->version,
-                protocol_name(ls->client_version.protocol));
+            LogFormat(2, "client version '%s', protocol '%s'\n",
+                      ls->client_version.packet->version,
+                      protocol_name(ls->client_version.protocol));
         }
     }
 
@@ -762,11 +762,11 @@ handle_client_version(struct linked_server *ls,
             if (was_unkown && c->client.client != nullptr)
                 uo_client_set_protocol(c->client.client,
                                        c->client_version.protocol);
-            log(2, "emulating client version '%s', protocol '%s'\n",
-                c->client_version.packet->version,
-                protocol_name(c->client_version.protocol));
+            LogFormat(2, "emulating client version '%s', protocol '%s'\n",
+                      c->client_version.packet->version,
+                      protocol_name(c->client_version.protocol));
         } else if (ret == 0)
-            log(2, "invalid client version\n");
+            LogFormat(2, "invalid client version\n");
         return PA_ACCEPT;
     }
 }
@@ -780,7 +780,7 @@ handle_extended(struct linked_server *ls __attr_unused,
     if (length < sizeof(*p))
         return PA_DISCONNECT;
 
-    log(8, "from client: extended 0x%04x\n", ntohs(p->extended_cmd));
+    LogFormat(8, "from client: extended 0x%04x\n", ntohs(p->extended_cmd));
 
     return PA_ACCEPT;
 }
@@ -807,11 +807,11 @@ handle_seed(struct linked_server *ls,
         client_version_seed(&ls->client_version, p);
         uo_server_set_protocol(ls->server, ls->client_version.protocol);
 
-        log(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
-            (unsigned)ntohl(p->client_major),
-            (unsigned)ntohl(p->client_minor),
-            (unsigned)ntohl(p->client_revision),
-            (unsigned)ntohl(p->client_patch));
+        LogFormat(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
+                  (unsigned)ntohl(p->client_major),
+                  (unsigned)ntohl(p->client_minor),
+                  (unsigned)ntohl(p->client_revision),
+                  (unsigned)ntohl(p->client_patch));
     }
 
     if (!client_version_defined(&ls->connection->client_version) &&
