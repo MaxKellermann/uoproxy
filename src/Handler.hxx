@@ -53,16 +53,16 @@ struct server_packet_binding {
                             const void *data, size_t length);
 };
 
-extern struct client_packet_binding server_packet_bindings[];
-extern struct server_packet_binding client_packet_bindings[];
+extern const struct client_packet_binding server_packet_bindings[];
+extern const struct server_packet_binding client_packet_bindings[];
 
 PacketAction
-handle_packet_from_server(struct client_packet_binding *bindings,
+handle_packet_from_server(const struct client_packet_binding *bindings,
                           Connection *c,
                           const void *data, size_t length);
 
 PacketAction
-handle_packet_from_client(struct server_packet_binding *bindings,
+handle_packet_from_client(const struct server_packet_binding *bindings,
                           LinkedServer *ls,
                           const void *data, size_t length);
 

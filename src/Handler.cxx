@@ -21,7 +21,7 @@
 #include "Handler.hxx"
 
 PacketAction
-handle_packet_from_server(struct client_packet_binding *bindings,
+handle_packet_from_server(const struct client_packet_binding *bindings,
                           Connection *c,
                           const void *data, size_t length)
 {
@@ -37,7 +37,7 @@ handle_packet_from_server(struct client_packet_binding *bindings,
 }
 
 PacketAction
-handle_packet_from_client(struct server_packet_binding *bindings,
+handle_packet_from_client(const struct server_packet_binding *bindings,
                           LinkedServer *ls,
                           const void *data, size_t length)
 {

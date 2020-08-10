@@ -819,7 +819,7 @@ handle_seed(LinkedServer *ls, const void *data, gcc_unused size_t length)
     return PacketAction::DROP;
 }
 
-struct server_packet_binding client_packet_bindings[] = {
+const struct server_packet_binding client_packet_bindings[] = {
     { .cmd = PCK_CreateCharacter,
       .handler = handle_create_character,
     },

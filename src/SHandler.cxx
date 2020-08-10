@@ -792,7 +792,7 @@ handle_protocol_extension(Connection *c, const void *data, size_t length)
     return PacketAction::ACCEPT;
 }
 
-struct client_packet_binding server_packet_bindings[] = {
+const struct client_packet_binding server_packet_bindings[] = {
     { .cmd = PCK_MobileStatus, /* 0x11 */
       .handler = handle_mobile_status,
     },
