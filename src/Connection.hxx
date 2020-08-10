@@ -91,7 +91,11 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
                            redirect handling to locate the zombied
                            linked_server */
 
-    LinkedServer() = default;
+    explicit LinkedServer(int fd)
+        :server(uo_server_create(fd, *this))
+    {
+    }
+
     ~LinkedServer() noexcept;
 
     LinkedServer(const LinkedServer &) = delete;

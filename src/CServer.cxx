@@ -122,8 +122,7 @@ connection_server_remove(Connection *c, LinkedServer *ls)
 LinkedServer *
 connection_server_new(Connection *c, int fd)
 {
-    auto *ls = new LinkedServer();
-    ls->server = uo_server_create(fd, *ls);
+    auto *ls = new LinkedServer(fd);
     connection_server_add(c, ls);
     return ls;
 }
