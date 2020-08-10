@@ -491,6 +491,7 @@ handle_game_login(struct linked_server *ls,
                 LogFormat(2, "attaching redirected client to its previous connection\n");
 
                 connection_server_add(reuse_conn, ls);
+                c = ls->connection;
             } else {
                 /* houston, we have a problem -- reject the game login -- it
                    either came in too slowly (and so we already reaped the
