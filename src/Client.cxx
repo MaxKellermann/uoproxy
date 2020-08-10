@@ -22,11 +22,11 @@
 #include "SocketBuffer.hxx"
 #include "Compression.hxx"
 #include "PacketLengths.h"
+#include "PacketStructs.hxx"
 #include "PacketType.hxx"
 #include "pversion.h"
 #include "FifoBuffer.hxx"
 #include "Log.hxx"
-#include "compiler.h"
 #include "SocketUtil.hxx"
 
 #include <utility>

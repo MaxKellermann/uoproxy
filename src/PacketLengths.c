@@ -19,6 +19,8 @@
  */
 
 #include "PacketLengths.h"
+#include "PacketStructs.hxx"
+#include "PacketType.hxx"
 
 /* packet length table borrowed from wolfpack */
 static const size_t packet_lengths[0x100] = {

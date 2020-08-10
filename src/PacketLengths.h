@@ -21,17 +21,9 @@
 #ifndef __PACKETS_H
 #define __PACKETS_H
 
-#include "PacketType.hxx"
-#include "PacketStructs.hxx"
 #include "pversion.h"
 
-#ifdef WIN32
-#include <winsock2.h>
-#else
-#include <netinet/in.h>
-#endif
-
-#include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -22,6 +22,7 @@
 #include "SocketBuffer.hxx"
 #include "Compression.hxx"
 #include "PacketLengths.h"
+#include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "SocketUtil.hxx"
 #include "Encryption.hxx"

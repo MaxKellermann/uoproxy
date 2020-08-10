@@ -25,7 +25,6 @@
 #include "Server.hxx"
 #include "Handler.hxx"
 #include "Log.hxx"
-#include "compiler.h"
 #include "Instance.hxx"
 #include "Config.hxx"
 
