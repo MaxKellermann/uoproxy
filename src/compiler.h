@@ -25,31 +25,15 @@
 
 /* GCC 4.x */
 
-#define __attr_malloc __attribute__((malloc))
-#define __attr_pure __attribute__((pure))
-#define __attr_const __attribute__((const))
 #define __attr_unused __attribute__((unused))
-#define __attr_packed __attribute__((packed))
-#define __attr_noreturn __attribute__((noreturn))
 #define __attr_printf(string_index, first_to_check) __attribute__((format(printf, string_index, first_to_check)))
-
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
 
 #else
 
 /* generic C compiler */
 
-#define __attr_malloc
-#define __attr_pure
-#define __attr_const
 #define __attr_unused
-#define __attr_packed
-#define __attr_noreturn
 #define __attr_printf(string_index, first_to_check)
-
-#define likely(x) (x)
-#define unlikely(x) (x)
 
 #endif
 
