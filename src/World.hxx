@@ -27,7 +27,7 @@
 struct Item {
     struct list_head siblings;
 
-    uint32_t serial;
+    const uint32_t serial;
 
     union {
         uint8_t cmd;
@@ -48,16 +48,35 @@ struct Item {
         struct uo_packet_equip mobile;
     } socket;
 
-    struct uo_packet_container_open packet_container_open;
-    unsigned attach_sequence;
+    struct uo_packet_container_open packet_container_open{};
+    unsigned attach_sequence = 0;
+
+    explicit Item(uint32_t _serial) noexcept
+        :serial(_serial)
+    {
+        socket.cmd = 0;
+    }
+
+    Item(const Item &) = delete;
+    Item &operator=(const Item &) = delete;
 };
 
 struct Mobile {
     struct list_head siblings;
 
-    uint32_t serial;
-    struct uo_packet_mobile_incoming *packet_mobile_incoming;
-    struct uo_packet_mobile_status *packet_mobile_status;
+    const uint32_t serial;
+    struct uo_packet_mobile_incoming *packet_mobile_incoming = nullptr;
+    struct uo_packet_mobile_status *packet_mobile_status = nullptr;
+
+    explicit Mobile(uint32_t _serial) noexcept
+        :serial(_serial)
+    {
+    }
+
+    ~Mobile() noexcept;
+
+    Mobile(const Mobile &) = delete;
+    Mobile &operator=(const Mobile &) = delete;
 };
 
 struct World {

@@ -62,12 +62,7 @@ make_item(World *world, uint32_t serial)
     if (i != nullptr)
         return i;
 
-    i = (Item *)calloc(1, sizeof(*i));
-    if (i == nullptr)
-        return nullptr;
-
-    i->serial = serial;
-
+    i = new Item(serial);
     list_add(&i->siblings, &world->items);
 
     return i;
@@ -200,20 +195,13 @@ world_container_content(World *world,
         world_sweep_container_update_inside(world, p->items[0].parent_serial);
 }
 
-static void free_item(Item *i) {
-    assert(i != nullptr);
-    assert(i->serial != 0);
-
-    free(i);
-}
-
 void
 world_remove_item(Item *item) {
     assert(item != nullptr);
     assert(!list_empty(&item->siblings));
 
     list_del(&item->siblings);
-    free_item(item);
+    delete item;
 }
 
 /** deep-delete all items contained in the specified serial */
@@ -253,6 +241,12 @@ world_remove_item_serial(World *world, uint32_t serial)
     remove_item_tree(world, serial);
 }
 
+Mobile::~Mobile() noexcept
+{
+    free(packet_mobile_status);
+    free(packet_mobile_incoming);
+}
+
 static Mobile *
 find_mobile(World *world, uint32_t serial)
 {
@@ -272,13 +266,7 @@ add_mobile(World *world, uint32_t serial) {
     if (m != nullptr)
         return m;
 
-    m = (Mobile *)calloc(1, sizeof(*m));
-    if (m == nullptr) {
-        log_oom();
-        return nullptr;
-    }
-
-    m->serial = serial;
+    m = new Mobile(serial);
 
     list_add(&m->siblings, &world->mobiles);
 
@@ -473,25 +461,13 @@ world_mobile_zone(World *world,
     world->packet_mobile_update.z = ntohs(p->z);
 }
 
-static void free_mobile(Mobile *m) {
-    assert(m != nullptr);
-    assert(m->serial != 0);
-
-    if (m->packet_mobile_incoming != nullptr)
-        free(m->packet_mobile_incoming);
-    if (m->packet_mobile_status != nullptr)
-        free(m->packet_mobile_status);
-
-    free(m);
-}
-
 void
 world_remove_mobile(Mobile *mobile) {
     assert(mobile != nullptr);
     assert(!list_empty(&mobile->siblings));
 
     list_del(&mobile->siblings);
-    free_mobile(mobile);
+    delete mobile;
 }
 
 static void
