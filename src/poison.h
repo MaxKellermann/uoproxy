@@ -40,6 +40,9 @@ poison(void *p, size_t length)
 {
 #ifndef NDEBUG
     memset(p, 0x01, length);
+#else
+    (void)p;
+    (void)length;
 #endif
 }
 
