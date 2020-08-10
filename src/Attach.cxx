@@ -62,7 +62,7 @@ attach_item(LinkedServer *ls,
         } else {
             struct uo_packet_world_item p;
             world_item_from_7(&p, &item->socket.ground);
-            uo_server_send(ls->server, &p, ntohs(p.length));
+            uo_server_send(ls->server, &p, p.length);
         }
 
         break;
@@ -123,21 +123,21 @@ attach_send_world(LinkedServer *ls)
                        sizeof(world->packet_start));
 
     /* 0xbf 0x08 MapChange */
-    if (ntohs(world->packet_map_change.length) > 0) {
+    if (world->packet_map_change.length > 0) {
         assert(world->packet_map_change.cmd == PCK_Extended);
-        assert(ntohs(world->packet_map_change.length) == sizeof(world->packet_map_change));
-        assert(ntohs(world->packet_map_change.extended_cmd) == 0x0008);
+        assert(world->packet_map_change.length == sizeof(world->packet_map_change));
+        assert(world->packet_map_change.extended_cmd == 0x0008);
         uo_server_send(ls->server, &world->packet_map_change,
-                       ntohs(world->packet_map_change.length));
+                       world->packet_map_change.length);
     }
 
     /* 0xbf 0x18 MapPatches */
-    if (ntohs(world->packet_map_patches.length) > 0) {
+    if (world->packet_map_patches.length > 0) {
         assert(world->packet_map_patches.cmd == PCK_Extended);
-        assert(ntohs(world->packet_map_patches.length) == sizeof(world->packet_map_patches));
-        assert(ntohs(world->packet_map_patches.extended_cmd) == 0x0018);
+        assert(world->packet_map_patches.length == sizeof(world->packet_map_patches));
+        assert(world->packet_map_patches.extended_cmd == 0x0018);
         uo_server_send(ls->server, &world->packet_map_patches,
-                       ntohs(world->packet_map_patches.length));
+                       world->packet_map_patches.length);
     }
 
     /* 0xbc SeasonChange */
@@ -149,13 +149,13 @@ attach_send_world(LinkedServer *ls)
     if (ls->client_version.protocol >= PROTOCOL_6_0_14) {
         struct uo_packet_supported_features_6014 supported_features;
         supported_features.cmd = PCK_SupportedFeatures;
-        supported_features.flags = htonl(ls->connection->client.supported_features_flags);
+        supported_features.flags = ls->connection->client.supported_features_flags;
         uo_server_send(ls->server, &supported_features,
                        sizeof(supported_features));
     } else {
         struct uo_packet_supported_features supported_features;
         supported_features.cmd = PCK_SupportedFeatures;
-        supported_features.flags = htons(ls->connection->client.supported_features_flags);
+        supported_features.flags = ls->connection->client.supported_features_flags;
         uo_server_send(ls->server, &supported_features,
                        sizeof(supported_features));
     }
@@ -184,10 +184,10 @@ attach_send_world(LinkedServer *ls)
     for (const auto &mobile : world->mobiles) {
         if (mobile.packet_mobile_incoming != nullptr)
             uo_server_send(ls->server, mobile.packet_mobile_incoming,
-                           ntohs(mobile.packet_mobile_incoming->length));
+                           mobile.packet_mobile_incoming->length);
         if (mobile.packet_mobile_status != nullptr)
             uo_server_send(ls->server, mobile.packet_mobile_status,
-                           ntohs(mobile.packet_mobile_status->length));
+                           mobile.packet_mobile_status->length);
     }
 
     /* items */

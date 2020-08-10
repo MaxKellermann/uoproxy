@@ -50,12 +50,12 @@
 
 #define TALK_MAX 128
 
-static char *simple_unicode_to_ascii(char *dest, const uint16_t *src,
+static char *simple_unicode_to_ascii(char *dest, const PackedBE16 *src,
                                      size_t length) {
     size_t position;
 
     for (position = 0; position < length && src[position] != 0; position++) {
-        uint16_t ch = ntohs(src[position]);
+        uint16_t ch = src[position];
         if (ch & 0xff00)
             return nullptr;
 
@@ -89,7 +89,7 @@ handle_create_character(LinkedServer *ls,
 
     if (ls->connection->instance->config->antispy) {
         struct uo_packet_create_character q = *p;
-        q.client_ip = htonl(0xc0a80102);
+        q.client_ip = 0xc0a80102;
         uo_client_send(ls->connection->client.client, &q, sizeof(q));
         return PacketAction::DROP;
     } else
@@ -164,7 +164,7 @@ handle_use(LinkedServer *ls,
     do {
         Item *i = connection_find_item(c, p->serial);
         if (i == nullptr) {
-            LogFormat(7, "Use 0x%x\n", ntohl(p->serial));
+            LogFormat(7, "Use 0x%x\n", (unsigned)p->serial);
         } else {
             uint16_t item_id;
 
@@ -178,7 +178,7 @@ handle_use(LinkedServer *ls,
                 item_id = 0xffff;
 
             LogFormat(7, "Use 0x%x item_id=0x%x\n",
-                      ntohl(p->serial), ntohs(item_id));
+                      (unsigned)p->serial, (unsigned)item_id);
         }
         fflush(stdout);
     } while (0);
@@ -339,11 +339,11 @@ handle_account_login(LinkedServer *ls,
         memset(&p2, 0, sizeof(p2));
 
         p2.cmd = PCK_ServerList;
-        p2.length = htons(sizeof(p2));
+        p2.length = sizeof(p2);
         p2.unknown_0x5d = 0x5d;
-        p2.num_game_servers = htons(1);
+        p2.num_game_servers = 1;
 
-        p2.game_servers[0].index = htons(0);
+        p2.game_servers[0].index = 0;
         strcpy(p2.game_servers[0].name, "attach");
         p2.game_servers[0].address = 0xdeadbeef;
 
@@ -370,12 +370,12 @@ handle_account_login(LinkedServer *ls,
         }
 
         p2->cmd = PCK_ServerList;
-        p2->length = htons(length);
+        p2->length = length;
         p2->unknown_0x5d = 0x5d;
-        p2->num_game_servers = htons(num_game_servers);
+        p2->num_game_servers = num_game_servers;
 
         for (i = 0; i < num_game_servers; i++) {
-            p2->game_servers[i].index = htons(i);
+            p2->game_servers[i].index = i;
             snprintf(p2->game_servers[i].name, sizeof(p2->game_servers[i].name),
                      "%s", game_servers[i].name);
 
@@ -399,7 +399,7 @@ handle_account_login(LinkedServer *ls,
                internal IP address of the client, we want to hide it
                in antispy mode - always send 192.168.1.2 which is
                generic enough to be useless */
-            seed = htonl(0xc0a80102);
+            seed = 0xc0a80102;
         else
             seed = uo_server_seed(ls->server);
 
@@ -506,7 +506,7 @@ handle_game_login(LinkedServer *ls,
             attach_send_world(ls);
         } else if (ls->enqueued_charlist) {
             uo_server_send(ls->server, ls->enqueued_charlist,
-                           htons(ls->enqueued_charlist->length));
+                           ls->enqueued_charlist->length);
         }
         free(ls->enqueued_charlist);
         ls->enqueued_charlist = nullptr;
@@ -527,7 +527,7 @@ handle_play_character(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    ls->connection->character_index = ntohl(p->slot);
+    ls->connection->character_index = p->slot;
 
     return PacketAction::ACCEPT;
 }
@@ -542,10 +542,11 @@ redirect_to_self(LinkedServer *ls, Connection *)
     if (!authid) authid = time(0);
 
     relay.cmd = PCK_Relay;
-    relay.port = uo_server_getsockport(ls->server);
-    relay.ip = uo_server_getsockname(ls->server);
-    addr.s_addr = relay.ip;
-    LogFormat(8, "redirecting to: %s:%hu\n", inet_ntoa(addr), htons(relay.port));;
+    relay.port = PackedBE16::FromBE(uo_server_getsockport(ls->server));
+    relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls->server));
+    addr.s_addr = relay.ip.raw();
+    LogFormat(8, "redirecting to: %s:%u\n",
+              inet_ntoa(addr), (unsigned)relay.port);;
     relay.auth_id = ls->auth_id = authid++;
     ls->expecting_reconnect = true;
     uo_server_send(ls->server, &relay, sizeof(relay));
@@ -567,7 +568,7 @@ handle_play_server(LinkedServer *ls,
 
     assert(std::next(c->servers.iterator_to(*ls)) == c->servers.end());
 
-    c->server_index = ntohs(p->index);
+    c->server_index = p->index;
 
     c2 = find_attach_connection(c);
     if (c2 != nullptr) {
@@ -589,7 +590,7 @@ handle_play_server(LinkedServer *ls,
     } else if (c->instance->config->login_address == nullptr &&
                c->instance->config->game_servers != nullptr &&
                c->instance->config->num_game_servers > 0) {
-        unsigned i, num_game_servers = c->instance->config->num_game_servers;
+        const unsigned num_game_servers = c->instance->config->num_game_servers;
         struct game_server_config *config;
         int ret;
         struct uo_packet_game_login login;
@@ -598,7 +599,7 @@ handle_play_server(LinkedServer *ls,
         assert(c->client.client == nullptr);
 
         /* locate the selected game server */
-        i = ntohs(p->index);
+        unsigned i = p->index;
         if (i >= num_game_servers)
             return PacketAction::DISCONNECT;
 
@@ -609,7 +610,7 @@ handle_play_server(LinkedServer *ls,
         if (c->client_version.seed != nullptr)
             seed = c->client_version.seed->seed;
         else
-            seed = htonl(0xc0a80102); /* 192.168.1.2 */
+            seed = 0xc0a80102; /* 192.168.1.2 */
 
         ret = connection_client_connect(c, config->address->ai_addr,
                                         config->address->ai_addrlen, seed);
@@ -666,7 +667,7 @@ handle_talk_unicode(LinkedServer *ls,
         return PacketAction::DISCONNECT;
 
     if (p->type == 0xc0) {
-        uint16_t value = ntohs(p->text[0]);
+        uint16_t value = p->text[0];
         unsigned num_keywords = (value & 0xfff0) >> 4;
         unsigned skip_bits = (num_keywords + 1) * 12;
         unsigned skip_bytes = 12 + (skip_bits + 7) / 8;
@@ -709,8 +710,8 @@ handle_gump_response(LinkedServer *ls,
     /* close the gump on all other clients */
     const struct uo_packet_close_gump close = {
         .cmd = PCK_Extended,
-        .length = htons(sizeof(close)),
-        .extended_cmd = htons(0x0004),
+        .length = sizeof(close),
+        .extended_cmd = 0x0004,
         .type_id = p->type_id,
         .button_id = 0,
     };
@@ -775,7 +776,7 @@ handle_extended(LinkedServer *, const void *data, size_t length)
     if (length < sizeof(*p))
         return PacketAction::DISCONNECT;
 
-    LogFormat(8, "from client: extended 0x%04x\n", ntohs(p->extended_cmd));
+    LogFormat(8, "from client: extended 0x%04x\n", (unsigned)p->extended_cmd);
 
     return PacketAction::ACCEPT;
 }
@@ -801,10 +802,10 @@ handle_seed(LinkedServer *ls, const void *data, gcc_unused size_t length)
         uo_server_set_protocol(ls->server, ls->client_version.protocol);
 
         LogFormat(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
-                  (unsigned)ntohl(p->client_major),
-                  (unsigned)ntohl(p->client_minor),
-                  (unsigned)ntohl(p->client_revision),
-                  (unsigned)ntohl(p->client_patch));
+                  (unsigned)p->client_major,
+                  (unsigned)p->client_minor,
+                  (unsigned)p->client_revision,
+                  (unsigned)p->client_patch);
     }
 
     if (!client_version_defined(&ls->connection->client_version) &&

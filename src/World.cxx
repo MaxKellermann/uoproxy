@@ -60,9 +60,9 @@ void
 World::Apply(const struct uo_packet_world_item &p) noexcept
 {
     assert(p.cmd == PCK_WorldItem);
-    assert(ntohs(p.length) <= sizeof(p));
+    assert(p.length <= sizeof(p));
 
-    MakeItem(p.serial & htonl(0x7fffffff)).Apply(p);
+    MakeItem(p.serial & PackedBE32(0x7fffffff)).Apply(p);
 }
 
 void
@@ -124,7 +124,7 @@ World::Apply(const struct uo_packet_container_content_6 &p) noexcept
     const unsigned attach_sequence = ++item_attach_sequence;
 
     const struct uo_packet_fragment_container_item_6 *pi = p.items,
-        *const end = pi + ntohs(p.num);
+        *const end = pi + p.num;
 
     for (; pi != end; ++pi) {
         auto &i = MakeItem(pi->serial);
@@ -232,7 +232,7 @@ read_equipped(World *world,
     };
 
     const char *const p0 = (const char*)(const void*)p;
-    const char *const end = p0 + ntohs(p->length);
+    const char *const end = p0 + p->length;
     const struct uo_packet_fragment_mobile_item *item = p->items;
     const char *i = (const char*)(const void*)item;
 
@@ -240,9 +240,9 @@ read_equipped(World *world,
         if (item->serial == 0)
             break;
         equip.serial = item->serial;
-        equip.item_id = item->item_id & htons(0x3fff);
+        equip.item_id = item->item_id & 0x3fff;
         equip.layer = item->layer;
-        if (item->item_id & htons(0x8000)) {
+        if (item->item_id & 0x8000) {
             equip.hue = item->hue;
             item++;
             i = (const char*)(const void*)item;
@@ -266,7 +266,7 @@ World::Apply(const struct uo_packet_mobile_incoming &p) noexcept
         packet_start.body = p.body;
         packet_start.x = p.x;
         packet_start.y = p.y;
-        packet_start.z = htons(p.z);
+        packet_start.z = p.z;
         packet_start.direction = p.direction;
 
         packet_mobile_update.body = p.body;
@@ -281,7 +281,7 @@ World::Apply(const struct uo_packet_mobile_incoming &p) noexcept
     auto &m = MakeMobile(p.serial);
 
     replace_packet((void**)&m.packet_mobile_incoming,
-                   &p, ntohs(p.length));
+                   &p, p.length);
 
     read_equipped(this, &p);
 }
@@ -297,7 +297,7 @@ World::Apply(const struct uo_packet_mobile_status &p) noexcept
     if (m.packet_mobile_status == nullptr ||
         m.packet_mobile_status->flags <= p.flags)
         replace_packet((void**)&m.packet_mobile_status,
-                       &p, ntohs(p.length));
+                       &p, p.length);
 }
 
 void
@@ -310,14 +310,14 @@ World::Apply(const struct uo_packet_mobile_update &p) noexcept
         packet_start.body = p.body;
         packet_start.x = p.x;
         packet_start.y = p.y;
-        packet_start.z = htons(p.z);
+        packet_start.z = p.z;
         packet_start.direction = p.direction;
     }
 
     Mobile *m = FindMobile(p.serial);
     if (m == nullptr) {
         LogFormat(3, "warning in connection_mobile_update: no such mobile 0x%x\n",
-                  (unsigned)ntohl(p.serial));
+                  (unsigned)p.serial);
         return;
     }
 
@@ -341,7 +341,7 @@ World::Apply(const struct uo_packet_mobile_moving &p) noexcept
         packet_start.body = p.body;
         packet_start.x = p.x;
         packet_start.y = p.y;
-        packet_start.z = htons(p.z);
+        packet_start.z = p.z;
         packet_start.direction = p.direction;
 
         packet_mobile_update.body = p.body;
@@ -356,7 +356,7 @@ World::Apply(const struct uo_packet_mobile_moving &p) noexcept
     Mobile *m = FindMobile(p.serial);
     if (m == nullptr) {
         LogFormat(3, "warning in connection_mobile_moving: no such mobile 0x%x\n",
-                  (unsigned)ntohl(p.serial));
+                  (unsigned)p.serial);
         return;
     }
 
@@ -382,7 +382,7 @@ World::Apply(const struct uo_packet_zone_change &p) noexcept
 
     packet_mobile_update.x = p.x;
     packet_mobile_update.y = p.y;
-    packet_mobile_update.z = ntohs(p.z);
+    packet_mobile_update.z = p.z;
 }
 
 void
@@ -407,11 +407,9 @@ World::RemoveMobileSerial(uint32_t serial) noexcept
 void
 World::RemoveSerial(uint32_t serial) noexcept
 {
-    uint32_t host_serial = ntohl(serial);
-
-    if (host_serial < 0x40000000)
+    if (serial < 0x40000000)
         RemoveMobileSerial(serial);
-    else if (host_serial < 0x80000000)
+    else if (serial < 0x80000000)
         RemoveItemSerial(serial);
 }
 

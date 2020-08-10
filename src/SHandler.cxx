@@ -64,27 +64,27 @@ static void send_antispy(UO::Client *client) {
     p = (struct uo_packet_hardware){
         .cmd = PCK_Hardware,
         .unknown0 = 2,
-        .instance_id = htonl(0xdeadbeef),
-        .os_major = htonl(5),
+        .instance_id = 0xdeadbeef,
+        .os_major = 5,
         .os_minor = 0,
         .os_revision = 0,
         .cpu_manufacturer = 3,
-        .cpu_family = htonl(6),
-        .cpu_model = htonl(8),
-        .cpu_clock = htonl(997),
+        .cpu_family = 6,
+        .cpu_model = 8,
+        .cpu_clock = 997,
         .cpu_quantity = 8,
-        .physical_memory = htonl(256),
-        .screen_width = htonl(1600),
-        .screen_height = htonl(1200),
-        .screen_depth = htonl(32),
-        .dx_major = htons(9),
-        .dx_minor = htons(0),
+        .physical_memory = 256,
+        .screen_width = 1600,
+        .screen_height = 1200,
+        .screen_depth = 32,
+        .dx_major = 9,
+        .dx_minor = 0,
         .vc_description = {
             'S', 0, '3', 0, ' ', 0, 'T', 0, 'r', 0, 'i', 0, 'o',
         },
         .vc_vendor_id = 0,
         .vc_device_id = 0,
-        .vc_memory = htonl(4),
+        .vc_memory = 4,
         .distribution = 2,
         .clients_running = 1,
         .clients_installed = 1,
@@ -490,8 +490,8 @@ handle_char_list(Connection *c, const void *data, size_t length)
     if (c->client.reconnecting) {
         struct uo_packet_play_character p2 = {
             .cmd = PCK_PlayCharacter,
-            .slot = htonl(c->character_index),
-            .client_ip = htonl(0xc0a80102), /* 192.168.1.2 */
+            .slot = c->character_index,
+            .client_ip = 0xc0a80102, /* 192.168.1.2 */
         };
 
         LogFormat(2, "sending PlayCharacter\n");
@@ -576,8 +576,8 @@ handle_relay(Connection *c, const void *data, size_t length)
 
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
-    sin.sin_port = relay.port;
-    sin.sin_addr.s_addr = relay.ip;
+    sin.sin_port = relay.port.raw();
+    sin.sin_addr.s_addr = relay.ip.raw();
 
     /* connect to new server */
 
@@ -611,7 +611,6 @@ handle_server_list(Connection *c, const void *data, size_t length)
     /* this packet tells the UO client where to connect; what
        we do here is replace the server IP with our own one */
     const unsigned char *p = (const unsigned char *)data;
-    unsigned count, i, k;
     const struct uo_fragment_server_info *server_info;
 
     (void)c;
@@ -635,21 +634,21 @@ handle_server_list(Connection *c, const void *data, size_t length)
         return PacketAction::DROP;
     }
 
-    count = ntohs(*(const uint16_t*)(p + 4));
+    const unsigned count = *(const PackedBE16 *)(p + 4);
     LogFormat(5, "serverlist: %u servers\n", count);
     if (length != 6 + count * sizeof(*server_info))
         return PacketAction::DISCONNECT;
 
     server_info = (const struct uo_fragment_server_info*)(p + 6);
-    for (i = 0; i < count; i++, server_info++) {
-        k = ntohs(server_info->index);
+    for (unsigned i = 0; i < count; i++, server_info++) {
+        const unsigned k = server_info->index;
         if (k != i)
             return PacketAction::DISCONNECT;
 
         LogFormat(6, "server %u: name=%s address=0x%08x\n",
-                  ntohs(server_info->index),
+                  (unsigned)server_info->index,
                   server_info->name,
-                  (unsigned)ntohl(server_info->address));
+                  (unsigned)server_info->address);
     }
 
     return PacketAction::ACCEPT;
@@ -670,7 +669,7 @@ handle_supported_features(Connection *c, const void *data, size_t length)
         auto p = (const struct uo_packet_supported_features_6014 *)data;
         assert(length == sizeof(*p));
 
-        c->client.supported_features_flags = ntohl(p->flags);
+        c->client.supported_features_flags = p->flags;
 
         struct uo_packet_supported_features p6;
         supported_features_6014_to_6(&p6, p);
@@ -681,7 +680,7 @@ handle_supported_features(Connection *c, const void *data, size_t length)
         auto p = (const struct uo_packet_supported_features *)data;
         assert(length == sizeof(*p));
 
-        c->client.supported_features_flags = ntohs(p->flags);
+        c->client.supported_features_flags = p->flags;
 
         struct uo_packet_supported_features_6014 p7;
         supported_features_6_to_6014(&p7, p);
@@ -733,9 +732,9 @@ handle_extended(Connection *c, const void *data, size_t length)
     if (length < sizeof(*p))
         return PacketAction::DISCONNECT;
 
-    LogFormat(8, "from server: extended 0x%04x\n", ntohs(p->extended_cmd));
+    LogFormat(8, "from server: extended 0x%04x\n", (unsigned)p->extended_cmd);
 
-    switch (ntohs(p->extended_cmd)) {
+    switch (p->extended_cmd) {
     case 0x0008:
         if (length <= sizeof(c->client.world.packet_map_change))
             memcpy(&c->client.world.packet_map_change, data, length);
@@ -763,7 +762,7 @@ handle_world_item_7(Connection *c, const void *data, size_t length)
     c->client.world.Apply(*p);
 
     connection_broadcast_divert(c, PROTOCOL_7,
-                                &old, ntohs(old.length),
+                                &old, old.length,
                                 data, length);
     return PacketAction::DROP;
 }
@@ -781,7 +780,7 @@ handle_protocol_extension(Connection *c, const void *data, size_t length)
 
         struct uo_packet_protocol_extension response = {
             .cmd = PCK_ProtocolExtension,
-            .length = htons(sizeof(response)),
+            .length = sizeof(response),
             .extension = 0xff,
         };
 

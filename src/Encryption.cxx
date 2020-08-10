@@ -219,10 +219,10 @@ encryption_from_client(struct encryption *e,
                 /* need more data */
                 return nullptr;
 
-            e->seed = ntohl(packet_seed->seed);
+            e->seed = packet_seed->seed;
             p += sizeof(*packet_seed);
         } else {
-            e->seed = ntohl(*(const uint32_t *)p);
+            e->seed = *(const PackedBE32 *)p;
             p += sizeof(e->seed);
         }
 
@@ -254,7 +254,7 @@ encryption_from_client(struct encryption *e,
             e->state = STATE_LOGIN;
         } else if (p + sizeof(*game_login) == end) {
             if (game_login->cmd == PCK_GameLogin &&
-                ntohl(game_login->auth_id) == e->seed) {
+                game_login->auth_id == e->seed) {
                 /* unencrypted game login */
                 e->state = STATE_DISABLED;
                 return data;

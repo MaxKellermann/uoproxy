@@ -21,6 +21,7 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <array>
 
@@ -137,7 +138,7 @@ get_packet_length(enum protocol_version protocol,
     if (max_length < 3)
         return 0;
 
-    length = ntohs(*(const uint16_t*)(p + 1));
+    length = *(const PackedBE16*)(p + 1);
     if (length < 3 || length >= 0x8000)
         return PACKET_LENGTH_INVALID;
 

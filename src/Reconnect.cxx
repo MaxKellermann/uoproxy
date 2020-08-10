@@ -58,7 +58,7 @@ connection_try_reconnect(Connection *c)
     if (c->client_version.seed != nullptr)
         seed = c->client_version.seed->seed;
     else
-        seed = htonl(0xc0a80102); /* 192.168.1.2 */
+        seed = 0xc0a80102; /* 192.168.1.2 */
 
     if (config->login_address == nullptr) {
         /* connect to game server */

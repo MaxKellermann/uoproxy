@@ -103,7 +103,7 @@ connection_handle_command(LinkedServer *server, const char *command)
                 .serial = 0,
                 .x = c->client.world.packet_start.x,
                 .y = c->client.world.packet_start.y,
-                .z = (int8_t)ntohs(c->client.world.packet_start.x),
+                .z = (int8_t)c->client.world.packet_start.z,
                 .dest_serial = 0,
             };
 
@@ -114,7 +114,7 @@ connection_handle_command(LinkedServer *server, const char *command)
                 .serial = 0,
                 .x = c->client.world.packet_start.x,
                 .y = c->client.world.packet_start.y,
-                .z = (int8_t)ntohs(c->client.world.packet_start.x),
+                .z = (int8_t)c->client.world.packet_start.x,
                 .unknown0 = 0,
                 .dest_serial = 0,
             };

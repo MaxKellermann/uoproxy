@@ -190,7 +190,6 @@ connection_walk_ack(Connection *c,
                     const struct uo_packet_walk_ack *p)
 {
     WalkState *state = &c->walk;
-    unsigned x, y;
 
     auto *i = find_by_seq(state, p->seq);
     if (i == nullptr) {
@@ -201,8 +200,8 @@ connection_walk_ack(Connection *c,
 
     LogFormat(7, "walk_ack seq_to_client=%u seq_from_server=%u\n", i->packet.seq, p->seq);
 
-    x = ntohs(c->client.world.packet_start.x);
-    y = ntohs(c->client.world.packet_start.y);
+    unsigned x = c->client.world.packet_start.x;
+    unsigned y = c->client.world.packet_start.y;
 
     if ((c->client.world.packet_start.direction & 0x07) == (i->packet.direction & 0x07)) {
         switch (i->packet.direction & 0x07) {
@@ -237,7 +236,7 @@ connection_walk_ack(Connection *c,
         }
     }
 
-    c->client.world.Walked(htons(x), htons(y),
+    c->client.world.Walked(x, y,
                            i->packet.direction, p->notoriety);
 
     /* forward ack to requesting client */

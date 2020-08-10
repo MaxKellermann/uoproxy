@@ -268,8 +268,10 @@ uo_client_create(int fd, uint32_t seed,
         struct uo_packet_seed p = *seed6;
         p.seed = seed;
         uo_client_send(client, &p, sizeof(p));
-    } else
-        uo_client_send(client, (unsigned char*)&seed, sizeof(seed));
+    } else {
+        PackedBE32 seed_be(seed);
+        uo_client_send(client, &seed_be, sizeof(seed_be));
+    }
 
     return client;
 }

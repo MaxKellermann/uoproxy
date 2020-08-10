@@ -63,7 +63,7 @@ uo_server_speak_ascii(UO::Server *server,
         return;
 
     p->cmd = PCK_SpeakAscii;
-    p->length = htons(length);
+    p->length = length;
     p->serial = serial;
     p->graphic = graphic;
     p->type = type;
@@ -82,10 +82,10 @@ uo_server_speak_console(UO::Server *server,
                         const char *text)
 {
     uo_server_speak_ascii(server,
-                          htonl(0xffffffff),
-                          htons(-1),
+                          0xffffffff,
+                          -1,
                           0x01,
-                          htons(0x35),
-                          htons(3),
+                          0x35,
+                          3,
                           "uoproxy", text);
 }
