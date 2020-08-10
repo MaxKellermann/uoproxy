@@ -117,38 +117,6 @@ connection_client_connect(Connection *c,
             return -fd;
     }
 
-    const struct uo_packet_seed *seed_packet = c->client_version.seed;
-    struct uo_packet_seed seed_buffer;
-
-    if (seed_packet == nullptr &&
-        client_version_defined(&c->client_version) &&
-        c->client_version.protocol >= PROTOCOL_6_0_14) {
-        seed_buffer.cmd = PCK_Seed;
-        seed_buffer.seed = seed;
-
-        if (c->client_version.protocol >= PROTOCOL_7) {
-            seed_buffer.client_major = 7;
-            seed_buffer.client_minor = 0;
-            seed_buffer.client_revision = 10;
-            seed_buffer.client_patch = 3;
-        } else {
-            seed_buffer.client_major = 6;
-            seed_buffer.client_minor = 0;
-            seed_buffer.client_revision = 14;
-            seed_buffer.client_patch = 2;
-        }
-
-        seed_packet = &seed_buffer;
-    }
-
-    c->client.client = uo_client_create(fd, seed,
-                                        seed_packet,
-                                        *c);
-
-    uo_client_set_protocol(c->client.client,
-                           c->client_version.protocol);
-
-    c->client.SchedulePing();
-
+    c->client.Connect(fd, c->client_version, seed, *c);
     return 0;
 }

@@ -20,6 +20,7 @@
 
 #include "StatefulClient.hxx"
 #include "Client.hxx"
+#include "CVersion.hxx"
 #include "Log.hxx"
 
 #include <assert.h>
@@ -45,6 +46,47 @@ ping_event_callback(int, short, void *ctx) noexcept
 StatefulClient::StatefulClient() noexcept
 {
     evtimer_set(&ping_event, ping_event_callback, this);
+}
+
+void
+StatefulClient::Connect(int fd, const struct client_version &version,
+                        uint32_t seed,
+                        UO::ClientHandler &handler)
+{
+    assert(client == nullptr);
+
+    const struct uo_packet_seed *seed_packet = version.seed;
+    struct uo_packet_seed seed_buffer;
+
+    if (seed_packet == nullptr &&
+        client_version_defined(&version) &&
+        version.protocol >= PROTOCOL_6_0_14) {
+        seed_buffer.cmd = PCK_Seed;
+        seed_buffer.seed = seed;
+
+        if (version.protocol >= PROTOCOL_7) {
+            seed_buffer.client_major = 7;
+            seed_buffer.client_minor = 0;
+            seed_buffer.client_revision = 10;
+            seed_buffer.client_patch = 3;
+        } else {
+            seed_buffer.client_major = 6;
+            seed_buffer.client_minor = 0;
+            seed_buffer.client_revision = 14;
+            seed_buffer.client_patch = 2;
+        }
+
+        seed_packet = &seed_buffer;
+    }
+
+    client = uo_client_create(fd, seed,
+                              seed_packet,
+                              handler);
+
+    uo_client_set_protocol(client, version.protocol);
+
+    SchedulePing();
+
 }
 
 void

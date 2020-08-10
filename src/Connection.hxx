@@ -30,7 +30,6 @@
 
 #include <event.h>
 
-#define MAX_CHARACTERS 16
 #define MAX_WALK_QUEUE 4
 
 struct Instance;

@@ -28,6 +28,7 @@
 
 namespace UO {
 class Client;
+class ClientHandler;
 }
 
 struct StatefulClient {
@@ -55,6 +56,10 @@ struct StatefulClient {
 
     StatefulClient(const StatefulClient &) = delete;
     StatefulClient &operator=(const StatefulClient &) = delete;
+
+    void Connect(int fd, const struct client_version &version,
+                 uint32_t seed,
+                 UO::ClientHandler &handler);
 
     void Disconnect() noexcept;
 
