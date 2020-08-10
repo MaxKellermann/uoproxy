@@ -109,6 +109,7 @@ executable(
   'src/CVersion.cxx', 'src/Bridge.cxx',
   'src/Connection.cxx', 'src/CClient.cxx', 'src/CServer.cxx', 'src/CNet.cxx',
   'src/LinkedServer.cxx',
+  'src/StatefulClient.cxx',
   'src/World.cxx', 'src/CWorld.cxx', 'src/Walk.cxx',
   'src/Handler.cxx', 'src/SHandler.cxx', 'src/CHandler.cxx',
   'src/Attach.cxx', 'src/Reconnect.cxx',

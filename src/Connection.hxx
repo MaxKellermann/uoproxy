@@ -26,7 +26,7 @@
 #include "World.hxx"
 #include "CVersion.hxx"
 #include "Client.hxx"
-#include "Server.hxx"
+#include "StatefulClient.hxx"
 
 #include <event.h>
 
@@ -41,35 +41,6 @@ namespace UO {
 class Client;
 class Server;
 }
-
-struct StatefulClient {
-    bool reconnecting = false, version_requested = false;
-    struct event reconnect_event;
-
-    UO::Client *client = nullptr;
-    struct event ping_event;
-
-    struct uo_fragment_character_info characters[MAX_CHARACTERS];
-    unsigned num_characters = 0;
-
-    uint32_t supported_features_flags = 0;
-
-    unsigned char ping_request = 0, ping_ack = 0;
-
-    World world;
-
-    StatefulClient() noexcept {
-        evtimer_set(&ping_event, nullptr, nullptr);
-    }
-
-    ~StatefulClient() noexcept {
-        if (reconnecting)
-            event_del(&reconnect_event);
-    }
-
-    StatefulClient(const StatefulClient &) = delete;
-    StatefulClient &operator=(const StatefulClient &) = delete;
-};
 
 struct WalkState {
     struct Item {
@@ -218,9 +189,6 @@ connection_client_connect(Connection *c,
                           const struct sockaddr *server_address,
                           size_t server_address_length,
                           uint32_t seed);
-
-void
-connection_client_disconnect(StatefulClient *client);
 
 void connection_disconnect(Connection *c);
 

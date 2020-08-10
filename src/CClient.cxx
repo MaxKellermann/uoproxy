@@ -22,7 +22,6 @@
 #include "LinkedServer.hxx"
 #include "SocketConnect.hxx"
 #include "ProxySocks.hxx"
-#include "Client.hxx"
 #include "Server.hxx"
 #include "Handler.hxx"
 #include "Log.hxx"
@@ -31,14 +30,6 @@
 #include "Config.hxx"
 
 #include <assert.h>
-#include <unistd.h>
-
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <netdb.h>
-#endif
 
 bool
 Connection::OnClientPacket(const void *data, size_t length)
@@ -188,22 +179,4 @@ connection_client_connect(Connection *c,
     evtimer_add(&c->client.ping_event, &tv);
 
     return 0;
-}
-
-void
-connection_client_disconnect(StatefulClient *client)
-{
-    assert(client->client != nullptr);
-
-    if (client->reconnecting) {
-        event_del(&client->reconnect_event);
-        client->reconnecting = false;
-    }
-
-    client->version_requested = false;
-
-    event_del(&client->ping_event);
-
-    uo_client_dispose(client->client);
-    client->client = nullptr;
 }
