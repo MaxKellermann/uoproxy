@@ -47,10 +47,10 @@ Connection::BroadcastToInGameClients(const void *data, size_t length) noexcept
 
 void
 Connection::BroadcastToInGameClientsExcept(const void *data, size_t length,
-                                           UO::Server &except) noexcept
+                                           LinkedServer &except) noexcept
 {
     for (auto &ls : servers)
-        if (ls.IsInGame() && ls.server != &except)
+        if (&ls != &except && ls.IsInGame())
             uo_server_send(ls.server, data, length);
 }
 

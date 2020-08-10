@@ -116,7 +116,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 
     void BroadcastToInGameClients(const void *data, size_t length) noexcept;
     void BroadcastToInGameClientsExcept(const void *data, size_t length,
-                                        UO::Server &except) noexcept;
+                                        LinkedServer &except) noexcept;
     void BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
                                         const void *old_data, size_t old_length,
                                         const void *new_data, size_t new_length) noexcept;

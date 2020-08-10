@@ -261,7 +261,7 @@ connection_walk_ack(Connection *c,
 
     if (state->server != nullptr)
         c->BroadcastToInGameClientsExcept(mu, sizeof(*mu),
-                                          *state->server->server);
+                                          *state->server);
     else
         c->BroadcastToInGameClients(mu, sizeof(*mu));
 

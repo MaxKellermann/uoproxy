@@ -287,7 +287,7 @@ handle_target(LinkedServer *ls,
 
         ls->connection->BroadcastToInGameClientsExcept(&world->packet_target,
                                                        sizeof(world->packet_target),
-                                                       *ls->server);
+                                                       *ls);
     }
 
     return PacketAction::ACCEPT;
@@ -714,8 +714,7 @@ handle_gump_response(LinkedServer *ls,
         .button_id = 0,
     };
 
-    ls->connection->BroadcastToInGameClientsExcept(&close, sizeof(close),
-                                                   *ls->server);
+    ls->connection->BroadcastToInGameClientsExcept(&close, sizeof(close), *ls);
 
     return PacketAction::ACCEPT;
 }
