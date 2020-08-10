@@ -37,7 +37,7 @@ namespace UO {
 
 class Server {
 public:
-    struct sock_buff *sock = nullptr;
+    SocketBuffer *sock = nullptr;
     uint32_t seed = 0;
     bool compression_enabled = false;
 
@@ -226,7 +226,7 @@ server_sock_buff_free(int error, void *ctx)
     uo_server_invoke_free(server);
 }
 
-struct sock_buff_handler server_sock_buff_handler = {
+static constexpr SocketBufferHandler server_sock_buff_handler = {
     .data = server_sock_buff_data,
     .free = server_sock_buff_free,
 };

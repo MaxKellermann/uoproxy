@@ -51,7 +51,7 @@ namespace UO {
 
 class Client {
 public:
-    struct sock_buff *sock = nullptr;
+    SocketBuffer *sock = nullptr;
     bool compression_enabled = false;
     struct uo_decompression decompression;
     struct fifo_buffer *decompressed_buffer = nullptr;
@@ -252,7 +252,7 @@ client_sock_buff_free(int error, void *ctx)
     uo_client_invoke_free(client);
 }
 
-struct sock_buff_handler client_sock_buff_handler = {
+static constexpr SocketBufferHandler client_sock_buff_handler = {
     .data = client_sock_buff_data,
     .free = client_sock_buff_free,
 };

@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct sock_buff_handler {
+struct SocketBufferHandler {
     /**
      * Data is available.
      *
@@ -41,39 +41,39 @@ struct sock_buff_handler {
     void (*free)(int error, void *ctx);
 };
 
-struct sock_buff;
+struct SocketBuffer;
 
-struct sock_buff *
+SocketBuffer *
 sock_buff_create(int fd, size_t input_max,
                  size_t output_max,
-                 const struct sock_buff_handler *handler,
+                 const SocketBufferHandler *handler,
                  void *handler_ctx);
 
-void sock_buff_dispose(struct sock_buff *sb);
+void sock_buff_dispose(SocketBuffer *sb);
 
 void *
-sock_buff_write(struct sock_buff *sb, size_t *max_length_r);
+sock_buff_write(SocketBuffer *sb, size_t *max_length_r);
 
 void
-sock_buff_append(struct sock_buff *sb, size_t length);
+sock_buff_append(SocketBuffer *sb, size_t length);
 
 /**
  * @return true on success, false if there is no more room in the
  * output buffer
  */
 bool
-sock_buff_send(struct sock_buff *sb, const void *data, size_t length);
+sock_buff_send(SocketBuffer *sb, const void *data, size_t length);
 
 /**
  * @return the 32-bit internet address of the socket buffer's fd, in
  * network byte order
  */
-uint32_t sock_buff_sockname(const struct sock_buff *sb);
+uint32_t sock_buff_sockname(const SocketBuffer *sb);
 
 /**
  * @return the 16-bit port ofthe socket buffer's fd, in network byte
  * order
  */
-uint16_t sock_buff_port(const struct sock_buff *sb);
+uint16_t sock_buff_port(const SocketBuffer *sb);
 
 #endif
