@@ -25,7 +25,11 @@
 #ifndef __UOPROXY_PVERIFY_H
 #define __UOPROXY_PVERIFY_H
 
-#include "packets.h"
+#include "PacketStructs.hxx"
+
+#ifndef NDEBUG
+#include "PacketType.hxx"
+#endif
 
 #include <assert.h>
 

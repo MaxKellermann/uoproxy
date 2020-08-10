@@ -25,7 +25,8 @@
  */
 
 #include "Bridge.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
+#include "PacketType.hxx"
 
 #include <assert.h>
 #include <stdlib.h>

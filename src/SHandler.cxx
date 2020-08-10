@@ -20,7 +20,7 @@
 
 #include "Handler.hxx"
 #include "Instance.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
 #include "VerifyPacket.hxx"
 #include "Connection.hxx"
 #include "LinkedServer.hxx"

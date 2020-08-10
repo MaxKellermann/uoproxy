@@ -19,7 +19,8 @@
  */
 
 #include "Server.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
+#include "PacketType.hxx"
 
 #include <string.h>
 #include <stdlib.h>

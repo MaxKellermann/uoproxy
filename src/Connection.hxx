@@ -22,7 +22,7 @@
 #define __CONNECTION_H
 
 #include "util/IntrusiveList.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
 #include "World.hxx"
 #include "CVersion.hxx"
 #include "Client.hxx"

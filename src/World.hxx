@@ -22,7 +22,8 @@
 #define __UOPROXY_WORLD_H
 
 #include "util/IntrusiveList.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
+#include "PacketType.hxx"
 
 struct Item final : IntrusiveListHook {
     const uint32_t serial;

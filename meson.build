@@ -103,7 +103,7 @@ executable(
   'src/NetUtil.cxx',
   'src/Encryption.cxx',
   'src/Server.cxx', 'src/Client.cxx',
-  'src/packets.c', 'src/Compression.cxx',
+  'src/PacketLengths.c', 'src/Compression.cxx',
   'src/pversion.c',
   'src/CVersion.cxx', 'src/Bridge.cxx',
   'src/Connection.cxx', 'src/CClient.cxx', 'src/CServer.cxx', 'src/CNet.cxx',

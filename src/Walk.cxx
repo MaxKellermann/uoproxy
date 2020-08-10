@@ -20,7 +20,8 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
+#include "PacketType.hxx"
 #include "Server.hxx"
 #include "Client.hxx"
 #include "Log.hxx"

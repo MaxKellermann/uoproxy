@@ -21,6 +21,8 @@
 #include "World.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
+#include "PacketLengths.h"
+#include "pversion.h"
 
 #include <assert.h>
 #include <stdlib.h>

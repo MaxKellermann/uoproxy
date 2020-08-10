@@ -19,7 +19,8 @@
  */
 
 #include "Encryption.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
+#include "PacketType.hxx"
 #include "Log.hxx"
 
 #include <assert.h>

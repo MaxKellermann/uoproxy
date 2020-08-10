@@ -19,7 +19,7 @@
  */
 
 #include "Instance.hxx"
-#include "packets.h"
+#include "PacketStructs.hxx"
 #include "Handler.hxx"
 #include "CVersion.hxx"
 #include "Connection.hxx"

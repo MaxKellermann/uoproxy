@@ -19,7 +19,7 @@
  */
 
 #include "CVersion.hxx"
-#include "packets.h"
+#include "PacketType.hxx"
 #include "VerifyPacket.hxx"
 
 #include <stdlib.h>
