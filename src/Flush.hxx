@@ -28,23 +28,33 @@
 #ifndef __UOPROXY_FLUSH_H
 #define __UOPROXY_FLUSH_H
 
-#include "list.h"
+#include "util/IntrusiveList.hxx"
 
 /**
  * An operation that has to be flushed.
  */
-struct pending_flush {
-    struct list_head siblings;
-    void (*flush)(struct pending_flush *flush);
-};
+struct pending_flush final : IntrusiveListHook {
+    bool is_linked = false;
 
-static inline void
-flush_init(struct pending_flush *flush,
-           void (*callback)(struct pending_flush *flush))
-{
-    flush->siblings.next = nullptr;
-    flush->flush = callback;
-}
+    void (*flush)(struct pending_flush *flush);
+
+    explicit pending_flush(void (*_callback)(struct pending_flush *)) noexcept
+        :flush(_callback) {}
+
+    ~pending_flush() noexcept {
+        Cancel();
+    }
+
+    pending_flush(const pending_flush &) = delete;
+    pending_flush &operator=(const pending_flush &) = delete;
+
+    void Cancel() noexcept {
+        if (is_linked) {
+            is_linked = false;
+            unlink();
+        }
+    }
+};
 
 void
 flush_begin();
@@ -54,8 +64,5 @@ flush_end();
 
 void
 flush_add(struct pending_flush *flush);
-
-void
-flush_del(struct pending_flush *flush);
 
 #endif

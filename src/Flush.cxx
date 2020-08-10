@@ -29,47 +29,35 @@
 
 #include <assert.h>
 
-static struct list_head flush_pending;
+static IntrusiveList<struct pending_flush> flush_pending;
+static bool flush_postponed = false;
 
 void
 flush_begin()
 {
-    assert(flush_pending.next == nullptr);
-
-    INIT_LIST_HEAD(&flush_pending);
+    assert(flush_pending.empty());
+    assert(!flush_postponed);
+    flush_postponed = true;
 }
 
 void
 flush_end()
 {
-    struct pending_flush *flush, *n;
+    assert(flush_postponed);
+    flush_postponed = false;
 
-    assert(flush_pending.next != nullptr);
-
-    list_for_each_entry_safe(flush, n, &flush_pending, siblings) {
-        list_del(&flush->siblings);
-
-        flush->siblings.next = nullptr;
+    flush_pending.clear_and_dispose([](struct pending_flush *flush){
         flush->flush(flush);
-    }
-
-    flush_pending.next = nullptr;
+    });
 }
 
 void
 flush_add(struct pending_flush *flush)
 {
-    if (flush_pending.next == nullptr)
+    if (!flush_postponed)
         flush->flush(flush);
-    else if (flush->siblings.next == nullptr)
-        list_add(&flush->siblings, &flush_pending);
-}
-
-void
-flush_del(struct pending_flush *flush)
-{
-    if (flush->siblings.next != nullptr) {
-        list_del(&flush->siblings);
-        flush->siblings.next = nullptr;
+    else if (!flush->is_linked) {
+        flush->is_linked = true;
+        flush_pending.push_back(*flush);
     }
 }

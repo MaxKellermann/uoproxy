@@ -64,9 +64,7 @@ Connection::~Connection() noexcept
 {
     connection_check(this);
 
-    LinkedServer *ls, *n;
-    list_for_each_entry_safe(ls, n, &servers, siblings)
-        connection_server_dispose(this, ls);
+    servers.clear_and_dispose([](LinkedServer *ls){ delete ls; });
 
     connection_disconnect(this);
 
@@ -83,8 +81,8 @@ void connection_check(const Connection *c) {
         /* when not yet in-game, there can only be one connection
            unless we are doing the razor workaround, in which case we keep
            zombies around that we later delete*/
-        assert(list_empty(&c->servers) ||
-               c->servers.next->next == &c->servers ||
+        assert(c->servers.empty() ||
+               std::next(c->servers.begin()) == c->servers.end() ||
                c->instance->config->razor_workaround);
     }
 }
@@ -93,6 +91,6 @@ void connection_check(const Connection *c) {
 void
 connection_delete(Connection *c)
 {
-    list_del(&c->siblings);
+    c->unlink();
     delete c;
 }

@@ -35,12 +35,9 @@ Item::Apply(const struct uo_packet_world_item &p) noexcept
 Item *
 World::FindItem(uint32_t serial) noexcept
 {
-    Item *item;
-
-    list_for_each_entry(item, &items, siblings) {
-        if (item->serial == serial)
-            return item;
-    }
+    for (auto &i : items)
+        if (i.serial == serial)
+            return &i;
 
     return nullptr;
 }
@@ -53,7 +50,7 @@ World::MakeItem(uint32_t serial) noexcept
         return *i;
 
     i = new Item(serial);
-    list_add(&i->siblings, &items);
+    items.push_front(*i);
     return *i;
 }
 
@@ -95,11 +92,10 @@ World::SweepAfterContainerUpdate(uint32_t parent_serial) noexcept
 {
     const unsigned attach_sequence = item_attach_sequence;
 
-    Item *item, *n;
-    list_for_each_entry_safe(item, n, &items, siblings)
-        if (item->GetParentSerial() == parent_serial &&
-            item->attach_sequence != attach_sequence)
-            RemoveItem(*item);
+    items.remove_and_dispose_if([parent_serial, attach_sequence](const Item &i){
+        return i.GetParentSerial() == parent_serial &&
+            i.attach_sequence != attach_sequence;
+    }, [](Item *i){ delete i; });
 }
 
 void
@@ -144,34 +140,28 @@ World::Apply(const struct uo_packet_container_content_6 &p) noexcept
 void
 World::RemoveItem(Item &item) noexcept
 {
-    assert(!list_empty(&item.siblings));
-
-    list_del(&item.siblings);
+    item.unlink();
     delete &item;
 }
 
 void
 World::RemoveItemTree(uint32_t parent_serial) noexcept
 {
-    Item *i, *n;
-    struct list_head temp;
-
-    INIT_LIST_HEAD(&temp);
+    IntrusiveList<Item> temp;
 
     /* move all direct children to the temporary list */
-    list_for_each_entry_safe(i, n, &items, siblings) {
-        if (i->GetParentSerial() == parent_serial) {
-            /* move to temp list */
-            list_del(&i->siblings);
-            list_add(&i->siblings, &temp);
-        }
-    }
+    items.remove_and_dispose_if([parent_serial](const Item &i){
+        return i.GetParentSerial() == parent_serial;
+    }, [&temp](Item *i){
+        /* move to temp list */
+        temp.push_back(*i);
+    });
 
     /* delete these, and recursively delete their children */
-    list_for_each_entry_safe(i, n, &temp, siblings) {
+    temp.clear_and_dispose([this](Item *i){
         RemoveItemTree(i->serial);
-        RemoveItem(*i);
-    }
+        delete i;
+    });
 }
 
 void
@@ -195,12 +185,9 @@ Mobile::~Mobile() noexcept
 Mobile *
 World::FindMobile(uint32_t serial) noexcept
 {
-    Mobile *mobile;
-
-    list_for_each_entry(mobile, &mobiles, siblings) {
-        if (mobile->serial == serial)
-            return mobile;
-    }
+    for (auto &i : mobiles)
+        if (i.serial == serial)
+            return &i;
 
     return nullptr;
 }
@@ -213,7 +200,7 @@ World::MakeMobile(uint32_t serial) noexcept
         return *m;
 
     m = new Mobile(serial);
-    list_add(&m->siblings, &mobiles);
+    mobiles.push_front(*m);
     return *m;
 }
 
@@ -399,9 +386,7 @@ World::Apply(const struct uo_packet_zone_change &p) noexcept
 void
 World::RemoveMobile(Mobile &mobile) noexcept
 {
-    assert(!list_empty(&mobile.siblings));
-
-    list_del(&mobile.siblings);
+    mobile.unlink();
     delete &mobile;
 }
 

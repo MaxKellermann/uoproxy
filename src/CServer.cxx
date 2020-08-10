@@ -57,7 +57,7 @@ server_packet(const void *data, size_t length, void *ctx)
         log_hexdump(6, data, length);
 
         connection_server_dispose(c, ls);
-        if (list_empty(&c->servers)) {
+        if (c->servers.empty()) {
             if (c->background)
                 LogFormat(1, "backgrounding\n");
             else
@@ -85,7 +85,8 @@ server_free(void *ctx)
     if (ls->expecting_reconnect) {
         LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
         connection_server_zombify(c, ls);
-    } else if (ls->siblings.next != &c->servers || ls->siblings.prev != &c->servers) {
+    } else if (c->servers.iterator_to(*ls) != c->servers.begin() ||
+               std::next(c->servers.iterator_to(*ls)) != c->servers.end()) {
         LogFormat(2, "client disconnected, server connection still in use\n");
         connection_server_dispose(c, ls);
     } else if (c->background && c->in_game) {
@@ -108,7 +109,7 @@ connection_server_add(Connection *c, LinkedServer *ls)
 {
     assert(ls->connection == nullptr);
 
-    list_add(&ls->siblings, &c->servers);
+    c->servers.push_front(*ls);
     ls->connection = c;
 }
 
@@ -122,7 +123,7 @@ connection_server_remove(Connection *c, LinkedServer *ls)
     connection_walk_server_removed(&c->walk, ls);
 
     ls->connection = nullptr;
-    list_del(&ls->siblings);
+    ls->unlink();
 }
 
 LinkedServer *

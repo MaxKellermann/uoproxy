@@ -30,16 +30,14 @@
 Connection *
 find_attach_connection(Connection *c)
 {
-    Connection *c2;
-
-    list_for_each_entry(c2, &c->instance->connections, siblings)
-        if (c2 != c && c2->in_game &&
-            c2->client.world.packet_start.serial != 0 &&
-            strncmp(c->username, c2->username, sizeof(c->username)) == 0 &&
-            strncmp(c->password, c2->password, sizeof(c->password)) == 0 &&
-            c->server_index == c2->server_index &&
-            c2->client.num_characters > 0)
-            return c2;
+    for (auto &i : c->instance->connections)
+        if (&i != c && i.in_game &&
+            i.client.world.packet_start.serial != 0 &&
+            strncmp(c->username, i.username, sizeof(c->username)) == 0 &&
+            strncmp(c->password, i.password, sizeof(c->password)) == 0 &&
+            c->server_index == i.server_index &&
+            i.client.num_characters > 0)
+            return &i;
 
     return nullptr;
 }
@@ -117,8 +115,6 @@ attach_send_world(LinkedServer *ls)
 {
     World *world = &ls->connection->client.world;
     struct uo_packet_login_complete login_complete;
-    Mobile *mobile;
-    Item *item;
 
     /* 0x1b LoginConfirm */
     if (world->packet_start.cmd == PCK_Start)
@@ -184,20 +180,20 @@ attach_send_world(LinkedServer *ls)
                        sizeof(world->packet_war_mode));
 
     /* mobiles */
-    list_for_each_entry(mobile, &world->mobiles, siblings) {
-        if (mobile->packet_mobile_incoming != nullptr)
-            uo_server_send(ls->server, mobile->packet_mobile_incoming,
-                           ntohs(mobile->packet_mobile_incoming->length));
-        if (mobile->packet_mobile_status != nullptr)
-            uo_server_send(ls->server, mobile->packet_mobile_status,
-                           ntohs(mobile->packet_mobile_status->length));
+    for (const auto &mobile : world->mobiles) {
+        if (mobile.packet_mobile_incoming != nullptr)
+            uo_server_send(ls->server, mobile.packet_mobile_incoming,
+                           ntohs(mobile.packet_mobile_incoming->length));
+        if (mobile.packet_mobile_status != nullptr)
+            uo_server_send(ls->server, mobile.packet_mobile_status,
+                           ntohs(mobile.packet_mobile_status->length));
     }
 
     /* items */
     ++world->item_attach_sequence;
-    list_for_each_entry(item, &world->items, siblings)
-        if (item->attach_sequence != world->item_attach_sequence)
-            attach_item(ls, item);
+    for (auto &item : world->items)
+        if (item.attach_sequence != world->item_attach_sequence)
+            attach_item(ls, &item);
 
     /* LoginComplete */
     login_complete.cmd = PCK_ReDrawAll;

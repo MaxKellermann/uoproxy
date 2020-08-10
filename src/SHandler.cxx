@@ -45,13 +45,11 @@
 #endif
 
 static void welcome(Connection *c) {
-    LinkedServer *ls;
-
-    list_for_each_entry(ls, &c->servers, siblings) {
-        if (!ls->attaching && !ls->is_zombie && !ls->welcome) {
-            uo_server_speak_console(ls->server, "Welcome to uoproxy v" VERSION "!  "
+    for (auto &ls : c->servers) {
+        if (!ls.attaching && !ls.is_zombie && !ls.welcome) {
+            uo_server_speak_console(ls.server, "Welcome to uoproxy v" VERSION "!  "
                                     "http://max.kellermann.name/projects/uoproxy/");
-            ls->welcome = true;
+            ls.welcome = true;
         }
     }
 }
@@ -480,15 +478,14 @@ static packet_action_t handle_char_list(Connection *c,
         return PA_DROP;
     } else if (c->instance->config->razor_workaround) {
         /* razor workaround -- we don't send the char list right away necessarily until they sent us GameLogin.. */
-        LinkedServer *ls;
-        list_for_each_entry(ls, &c->servers, siblings) {
-            if (ls->got_gamelogin && !ls->attaching && !ls->is_zombie)
-                uo_server_send(ls->server, data, length);
+        for (auto &ls : c->servers) {
+            if (ls.got_gamelogin && !ls.attaching && !ls.is_zombie)
+                uo_server_send(ls.server, data, length);
             else {
-                if (ls->enqueued_charlist) free(ls->enqueued_charlist);
-                ls->enqueued_charlist = (struct uo_packet_simple_character_list *)calloc(1,length);
-                if (ls->enqueued_charlist) {
-                    memcpy(ls->enqueued_charlist, data, length);
+                if (ls.enqueued_charlist) free(ls.enqueued_charlist);
+                ls.enqueued_charlist = (struct uo_packet_simple_character_list *)calloc(1,length);
+                if (ls.enqueued_charlist) {
+                    memcpy(ls.enqueued_charlist, data, length);
                 } else
                     log_oom();
             }

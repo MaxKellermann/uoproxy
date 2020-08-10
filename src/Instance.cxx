@@ -63,7 +63,7 @@ listener_event_callback(int fd, short event __attr_unused, void *ctx)
         return;
     }
 
-    list_add(&c->siblings, &instance->connections);
+    instance->connections.push_front(*c);
 }
 
 void

@@ -25,40 +25,36 @@ static void
 connection_delete_items(Connection *c)
 {
     auto &world = c->client.world;
-    struct uo_packet_delete p = { .cmd = PCK_Delete };
-    Item *i, *n;
 
-    list_for_each_entry_safe(i, n, &world.items, siblings) {
+    world.items.clear_and_dispose([c](Item *i){
+        struct uo_packet_delete p = { .cmd = PCK_Delete };
         p.serial = i->serial;
 
-        LinkedServer *ls;
-        list_for_each_entry(ls, &c->servers, siblings) {
-            if (!ls->attaching && !ls->is_zombie)
-                uo_server_send(ls->server, &p, sizeof(p));
+        for (auto &ls : c->servers) {
+            if (!ls.attaching && !ls.is_zombie)
+                uo_server_send(ls.server, &p, sizeof(p));
         }
 
-        world.RemoveItem(*i);
-    }
+        delete i;
+    });
 }
 
 static void
 connection_delete_mobiles(Connection *c)
 {
     auto &world = c->client.world;
-    struct uo_packet_delete p = { .cmd = PCK_Delete };
-    Mobile *m, *n;
 
-    list_for_each_entry_safe(m, n, &world.mobiles, siblings) {
+    world.mobiles.clear_and_dispose([c](Mobile *m){
+        struct uo_packet_delete p = { .cmd = PCK_Delete };
         p.serial = m->serial;
 
-        LinkedServer *ls;
-        list_for_each_entry(ls, &c->servers, siblings) {
-            if (!ls->attaching && !ls->is_zombie)
-                uo_server_send(ls->server, &p, sizeof(p));
+        for (auto &ls : c->servers) {
+            if (!ls.attaching && !ls.is_zombie)
+                uo_server_send(ls.server, &p, sizeof(p));
         }
 
-        world.RemoveMobile(*m);
-    }
+        delete m;
+    });
 }
 
 void

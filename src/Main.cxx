@@ -51,15 +51,6 @@ deinit_signals(Instance *instance)
 }
 
 static void
-delete_all_connections(struct list_head *head)
-{
-    Connection *c, *n;
-
-    list_for_each_entry_safe(c, n, head, siblings)
-        connection_delete(c);
-}
-
-static void
 exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
 {
     Instance *instance = (Instance *)ctx;
@@ -77,7 +68,9 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
         instance->server_socket = -1;
     }
 
-    delete_all_connections(&instance->connections);
+    instance->connections.clear_and_dispose([](Connection *c) {
+        connection_delete(c);
+    });
 }
 
 #endif
@@ -129,8 +122,6 @@ setup_signal_handlers(Instance *instance)
 int main(int argc, char **argv) {
     Config config;
     Instance instance(config);
-
-    INIT_LIST_HEAD(&instance.connections);
 
     /* WinSock */
 

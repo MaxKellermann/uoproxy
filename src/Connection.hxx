@@ -21,6 +21,7 @@
 #ifndef __CONNECTION_H
 #define __CONNECTION_H
 
+#include "util/IntrusiveList.hxx"
 #include "packets.h"
 #include "World.hxx"
 #include "CVersion.hxx"
@@ -67,9 +68,7 @@ struct StatefulClient {
     StatefulClient &operator=(const StatefulClient &) = delete;
 };
 
-struct LinkedServer {
-    struct list_head siblings;
-
+struct LinkedServer : IntrusiveListHook {
     Connection *connection;
 
     UO::Server *server = nullptr;
@@ -116,10 +115,7 @@ struct WalkState {
     uint8_t seq_next = 0;
 };
 
-struct Connection {
-    /* linked list and parent */
-    struct list_head siblings;
-
+struct Connection final : IntrusiveListHook {
     Instance *const instance;
 
     /* flags */
@@ -149,14 +145,13 @@ struct Connection {
 
     /* sub-objects */
 
-    struct list_head servers;
+    IntrusiveList<LinkedServer> servers;
 
     Connection(Instance &_instance, bool _background,
                bool _autoreconnect)
         :instance(&_instance), background(_background),
          autoreconnect(_autoreconnect)
     {
-        INIT_LIST_HEAD(&servers);
     }
 
     ~Connection() noexcept;

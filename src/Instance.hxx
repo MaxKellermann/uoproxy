@@ -21,7 +21,7 @@
 #ifndef __INSTANCE_H
 #define __INSTANCE_H
 
-#include "list.h"
+#include "util/IntrusiveList.hxx"
 
 #include <event.h>
 
@@ -30,6 +30,7 @@
 #endif
 
 struct Config;
+struct Connection;
 
 struct Instance {
     /* configuration */
@@ -43,7 +44,7 @@ struct Instance {
     int server_socket;
     struct event server_socket_event;
 
-    struct list_head connections;
+    IntrusiveList<Connection> connections;
 
     struct timeval tv;
 

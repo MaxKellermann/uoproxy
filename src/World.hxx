@@ -21,12 +21,10 @@
 #ifndef __UOPROXY_WORLD_H
 #define __UOPROXY_WORLD_H
 
+#include "util/IntrusiveList.hxx"
 #include "packets.h"
-#include "list.h"
 
-struct Item {
-    struct list_head siblings;
-
+struct Item final : IntrusiveListHook {
     const uint32_t serial;
 
     union {
@@ -92,9 +90,7 @@ struct Item {
     }
 };
 
-struct Mobile {
-    struct list_head siblings;
-
+struct Mobile final : IntrusiveListHook {
     const uint32_t serial;
     struct uo_packet_mobile_incoming *packet_mobile_incoming = nullptr;
     struct uo_packet_mobile_status *packet_mobile_status = nullptr;
@@ -125,17 +121,12 @@ struct World {
 
     /* mobiles in the world */
 
-    struct list_head mobiles;
+    IntrusiveList<Mobile> mobiles;
 
     /* items in the world */
 
-    struct list_head items;
+    IntrusiveList<Item> items;
     unsigned item_attach_sequence = 0;
-
-    World() noexcept {
-        INIT_LIST_HEAD(&items);
-        INIT_LIST_HEAD(&mobiles);
-    }
 
     Item *FindItem(uint32_t serial) noexcept;
     Item &MakeItem(uint32_t serial) noexcept;

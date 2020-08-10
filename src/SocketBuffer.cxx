@@ -96,7 +96,7 @@ sock_buff_invoke_free(SocketBuffer *sb, int error)
     event_del(&sb->recv_event);
     event_del(&sb->send_event);
 
-    flush_del(&sb->flush);
+    sb->flush.Cancel();
 
     handler = sb->handler;
     sb->handler = nullptr;
@@ -263,13 +263,11 @@ SocketBuffer::SocketBuffer(int _fd, size_t input_max,
                            size_t output_max,
                            const SocketBufferHandler &_handler,
                            void *_handler_ctx)
-    :fd(_fd),
+    :flush(sock_buff_flush_callback), fd(_fd),
      input(fifo_buffer_new(input_max)),
      output(fifo_buffer_new(output_max)),
      handler(&_handler), handler_ctx(_handler_ctx)
 {
-    flush_init(&flush, sock_buff_flush_callback);
-
     event_set(&recv_event, fd, EV_READ|EV_PERSIST,
               sock_buff_recv_callback, this);
     event_set(&send_event, fd, EV_WRITE|EV_PERSIST,
@@ -298,8 +296,6 @@ SocketBuffer::~SocketBuffer() noexcept
 
     event_del(&recv_event);
     event_del(&send_event);
-
-    flush_del(&flush);
 
     close(fd);
 

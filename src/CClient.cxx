@@ -52,10 +52,9 @@ client_packet(const void *data, size_t length, void *ctx)
     switch (action) {
     case PA_ACCEPT:
         if (!c->client.reconnecting) {
-            LinkedServer *ls;
-            list_for_each_entry(ls, &c->servers, siblings)
-                if (!ls->attaching && !ls->is_zombie)
-                    uo_server_send(ls->server, data, length);
+            for (auto &ls : c->servers)
+                if (!ls.attaching && !ls.is_zombie)
+                    uo_server_send(ls.server, data, length);
         }
 
         break;

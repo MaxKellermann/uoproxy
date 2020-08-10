@@ -440,7 +440,6 @@ handle_game_login(LinkedServer *ls,
     assert(sizeof(p->password) == sizeof(ls->connection->password));
 
     if (ls->connection->instance->config->razor_workaround) {
-        Connection *c = ls->connection;
         bool was_attach = false;
 
         /* I have observed the Razor client ignoring the redirect if the IP
@@ -453,32 +452,31 @@ handle_game_login(LinkedServer *ls,
         if (!ls->connection->client.client) {
             Connection *reuse_conn = nullptr;
             Instance *instance = ls->connection->instance;
-            LinkedServer *ls2;
 
             /* this should only happen in redirect mode.. so look for the
                correct zombie so that we can re-use its connection to the UO
                server. */
-            list_for_each_entry(c, &instance->connections, siblings) {
-                list_for_each_entry(ls2, &c->servers, siblings) {
-                    if (ls2->is_zombie
-                        && ls2->auth_id == p->auth_id
-                        && !strcmp(c->username, p->username)
-                        && !strcmp(c->password, p->password)) {
+            for (auto &c : instance->connections) {
+                for (auto &ls2 : c.servers) {
+                    if (ls2.is_zombie
+                        && ls2.auth_id == p->auth_id
+                        && !strcmp(c.username, p->username)
+                        && !strcmp(c.password, p->password)) {
                         /* found it! Eureka! */
-                        reuse_conn = c;
-                        ls2->expecting_reconnect = false;
+                        reuse_conn = &c;
+                        ls2.expecting_reconnect = false;
                         // copy over charlist (if any)..
-                        ls->enqueued_charlist = ls2->enqueued_charlist;
-                        ls2->enqueued_charlist = nullptr;
-                        was_attach = ls2->attaching;
-                        ls2->attaching = false;
+                        ls->enqueued_charlist = ls2.enqueued_charlist;
+                        ls2.enqueued_charlist = nullptr;
+                        was_attach = ls2.attaching;
+                        ls2.attaching = false;
                         break;
                     }
                 }
                 if (reuse_conn) break;
             }
             if (reuse_conn) {
-                c = ls->connection;
+                Connection *c = ls->connection;
 
                 /* copy the previously detected protocol version */
                 if (!was_attach)
@@ -491,7 +489,6 @@ handle_game_login(LinkedServer *ls,
                 LogFormat(2, "attaching redirected client to its previous connection\n");
 
                 connection_server_add(reuse_conn, ls);
-                c = ls->connection;
             } else {
                 /* houston, we have a problem -- reject the game login -- it
                    either came in too slowly (and so we already reaped the
@@ -506,7 +503,7 @@ handle_game_login(LinkedServer *ls,
         uo_server_set_compression(ls->server, true);
         ls->got_gamelogin = true;
         ls->attaching = false;
-        if (c->in_game && was_attach) {
+        if (ls->connection->in_game && was_attach) {
             /* already in game .. this was likely an attach connection */
             attach_send_world(ls);
         } else if (ls->enqueued_charlist) {
@@ -570,7 +567,7 @@ handle_play_server(LinkedServer *ls,
     if (c->in_game)
         return PA_DISCONNECT;
 
-    assert(ls->siblings.next == &c->servers);
+    assert(std::next(c->servers.iterator_to(*ls)) == c->servers.end());
 
     c->server_index = ntohs(p->index);
 

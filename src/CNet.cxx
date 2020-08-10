@@ -27,13 +27,11 @@
 void
 connection_speak_console(Connection *c, const char *msg)
 {
-    LinkedServer *ls;
+    for (auto &ls : c->servers) {
+        if (!ls.attaching && !ls.is_zombie) {
+            assert(ls.server != nullptr);
 
-    list_for_each_entry(ls, &c->servers, siblings) {
-        if (!ls->attaching && !ls->is_zombie) {
-            assert(ls->server != nullptr);
-
-            uo_server_speak_console(ls->server, msg);
+            uo_server_speak_console(ls.server, msg);
         }
     }
 }
@@ -42,11 +40,9 @@ void
 connection_broadcast_servers(Connection *c,
                              const void *data, size_t length)
 {
-    LinkedServer *ls;
-
-    list_for_each_entry(ls, &c->servers, siblings)
-        if (!ls->attaching && !ls->is_zombie)
-            uo_server_send(ls->server, data, length);
+    for (auto &ls : c->servers)
+        if (!ls.attaching && !ls.is_zombie)
+            uo_server_send(ls.server, data, length);
 }
 
 void
@@ -54,13 +50,11 @@ connection_broadcast_servers_except(Connection *c,
                                     const void *data, size_t length,
                                     UO::Server *except)
 {
-    LinkedServer *ls;
-
     assert(except != nullptr);
 
-    list_for_each_entry(ls, &c->servers, siblings)
-        if (!ls->attaching && !ls->is_zombie && ls->server != except)
-            uo_server_send(ls->server, data, length);
+    for (auto &ls : c->servers)
+        if (!ls.attaching && !ls.is_zombie && ls.server != except)
+            uo_server_send(ls.server, data, length);
 }
 
 void
@@ -75,13 +69,12 @@ connection_broadcast_divert(Connection *c,
     assert(new_data != nullptr);
     assert(new_length > 0);
 
-    LinkedServer *ls;
-    list_for_each_entry(ls, &c->servers, siblings) {
-        if (!ls->attaching && !ls->is_zombie) {
-            if (ls->client_version.protocol >= new_protocol)
-                uo_server_send(ls->server, new_data, new_length);
+    for (auto &ls : c->servers) {
+        if (!ls.attaching && !ls.is_zombie) {
+            if (ls.client_version.protocol >= new_protocol)
+                uo_server_send(ls.server, new_data, new_length);
             else
-                uo_server_send(ls->server, old_data, old_length);
+                uo_server_send(ls.server, old_data, old_length);
         }
     }
 }
