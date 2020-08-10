@@ -57,7 +57,6 @@ struct StatefulClient {
 
     StatefulClient(const StatefulClient &) = delete;
     StatefulClient &operator=(const StatefulClient &) = delete;
-};
 
-void
-connection_client_disconnect(StatefulClient *client);
+    void Disconnect() noexcept;
+};

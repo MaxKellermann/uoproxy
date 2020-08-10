@@ -24,19 +24,19 @@
 #include <assert.h>
 
 void
-connection_client_disconnect(StatefulClient *client)
+StatefulClient::Disconnect() noexcept
 {
-    assert(client->client != nullptr);
+    assert(client != nullptr);
 
-    if (client->reconnecting) {
-        event_del(&client->reconnect_event);
-        client->reconnecting = false;
+    if (reconnecting) {
+        event_del(&reconnect_event);
+        reconnecting = false;
     }
 
-    client->version_requested = false;
+    version_requested = false;
 
-    event_del(&client->ping_event);
+    event_del(&ping_event);
 
-    uo_client_dispose(client->client);
-    client->client = nullptr;
+    uo_client_dispose(client);
+    client = nullptr;
 }

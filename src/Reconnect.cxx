@@ -41,7 +41,7 @@ connection_disconnect(Connection *c)
     if (c->client.client == nullptr)
         return;
 
-    connection_client_disconnect(&c->client);
+    c->client.Disconnect();
     connection_world_clear(c);
 }
 
