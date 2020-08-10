@@ -28,8 +28,10 @@ connection_delete_items(Connection *c)
     auto &world = c->client.world;
 
     world.items.clear_and_dispose([c](Item *i){
-        struct uo_packet_delete p = { .cmd = PCK_Delete };
-        p.serial = i->serial;
+        const struct uo_packet_delete p{
+            .cmd = PCK_Delete,
+            .serial = i->serial,
+        };
 
         for (auto &ls : c->servers) {
             if (ls.IsInGame())
@@ -46,8 +48,10 @@ connection_delete_mobiles(Connection *c)
     auto &world = c->client.world;
 
     world.mobiles.clear_and_dispose([c](Mobile *m){
-        struct uo_packet_delete p = { .cmd = PCK_Delete };
-        p.serial = m->serial;
+        const struct uo_packet_delete p{
+            .cmd = PCK_Delete,
+            .serial = m->serial,
+        };
 
         for (auto &ls : c->servers) {
             if (ls.IsInGame())

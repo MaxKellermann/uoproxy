@@ -86,6 +86,7 @@ static void send_antispy(UO::Client *client) {
         .clients_installed = 1,
         .partial_installed = 0,
         .language = { 'e', 0, 'n', 0, 'u', 0 },
+        .unknown1 = {},
     };
 
     uo_client_send(client, &p, sizeof(p));
@@ -486,6 +487,11 @@ handle_char_list(Connection *c, const void *data, size_t length)
     if (c->client.reconnecting) {
         struct uo_packet_play_character p2 = {
             .cmd = PCK_PlayCharacter,
+            .unknown0 = {},
+            .name = {},
+            .unknown1 = {},
+            .flags = {},
+            .unknown2 = {},
             .slot = c->character_index,
             .client_ip = 0xc0a80102, /* 192.168.1.2 */
         };
@@ -893,5 +899,5 @@ const struct client_packet_binding server_packet_bindings[] = {
     { .cmd = PCK_ProtocolExtension, /* 0xf0 */
       .handler = handle_protocol_extension,
     },
-    { .handler = nullptr }
+    {}
 };

@@ -226,10 +226,9 @@ static void
 read_equipped(World *world,
               const struct uo_packet_mobile_incoming *p)
 {
-    struct uo_packet_equip equip = {
-        .cmd = PCK_Equip,
-        .parent_serial = p->serial,
-    };
+    struct uo_packet_equip equip{};
+    equip.cmd = PCK_Equip;
+    equip.parent_serial = p->serial;
 
     const char *const p0 = (const char*)(const void*)p;
     const char *const end = p0 + p->length;

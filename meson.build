@@ -59,7 +59,6 @@ test_cxxflags = test_common_flags + [
 
   # TODO: remove those after the C++ transition is complete
   '-Wno-pedantic',
-  '-Wno-error=missing-field-initializers',
 
   # TODO: fix these
   '-Wno-error=address-of-packed-member',

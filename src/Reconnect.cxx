@@ -74,6 +74,8 @@ connection_try_reconnect(Connection *c)
             struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
                 .auth_id = seed,
+                .username = {},
+                .password = {},
             };
 
             LogFormat(2, "connected, doing GameLogin\n");
@@ -95,6 +97,9 @@ connection_try_reconnect(Connection *c)
         if (ret == 0) {
             struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,
+                .username = {},
+                .password = {},
+                .unknown1 = {},
             };
 
             LogFormat(2, "connected, doing AccountLogin\n");

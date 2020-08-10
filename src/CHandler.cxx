@@ -887,6 +887,6 @@ const struct server_packet_binding client_packet_bindings[] = {
     { .cmd = PCK_Seed, /* 0xef */
       .handler = handle_seed,
     },
-    { .handler = nullptr }
+    {}
 };
 
