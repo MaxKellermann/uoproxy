@@ -23,13 +23,9 @@
 
 #include "pversion.h"
 
-#include <stddef.h>
+#include <cstddef>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define PACKET_LENGTH_INVALID ((size_t)-1)
+inline constexpr std::size_t PACKET_LENGTH_INVALID(-1);
 
 /**
  * Determines the length of the packet.  Returns '0' when the length
@@ -37,12 +33,8 @@ extern "C" {
  * Returns PACKET_LENGTH_INVALID when the packet contains invalid
  * data.  The length being bigger than max_length is not an error.
  */
-size_t
+std::size_t
 get_packet_length(enum protocol_version protocol,
-                  const void *q, size_t max_length);
-
-#ifdef __cplusplus
-}
-#endif
+                  const void *q, std::size_t max_length);
 
 #endif

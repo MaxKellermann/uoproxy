@@ -21,7 +21,7 @@
 #include "Client.hxx"
 #include "SocketBuffer.hxx"
 #include "Compression.hxx"
-#include "PacketLengths.h"
+#include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
 #include "pversion.h"

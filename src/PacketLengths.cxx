@@ -18,12 +18,14 @@
  *
  */
 
-#include "PacketLengths.h"
+#include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
 
+#include <array>
+
 /* packet length table borrowed from wolfpack */
-static const size_t packet_lengths[0x100] = {
+static constexpr std::array<size_t, 0x100> packet_lengths{
     0x0068, 0x0005, 0x0007, 0x0000, 0x0002, 0x0005, 0x0005, 0x0007, // 0x00
     0x000e, 0x0005, 0x0007, 0x0007, 0x0000, 0x0003, 0x0000, 0x003d, // 0x08
     0x00d7, 0x0000, 0x0000, 0x000a, 0x0006, 0x0009, 0x0001, 0x0000, // 0x10
@@ -58,49 +60,74 @@ static const size_t packet_lengths[0x100] = {
     0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, // 0xF8
 };
 
-static const size_t packet_lengths_6[0x100] = {
-    [PCK_Drop] = sizeof(struct uo_packet_drop_6),
-    [PCK_ContainerUpdate] = sizeof(struct uo_packet_container_update_6),
-};
-
-static const size_t packet_lengths_6014[0x100] = {
-    [PCK_SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014),
-};
-
-static const size_t packet_lengths_7[0x100] = {
-    [PCK_ContainerOpen] = sizeof(struct uo_packet_container_open_7),
-    [PCK_CreateCharacter7] = sizeof(struct uo_packet_create_character_7),
-};
-
-size_t
-get_packet_length(enum protocol_version protocol,
-                  const void *q, size_t max_length)
+static constexpr auto
+MakePaketLengths6() noexcept
 {
-    const unsigned char *p = q;
-    size_t length;
+    auto pl = packet_lengths;
+    pl[PCK_Drop] = sizeof(struct uo_packet_drop_6);
+    pl[PCK_ContainerUpdate] = sizeof(struct uo_packet_container_update_6);
+    return pl;
+}
 
+static constexpr auto packet_lengths_6 = MakePaketLengths6();
+
+static constexpr auto
+MakePaketLengths6014() noexcept
+{
+    auto pl = packet_lengths_6;
+    pl[PCK_SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014);
+    return pl;
+}
+
+static constexpr auto packet_lengths_6014 = MakePaketLengths6014();
+
+static constexpr auto
+MakePaketLengths7() noexcept
+{
+    auto pl = packet_lengths_6014;
+    pl[PCK_ContainerOpen] = sizeof(struct uo_packet_container_open_7);
+    pl[PCK_CreateCharacter7] = sizeof(struct uo_packet_create_character_7);
+    return pl;
+}
+
+static constexpr auto packet_lengths_7 = MakePaketLengths7();
+
+static constexpr const auto &
+GetPacketLengths(enum protocol_version protocol) noexcept
+{
+    switch (protocol) {
+    case PROTOCOL_UNKNOWN:
+        break;
+
+    case PROTOCOL_5:
+    case PROTOCOL_6:
+        return packet_lengths_6;
+
+    case PROTOCOL_6_0_5:
+    case PROTOCOL_6_0_14:
+        return packet_lengths_6014;
+
+    case PROTOCOL_7:
+        return packet_lengths_7;
+
+    case PROTOCOL_COUNT:
+        break;
+    }
+
+    return packet_lengths;
+}
+
+std::size_t
+get_packet_length(enum protocol_version protocol,
+                  const void *q, std::size_t max_length)
+{
     if (max_length == 0)
         return 0;
 
-    if (protocol >= PROTOCOL_7) {
-        length = packet_lengths_7[p[0]];
-        if (length > 0)
-            return length;
-    }
+    const uint8_t *p = (const uint8_t *)q;
+    const uint8_t cmd = *p;
 
-    if (protocol >= PROTOCOL_6_0_14) {
-        length = packet_lengths_6014[p[0]];
-        if (length > 0)
-            return length;
-    }
-
-    if (protocol >= PROTOCOL_6) {
-        length = packet_lengths_6[p[0]];
-        if (length > 0)
-            return length;
-    }
-
-    length = packet_lengths[p[0]];
+    std::size_t length = GetPacketLengths(protocol)[cmd];
     if (length == 0xffff)
         return PACKET_LENGTH_INVALID;
 
