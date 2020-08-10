@@ -19,7 +19,6 @@
  */
 
 #include "World.hxx"
-#include "poison.h"
 #include "Log.hxx"
 #include "Bridge.hxx"
 
@@ -204,8 +203,6 @@ world_container_content(struct world *world,
 static void free_item(struct item *i) {
     assert(i != nullptr);
     assert(i->serial != 0);
-
-    poison(i, sizeof(*i));
 
     free(i);
 }
@@ -484,8 +481,6 @@ static void free_mobile(struct mobile *m) {
         free(m->packet_mobile_incoming);
     if (m->packet_mobile_status != nullptr)
         free(m->packet_mobile_status);
-
-    poison(m, sizeof(*m));
 
     free(m);
 }

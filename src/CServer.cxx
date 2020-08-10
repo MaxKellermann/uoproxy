@@ -23,7 +23,6 @@
 #include "Client.hxx"
 #include "Handler.hxx"
 #include "Log.hxx"
-#include "poison.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -183,6 +182,5 @@ connection_server_dispose(struct connection *c, struct linked_server *ls)
 
     client_version_free(&ls->client_version);
 
-    poison(ls, sizeof(*ls));
     free(ls);
 }

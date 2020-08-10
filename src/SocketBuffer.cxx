@@ -23,7 +23,6 @@
 #include "BufferedIO.hxx"
 #include "FifoBuffer.hxx"
 #include "Flush.hxx"
-#include "poison.h"
 #include "Log.hxx"
 
 #include <event.h>
@@ -313,6 +312,5 @@ void sock_buff_dispose(struct sock_buff *sb) {
     fifo_buffer_free(sb->input);
     fifo_buffer_free(sb->output);
 
-    poison(sb, sizeof(*sb));
     free(sb);
 }

@@ -22,7 +22,6 @@
 #include "Instance.hxx"
 #include "Server.hxx"
 #include "Config.hxx"
-#include "poison.h"
 #include "Log.hxx"
 
 #include <assert.h>
@@ -90,7 +89,6 @@ connection_free(struct connection *c)
 
     client_version_free(&c->client_version);
 
-    poison(c, sizeof(*c));
     free(c);
 }
 
