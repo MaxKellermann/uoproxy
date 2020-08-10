@@ -22,49 +22,32 @@
 #include "LinkedServer.hxx"
 #include "Server.hxx"
 
-static void
-connection_delete_items(Connection *c)
+void
+Connection::DeleteItems() noexcept
 {
-    auto &world = c->client.world;
-
-    world.items.clear_and_dispose([c](Item *i){
+    client.world.items.clear_and_dispose([this](Item *i){
         const struct uo_packet_delete p{
             .cmd = PCK_Delete,
             .serial = i->serial,
         };
 
-        for (auto &ls : c->servers) {
-            if (ls.IsInGame())
-                uo_server_send(ls.server, &p, sizeof(p));
-        }
+        BroadcastToInGameClients(&p, sizeof(p));
 
         delete i;
     });
 }
 
-static void
-connection_delete_mobiles(Connection *c)
+void
+Connection::DeleteMobiles() noexcept
 {
-    auto &world = c->client.world;
-
-    world.mobiles.clear_and_dispose([c](Mobile *m){
+    client.world.mobiles.clear_and_dispose([this](Mobile *m){
         const struct uo_packet_delete p{
             .cmd = PCK_Delete,
             .serial = m->serial,
         };
 
-        for (auto &ls : c->servers) {
-            if (ls.IsInGame())
-                uo_server_send(ls.server, &p, sizeof(p));
-        }
+        BroadcastToInGameClients(&p, sizeof(p));
 
         delete m;
     });
-}
-
-void
-connection_world_clear(Connection *c)
-{
-    connection_delete_items(c);
-    connection_delete_mobiles(c);
 }

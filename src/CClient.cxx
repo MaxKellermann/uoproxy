@@ -39,11 +39,8 @@ Connection::OnClientPacket(const void *data, size_t length)
                                                   this, data, length);
     switch (action) {
     case PacketAction::ACCEPT:
-        if (!client.reconnecting) {
-            for (auto &ls : servers)
-                if (ls.IsInGame())
-                    uo_server_send(ls.server, data, length);
-        }
+        if (!client.reconnecting)
+            BroadcastToInGameClients(data, length);
 
         break;
 
@@ -57,8 +54,8 @@ Connection::OnClientPacket(const void *data, size_t length)
 
         if (autoreconnect && in_game) {
             LogFormat(2, "auto-reconnecting\n");
-            connection_disconnect(this);
-            connection_reconnect_delayed(this);
+            Disconnect();
+            ScheduleReconnect();
         } else {
             connection_delete(this);
         }
@@ -79,8 +76,8 @@ Connection::OnClientDisconnect() noexcept
     if (autoreconnect && in_game) {
         LogFormat(2, "server disconnected, auto-reconnecting\n");
         connection_speak_console(this, "uoproxy was disconnected, auto-reconnecting...");
-        connection_disconnect(this);
-        connection_reconnect_delayed(this);
+        Disconnect();
+        ScheduleReconnect();
     } else {
         LogFormat(1, "server disconnected\n");
         connection_delete(this);
@@ -88,17 +85,16 @@ Connection::OnClientDisconnect() noexcept
 }
 
 int
-connection_client_connect(Connection *c,
-                          const struct sockaddr *server_address,
-                          size_t server_address_length,
-                          uint32_t seed)
+Connection::Connect(const struct sockaddr *server_address,
+                    size_t server_address_length,
+                    uint32_t seed)
 {
-    assert(c->client.client == nullptr);
+    assert(client.client == nullptr);
 
     int fd;
 
     const struct addrinfo *socks4_address =
-        c->instance->config->socks4_address;
+        instance->config->socks4_address;
     if (socks4_address != nullptr) {
         fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
                             socks4_address->ai_addr, socks4_address->ai_addrlen);
@@ -114,6 +110,6 @@ connection_client_connect(Connection *c,
             return -fd;
     }
 
-    c->client.Connect(fd, c->client_version, seed, *c);
+    client.Connect(fd, client_version, seed, *this);
     return 0;
 }

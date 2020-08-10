@@ -38,31 +38,26 @@ connection_speak_console(Connection *c, const char *msg)
 }
 
 void
-connection_broadcast_servers(Connection *c,
-                             const void *data, size_t length)
+Connection::BroadcastToInGameClients(const void *data, size_t length) noexcept
 {
-    for (auto &ls : c->servers)
+    for (auto &ls : servers)
         if (ls.IsInGame())
             uo_server_send(ls.server, data, length);
 }
 
 void
-connection_broadcast_servers_except(Connection *c,
-                                    const void *data, size_t length,
-                                    UO::Server *except)
+Connection::BroadcastToInGameClientsExcept(const void *data, size_t length,
+                                           UO::Server &except) noexcept
 {
-    assert(except != nullptr);
-
-    for (auto &ls : c->servers)
-        if (ls.IsInGame() && ls.server != except)
+    for (auto &ls : servers)
+        if (ls.IsInGame() && ls.server != &except)
             uo_server_send(ls.server, data, length);
 }
 
 void
-connection_broadcast_divert(Connection *c,
-                            enum protocol_version new_protocol,
-                            const void *old_data, size_t old_length,
-                            const void *new_data, size_t new_length)
+Connection::BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
+                                           const void *old_data, size_t old_length,
+                                           const void *new_data, size_t new_length) noexcept
 {
     assert(new_protocol > PROTOCOL_UNKNOWN);
     assert(old_data != nullptr);
@@ -70,7 +65,7 @@ connection_broadcast_divert(Connection *c,
     assert(new_data != nullptr);
     assert(new_length > 0);
 
-    for (auto &ls : c->servers) {
+    for (auto &ls : servers) {
         if (ls.IsInGame()) {
             if (ls.client_version.protocol >= new_protocol)
                 uo_server_send(ls.server, new_data, new_length);

@@ -104,8 +104,30 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     Connection(const Connection &) = delete;
     Connection &operator=(const Connection &) = delete;
 
+    int Connect(const struct sockaddr *server_address,
+                size_t server_address_length,
+                uint32_t seed);
+    void Disconnect() noexcept;
+    void Reconnect();
+    void ScheduleReconnect() noexcept;
+
     void Add(LinkedServer &ls) noexcept;
     void Remove(LinkedServer &ls) noexcept;
+
+    void BroadcastToInGameClients(const void *data, size_t length) noexcept;
+    void BroadcastToInGameClientsExcept(const void *data, size_t length,
+                                        UO::Server &except) noexcept;
+    void BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
+                                        const void *old_data, size_t old_length,
+                                        const void *new_data, size_t new_length) noexcept;
+
+    void ClearWorld() noexcept {
+        DeleteItems();
+        DeleteMobiles();
+    }
+
+    void DeleteItems() noexcept;
+    void DeleteMobiles() noexcept;
 
     /* virtual methods from UO::ClientHandler */
     bool OnClientPacket(const void *data, size_t length) override;
@@ -130,28 +152,6 @@ void connection_delete(Connection *c);
 
 void connection_speak_console(Connection *c, const char *msg);
 
-void
-connection_broadcast_servers(Connection *c,
-                             const void *data, size_t length);
-
-void
-connection_broadcast_servers_except(Connection *c,
-                                    const void *data, size_t length,
-                                    UO::Server *except);
-
-void
-connection_broadcast_divert(Connection *c,
-                            enum protocol_version new_protocol,
-                            const void *old_data, size_t old_length,
-                            const void *new_data, size_t new_length);
-
-
-/* world */
-
-void
-connection_world_clear(Connection *c);
-
-
 /* walk */
 
 void connection_walk_server_removed(WalkState *state,
@@ -166,21 +166,6 @@ void connection_walk_cancel(Connection *c,
 
 void connection_walk_ack(Connection *c,
                          const struct uo_packet_walk_ack *p);
-
-/* reconnect */
-
-int
-connection_client_connect(Connection *c,
-                          const struct sockaddr *server_address,
-                          size_t server_address_length,
-                          uint32_t seed);
-
-void connection_disconnect(Connection *c);
-
-void connection_reconnect(Connection *c);
-
-void
-connection_reconnect_delayed(Connection *c);
 
 /* attach */
 

@@ -35,13 +35,13 @@
 #endif
 
 void
-connection_disconnect(Connection *c)
+Connection::Disconnect() noexcept
 {
-    if (c->client.client == nullptr)
+    if (client.client == nullptr)
         return;
 
-    c->client.Disconnect();
-    connection_world_clear(c);
+    client.Disconnect();
+    ClearWorld();
 }
 
 static void
@@ -68,8 +68,8 @@ connection_try_reconnect(Connection *c)
         assert(config->game_servers != nullptr);
         assert(c->server_index < config->num_game_servers);
 
-        ret = connection_client_connect(c, server_address->ai_addr,
-                                        server_address->ai_addrlen, seed);
+        ret = c->Connect(server_address->ai_addr,
+                         server_address->ai_addrlen, seed);
         if (ret == 0) {
             struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
@@ -87,13 +87,13 @@ connection_try_reconnect(Connection *c)
         } else {
             log_error("reconnect failed", ret);
             c->client.reconnecting = false;
-            connection_reconnect_delayed(c);
+            c->ScheduleReconnect();
         }
     } else {
         /* connect to login server */
-        ret = connection_client_connect(c, config->login_address->ai_addr,
-                                        config->login_address->ai_addrlen,
-                                        seed);
+        ret = c->Connect(config->login_address->ai_addr,
+                         config->login_address->ai_addrlen,
+                         seed);
         if (ret == 0) {
             struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,
@@ -111,7 +111,7 @@ connection_try_reconnect(Connection *c)
         } else {
             log_error("reconnect failed", ret);
             c->client.reconnecting = false;
-            connection_reconnect_delayed(c);
+            c->ScheduleReconnect();
         }
     }
 }
@@ -125,39 +125,36 @@ connection_reconnect_event_callback(int, short, void *ctx) noexcept
 }
 
 void
-connection_reconnect(Connection *c)
+Connection::Reconnect()
 {
-    if (c->client.reconnecting)
+    if (client.reconnecting)
         return;
 
-    connection_disconnect(c);
+    Disconnect();
 
-    assert(c->in_game);
-    assert(c->client.client == nullptr);
+    assert(in_game);
+    assert(client.client == nullptr);
 
-    c->client.reconnecting = true;
+    client.reconnecting = true;
 
-    connection_try_reconnect(c);
+    connection_try_reconnect(this);
 }
 
 void
-connection_reconnect_delayed(Connection *c)
+Connection::ScheduleReconnect() noexcept
 {
-    struct timeval tv;
-
-    if (c->client.reconnecting)
+    if (client.reconnecting)
         return;
 
-    connection_disconnect(c);
+    Disconnect();
 
-    assert(c->in_game);
-    assert(c->client.client == nullptr);
+    assert(in_game);
+    assert(client.client == nullptr);
 
-    c->client.reconnecting = true;
+    client.reconnecting = true;
 
-    tv.tv_sec = 5;
-    tv.tv_usec = 0;
-    evtimer_set(&c->client.reconnect_event,
-                connection_reconnect_event_callback, c);
-    evtimer_add(&c->client.reconnect_event, &tv);
+    static constexpr struct timeval tv{5, 0};
+    evtimer_set(&client.reconnect_event,
+                connection_reconnect_event_callback, this);
+    evtimer_add(&client.reconnect_event, &tv);
 }

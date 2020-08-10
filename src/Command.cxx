@@ -43,7 +43,7 @@ change_character(Connection *c,
     uo_server_speak_console(server->server,
                             "uoproxy: changing character");
 
-    connection_reconnect(c);
+    c->Reconnect();
 }
 
 void
@@ -66,7 +66,7 @@ connection_handle_command(LinkedServer *server, const char *command)
         } else {
             uo_server_speak_console(server->server,
                                     "uoproxy: reconnecting");
-            connection_reconnect(c);
+            c->Reconnect();
         }
     } else if (strcmp(command, "char") == 0) {
         char msg[1024] = "uoproxy:";

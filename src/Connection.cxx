@@ -62,7 +62,7 @@ Connection::~Connection() noexcept
 
     servers.clear_and_dispose([](LinkedServer *ls){ delete ls; });
 
-    connection_disconnect(this);
+    Disconnect();
 
     if (client.reconnecting)
         event_del(&client.reconnect_event);

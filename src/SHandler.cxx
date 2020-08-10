@@ -204,9 +204,9 @@ handle_container_open(Connection *c, const void *data, size_t length)
 
         c->client.world.Apply(*p);
 
-        connection_broadcast_divert(c, PROTOCOL_7,
-                                    &p->base, sizeof(p->base),
-                                    data, length);
+        c->BroadcastToInGameClientsDivert(PROTOCOL_7,
+                                          &p->base, sizeof(p->base),
+                                          data, length);
         return PacketAction::DROP;
     } else {
         auto p = (const struct uo_packet_container_open *)data;
@@ -220,9 +220,9 @@ handle_container_open(Connection *c, const void *data, size_t length)
             .x7d = 0x7d,
         };
 
-        connection_broadcast_divert(c, PROTOCOL_7,
-                                    p, sizeof(*p),
-                                    &p7, sizeof(p7));
+        c->BroadcastToInGameClientsDivert(PROTOCOL_7,
+                                          p, sizeof(*p),
+                                          &p7, sizeof(p7));
 
         return PacketAction::DROP;
     }
@@ -241,9 +241,9 @@ handle_container_update(Connection *c, const void *data, size_t length)
 
         c->client.world.Apply(p6);
 
-        connection_broadcast_divert(c, PROTOCOL_6,
-                                    data, length,
-                                    &p6, sizeof(p6));
+        c->BroadcastToInGameClientsDivert(PROTOCOL_6,
+                                          data, length,
+                                          &p6, sizeof(p6));
     } else {
         auto p = (const struct uo_packet_container_update_6 *)data;
         struct uo_packet_container_update p5;
@@ -254,9 +254,9 @@ handle_container_update(Connection *c, const void *data, size_t length)
 
         c->client.world.Apply(*p);
 
-        connection_broadcast_divert(c, PROTOCOL_6,
-                                    &p5, sizeof(p5),
-                                    data, length);
+        c->BroadcastToInGameClientsDivert(PROTOCOL_6,
+                                          &p5, sizeof(p5),
+                                          data, length);
     }
 
     return PacketAction::DROP;
@@ -291,9 +291,9 @@ handle_container_content(Connection *c, const void *data, size_t length)
 
         c->client.world.Apply(*p6);
 
-        connection_broadcast_divert(c, PROTOCOL_6,
-                                    data, length,
-                                    p6, length6);
+        c->BroadcastToInGameClientsDivert(PROTOCOL_6,
+                                          data, length,
+                                          p6, length6);
 
         free(p6);
     } else if (packet_verify_container_content_6((const uo_packet_container_content_6 *)data, length)) {
@@ -310,9 +310,9 @@ handle_container_content(Connection *c, const void *data, size_t length)
             return PacketAction::DROP;
         }
 
-        connection_broadcast_divert(c, PROTOCOL_6,
-                                    p5, length5,
-                                    data, length);
+        c->BroadcastToInGameClientsDivert(PROTOCOL_6,
+                                          p5, length5,
+                                          data, length);
 
         free(p5);
     } else
@@ -366,7 +366,7 @@ handle_popup_message(Connection *c, const void *data, [[maybe_unused]] size_t le
             connection_speak_console(c, "character change failed, trying again");
         }
 
-        connection_reconnect_delayed(c);
+        c->ScheduleReconnect();
         return PacketAction::DROP;
     }
 
@@ -532,7 +532,7 @@ handle_account_login_reject(Connection *c, const void *data, [[maybe_unused]] si
         LogFormat(1, "reconnect failed: AccountLoginReject reason=0x%x\n",
                   p->reason);
 
-        connection_reconnect_delayed(c);
+        c->ScheduleReconnect();
         return PacketAction::DROP;
     }
 
@@ -564,7 +564,7 @@ handle_relay(Connection *c, const void *data, [[maybe_unused]] size_t length)
     relay = *p;
 
     /* close old connection */
-    connection_disconnect(c);
+    c->Disconnect();
 
     /* restore the "reconnecting" flag: it was cleared by
        connection_client_disconnect(), but since continue reconnecting
@@ -586,8 +586,8 @@ handle_relay(Connection *c, const void *data, [[maybe_unused]] size_t length)
     if (c->client_version.seed != nullptr)
         c->client_version.seed->seed = relay.auth_id;
 
-    ret = connection_client_connect(c, (const struct sockaddr *)&sin,
-                                    sizeof(sin), relay.auth_id);
+    ret = c->Connect((const struct sockaddr *)&sin,
+                     sizeof(sin), relay.auth_id);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
         return PacketAction::DISCONNECT;
@@ -675,9 +675,9 @@ handle_supported_features(Connection *c, const void *data, size_t length)
 
         struct uo_packet_supported_features p6;
         supported_features_6014_to_6(&p6, p);
-        connection_broadcast_divert(c, PROTOCOL_6_0_14,
-                                    &p6, sizeof(p6),
-                                    data, length);
+        c->BroadcastToInGameClientsDivert(PROTOCOL_6_0_14,
+                                          &p6, sizeof(p6),
+                                          data, length);
     } else {
         auto p = (const struct uo_packet_supported_features *)data;
         assert(length == sizeof(*p));
@@ -686,9 +686,9 @@ handle_supported_features(Connection *c, const void *data, size_t length)
 
         struct uo_packet_supported_features_6014 p7;
         supported_features_6_to_6014(&p7, p);
-        connection_broadcast_divert(c, PROTOCOL_6_0_14,
-                                    data, length,
-                                    &p7, sizeof(p7));
+        c->BroadcastToInGameClientsDivert(PROTOCOL_6_0_14,
+                                          data, length,
+                                          &p7, sizeof(p7));
     }
 
     return PacketAction::DROP;
@@ -763,9 +763,9 @@ handle_world_item_7(Connection *c, const void *data, size_t length)
 
     c->client.world.Apply(*p);
 
-    connection_broadcast_divert(c, PROTOCOL_7,
-                                &old, old.length,
-                                data, length);
+    c->BroadcastToInGameClientsDivert(PROTOCOL_7,
+                                      &old, old.length,
+                                      data, length);
     return PacketAction::DROP;
 }
 

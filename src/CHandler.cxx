@@ -285,10 +285,9 @@ handle_target(LinkedServer *ls,
         world->packet_target.cmd = PCK_Target;
         world->packet_target.flags = 3;
 
-        connection_broadcast_servers_except(ls->connection,
-                                            &world->packet_target,
-                                            sizeof(world->packet_target),
-                                            ls->server);
+        ls->connection->BroadcastToInGameClientsExcept(&world->packet_target,
+                                                       sizeof(world->packet_target),
+                                                       *ls->server);
     }
 
     return PacketAction::ACCEPT;
@@ -402,9 +401,9 @@ handle_account_login(LinkedServer *ls,
         else
             seed = uo_server_seed(ls->server);
 
-        int ret = connection_client_connect(c, config->login_address->ai_addr,
-                                            config->login_address->ai_addrlen,
-                                            seed);
+        int ret = c->Connect(config->login_address->ai_addr,
+                             config->login_address->ai_addrlen,
+                             seed);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
 
@@ -611,8 +610,8 @@ handle_play_server(LinkedServer *ls,
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
-        ret = connection_client_connect(c, config->address->ai_addr,
-                                        config->address->ai_addrlen, seed);
+        ret = c->Connect(config->address->ai_addr,
+                         config->address->ai_addrlen, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PacketAction::DISCONNECT;
@@ -715,8 +714,8 @@ handle_gump_response(LinkedServer *ls,
         .button_id = 0,
     };
 
-    connection_broadcast_servers_except(ls->connection, &close, sizeof(close),
-                                        ls->server);
+    ls->connection->BroadcastToInGameClientsExcept(&close, sizeof(close),
+                                                   *ls->server);
 
     return PacketAction::ACCEPT;
 }

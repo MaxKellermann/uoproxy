@@ -260,10 +260,10 @@ connection_walk_ack(Connection *c,
         &c->client.world.packet_mobile_update;
 
     if (state->server != nullptr)
-        connection_broadcast_servers_except(c, mu, sizeof(*mu),
-                                            state->server->server);
+        c->BroadcastToInGameClientsExcept(mu, sizeof(*mu),
+                                          *state->server->server);
     else
-        connection_broadcast_servers(c, mu, sizeof(*mu));
+        c->BroadcastToInGameClients(mu, sizeof(*mu));
 
     remove_item(state, i);
 }
