@@ -32,21 +32,22 @@ namespace UO {
 
 class Client;
 
-struct ClientHandler {
+class ClientHandler {
+public:
     /**
      * A packet has been received.
      *
-     * @return 0, or -1 if this object has been closed within the
+     * @return false if this object has been closed within the
      * function
      */
-    int (*packet)(const void *data, size_t length, void *ctx);
+    virtual bool OnClientPacket(const void *data, size_t length) = 0;
 
     /**
      * The connection has been closed due to an error or because the
      * peer closed his side.  uo_client_dispose() does not trigger
      * this callback, and the callee has to invoke this function.
      */
-    void (*free)(void *ctx);
+    virtual void OnClientDisconnect() noexcept = 0;
 };
 
 } // namespace UO
@@ -54,8 +55,7 @@ struct ClientHandler {
 int
 uo_client_create(int fd, uint32_t seed,
                  const struct uo_packet_seed *seed6,
-                 const UO::ClientHandler *handler,
-                 void *handler_ctx,
+                 UO::ClientHandler &handler,
                  UO::Client **clientp);
 
 void uo_client_dispose(UO::Client *client);

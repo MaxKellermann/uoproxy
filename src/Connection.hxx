@@ -25,6 +25,8 @@
 #include "packets.h"
 #include "World.hxx"
 #include "CVersion.hxx"
+#include "Client.hxx"
+#include "Server.hxx"
 
 #include <event.h>
 
@@ -68,7 +70,7 @@ struct StatefulClient {
     StatefulClient &operator=(const StatefulClient &) = delete;
 };
 
-struct LinkedServer : IntrusiveListHook {
+struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     Connection *connection;
 
     UO::Server *server = nullptr;
@@ -94,6 +96,10 @@ struct LinkedServer : IntrusiveListHook {
 
     LinkedServer(const LinkedServer &) = delete;
     LinkedServer &operator=(const LinkedServer &) = delete;
+
+    /* virtual methods from UO::ServerHandler */
+    bool OnServerPacket(const void *data, size_t length) override;
+    void OnServerDisconnect() noexcept override;
 };
 
 struct WalkState {
@@ -115,7 +121,7 @@ struct WalkState {
     uint8_t seq_next = 0;
 };
 
-struct Connection final : IntrusiveListHook {
+struct Connection final : IntrusiveListHook, UO::ClientHandler {
     Instance *const instance;
 
     /* flags */
@@ -158,6 +164,10 @@ struct Connection final : IntrusiveListHook {
 
     Connection(const Connection &) = delete;
     Connection &operator=(const Connection &) = delete;
+
+    /* virtual methods from UO::ClientHandler */
+    bool OnClientPacket(const void *data, size_t length) override;
+    void OnClientDisconnect() noexcept override;
 };
 
 int connection_new(Instance *instance,

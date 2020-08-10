@@ -27,6 +27,8 @@
 #include "SocketUtil.hxx"
 #include "Encryption.hxx"
 
+#include <utility>
+
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -45,14 +47,13 @@ public:
 
     enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
-    const ServerHandler *handler;
-    void *const handler_ctx;
+    ServerHandler *handler;
 
     bool aborted = false;
     struct event abort_event;
 
-    Server(const ServerHandler &_handler, void *_handler_ctx) noexcept
-        :handler(&_handler), handler_ctx(_handler_ctx)
+    explicit Server(ServerHandler &_handler) noexcept
+        :handler(&_handler)
     {
     }
 
@@ -72,14 +73,10 @@ public:
 static void
 uo_server_invoke_free(UO::Server *server)
 {
-    const UO::ServerHandler *handler;
-
     assert(server->handler != nullptr);
 
-    handler = server->handler;
-    server->handler = nullptr;
-
-    handler->free(server->handler_ctx);
+    auto *handler = std::exchange(server->handler, nullptr);
+    handler->OnServerDisconnect();
 }
 
 static void
@@ -144,10 +141,8 @@ server_packets_from_buffer(UO::Server *server,
 
         log_hexdump(10, data, packet_length);
 
-        int ret = server->handler->packet(data, packet_length,
-                                          server->handler_ctx);
-        if (ret < 0)
-            return ret;
+        if (!server->handler->OnServerPacket(data, packet_length))
+            return -1;
 
         consumed += packet_length;
         data += packet_length;
@@ -231,19 +226,16 @@ static constexpr SocketBufferHandler server_sock_buff_handler = {
     .free = server_sock_buff_free,
 };
 
-int uo_server_create(int sockfd,
-                     const UO::ServerHandler *handler,
-                     void *handler_ctx,
-                     UO::Server **serverp) {
-    assert(handler != nullptr);
-    assert(handler->packet != nullptr);
-    assert(handler->free != nullptr);
-
+int
+uo_server_create(int sockfd,
+                 UO::ServerHandler &handler,
+                 UO::Server **serverp)
+{
     if (socket_set_nonblock(sockfd, 1) < 0 ||
         socket_set_nodelay(sockfd, 1) < 0)
         return errno;
 
-    auto *server = new UO::Server(*handler, handler_ctx);
+    auto *server = new UO::Server(handler);
     if (server == nullptr)
         return ENOMEM;
 

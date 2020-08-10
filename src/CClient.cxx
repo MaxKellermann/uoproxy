@@ -39,20 +39,19 @@
 #include <netdb.h>
 #endif
 
-static int
-client_packet(const void *data, size_t length, void *ctx)
+bool
+Connection::OnClientPacket(const void *data, size_t length)
 {
-    auto c = (Connection *)ctx;
     packet_action_t action;
 
-    assert(c->client.client != nullptr);
+    assert(client.client != nullptr);
 
     action = handle_packet_from_server(server_packet_bindings,
-                                       c, data, length);
+                                       this, data, length);
     switch (action) {
     case PA_ACCEPT:
-        if (!c->client.reconnecting) {
-            for (auto &ls : c->servers)
+        if (!client.reconnecting) {
+            for (auto &ls : servers)
                 if (!ls.attaching && !ls.is_zombie)
                     uo_server_send(ls.server, data, length);
         }
@@ -67,44 +66,37 @@ client_packet(const void *data, size_t length, void *ctx)
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
-        if (c->autoreconnect && c->in_game) {
+        if (autoreconnect && in_game) {
             LogFormat(2, "auto-reconnecting\n");
-            connection_disconnect(c);
-            connection_reconnect_delayed(c);
+            connection_disconnect(this);
+            connection_reconnect_delayed(this);
         } else {
-            connection_delete(c);
+            connection_delete(this);
         }
-        return -1;
+        return false;
 
     case PA_DELETED:
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
-static void
-client_free(void *ctx)
+void
+Connection::OnClientDisconnect() noexcept
 {
-    auto c = (Connection *)ctx;
+    assert(client.client != nullptr);
 
-    assert(c->client.client != nullptr);
-
-    if (c->autoreconnect && c->in_game) {
+    if (autoreconnect && in_game) {
         LogFormat(2, "server disconnected, auto-reconnecting\n");
-        connection_speak_console(c, "uoproxy was disconnected, auto-reconnecting...");
-        connection_disconnect(c);
-        connection_reconnect_delayed(c);
+        connection_speak_console(this, "uoproxy was disconnected, auto-reconnecting...");
+        connection_disconnect(this);
+        connection_reconnect_delayed(this);
     } else {
         LogFormat(1, "server disconnected\n");
-        connection_delete(c);
+        connection_delete(this);
     }
 }
-
-static constexpr UO::ClientHandler client_handler = {
-    .packet = client_packet,
-    .free = client_free,
-};
 
 static void
 connection_ping_event_callback(int fd __attr_unused,
@@ -184,7 +176,7 @@ connection_client_connect(Connection *c,
 
     ret = uo_client_create(fd, seed,
                            seed_packet,
-                           &client_handler, c,
+                           *c,
                            &c->client.client);
     if (ret != 0) {
         close(fd);

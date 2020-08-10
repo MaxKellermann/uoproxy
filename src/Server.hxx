@@ -30,28 +30,28 @@ namespace UO {
 
 class Server;
 
-struct ServerHandler {
+class ServerHandler {
+public:
     /**
      * A packet has been received.
      *
-     * @return 0, or -1 if this object has been closed within the
+     * @return false if this object has been closed within the
      * function
      */
-    int (*packet)(const void *data, size_t length, void *ctx);
+    virtual bool OnServerPacket(const void *data, size_t length) = 0;
 
     /**
      * The connection has been closed due to an error or because the
      * peer closed his side.  uo_server_dispose() does not trigger
      * this callback, and the callee has to invoke this function.
      */
-    void (*free)(void *ctx);
+    virtual void OnServerDisconnect() noexcept = 0;
 };
 
 } // namespace UO
 
 int uo_server_create(int sockfd,
-                     const UO::ServerHandler *handler,
-                     void *handler_ctx,
+                     UO::ServerHandler &handler,
                      UO::Server **serverp);
 void uo_server_dispose(UO::Server *server);
 

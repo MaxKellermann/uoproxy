@@ -28,18 +28,18 @@
 #include <stdlib.h>
 #include <errno.h>
 
-static int
-server_packet(const void *data, size_t length, void *ctx)
+bool
+LinkedServer::OnServerPacket(const void *data, size_t length)
 {
-    auto ls = (LinkedServer *)ctx;
-    Connection *c = ls->connection;
+    Connection *c = connection;
+
     packet_action_t action;
 
     assert(c != nullptr);
-    assert(!ls->is_zombie);
+    assert(!is_zombie);
 
     action = handle_packet_from_client(client_packet_bindings,
-                                       ls, data, length);
+                                       this, data, length);
     switch (action) {
     case PA_ACCEPT:
         if (c->client.client != nullptr &&
@@ -56,53 +56,47 @@ server_packet(const void *data, size_t length, void *ctx)
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
-        connection_server_dispose(c, ls);
+        connection_server_dispose(c, this);
         if (c->servers.empty()) {
             if (c->background)
                 LogFormat(1, "backgrounding\n");
             else
                 connection_delete(c);
         }
-        return -1;
+        return false;
 
     case PA_DELETED:
-        return -1;
+        return false;
     }
 
-    return 0;
+    return true;
 }
 
-static void
-server_free(void *ctx)
+void
+LinkedServer::OnServerDisconnect() noexcept
 {
-    auto ls = (LinkedServer *)ctx;
-    Connection *c = ls->connection;
+    Connection *c = connection;
 
     assert(c != nullptr);
 
-    connection_walk_server_removed(&c->walk, ls);
+    connection_walk_server_removed(&c->walk, this);
 
-    if (ls->expecting_reconnect) {
+    if (expecting_reconnect) {
         LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
-        connection_server_zombify(c, ls);
-    } else if (c->servers.iterator_to(*ls) != c->servers.begin() ||
-               std::next(c->servers.iterator_to(*ls)) != c->servers.end()) {
+        connection_server_zombify(c, this);
+    } else if (c->servers.iterator_to(*this) != c->servers.begin() ||
+               std::next(c->servers.iterator_to(*this)) != c->servers.end()) {
         LogFormat(2, "client disconnected, server connection still in use\n");
-        connection_server_dispose(c, ls);
+        connection_server_dispose(c, this);
     } else if (c->background && c->in_game) {
         LogFormat(1, "client disconnected, backgrounding\n");
-        connection_server_dispose(c, ls);
+        connection_server_dispose(c, this);
     } else {
         LogFormat(1, "last client disconnected, removing connection\n");
-        connection_server_dispose(c, ls);
+        connection_server_dispose(c, this);
         connection_delete(c);
     }
 }
-
-static constexpr UO::ServerHandler server_handler = {
-    .packet = server_packet,
-    .free = server_free,
-};
 
 void
 connection_server_add(Connection *c, LinkedServer *ls)
@@ -133,8 +127,7 @@ connection_server_new(Connection *c, int fd)
 
     auto *ls = new LinkedServer();
 
-    ret = uo_server_create(fd,
-                           &server_handler, ls,
+    ret = uo_server_create(fd, *ls,
                            &ls->server);
     if (ret != 0) {
         delete ls;
@@ -153,7 +146,7 @@ zombie_timeout_event_callback(int fd __attr_unused,
 {
     LinkedServer *ls = (LinkedServer *)ctx;
     ls->expecting_reconnect = false;
-    server_free(ls);
+    ls->OnServerDisconnect();
 }
 
 void

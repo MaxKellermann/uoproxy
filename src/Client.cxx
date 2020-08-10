@@ -28,6 +28,8 @@
 #include "compiler.h"
 #include "SocketUtil.hxx"
 
+#include <utility>
+
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -58,14 +60,13 @@ public:
 
     enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
-    const ClientHandler *handler;
-    void *const handler_ctx;
+    ClientHandler *handler;
 
     bool aborted = false;
     struct event abort_event;
 
-    Client(const ClientHandler &_handler, void *_handler_ctx) noexcept
-        :handler(&_handler), handler_ctx(_handler_ctx)
+    explicit Client(ClientHandler &_handler) noexcept
+        :handler(&_handler)
     {
         uo_decompression_init(&decompression);
 
@@ -89,14 +90,10 @@ public:
 static void
 uo_client_invoke_free(UO::Client *client)
 {
-    const UO::ClientHandler *handler;
-
     assert(client->handler != nullptr);
 
-    handler = client->handler;
-    client->handler = nullptr;
-
-    handler->free(client->handler_ctx);
+    auto *handler = std::exchange(client->handler, nullptr);
+    handler->OnClientDisconnect();
 }
 
 static void
@@ -168,7 +165,6 @@ client_packets_from_buffer(UO::Client *client,
                            const unsigned char *data, size_t length)
 {
     size_t consumed = 0, packet_length;
-    int ret;
 
     while (length > 0) {
         packet_length = get_packet_length(client->protocol_version,
@@ -188,10 +184,8 @@ client_packets_from_buffer(UO::Client *client,
 
         log_hexdump(10, data, packet_length);
 
-        ret = client->handler->packet(data, packet_length,
-                                      client->handler_ctx);
-        if (ret < 0)
-            return ret;
+        if (!client->handler->OnClientPacket(data, packet_length))
+            return -1;
 
         consumed += packet_length;
         data += packet_length;
@@ -260,15 +254,10 @@ static constexpr SocketBufferHandler client_sock_buff_handler = {
 int
 uo_client_create(int fd, uint32_t seed,
                  const struct uo_packet_seed *seed6,
-                 const UO::ClientHandler *handler,
-                 void *handler_ctx,
+                 UO::ClientHandler &handler,
                  UO::Client **clientp)
 {
     int ret;
-
-    assert(handler != nullptr);
-    assert(handler->packet != nullptr);
-    assert(handler->free != nullptr);
 
     ret = socket_set_nonblock(fd, 1);
     if (ret < 0)
@@ -278,7 +267,7 @@ uo_client_create(int fd, uint32_t seed,
     if (ret < 0)
         return errno;
 
-    auto *client = new UO::Client(*handler, handler_ctx);
+    auto *client = new UO::Client(handler);
     if (client == nullptr)
         return ENOMEM;
 
