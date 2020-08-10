@@ -1,9 +1,6 @@
 uoproxy (0.5) unstable; urgency=medium
 
-  * build with Meson/ninja
-  * fix libevent API breakage
-  * fix character creation with antispy
-  * fix Razor support due to protocol mismatch bug
+  * use debhelper 12
 
  --
 
