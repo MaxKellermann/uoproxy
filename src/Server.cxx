@@ -249,10 +249,6 @@ int uo_server_create(int sockfd,
 
     server->sock = sock_buff_create(sockfd, 8192, 65536,
                                     &server_sock_buff_handler, server);
-    if (server->sock == nullptr) {
-        delete server;
-        return errno;
-    }
 
     *serverp = server;
 

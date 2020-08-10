@@ -284,10 +284,6 @@ uo_client_create(int fd, uint32_t seed,
 
     client->sock = sock_buff_create(fd, 8192, 65536,
                                     &client_sock_buff_handler, client);
-    if (client->sock == nullptr) {
-        delete client;
-        return errno;
-    }
 
     client->decompressed_buffer = fifo_buffer_new(65536);
     if (client->decompressed_buffer == nullptr) {

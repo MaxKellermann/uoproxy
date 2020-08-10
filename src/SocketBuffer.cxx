@@ -29,7 +29,6 @@
 
 #include <assert.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
@@ -37,14 +36,20 @@
 struct SocketBuffer {
     struct pending_flush flush;
 
-    int fd;
+    const int fd;
 
     struct event recv_event, send_event;
 
-    struct fifo_buffer *input, *output;
+    struct fifo_buffer *input = nullptr, *output = nullptr;
 
     const SocketBufferHandler *handler;
-    void *handler_ctx;
+    void *const handler_ctx;
+
+    SocketBuffer(int _fd, size_t input_max,
+                 size_t output_max,
+                 const SocketBufferHandler &_handler,
+                 void *_handler_ctx);
+    ~SocketBuffer() noexcept;
 };
 
 
@@ -253,64 +258,56 @@ uint16_t sock_buff_port(const SocketBuffer *sb)
  *
  */
 
+inline
+SocketBuffer::SocketBuffer(int _fd, size_t input_max,
+                           size_t output_max,
+                           const SocketBufferHandler &_handler,
+                           void *_handler_ctx)
+    :fd(_fd),
+     input(fifo_buffer_new(input_max)),
+     output(fifo_buffer_new(output_max)),
+     handler(&_handler), handler_ctx(_handler_ctx)
+{
+    flush_init(&flush, sock_buff_flush_callback);
+
+    event_set(&recv_event, fd, EV_READ|EV_PERSIST,
+              sock_buff_recv_callback, this);
+    event_set(&send_event, fd, EV_WRITE|EV_PERSIST,
+              sock_buff_send_callback, this);
+
+    event_add(&recv_event, nullptr);
+}
+
 SocketBuffer *
 sock_buff_create(int fd, size_t input_max,
                  size_t output_max,
                  const SocketBufferHandler *handler,
                  void *handler_ctx)
 {
-    SocketBuffer *sb;
-
     assert(handler != nullptr);
     assert(handler->data != nullptr);
     assert(handler->free != nullptr);
 
-    sb = (SocketBuffer*)malloc(sizeof(*sb));
-    if (sb == nullptr)
-        return nullptr;
+    return new SocketBuffer(fd, input_max, output_max,
+                            *handler, handler_ctx);
+}
 
-    flush_init(&sb->flush, sock_buff_flush_callback);
+SocketBuffer::~SocketBuffer() noexcept
+{
+    assert(fd >= 0);
 
-    sb->fd = fd;
+    event_del(&recv_event);
+    event_del(&send_event);
 
-    event_set(&sb->recv_event, fd, EV_READ|EV_PERSIST,
-              sock_buff_recv_callback, sb);
-    event_set(&sb->send_event, fd, EV_WRITE|EV_PERSIST,
-              sock_buff_send_callback, sb);
+    flush_del(&flush);
 
-    sb->input = fifo_buffer_new(input_max);
-    if (sb->input == nullptr) {
-        free(sb);
-        return nullptr;
-    }
+    close(fd);
 
-    sb->output = fifo_buffer_new(output_max);
-    if (sb->output == nullptr) {
-        fifo_buffer_free(sb->input);
-        free(sb);
-        return nullptr;
-    }
+    fifo_buffer_free(input);
+    fifo_buffer_free(output);
 
-    sb->handler = handler;
-    sb->handler_ctx = handler_ctx;
-
-    event_add(&sb->recv_event, nullptr);
-
-    return sb;
 }
 
 void sock_buff_dispose(SocketBuffer *sb) {
-    assert(sb->fd >= 0);
-
-    event_del(&sb->recv_event);
-    event_del(&sb->send_event);
-
-    flush_del(&sb->flush);
-
-    close(sb->fd);
-
-    fifo_buffer_free(sb->input);
-    fifo_buffer_free(sb->output);
-
-    free(sb);
+    delete sb;
 }
