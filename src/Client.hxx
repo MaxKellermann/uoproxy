@@ -26,10 +26,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
-struct uo_client;
 struct uo_packet_seed;
 
-struct uo_client_handler {
+namespace UO {
+
+class Client;
+
+struct ClientHandler {
     /**
      * A packet has been received.
      *
@@ -46,20 +49,22 @@ struct uo_client_handler {
     void (*free)(void *ctx);
 };
 
+} // namespace UO
+
 int
 uo_client_create(int fd, uint32_t seed,
                  const struct uo_packet_seed *seed6,
-                 const struct uo_client_handler *handler,
+                 const UO::ClientHandler *handler,
                  void *handler_ctx,
-                 struct uo_client **clientp);
+                 UO::Client **clientp);
 
-void uo_client_dispose(struct uo_client *client);
+void uo_client_dispose(UO::Client *client);
 
 void
-uo_client_set_protocol(struct uo_client *client,
+uo_client_set_protocol(UO::Client *client,
                        enum protocol_version protocol_version);
 
-void uo_client_send(struct uo_client *client,
+void uo_client_send(UO::Client *client,
                     const void *src, size_t length);
 
 #endif

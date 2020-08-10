@@ -102,7 +102,7 @@ client_free(void *ctx)
     }
 }
 
-static const struct uo_client_handler client_handler = {
+static constexpr UO::ClientHandler client_handler = {
     .packet = client_packet,
     .free = client_free,
 };

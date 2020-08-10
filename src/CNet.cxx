@@ -52,7 +52,7 @@ connection_broadcast_servers(Connection *c,
 void
 connection_broadcast_servers_except(Connection *c,
                                     const void *data, size_t length,
-                                    struct uo_server *except)
+                                    UO::Server *except)
 {
     LinkedServer *ls;
 

@@ -58,7 +58,7 @@ static void welcome(Connection *c) {
 
 /** send a HardwareInfo packet to the server, containing inane
     information, to overwrite its old database entry */
-static void send_antispy(struct uo_client *client) {
+static void send_antispy(UO::Client *client) {
     struct uo_packet_hardware p;
 
     memset(&p, 0, sizeof(p));

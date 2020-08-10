@@ -26,9 +26,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
-struct uo_server;
+namespace UO {
 
-struct uo_server_handler {
+class Server;
+
+struct ServerHandler {
     /**
      * A packet has been received.
      *
@@ -45,34 +47,36 @@ struct uo_server_handler {
     void (*free)(void *ctx);
 };
 
-int uo_server_create(int sockfd,
-                     const struct uo_server_handler *handler,
-                     void *handler_ctx,
-                     struct uo_server **serverp);
-void uo_server_dispose(struct uo_server *server);
+} // namespace UO
 
-uint32_t uo_server_seed(const struct uo_server *server);
+int uo_server_create(int sockfd,
+                     const UO::ServerHandler *handler,
+                     void *handler_ctx,
+                     UO::Server **serverp);
+void uo_server_dispose(UO::Server *server);
+
+uint32_t uo_server_seed(const UO::Server *server);
 
 void
-uo_server_set_protocol(struct uo_server *server,
+uo_server_set_protocol(UO::Server *server,
                        enum protocol_version protocol_version);
 
-void uo_server_set_compression(struct uo_server *server, bool compression);
+void uo_server_set_compression(UO::Server *server, bool compression);
 
-void uo_server_send(struct uo_server *server,
+void uo_server_send(UO::Server *server,
                     const void *src, size_t length);
 
 
 /** @return ip address, in network byte order, of our uo server socket
             (= connection to client) */
-uint32_t uo_server_getsockname(const struct uo_server *server);
+uint32_t uo_server_getsockname(const UO::Server *server);
 /** @return port, in network byte order, of our uo server socket
             (= connection to client) */
-uint16_t uo_server_getsockport(const struct uo_server *server);
+uint16_t uo_server_getsockport(const UO::Server *server);
 
 /* utilities */
 
-void uo_server_speak_ascii(struct uo_server *server,
+void uo_server_speak_ascii(UO::Server *server,
                            uint32_t serial,
                            int16_t graphic,
                            uint8_t type,
@@ -80,7 +84,7 @@ void uo_server_speak_ascii(struct uo_server *server,
                            const char *name,
                            const char *text);
 
-void uo_server_speak_console(struct uo_server *server,
+void uo_server_speak_console(UO::Server *server,
                              const char *text);
 
 #endif

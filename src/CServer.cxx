@@ -98,7 +98,7 @@ server_free(void *ctx)
     }
 }
 
-static const struct uo_server_handler server_handler = {
+static constexpr UO::ServerHandler server_handler = {
     .packet = server_packet,
     .free = server_free,
 };

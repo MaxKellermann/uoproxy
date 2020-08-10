@@ -42,13 +42,15 @@ static void write_fixed_string(char *dest, size_t max_length,
     }
 }
 
-void uo_server_speak_ascii(struct uo_server *server,
-                           uint32_t serial,
-                           int16_t graphic,
-                           uint8_t type,
-                           uint16_t hue, uint16_t font,
-                           const char *name,
-                           const char *text) {
+void
+uo_server_speak_ascii(UO::Server *server,
+                      uint32_t serial,
+                      int16_t graphic,
+                      uint8_t type,
+                      uint16_t hue, uint16_t font,
+                      const char *name,
+                      const char *text)
+{
     struct uo_packet_speak_ascii *p;
     size_t text_length, length;
 
@@ -74,8 +76,10 @@ void uo_server_speak_ascii(struct uo_server *server,
     free(p);
 }
 
-void uo_server_speak_console(struct uo_server *server,
-                             const char *text) {
+void
+uo_server_speak_console(UO::Server *server,
+                        const char *text)
+{
     uo_server_speak_ascii(server,
                           htonl(0xffffffff),
                           htons(-1),

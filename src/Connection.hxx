@@ -33,11 +33,16 @@
 struct Instance;
 struct Connection;
 
+namespace UO {
+class Client;
+class Server;
+}
+
 struct StatefulClient {
     bool reconnecting = false, version_requested = false;
     struct event reconnect_event;
 
-    struct uo_client *client = nullptr;
+    UO::Client *client = nullptr;
     struct event ping_event;
 
     struct uo_fragment_character_info characters[MAX_CHARACTERS];
@@ -67,7 +72,7 @@ struct LinkedServer {
 
     Connection *connection;
 
-    struct uo_server *server = nullptr;
+    UO::Server *server = nullptr;
     bool welcome = false, attaching = false;
 
     struct client_version client_version;
@@ -182,9 +187,10 @@ void
 connection_broadcast_servers(Connection *c,
                              const void *data, size_t length);
 
-void connection_broadcast_servers_except(Connection *c,
-                                         const void *data, size_t length,
-                                         struct uo_server *except);
+void
+connection_broadcast_servers_except(Connection *c,
+                                    const void *data, size_t length,
+                                    UO::Server *except);
 
 void
 connection_broadcast_divert(Connection *c,

@@ -42,7 +42,10 @@
 
 #include <event.h>
 
-struct uo_client {
+namespace UO {
+
+class Client {
+public:
     struct sock_buff *sock;
     bool compression_enabled;
     struct uo_decompression decompression;
@@ -50,17 +53,19 @@ struct uo_client {
 
     enum protocol_version protocol_version;
 
-    const struct uo_client_handler *handler;
+    const ClientHandler *handler;
     void *handler_ctx;
 
     bool aborted;
     struct event abort_event;
 };
 
+} // namespace UO
+
 static void
-uo_client_invoke_free(struct uo_client *client)
+uo_client_invoke_free(UO::Client *client)
 {
-    const struct uo_client_handler *handler;
+    const UO::ClientHandler *handler;
 
     assert(client->handler != nullptr);
 
@@ -75,7 +80,7 @@ uo_client_abort_event_callback(int fd __attr_unused,
                                short event __attr_unused,
                                void *ctx)
 {
-    auto client = (struct uo_client *)ctx;
+    auto client = (UO::Client *)ctx;
 
     assert(client->aborted);
 
@@ -83,7 +88,7 @@ uo_client_abort_event_callback(int fd __attr_unused,
 }
 
 static void
-uo_client_abort(struct uo_client *client)
+uo_client_abort(UO::Client *client)
 {
     if (client->aborted)
         return;
@@ -101,13 +106,13 @@ uo_client_abort(struct uo_client *client)
 }
 
 static int
-uo_client_is_aborted(struct uo_client *client)
+uo_client_is_aborted(UO::Client *client)
 {
     return client->aborted;
 }
 
 static ssize_t
-client_decompress(struct uo_client *client,
+client_decompress(UO::Client *client,
                   const unsigned char *data, size_t length)
 {
     size_t max_length;
@@ -135,7 +140,7 @@ client_decompress(struct uo_client *client,
 }
 
 static ssize_t
-client_packets_from_buffer(struct uo_client *client,
+client_packets_from_buffer(UO::Client *client,
                            const unsigned char *data, size_t length)
 {
     size_t consumed = 0, packet_length;
@@ -175,7 +180,7 @@ client_packets_from_buffer(struct uo_client *client,
 static size_t
 client_sock_buff_data(const void *data0, size_t length, void *ctx)
 {
-    auto client = (struct uo_client *)ctx;
+    auto client = (UO::Client *)ctx;
     const unsigned char *data = (const unsigned char *)data0;
 
     if (client->compression_enabled) {
@@ -210,7 +215,7 @@ client_sock_buff_data(const void *data0, size_t length, void *ctx)
 static void
 client_sock_buff_free(int error, void *ctx)
 {
-    auto client = (struct uo_client *)ctx;
+    auto client = (UO::Client *)ctx;
 
     if (error == 0)
         LogFormat(2, "server closed the connection\n");
@@ -231,12 +236,12 @@ struct sock_buff_handler client_sock_buff_handler = {
 int
 uo_client_create(int fd, uint32_t seed,
                  const struct uo_packet_seed *seed6,
-                 const struct uo_client_handler *handler,
+                 const UO::ClientHandler *handler,
                  void *handler_ctx,
-                 struct uo_client **clientp)
+                 UO::Client **clientp)
 {
     int ret;
-    struct uo_client *client;
+    UO::Client *client;
 
     assert(handler != nullptr);
     assert(handler->packet != nullptr);
@@ -250,7 +255,7 @@ uo_client_create(int fd, uint32_t seed,
     if (ret < 0)
         return errno;
 
-    client = (struct uo_client*)calloc(1, sizeof(*client));
+    client = (UO::Client*)calloc(1, sizeof(*client));
     if (client == nullptr)
         return ENOMEM;
 
@@ -287,7 +292,7 @@ uo_client_create(int fd, uint32_t seed,
     return 0;
 }
 
-void uo_client_dispose(struct uo_client *client) {
+void uo_client_dispose(UO::Client *client) {
     fifo_buffer_free(client->decompressed_buffer);
 
     if (client->sock != nullptr)
@@ -299,7 +304,7 @@ void uo_client_dispose(struct uo_client *client) {
 }
 
 void
-uo_client_set_protocol(struct uo_client *client,
+uo_client_set_protocol(UO::Client *client,
                        enum protocol_version protocol_version)
 {
     assert(client->protocol_version == PROTOCOL_UNKNOWN);
@@ -307,7 +312,7 @@ uo_client_set_protocol(struct uo_client *client,
     client->protocol_version = protocol_version;
 }
 
-void uo_client_send(struct uo_client *client,
+void uo_client_send(UO::Client *client,
                     const void *src, size_t length) {
     assert(client->sock != nullptr || uo_client_is_aborted(client));
     assert(length > 0);

@@ -80,7 +80,7 @@ walk_clear(WalkState *state)
 
 static void
 walk_cancel(const World *world,
-            struct uo_server *server,
+            UO::Server *server,
             const struct uo_packet_walk *old)
 {
     struct uo_packet_walk_cancel p = {

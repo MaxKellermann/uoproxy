@@ -33,7 +33,10 @@
 
 #include <event.h>
 
-struct uo_server {
+namespace UO {
+
+class Server {
+public:
     struct sock_buff *sock;
     uint32_t seed;
     bool compression_enabled;
@@ -42,17 +45,19 @@ struct uo_server {
 
     enum protocol_version protocol_version;
 
-    const struct uo_server_handler *handler;
+    const UO::ServerHandler *handler;
     void *handler_ctx;
 
     bool aborted;
     struct event abort_event;
 };
 
+} // namespace UO
+
 static void
-uo_server_invoke_free(struct uo_server *server)
+uo_server_invoke_free(UO::Server *server)
 {
-    const struct uo_server_handler *handler;
+    const UO::ServerHandler *handler;
 
     assert(server->handler != nullptr);
 
@@ -67,7 +72,7 @@ uo_server_abort_event_callback(int fd __attr_unused,
                                short event __attr_unused,
                                void *ctx)
 {
-    auto server = (struct uo_server *)ctx;
+    auto server = (UO::Server *)ctx;
 
     assert(server->aborted);
 
@@ -75,7 +80,7 @@ uo_server_abort_event_callback(int fd __attr_unused,
 }
 
 static void
-uo_server_abort(struct uo_server *server)
+uo_server_abort(UO::Server *server)
 {
     if (server->aborted)
         return;
@@ -95,13 +100,13 @@ uo_server_abort(struct uo_server *server)
 }
 
 static int
-uo_server_is_aborted(struct uo_server *server)
+uo_server_is_aborted(UO::Server *server)
 {
     return server->aborted;
 }
 
 static ssize_t
-server_packets_from_buffer(struct uo_server *server,
+server_packets_from_buffer(UO::Server *server,
                            const unsigned char *data, size_t length)
 {
     size_t consumed = 0;
@@ -140,7 +145,7 @@ server_packets_from_buffer(struct uo_server *server,
 static size_t
 server_sock_buff_data(const void *data0, size_t length, void *ctx)
 {
-    auto server = (struct uo_server *)ctx;
+    auto server = (UO::Server *)ctx;
 
     data0 = encryption_from_client(server->encryption, data0, length);
     if (data0 == nullptr)
@@ -193,7 +198,7 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
 static void
 server_sock_buff_free(int error, void *ctx)
 {
-    auto server = (struct uo_server *)ctx;
+    auto server = (UO::Server *)ctx;
 
     if (error == 0)
         LogFormat(2, "client closed the connection\n");
@@ -212,9 +217,9 @@ struct sock_buff_handler server_sock_buff_handler = {
 };
 
 int uo_server_create(int sockfd,
-                     const struct uo_server_handler *handler,
+                     const UO::ServerHandler *handler,
                      void *handler_ctx,
-                     struct uo_server **serverp) {
+                     UO::Server **serverp) {
     assert(handler != nullptr);
     assert(handler->packet != nullptr);
     assert(handler->free != nullptr);
@@ -223,7 +228,7 @@ int uo_server_create(int sockfd,
         socket_set_nodelay(sockfd, 1) < 0)
         return errno;
 
-    struct uo_server *server = (struct uo_server*)calloc(1, sizeof(*server));
+    UO::Server *server = (UO::Server*)calloc(1, sizeof(*server));
     if (server == nullptr)
         return ENOMEM;
 
@@ -244,7 +249,7 @@ int uo_server_create(int sockfd,
     return 0;
 }
 
-void uo_server_dispose(struct uo_server *server) {
+void uo_server_dispose(UO::Server *server) {
     encryption_free(server->encryption);
 
     if (server->sock != nullptr)
@@ -256,16 +261,16 @@ void uo_server_dispose(struct uo_server *server) {
     free(server);
 }
 
-uint32_t uo_server_seed(const struct uo_server *server) {
+uint32_t uo_server_seed(const UO::Server *server) {
     return server->seed;
 }
 
-void uo_server_set_compression(struct uo_server *server, bool comp) {
+void uo_server_set_compression(UO::Server *server, bool comp) {
     server->compression_enabled = comp;
 }
 
 void
-uo_server_set_protocol(struct uo_server *server,
+uo_server_set_protocol(UO::Server *server,
                        enum protocol_version protocol_version)
 {
     assert(server->protocol_version == PROTOCOL_UNKNOWN);
@@ -273,17 +278,17 @@ uo_server_set_protocol(struct uo_server *server,
     server->protocol_version = protocol_version;
 }
 
-uint32_t uo_server_getsockname(const struct uo_server *server)
+uint32_t uo_server_getsockname(const UO::Server *server)
 {
     return sock_buff_sockname(server->sock);
 }
 
-uint16_t uo_server_getsockport(const struct uo_server *server)
+uint16_t uo_server_getsockport(const UO::Server *server)
 {
     return sock_buff_port(server->sock);
 }
 
-void uo_server_send(struct uo_server *server,
+void uo_server_send(UO::Server *server,
                     const void *src, size_t length) {
     assert(server->sock != nullptr || uo_server_is_aborted(server));
     assert(length > 0);
