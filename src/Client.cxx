@@ -257,11 +257,7 @@ uo_client_create(int fd, uint32_t seed,
                  UO::ClientHandler &handler,
                  UO::Client **clientp)
 {
-    int ret;
-
-    ret = socket_set_nodelay(fd, 1);
-    if (ret < 0)
-        return errno;
+    socket_set_nodelay(fd, 1);
 
     auto *client = new UO::Client(handler);
     if (client == nullptr)
