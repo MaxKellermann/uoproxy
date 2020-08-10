@@ -28,19 +28,6 @@
 #include <assert.h>
 #include <string.h>
 
-Connection *
-find_attach_connection(Connection *c)
-{
-    for (auto &i : c->instance->connections)
-        if (&i != c && i.CanAttach() &&
-            strncmp(c->username, i.username, sizeof(c->username)) == 0 &&
-            strncmp(c->password, i.password, sizeof(c->password)) == 0 &&
-            c->server_index == i.server_index)
-            return &i;
-
-    return nullptr;
-}
-
 static void
 attach_item(LinkedServer *ls,
             Item *item)

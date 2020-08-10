@@ -329,7 +329,7 @@ handle_account_login(LinkedServer *ls,
     memcpy(c->username, p->username, sizeof(c->username));
     memcpy(c->password, p->password, sizeof(c->password));
 
-    Connection *other = find_attach_connection(c);
+    Connection *other = c->instance->FindAttachConnection(*c);
     if (other != nullptr) {
         /* attaching to an existing connection, fake the server
            list */
@@ -568,7 +568,7 @@ handle_play_server(LinkedServer *ls,
 
     c->server_index = p->index;
 
-    c2 = find_attach_connection(c);
+    c2 = c->instance->FindAttachConnection(*c);
     if (c2 != nullptr) {
         /* remove the object from the old connection */
         c->Remove(*ls);

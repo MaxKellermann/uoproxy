@@ -75,3 +75,16 @@ instance_setup_server_socket(Instance *instance)
               listener_event_callback, instance);
     event_add(&instance->server_socket_event, nullptr);
 }
+
+Connection *
+Instance::FindAttachConnection(Connection &c) noexcept
+{
+    for (auto &i : connections)
+        if (&i != &c && i.CanAttach() &&
+            strncmp(c.username, i.username, sizeof(c.username)) == 0 &&
+            strncmp(c.password, i.password, sizeof(c.password)) == 0 &&
+            c.server_index == i.server_index)
+            return &i;
+
+    return nullptr;
+}

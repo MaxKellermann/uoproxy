@@ -174,8 +174,6 @@ void connection_walk_ack(Connection *c,
 
 /* attach */
 
-Connection *find_attach_connection(Connection *c);
-
 void attach_after_play_server(Connection *c,
                               LinkedServer *ls);
 

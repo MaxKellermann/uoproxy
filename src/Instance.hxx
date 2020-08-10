@@ -50,6 +50,8 @@ struct Instance {
 
     explicit Instance(Config &_config) noexcept
         :config(&_config) {}
+
+    Connection *FindAttachConnection(Connection &c) noexcept;
 };
 
 void
