@@ -66,7 +66,14 @@ endif
 add_global_arguments(common_cppflags + compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
 add_global_link_arguments(compiler.get_supported_link_arguments(test_ldflags), language: 'cpp')
 
+conf = configuration_data()
+
 libevent = dependency('libevent')
+
+libsystemd = dependency('libsystemd', required: get_option('systemd'))
+conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
+
+configure_file(output: 'config.h', configuration: conf)
 
 version_conf = configuration_data()
 version_conf.set_quoted('VERSION', meson.project_version())
@@ -108,6 +115,11 @@ executable(
   include_directories: inc,
   dependencies: [
     libevent,
+    libsystemd,
   ],
   install: true,
 )
+
+if libsystemd.found()
+  subdir('systemd')
+endif

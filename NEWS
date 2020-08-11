@@ -11,6 +11,7 @@ uoproxy (0.5) unstable; urgency=low
   * fix "%char" command bug
   * fix character creation with antispy
   * fix Razor support due to protocol mismatch bug
+  * systemd support
 
  --
 

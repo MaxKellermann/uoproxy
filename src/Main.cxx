@@ -23,6 +23,11 @@
 #include "Config.hxx"
 #include "version.h"
 #include "Log.hxx"
+#include "config.h"
+
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 #include <exception>
 
@@ -153,6 +158,11 @@ try {
     instance_daemonize(&instance);
 
     /* main loop */
+
+#ifdef HAVE_LIBSYSTEMD
+    /* tell systemd we're ready */
+    sd_notify(0, "READY=1");
+#endif
 
     event_dispatch();
 

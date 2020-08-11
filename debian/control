@@ -4,12 +4,13 @@ Priority: extra
 Maintainer: Max Kellermann <max.kellermann@gmail.com>
 Build-Depends: debhelper (>= 12~),
  meson (>= 0.47),
+ libsystemd-dev,
  libevent-dev (>= 1.1)
 Standards-Version: 4.0.0
 
 Package: uoproxy
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base (>= 3.0-6)
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: proxy server for Ultima Online
  uoproxy is a proxy server designed for Ultima Online.  It acts as an
  Ultima Online server, and forwards the connection to a 'real' server.

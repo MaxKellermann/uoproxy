@@ -1,0 +1,26 @@
+[Unit]
+Description=Ultima Online proxy
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+User=uoproxy
+DynamicUser=yes
+ExecStart=@prefix@/bin/uoproxy -D
+
+# resource limits
+MemoryMax=64M
+TasksMax=4
+
+# paranoid security settings
+NoNewPrivileges=yes
+ProtectSystem=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+ProtectKernelModules=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+
+[Install]
+WantedBy=multi-user.target
