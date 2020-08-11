@@ -514,7 +514,7 @@ handle_play_character(LinkedServer *ls,
 }
 
 static void
-redirect_to_self(LinkedServer *ls, Connection *)
+redirect_to_self(LinkedServer *ls)
 {
     struct uo_packet_relay relay;
     static uint32_t authid = 0;
@@ -531,7 +531,6 @@ redirect_to_self(LinkedServer *ls, Connection *)
     relay.auth_id = ls->auth_id = authid++;
     ls->expecting_reconnect = true;
     uo_server_send(ls->server, &relay, sizeof(relay));
-    return;
 }
 
 static PacketAction
@@ -571,7 +570,6 @@ handle_play_server(LinkedServer *ls,
         }
 
         retaction = PacketAction::DROP;
-        c = c2;
     } else if (config.login_address == nullptr &&
                config.game_servers != nullptr &&
                config.num_game_servers > 0) {
@@ -620,7 +618,7 @@ handle_play_server(LinkedServer *ls,
            it doesn't see a redirect packet.  Note that after the redirect,
            the client immediately sends 'GameLogin' which means we turn
            compression on. */
-        redirect_to_self(ls, c);
+        redirect_to_self(ls);
     }
 
     return retaction;
