@@ -473,6 +473,10 @@ handle_game_login(LinkedServer *ls,
             LogFormat(2, "attaching redirected client to its previous connection\n");
 
             existing_connection.Add(*ls);
+
+            /* delete the zombie, we don't need it anymore */
+            existing_connection.Remove(*zombie);
+            delete zombie;
         } else
             was_attach = ls->attaching;
         /* after GameLogin, must enable compression. */
