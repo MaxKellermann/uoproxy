@@ -192,7 +192,6 @@ void
 attach_after_play_server(Connection *c, LinkedServer *ls)
 {
     assert(c->in_game);
-    connection_check(c);
 
     LogFormat(2, "attaching connection\n");
 

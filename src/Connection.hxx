@@ -143,16 +143,6 @@ int connection_new(Instance *instance,
                    int server_socket,
                    Connection **connectionp);
 
-#ifdef NDEBUG
-static inline void
-connection_check(const Connection *c)
-{
-    (void)c;
-}
-#else
-void connection_check(const Connection *c);
-#endif
-
 void connection_delete(Connection *c);
 
 void connection_speak_console(Connection *c, const char *msg);

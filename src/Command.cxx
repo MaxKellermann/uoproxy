@@ -51,8 +51,6 @@ connection_handle_command(LinkedServer *server, const char *command)
 {
     Connection *c = server->connection;
 
-    connection_check(c);
-
     if (!c->in_game || server->server == nullptr)
         return;
 

@@ -49,8 +49,6 @@ int connection_new(Instance *instance,
     auto *ls = new LinkedServer(server_socket);
     c->Add(*ls);
 
-    connection_check(c);
-
     *connectionp = c;
 
     return 0;
@@ -58,8 +56,6 @@ int connection_new(Instance *instance,
 
 Connection::~Connection() noexcept
 {
-    connection_check(this);
-
     servers.clear_and_dispose([](LinkedServer *ls){ delete ls; });
 
     Disconnect();
@@ -67,22 +63,6 @@ Connection::~Connection() noexcept
     if (client.reconnecting)
         event_del(&client.reconnect_event);
 }
-
-#ifndef NDEBUG
-void connection_check(const Connection *c) {
-    assert(c != nullptr);
-    assert(c->instance != nullptr);
-
-    if (!c->in_game) {
-        /* when not yet in-game, there can only be one connection
-           unless we are doing the razor workaround, in which case we keep
-           zombies around that we later delete*/
-        assert(c->servers.empty() ||
-               std::next(c->servers.begin()) == c->servers.end() ||
-               c->instance->config.razor_workaround);
-    }
-}
-#endif
 
 void
 connection_delete(Connection *c)
