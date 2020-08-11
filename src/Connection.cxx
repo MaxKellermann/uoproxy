@@ -34,12 +34,12 @@ int connection_new(Instance *instance,
     int ret;
 
     auto *c = new Connection(*instance,
-                             instance->config->background,
-                             instance->config->autoreconnect);
+                             instance->config.background,
+                             instance->config.autoreconnect);
 
-    if (instance->config->client_version != nullptr) {
+    if (instance->config.client_version != nullptr) {
         ret = client_version_set(&c->client_version,
-                                 instance->config->client_version);
+                                 instance->config.client_version);
         if (ret > 0)
             LogFormat(2, "configured client version '%s', protocol '%s'\n",
                       c->client_version.packet->version,
@@ -79,7 +79,7 @@ void connection_check(const Connection *c) {
            zombies around that we later delete*/
         assert(c->servers.empty() ||
                std::next(c->servers.begin()) == c->servers.end() ||
-               c->instance->config->razor_workaround);
+               c->instance->config.razor_workaround);
     }
 }
 #endif

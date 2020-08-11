@@ -86,7 +86,7 @@ handle_create_character(LinkedServer *ls,
     auto p = (const struct uo_packet_create_character *)data;
     assert(length == sizeof(*p));
 
-    if (ls->connection->instance->config->antispy) {
+    if (ls->connection->instance->config.antispy) {
         struct uo_packet_create_character q = *p;
         q.client_ip = 0xc0a80102;
         uo_client_send(ls->connection->client.client, &q, sizeof(q));
@@ -307,7 +307,7 @@ handle_account_login(LinkedServer *ls,
 {
     auto p = (const struct uo_packet_account_login *)data;
     Connection *c = ls->connection;
-    const Config *config = c->instance->config;
+    const Config &config = c->instance->config;
 
     assert(length == sizeof(*p));
     assert(sizeof(p->username) == sizeof(ls->connection->username));
@@ -349,14 +349,14 @@ handle_account_login(LinkedServer *ls,
         return PacketAction::DROP;
     }
 
-    if (config->num_game_servers > 0) {
+    if (config.num_game_servers > 0) {
         /* we have a game server list and thus we emulate the login
            server */
-        unsigned i, num_game_servers = config->num_game_servers;
-        struct game_server_config *game_servers = config->game_servers;
+        unsigned i, num_game_servers = config.num_game_servers;
+        struct game_server_config *game_servers = config.game_servers;
         struct sockaddr_in *sin;
 
-        assert(config->game_servers != nullptr);
+        assert(config.game_servers != nullptr);
 
         struct uo_packet_server_list *p2;
         length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
@@ -388,11 +388,11 @@ handle_account_login(LinkedServer *ls,
         free(p2);
 
         return PacketAction::DROP;
-    } else if (config->login_address != nullptr) {
+    } else if (config.login_address != nullptr) {
         /* connect to the real login server */
         uint32_t seed;
 
-        if (config->antispy)
+        if (config.antispy)
             /* since the login server seed usually contains the
                internal IP address of the client, we want to hide it
                in antispy mode - always send 192.168.1.2 which is
@@ -401,8 +401,8 @@ handle_account_login(LinkedServer *ls,
         else
             seed = uo_server_seed(ls->server);
 
-        int ret = c->Connect(config->login_address->ai_addr,
-                             config->login_address->ai_addrlen,
+        int ret = c->Connect(config.login_address->ai_addr,
+                             config.login_address->ai_addrlen,
                              seed);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
@@ -435,7 +435,7 @@ handle_game_login(LinkedServer *ls,
     assert(sizeof(p->username) == sizeof(ls->connection->username));
     assert(sizeof(p->password) == sizeof(ls->connection->password));
 
-    if (ls->connection->instance->config->razor_workaround) {
+    if (ls->connection->instance->config.razor_workaround) {
         bool was_attach = false;
 
         /* I have observed the Razor client ignoring the redirect if the IP
@@ -574,7 +574,7 @@ handle_play_server(LinkedServer *ls,
         c->Remove(*ls);
         connection_delete(c);
 
-        if (c2->instance->config->razor_workaround) { ///< need to send redirect
+        if (c2->instance->config.razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
             ls->attaching = true;
             c2->Add(*ls);
@@ -585,11 +585,10 @@ handle_play_server(LinkedServer *ls,
 
         retaction = PacketAction::DROP;
         c = c2;
-    } else if (c->instance->config->login_address == nullptr &&
-               c->instance->config->game_servers != nullptr &&
-               c->instance->config->num_game_servers > 0) {
-        const unsigned num_game_servers = c->instance->config->num_game_servers;
-        struct game_server_config *config;
+    } else if (c->instance->config.login_address == nullptr &&
+               c->instance->config.game_servers != nullptr &&
+               c->instance->config.num_game_servers > 0) {
+        const unsigned num_game_servers = c->instance->config.num_game_servers;
         int ret;
         struct uo_packet_game_login login;
         uint32_t seed;
@@ -601,7 +600,7 @@ handle_play_server(LinkedServer *ls,
         if (i >= num_game_servers)
             return PacketAction::DISCONNECT;
 
-        config = c->instance->config->game_servers + i;
+        const auto &config = c->instance->config.game_servers[i];
 
         /* connect to new server */
 
@@ -610,8 +609,8 @@ handle_play_server(LinkedServer *ls,
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
-        ret = c->Connect(config->address->ai_addr,
-                         config->address->ai_addrlen, seed);
+        ret = c->Connect(config.address->ai_addr,
+                         config.address->ai_addrlen, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PacketAction::DISCONNECT;
@@ -630,7 +629,7 @@ handle_play_server(LinkedServer *ls,
     } else
         retaction = PacketAction::ACCEPT;
 
-    if (c->instance->config->razor_workaround) {
+    if (c->instance->config.razor_workaround) {
         /* Razor workaround -> send the redirect packet to the client and tell
            them to redirect to self!  This is because Razor refuses to work if
            it doesn't see a redirect packet.  Note that after the redirect,
@@ -649,7 +648,7 @@ handle_spy(LinkedServer *ls,
     (void)data;
     (void)length;
 
-    if (ls->connection->instance->config->antispy)
+    if (ls->connection->instance->config.antispy)
         return PacketAction::DROP;
 
     return PacketAction::ACCEPT;
@@ -781,7 +780,7 @@ handle_extended(LinkedServer *, const void *data, size_t length)
 static PacketAction
 handle_hardware(LinkedServer *ls, const void *, size_t)
 {
-    if (ls->connection->instance->config->antispy)
+    if (ls->connection->instance->config.antispy)
         return PacketAction::DROP;
 
     return PacketAction::ACCEPT;

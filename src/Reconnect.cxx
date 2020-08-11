@@ -47,7 +47,7 @@ Connection::Disconnect() noexcept
 static void
 connection_try_reconnect(Connection *c)
 {
-    Config *config = c->instance->config;
+    const auto &config = c->instance->config;
     uint32_t seed;
     int ret;
 
@@ -60,13 +60,13 @@ connection_try_reconnect(Connection *c)
     else
         seed = 0xc0a80102; /* 192.168.1.2 */
 
-    if (config->login_address == nullptr) {
+    if (config.login_address == nullptr) {
         /* connect to game server */
         struct addrinfo *server_address
-            = config->game_servers[c->server_index].address;
+            = config.game_servers[c->server_index].address;
 
-        assert(config->game_servers != nullptr);
-        assert(c->server_index < config->num_game_servers);
+        assert(config.game_servers != nullptr);
+        assert(c->server_index < config.num_game_servers);
 
         ret = c->Connect(server_address->ai_addr,
                          server_address->ai_addrlen, seed);
@@ -91,8 +91,8 @@ connection_try_reconnect(Connection *c)
         }
     } else {
         /* connect to login server */
-        ret = c->Connect(config->login_address->ai_addr,
-                         config->login_address->ai_addrlen,
+        ret = c->Connect(config.login_address->ai_addr,
+                         config.login_address->ai_addrlen,
                          seed);
         if (ret == 0) {
             struct uo_packet_account_login p = {

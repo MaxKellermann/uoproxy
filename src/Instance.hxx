@@ -34,7 +34,7 @@ struct Connection;
 
 struct Instance {
     /* configuration */
-    Config *config;
+    const Config &config;
 
     /* state */
 
@@ -47,7 +47,7 @@ struct Instance {
     IntrusiveList<Connection> connections;
 
     explicit Instance(Config &_config) noexcept
-        :config(&_config) {}
+        :config(_config) {}
 
     Connection *FindAttachConnection(Connection &c) noexcept;
 };

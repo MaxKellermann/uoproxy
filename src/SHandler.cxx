@@ -328,7 +328,7 @@ handle_personal_light_level(Connection *c, const void *data, [[maybe_unused]] si
 
     assert(length == sizeof(*p));
 
-    if (c->instance->config->light)
+    if (c->instance->config.light)
         return PacketAction::DROP;
 
     if (c->client.world.packet_start.serial == p->serial)
@@ -344,7 +344,7 @@ handle_global_light_level(Connection *c, const void *data, [[maybe_unused]] size
 
     assert(length == sizeof(*p));
 
-    if (c->instance->config->light)
+    if (c->instance->config.light)
         return PacketAction::DROP;
 
     c->client.world.packet_global_light_level = *p;
@@ -379,7 +379,7 @@ handle_login_complete(Connection *c, const void *data, size_t length)
     (void)data;
     (void)length;
 
-    if (c->instance->config->antispy)
+    if (c->instance->config.antispy)
         send_antispy(c->client.client);
 
     return PacketAction::ACCEPT;
@@ -501,7 +501,7 @@ handle_char_list(Connection *c, const void *data, size_t length)
         uo_client_send(c->client.client, &p2, sizeof(p2));
 
         return PacketAction::DROP;
-    } else if (c->instance->config->razor_workaround) {
+    } else if (c->instance->config.razor_workaround) {
         /* razor workaround -- we don't send the char list right away necessarily until they sent us GameLogin.. */
         for (auto &ls : c->servers) {
             if (ls.got_gamelogin && !ls.attaching && !ls.is_zombie)
@@ -622,7 +622,7 @@ handle_server_list(Connection *c, const void *data, size_t length)
     if (length < 6 || p[3] != 0x5d)
         return PacketAction::DISCONNECT;
 
-    if (c->instance->config->antispy)
+    if (c->instance->config.antispy)
         send_antispy(c->client.client);
 
     if (c->client.reconnecting) {

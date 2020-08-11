@@ -37,12 +37,12 @@
 #include <grp.h>
 
 void instance_daemonize(Instance *instance) {
-    Config *config = instance->config;
+    const auto &config = instance->config;
     int ret, parentfd = -1, loggerfd = -1;
     pid_t logger_pid;
 
     /* daemonize */
-    if (!config->no_daemon && getppid() != 1) {
+    if (!config.no_daemon && getppid() != 1) {
         int fds[2];
         pid_t pid;
 
@@ -103,13 +103,13 @@ void instance_daemonize(Instance *instance) {
     }
 
     /* write PID file */
-    if (config->pidfile != nullptr) {
+    if (config.pidfile != nullptr) {
         FILE *file;
 
-        file = fopen(config->pidfile, "w");
+        file = fopen(config.pidfile, "w");
         if (file == nullptr) {
             fprintf(stderr, "failed to create '%s': %s\n",
-                    config->pidfile, strerror(errno));
+                    config.pidfile, strerror(errno));
             exit(1);
         }
 
@@ -118,10 +118,10 @@ void instance_daemonize(Instance *instance) {
     }
 
     /* start logger process */
-    if (config->logger != nullptr) {
+    if (config.logger != nullptr) {
         int fds[2];
 
-        LogFormat(3, "starting logger '%s'\n", config->logger);
+        LogFormat(3, "starting logger '%s'\n", config.logger);
 
         ret = pipe(fds);
         if (ret < 0) {
@@ -147,7 +147,7 @@ void instance_daemonize(Instance *instance) {
             close(*randomfdp);
 #endif
 
-            execl("/bin/sh", "sh", "-c", config->logger, nullptr);
+            execl("/bin/sh", "sh", "-c", config.logger, nullptr);
             exit(1);
         }
 
@@ -160,11 +160,11 @@ void instance_daemonize(Instance *instance) {
     }
 
     /* chroot */
-    if (config->chroot_dir != nullptr) {
-        ret = chroot(config->chroot_dir);
+    if (config.chroot_dir != nullptr) {
+        ret = chroot(config.chroot_dir);
         if (ret < 0) {
             fprintf(stderr, "chroot '%s' failed: %s\n",
-                    config->chroot_dir, strerror(errno));
+                    config.chroot_dir, strerror(errno));
             exit(1);
         }
     }
@@ -172,20 +172,20 @@ void instance_daemonize(Instance *instance) {
     chdir("/");
 
     /* setuid */
-    if (config->uid > 0) {
+    if (config.uid > 0) {
         ret = setgroups(0, nullptr);
         if (ret < 0) {
             perror("setgroups failed");
             exit(1);
         }
 
-        ret = setregid(config->gid, config->gid);
+        ret = setregid(config.gid, config.gid);
         if (ret < 0) {
             perror("setgid failed");
             exit(1);
         }
 
-        ret = setreuid(config->uid, config->uid);
+        ret = setreuid(config.uid, config.uid);
         if (ret < 0) {
             perror("setuid failed");
             exit(1);

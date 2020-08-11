@@ -94,7 +94,7 @@ Connection::Connect(const struct sockaddr *server_address,
     int fd;
 
     const struct addrinfo *socks4_address =
-        instance->config->socks4_address;
+        instance->config.socks4_address;
     if (socks4_address != nullptr) {
         fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
                             socks4_address->ai_addr, socks4_address->ai_addrlen);
