@@ -66,6 +66,7 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     explicit LinkedServer(int fd)
         :server(uo_server_create(fd, *this))
     {
+        evtimer_set(&zombie_timeout, ZombieTimeoutCallback, this);
     }
 
     ~LinkedServer() noexcept;
@@ -82,6 +83,9 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     }
 
     void Zombify() noexcept;
+
+private:
+    static void ZombieTimeoutCallback(int, short, void *ctx) noexcept;
 
     /* virtual methods from UO::ServerHandler */
     bool OnServerPacket(const void *data, size_t length) override;

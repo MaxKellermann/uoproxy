@@ -27,15 +27,14 @@
 
 LinkedServer::~LinkedServer() noexcept
 {
-    if (is_zombie)
-        evtimer_del(&zombie_timeout);
+    evtimer_del(&zombie_timeout);
 
     if (server != nullptr)
         uo_server_dispose(server);
 }
 
-static void
-zombie_timeout_event_callback(int, short, void *ctx) noexcept
+void
+LinkedServer::ZombieTimeoutCallback(int, short, void *ctx) noexcept
 {
     auto &ls = *(LinkedServer *)ctx;
 
@@ -47,7 +46,6 @@ inline void
 LinkedServer::Zombify() noexcept
 {
     is_zombie = true;
-    evtimer_set(&zombie_timeout, zombie_timeout_event_callback, this);
 
     static constexpr struct timeval tv{5, 0};
     evtimer_add(&zombie_timeout, &tv);
