@@ -68,8 +68,15 @@ add_global_link_arguments(compiler.get_supported_link_arguments(test_ldflags), l
 
 libevent = dependency('libevent')
 
+version_conf = configuration_data()
+version_conf.set_quoted('VERSION', meson.project_version())
+configure_file(output: 'version.h', configuration: version_conf)
+
 inc = include_directories(
   'src',
+
+  # for generated headers
+  '.',
 )
 
 executable(
