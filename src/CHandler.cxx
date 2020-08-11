@@ -429,8 +429,6 @@ handle_game_login(LinkedServer &ls,
            from them */
         return PacketAction::DISCONNECT;
 
-    bool was_attach = false;
-
     /* I have observed the Razor client ignoring the redirect if the IP
        address differs from what it connected to.  (I guess this is a bug in
        RunUO & Razor).  In that case it does a gamelogin on the old
@@ -459,12 +457,11 @@ handle_game_login(LinkedServer &ls,
 
         /* found it! Eureka! */
         zombie->expecting_reconnect = false;
-        was_attach = zombie->attaching;
         zombie->attaching = false;
 
 
         /* copy the previously detected protocol version */
-        if (!was_attach)
+        if (!existing_connection.IsInGame())
             existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
 
         /* remove the object from the old connection */
@@ -478,13 +475,12 @@ handle_game_login(LinkedServer &ls,
         /* delete the zombie, we don't need it anymore */
         existing_connection.Remove(*zombie);
         delete zombie;
-    } else
-        was_attach = ls.attaching;
+    }
     /* after GameLogin, must enable compression. */
     uo_server_set_compression(ls.server, true);
     ls.got_gamelogin = true;
     ls.attaching = false;
-    if (ls.connection->IsInGame() && was_attach) {
+    if (ls.connection->IsInGame()) {
         /* already in game .. this was likely an attach connection */
         attach_send_world(&ls);
     } else if (ls.connection->client.char_list) {
