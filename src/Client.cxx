@@ -52,21 +52,21 @@ namespace UO {
 
 class Client final : SocketBufferHandler {
 public:
-    SocketBuffer *sock;
+    SocketBuffer *const sock;
     bool compression_enabled = false;
     struct uo_decompression decompression;
     struct fifo_buffer *decompressed_buffer = nullptr;
 
     enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
-    ClientHandler *handler;
+    ClientHandler &handler;
 
     bool aborted = false;
     struct event abort_event;
 
     explicit Client(int fd, ClientHandler &_handler) noexcept
         :sock(sock_buff_create(fd, 8192, 65536, *this)),
-         handler(&_handler)
+         handler(_handler)
     {
         uo_decompression_init(&decompression);
 
@@ -78,8 +78,7 @@ public:
         if (decompressed_buffer != nullptr)
             fifo_buffer_free(decompressed_buffer);
 
-        if (sock != nullptr)
-            sock_buff_dispose(sock);
+        sock_buff_dispose(sock);
 
         evtimer_del(&abort_event);
     }
@@ -93,22 +92,13 @@ private:
 } // namespace UO
 
 static void
-uo_client_invoke_free(UO::Client *client)
-{
-    assert(client->handler != nullptr);
-
-    auto *handler = std::exchange(client->handler, nullptr);
-    handler->OnClientDisconnect();
-}
-
-static void
 uo_client_abort_event_callback(int, short, void *ctx) noexcept
 {
     auto client = (UO::Client *)ctx;
 
     assert(client->aborted);
 
-    uo_client_invoke_free(client);
+    client->handler.OnClientDisconnect();
 }
 
 static void
@@ -184,7 +174,7 @@ client_packets_from_buffer(UO::Client *client,
 
         log_hexdump(10, data, packet_length);
 
-        if (!client->handler->OnClientPacket(data, packet_length))
+        if (!client->handler.OnClientPacket(data, packet_length))
             return -1;
 
         consumed += packet_length;
@@ -237,10 +227,7 @@ UO::Client::OnSocketDisconnect(int error) noexcept
     else
         log_error("error during communication with server", error);
 
-    sock_buff_dispose(sock);
-    sock = nullptr;
-
-    uo_client_invoke_free(this);
+    handler.OnClientDisconnect();
 }
 
 UO::Client *
