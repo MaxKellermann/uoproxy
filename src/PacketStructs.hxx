@@ -30,6 +30,18 @@
 
 #include <stdint.h>
 
+namespace UO {
+
+struct CredentialsFragment {
+    char username[30];
+    char password[30];
+};
+
+static_assert(alignof(CredentialsFragment) == 1);
+static_assert(sizeof(CredentialsFragment) == 60);
+
+} // namespace UO
+
 /* 0x00 CreateCharacter */
 struct uo_packet_create_character {
     uint8_t cmd;
@@ -484,12 +496,12 @@ static_assert(alignof(struct uo_packet_mobile_incoming) == 1);
 /* 0x80 AccountLogin */
 struct uo_packet_account_login {
     uint8_t cmd;
-    char username[30];
-    char password[30];
+    UO::CredentialsFragment credentials;
     uint8_t unknown1;
 };
 
 static_assert(alignof(struct uo_packet_account_login) == 1);
+static_assert(sizeof(struct uo_packet_account_login) == 62);
 
 /* 0x82 AccountLoginReject */
 struct uo_packet_account_login_reject {
@@ -513,11 +525,11 @@ static_assert(alignof(struct uo_packet_relay) == 1);
 struct uo_packet_game_login {
     uint8_t cmd;
     PackedBE32 auth_id;
-    char username[30];
-    char password[30];
+    UO::CredentialsFragment credentials;
 };
 
 static_assert(alignof(struct uo_packet_game_login) == 1);
+static_assert(sizeof(struct uo_packet_game_login) == 65);
 
 /* 0x97 WalkForce */
 struct uo_packet_walk_force {

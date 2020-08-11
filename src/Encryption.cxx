@@ -141,7 +141,8 @@ static bool
 account_login_valid(const struct uo_packet_account_login *p)
 {
     return p->cmd == PCK_AccountLogin &&
-        p->username[29] == 0x00 && p->password[29] == 0x00;
+        p->credentials.username[29] == 0x00 &&
+        p->credentials.password[29] == 0x00;
 }
 
 static void
