@@ -41,7 +41,7 @@ namespace UO {
 
 class Server final : SocketBufferHandler  {
 public:
-    SocketBuffer *sock = nullptr;
+    SocketBuffer *const sock;
     uint32_t seed = 0;
     bool compression_enabled = false;
 
@@ -49,14 +49,14 @@ public:
 
     enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
-    ServerHandler *handler;
+    ServerHandler &handler;
 
     bool aborted = false;
     struct event abort_event;
 
     explicit Server(int fd, ServerHandler &_handler) noexcept
         :sock(sock_buff_create(fd, 8192, 65536, *this)),
-         handler(&_handler)
+         handler(_handler)
     {
         evtimer_set(&abort_event,
                     uo_server_abort_event_callback, this);
@@ -65,8 +65,7 @@ public:
     ~Server() noexcept {
         encryption_free(encryption);
 
-        if (sock != nullptr)
-            sock_buff_dispose(sock);
+        sock_buff_dispose(sock);
 
         evtimer_del(&abort_event);
     }
@@ -80,22 +79,13 @@ private:
 } // namespace UO
 
 static void
-uo_server_invoke_free(UO::Server *server)
-{
-    assert(server->handler != nullptr);
-
-    auto *handler = std::exchange(server->handler, nullptr);
-    handler->OnServerDisconnect();
-}
-
-static void
 uo_server_abort_event_callback(int, short, void *ctx) noexcept
 {
     auto server = (UO::Server *)ctx;
 
     assert(server->aborted);
 
-    uo_server_invoke_free(server);
+    server->handler.OnServerDisconnect();
 }
 
 static void
@@ -143,7 +133,7 @@ server_packets_from_buffer(UO::Server *server,
 
         log_hexdump(10, data, packet_length);
 
-        if (!server->handler->OnServerPacket(data, packet_length))
+        if (!server->handler.OnServerPacket(data, packet_length))
             return -1;
 
         consumed += packet_length;
@@ -213,10 +203,7 @@ UO::Server::OnSocketDisconnect(int error) noexcept
     else
         log_error("error during communication with client", error);
 
-    sock_buff_dispose(sock);
-    sock = nullptr;
-
-    uo_server_invoke_free(this);
+    handler.OnServerDisconnect();
 }
 
 UO::Server *

@@ -43,7 +43,7 @@ public:
     /**
      * The connection has been closed due to an error or because the
      * peer closed his side.  uo_server_dispose() does not trigger
-     * this callback, and the callee has to invoke this function.
+     * this callback, and the method has to invoke this function.
      */
     virtual void OnServerDisconnect() noexcept = 0;
 };
