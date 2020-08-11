@@ -187,9 +187,6 @@ void connection_walk_ack(Connection *c,
 
 /* attach */
 
-void attach_after_play_server(Connection *c,
-                              LinkedServer *ls);
-
 void
 attach_send_world(LinkedServer *ls);
 

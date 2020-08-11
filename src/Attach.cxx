@@ -187,15 +187,3 @@ attach_send_world(LinkedServer *ls)
                    sizeof(login_complete));
 
 }
-
-void
-attach_after_play_server(Connection *c, LinkedServer *ls)
-{
-    assert(c->IsInGame());
-
-    LogFormat(2, "attaching connection\n");
-
-    c->Add(*ls);
-
-    attach_send_world(ls);
-}

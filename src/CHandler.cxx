@@ -551,13 +551,15 @@ handle_play_server(LinkedServer *ls,
         c->Remove(*ls);
         c->Destroy();
 
+        c2->Add(*ls);
+
         if (c2->instance.config.razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
             ls->attaching = true;
-            c2->Add(*ls);
         }  else {
             /* attach it to the new connection and begin playing right away */
-            attach_after_play_server(c2, ls);
+            LogFormat(2, "attaching connection\n");
+            attach_send_world(ls);
         }
 
         retaction = PacketAction::DROP;
