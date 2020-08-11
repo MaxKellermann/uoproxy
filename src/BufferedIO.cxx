@@ -19,7 +19,7 @@
  */
 
 #include "BufferedIO.hxx"
-#include "FifoBuffer.hxx"
+#include "util/DynamicFifoBuffer.hxx"
 
 #include <assert.h>
 #include <errno.h>
@@ -35,47 +35,35 @@
 #endif
 
 ssize_t
-read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
+read_to_buffer(int fd, DynamicFifoBuffer<uint8_t> &buffer, size_t length)
 {
-    void *dest;
-    size_t max_length;
-    ssize_t nbytes;
-
     assert(fd >= 0);
-    assert(buffer != nullptr);
 
-    dest = fifo_buffer_write(buffer, &max_length);
-    if (dest == nullptr)
+    auto w = buffer.Write();
+    if (w.empty())
         return -2;
 
-    if (length > max_length)
-        length = max_length;
-
-    nbytes = recv(fd, dest, length, MSG_DONTWAIT);
+    ssize_t nbytes = recv(fd, w.data, std::min(w.size, length), MSG_DONTWAIT);
     if (nbytes > 0)
-        fifo_buffer_append(buffer, (size_t)nbytes);
+        buffer.Append(nbytes);
 
     return nbytes;
 }
 
 ssize_t
-write_from_buffer(int fd, struct fifo_buffer *buffer)
+write_from_buffer(int fd, DynamicFifoBuffer<uint8_t> &buffer)
 {
-    const void *data;
-    size_t length;
-    ssize_t nbytes;
-
-    data = fifo_buffer_read(buffer, &length);
-    if (data == nullptr)
+    auto r = buffer.Read();
+    if (r.empty())
         return -2;
 
-    nbytes = send(fd, data, length, MSG_DONTWAIT);
+    ssize_t nbytes = send(fd, r.data, r.size, MSG_DONTWAIT);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 
     if (nbytes <= 0)
-        return length;
+        return r.size;
 
-    fifo_buffer_consume(buffer, (size_t)nbytes);
-    return (ssize_t)length - nbytes;
+    buffer.Consume(nbytes);
+    return (ssize_t)r.size - nbytes;
 }

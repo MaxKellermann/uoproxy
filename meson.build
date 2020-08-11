@@ -79,7 +79,7 @@ executable(
   'src/Daemon.cxx',
   'src/Log.cxx',
   'src/SocketConnect.cxx',
-  'src/FifoBuffer.cxx', 'src/Flush.cxx', 'src/SocketBuffer.cxx',
+  'src/Flush.cxx', 'src/SocketBuffer.cxx',
   'src/BufferedIO.cxx', 'src/SocketUtil.cxx',
   'src/ProxySocks.cxx',
   'src/NetUtil.cxx',

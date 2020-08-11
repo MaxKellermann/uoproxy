@@ -24,9 +24,9 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
-#include "FifoBuffer.hxx"
 #include "Log.hxx"
 #include "SocketUtil.hxx"
+#include "util/DynamicFifoBuffer.hxx"
 
 #include <utility>
 
@@ -55,7 +55,7 @@ public:
     SocketBuffer *const sock;
     bool compression_enabled = false;
     struct uo_decompression decompression;
-    struct fifo_buffer *decompressed_buffer = nullptr;
+    DynamicFifoBuffer<uint8_t> decompressed_buffer{65536};
 
     enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
@@ -75,9 +75,6 @@ public:
     }
 
     ~Client() noexcept {
-        if (decompressed_buffer != nullptr)
-            fifo_buffer_free(decompressed_buffer);
-
         sock_buff_dispose(sock);
 
         evtimer_del(&abort_event);
@@ -124,26 +121,23 @@ UO::Client::Abort() noexcept
 inline ssize_t
 UO::Client::Decompress(const uint8_t *data, size_t length)
 {
-    size_t max_length;
-    ssize_t nbytes;
-
-    auto dest = (uint8_t *)fifo_buffer_write(decompressed_buffer, &max_length);
-    if (dest == nullptr) {
+    auto w = decompressed_buffer.Write();
+    if (w.empty()) {
         LogFormat(1, "decompression buffer full\n");
         Abort();
         return -1;
     }
 
-    nbytes = uo_decompress(&decompression,
-                           dest, max_length,
-                           data, length);
+    ssize_t nbytes = uo_decompress(&decompression,
+                                   w.data, w.size,
+                                   data, length);
     if (nbytes < 0) {
         LogFormat(1, "decompression failed\n");
         Abort();
         return -1;
     }
 
-    fifo_buffer_append(decompressed_buffer, (size_t)nbytes);
+    decompressed_buffer.Append((size_t)nbytes);
 
     return (size_t)length;
 }
@@ -195,15 +189,15 @@ UO::Client::OnSocketData(const void *data0, size_t length)
             return 0;
         consumed = (size_t)nbytes;
 
-        data = (const uint8_t *)fifo_buffer_read(decompressed_buffer, &length);
-        if (data == nullptr)
+        auto r = decompressed_buffer.Read();
+        if (r.empty())
             return consumed;
 
-        nbytes = ParsePackets(data, length);
+        nbytes = ParsePackets(r.data, r.size);
         if (nbytes < 0)
             return 0;
 
-        fifo_buffer_consume(decompressed_buffer, (size_t)nbytes);
+        decompressed_buffer.Consume((size_t)nbytes);
 
         return consumed;
     } else {
@@ -234,8 +228,6 @@ uo_client_create(int fd, uint32_t seed,
     socket_set_nodelay(fd, 1);
 
     auto *client = new UO::Client(fd, handler);
-
-    client->decompressed_buffer = fifo_buffer_new(65536);
 
     /* seed must be the first 4 bytes, and it must be flushed */
     if (seed6 != nullptr) {

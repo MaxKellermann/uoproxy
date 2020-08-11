@@ -20,9 +20,9 @@
 
 #include "SocketBuffer.hxx"
 #include "BufferedIO.hxx"
-#include "FifoBuffer.hxx"
 #include "Flush.hxx"
 #include "Log.hxx"
+#include "util/DynamicFifoBuffer.hxx"
 
 #include <event.h>
 
@@ -37,7 +37,7 @@ struct SocketBuffer final : PendingFlush {
 
     struct event recv_event, send_event;
 
-    struct fifo_buffer *input = nullptr, *output = nullptr;
+    DynamicFifoBuffer<uint8_t> input, output;
 
     SocketBufferHandler &handler;
 
@@ -69,21 +69,17 @@ protected:
 inline bool
 SocketBuffer::SubmitData()
 {
-    const void *data;
-    size_t length;
-    ssize_t nbytes;
-
-    data = fifo_buffer_read(input, &length);
-    if (data == nullptr)
+    auto r = input.Read();
+    if (r.empty())
         return true;
 
     const ScopeLockFlush lock_flush;
 
-    nbytes = handler.OnSocketData(data, length);
+    ssize_t nbytes = handler.OnSocketData(r.data, r.size);
     if (nbytes == 0)
         return false;
 
-    fifo_buffer_consume(input, (size_t)nbytes);
+    input.Consume(nbytes);
     return true;
 }
 
@@ -106,7 +102,7 @@ SocketBuffer::DoFlush() noexcept
     if (!FlushOutput())
         return;
 
-    if (fifo_buffer_empty(output))
+    if (output.empty())
         event_del(&send_event);
 }
 
@@ -137,7 +133,7 @@ sock_buff_recv_callback(int fd, short event, void *ctx)
         return;
     }
 
-    if (fifo_buffer_full(sb->input))
+    if (sb->input.IsFull())
         event_del(&sb->recv_event);
 }
 
@@ -156,7 +152,7 @@ sock_buff_send_callback(int fd, short event, void *ctx)
         return;
     }
 
-    if (fifo_buffer_empty(sb->output))
+    if (sb->output.empty())
         event_del(&sb->send_event);
 }
 
@@ -166,16 +162,16 @@ sock_buff_send_callback(int fd, short event, void *ctx)
  *
  */
 
-void *
-sock_buff_write(SocketBuffer *sb, size_t *max_length_r)
+WritableBuffer<void>
+sock_buff_write(SocketBuffer *sb) noexcept
 {
-    return fifo_buffer_write(sb->output, max_length_r);
+    return sb->output.Write().ToVoid();
 }
 
 void
 sock_buff_append(SocketBuffer *sb, size_t length)
 {
-    fifo_buffer_append(sb->output, length);
+    sb->output.Append(length);
 
     event_add(&sb->send_event, nullptr);
     sb->ScheduleFlush();
@@ -184,14 +180,11 @@ sock_buff_append(SocketBuffer *sb, size_t length)
 bool
 sock_buff_send(SocketBuffer *sb, const void *data, size_t length)
 {
-    void *dest;
-    size_t max_length;
-
-    dest = sock_buff_write(sb, &max_length);
-    if (dest == nullptr || length > max_length)
+    auto w = sock_buff_write(sb);
+    if (length > w.size)
         return false;
 
-    memcpy(dest, data, length);
+    memcpy(w.data, data, length);
     sock_buff_append(sb, length);
     return true;
 }
@@ -230,8 +223,8 @@ SocketBuffer::SocketBuffer(int _fd, size_t input_max,
                            size_t output_max,
                            SocketBufferHandler &_handler)
     :fd(_fd),
-     input(fifo_buffer_new(input_max)),
-     output(fifo_buffer_new(output_max)),
+     input(input_max),
+     output(output_max),
      handler(_handler)
 {
     event_set(&recv_event, fd, EV_READ|EV_PERSIST,
@@ -258,10 +251,6 @@ SocketBuffer::~SocketBuffer() noexcept
     event_del(&send_event);
 
     close(fd);
-
-    fifo_buffer_free(input);
-    fifo_buffer_free(output);
-
 }
 
 void sock_buff_dispose(SocketBuffer *sb) {

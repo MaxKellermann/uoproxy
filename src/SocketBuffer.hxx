@@ -43,6 +43,7 @@ public:
 };
 
 struct SocketBuffer;
+template<typename T> struct WritableBuffer;
 
 SocketBuffer *
 sock_buff_create(int fd, size_t input_max,
@@ -51,8 +52,8 @@ sock_buff_create(int fd, size_t input_max,
 
 void sock_buff_dispose(SocketBuffer *sb);
 
-void *
-sock_buff_write(SocketBuffer *sb, size_t *max_length_r);
+WritableBuffer<void>
+sock_buff_write(SocketBuffer *sb) noexcept;
 
 void
 sock_buff_append(SocketBuffer *sb, size_t length);
