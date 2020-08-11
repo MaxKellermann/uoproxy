@@ -31,7 +31,7 @@
 
 #include <exception>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/signal.h>
 #include <signal.h>
 #endif
@@ -41,11 +41,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 
 static void
 deinit_signals(Instance *instance)
@@ -103,7 +103,7 @@ static void config_get(Config *config, int argc, char **argv) {
 static void
 setup_signal_handlers(Instance *instance)
 {
-#ifdef WIN32
+#ifdef _WIN32
     (void)instance;
 #else
     signal(SIGPIPE, SIG_IGN);
@@ -129,7 +129,7 @@ try {
 
     /* WinSock */
 
-#ifdef WIN32
+#ifdef _WIN32
     WSADATA wsaData;
 
     if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0 ||

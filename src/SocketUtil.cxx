@@ -20,19 +20,10 @@
 
 #include "SocketUtil.hxx"
 
-#ifdef WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#endif
-
 #ifdef __linux
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#endif
-
-#ifdef __linux
 
 int
 socket_set_nodelay(int fd, int value)

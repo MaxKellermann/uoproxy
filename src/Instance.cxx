@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -47,7 +47,7 @@ listener_event_callback(int fd, short, void *ctx)
     remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
         if (errno != EAGAIN
-#ifndef WIN32
+#ifndef _WIN32
             && errno != EWOULDBLOCK
 #endif
             )

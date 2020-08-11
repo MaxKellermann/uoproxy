@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -51,7 +51,7 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 
         if (len >= sizeof(buffer)) {
             errno = ENAMETOOLONG;
-#ifdef WIN32
+#ifdef _WIN32
             return EAI_FAIL;
 #else
             return EAI_SYSTEM;
@@ -83,7 +83,7 @@ int setup_server_socket(const struct addrinfo *bind_address) {
         exit(1);
     }
 
-#ifndef WIN32
+#ifndef _WIN32
     int param = 1;
     ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {

@@ -22,12 +22,6 @@
 
 #include "util/ByteOrder.hxx"
 
-#ifdef WIN32
-#include <winsock2.h>
-#else
-#include <netinet/in.h>
-#endif
-
 #include <stdint.h>
 #include <string.h>
 
