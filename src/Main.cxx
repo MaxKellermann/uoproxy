@@ -145,7 +145,7 @@ try {
     config_get(&config, argc, argv);
 
     LogFormat(1, "uoproxy v" VERSION
-        ", http://max.kellermann.name/projects/uoproxy/\n");
+        ", https://github.com/MaxKellermann/uoproxy\n");
 
     /* set up */
 

@@ -146,7 +146,7 @@ void parse_cmdline(Config *config, int argc, char **argv) {
 
         case 'V':
             printf("uoproxy v" VERSION
-                   ", http://max.kellermann.name/projects/uoproxy/\n");
+                   ", https://github.com/MaxKellermann/uoproxy\n");
             exit(0);
 
 #ifndef DISABLE_LOGGING

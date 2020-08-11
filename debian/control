@@ -7,6 +7,8 @@ Build-Depends: debhelper (>= 12~),
  libsystemd-dev,
  libevent-dev (>= 1.1)
 Standards-Version: 4.0.0
+Vcs-Browser: https://github.com/MaxKellermann/uoproxy
+Vcs-Git: git://github.com/MaxKellermann/uoproxy
 
 Package: uoproxy
 Architecture: any
@@ -15,4 +17,4 @@ Description: proxy server for Ultima Online
  uoproxy is a proxy server designed for Ultima Online.  It acts as an
  Ultima Online server, and forwards the connection to a 'real' server.
  .
- Home page: http://max.kellermann.name/projects/uoproxy/
+ Home page: https://github.com/MaxKellermann/uoproxy

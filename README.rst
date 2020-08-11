@@ -45,9 +45,9 @@ Some of the interesting features:
 Getting uoproxy
 ---------------
 
-You can download uoproxy on the home page:
+You can download uoproxy from GitHub:
 
- http://max.kellermann.name/projects/uoproxy/
+ https://github.com/MaxKellermann/uoproxy
 
 
 Installation
