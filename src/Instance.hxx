@@ -27,6 +27,7 @@
 
 struct Config;
 struct Connection;
+struct LinkedServer;
 namespace UO { struct CredentialsFragment; }
 
 struct Instance {
@@ -48,6 +49,8 @@ struct Instance {
 
     Connection *FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept;
     Connection *FindAttachConnection(Connection &c) noexcept;
+
+    LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
 };
 
 void

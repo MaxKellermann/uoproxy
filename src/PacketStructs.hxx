@@ -35,6 +35,10 @@ struct CredentialsFragment {
         return strncmp(username, other.username, sizeof(username)) == 0 &&
             strncmp(password, other.password, sizeof(password)) == 0;
     }
+
+    bool operator!=(const CredentialsFragment &other) const noexcept {
+        return !(*this == other);
+    }
 };
 
 static_assert(alignof(CredentialsFragment) == 1);

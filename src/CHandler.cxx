@@ -438,33 +438,23 @@ handle_game_login(LinkedServer *ls,
            So we apply the zombie-lookup only if the remote UO client actually
            did bother to reconnet to us. */
         if (!ls->connection->client.client) {
-            Connection *reuse_conn = nullptr;
             auto &instance = ls->connection->instance;
 
             /* this should only happen in redirect mode.. so look for the
                correct zombie so that we can re-use its connection to the UO
                server. */
-            for (auto &c : instance.connections) {
-                for (auto &ls2 : c.servers) {
-                    if (ls2.is_zombie
-                        && ls2.auth_id == p->auth_id
-                        && c.credentials == p->credentials) {
-                        /* found it! Eureka! */
-                        reuse_conn = &c;
-                        ls2.expecting_reconnect = false;
-                        was_attach = ls2.attaching;
-                        ls2.attaching = false;
-                        break;
-                    }
-                }
-                if (reuse_conn) break;
-            }
-            if (reuse_conn) {
+            LinkedServer *zombie = instance.FindZombie(*p);
+            if (zombie != nullptr) {
+                /* found it! Eureka! */
+                zombie->expecting_reconnect = false;
+                was_attach = zombie->attaching;
+                zombie->attaching = false;
+
                 Connection *c = ls->connection;
 
                 /* copy the previously detected protocol version */
                 if (!was_attach)
-                    reuse_conn->client_version.protocol = c->client_version.protocol;
+                    zombie->connection->client_version.protocol = c->client_version.protocol;
 
                 /* remove the object from the old connection */
                 c->Remove(*ls);
@@ -472,7 +462,7 @@ handle_game_login(LinkedServer *ls,
 
                 LogFormat(2, "attaching redirected client to its previous connection\n");
 
-                reuse_conn->Add(*ls);
+                zombie->connection->Add(*ls);
             } else {
                 /* houston, we have a problem -- reject the game login -- it
                    either came in too slowly (and so we already reaped the

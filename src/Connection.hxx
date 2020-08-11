@@ -145,6 +145,8 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
                                         const void *old_data, size_t old_length,
                                         const void *new_data, size_t new_length) noexcept;
 
+    LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
+
     void ClearWorld() noexcept {
         DeleteItems();
         DeleteMobiles();

@@ -20,6 +20,7 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
+#include "PacketStructs.hxx"
 #include "Log.hxx"
 
 #include <assert.h>
@@ -57,4 +58,18 @@ Connection::RemoveCheckEmpty(LinkedServer &ls) noexcept
         LogFormat(1, "last client disconnected, removing connection\n");
         Destroy();
     }
+}
+
+LinkedServer *
+Connection::FindZombie(const struct uo_packet_game_login &game_login) noexcept
+{
+    if (game_login.credentials != credentials)
+        return nullptr;
+
+    for (auto &i : servers) {
+        if (i.is_zombie && i.auth_id == game_login.auth_id)
+            return &i;
+    }
+
+    return nullptr;
 }

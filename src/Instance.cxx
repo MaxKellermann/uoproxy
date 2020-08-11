@@ -97,3 +97,15 @@ Instance::FindAttachConnection(Connection &c) noexcept
 
     return nullptr;
 }
+
+LinkedServer *
+Instance::FindZombie(const struct uo_packet_game_login &game_login) noexcept
+{
+    for (auto &i : connections) {
+        auto *zombie = i.FindZombie(game_login);
+        if (zombie != nullptr)
+            return zombie;
+    }
+
+    return nullptr;
+}
