@@ -585,14 +585,13 @@ handle_server_list(Connection *c, const void *data, size_t length)
 {
     /* this packet tells the UO client where to connect; what
        we do here is replace the server IP with our own one */
-    const unsigned char *p = (const unsigned char *)data;
-    const struct uo_fragment_server_info *server_info;
+    auto p = (const struct uo_packet_server_list *)data;
 
     (void)c;
 
     assert(length > 0);
 
-    if (length < 6 || p[3] != 0x5d)
+    if (length < sizeof(*p) || p->unknown_0x5d != 0x5d)
         return PacketAction::DISCONNECT;
 
     if (c->instance.config.antispy)
@@ -609,12 +608,13 @@ handle_server_list(Connection *c, const void *data, size_t length)
         return PacketAction::DROP;
     }
 
-    const unsigned count = *(const PackedBE16 *)(p + 4);
+    const unsigned count = p->num_game_servers;
     LogFormat(5, "serverlist: %u servers\n", count);
-    if (length != 6 + count * sizeof(*server_info))
+
+    const auto *server_info = p->game_servers;
+    if (length != sizeof(*p) + (count - 1) * sizeof(*server_info))
         return PacketAction::DISCONNECT;
 
-    server_info = (const struct uo_fragment_server_info*)(p + 6);
     for (unsigned i = 0; i < count; i++, server_info++) {
         const unsigned k = server_info->index;
         if (k != i)
