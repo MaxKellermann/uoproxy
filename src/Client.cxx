@@ -83,7 +83,12 @@ public:
         evtimer_del(&abort_event);
     }
 
+    void Abort() noexcept;
+
 private:
+    ssize_t Decompress(const uint8_t *data, size_t length);
+    ssize_t ParsePackets(const uint8_t *data, size_t length);
+
     /* virtual methods from SocketBufferHandler */
     size_t OnSocketData(const void *data, size_t length) override;
     void OnSocketDisconnect(int error) noexcept override;
@@ -101,68 +106,59 @@ uo_client_abort_event_callback(int, short, void *ctx) noexcept
     client->handler.OnClientDisconnect();
 }
 
-static void
-uo_client_abort(UO::Client *client)
+void
+UO::Client::Abort() noexcept
 {
-    if (client->aborted)
+    if (aborted)
         return;
 
     static constexpr struct timeval tv{0, 0};
 
     /* this is a trick to delay the destruction of this object until
        everything is done */
-    evtimer_add(&client->abort_event, &tv);
+    evtimer_add(&abort_event, &tv);
 
-    client->aborted = true;
+    aborted = true;
 }
 
-static int
-uo_client_is_aborted(UO::Client *client)
-{
-    return client->aborted;
-}
-
-static ssize_t
-client_decompress(UO::Client *client,
-                  const unsigned char *data, size_t length)
+inline ssize_t
+UO::Client::Decompress(const uint8_t *data, size_t length)
 {
     size_t max_length;
     ssize_t nbytes;
 
-    auto dest = (unsigned char *)fifo_buffer_write(client->decompressed_buffer, &max_length);
+    auto dest = (uint8_t *)fifo_buffer_write(decompressed_buffer, &max_length);
     if (dest == nullptr) {
         LogFormat(1, "decompression buffer full\n");
-        uo_client_abort(client);
+        Abort();
         return -1;
     }
 
-    nbytes = uo_decompress(&client->decompression,
+    nbytes = uo_decompress(&decompression,
                            dest, max_length,
                            data, length);
     if (nbytes < 0) {
         LogFormat(1, "decompression failed\n");
-        uo_client_abort(client);
+        Abort();
         return -1;
     }
 
-    fifo_buffer_append(client->decompressed_buffer, (size_t)nbytes);
+    fifo_buffer_append(decompressed_buffer, (size_t)nbytes);
 
     return (size_t)length;
 }
 
-static ssize_t
-client_packets_from_buffer(UO::Client *client,
-                           const unsigned char *data, size_t length)
+ssize_t
+UO::Client::ParsePackets(const uint8_t *data, size_t length)
 {
     size_t consumed = 0, packet_length;
 
     while (length > 0) {
-        packet_length = get_packet_length(client->protocol_version,
-                                          data, length);
+        packet_length = get_packet_length(protocol_version, data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
             LogFormat(1, "malformed packet from server\n");
             log_hexdump(5, data, length);
-            uo_client_abort(client);
+            Abort();
             return 0;
         }
 
@@ -174,7 +170,7 @@ client_packets_from_buffer(UO::Client *client,
 
         log_hexdump(10, data, packet_length);
 
-        if (!client->handler.OnClientPacket(data, packet_length))
+        if (!handler.OnClientPacket(data, packet_length))
             return -1;
 
         consumed += packet_length;
@@ -188,22 +184,22 @@ client_packets_from_buffer(UO::Client *client,
 size_t
 UO::Client::OnSocketData(const void *data0, size_t length)
 {
-    const unsigned char *data = (const unsigned char *)data0;
+    const uint8_t *data = (const uint8_t *)data0;
 
     if (compression_enabled) {
         ssize_t nbytes;
         size_t consumed;
 
-        nbytes = client_decompress(this, data, length);
+        nbytes = Decompress(data, length);
         if (nbytes <= 0)
             return 0;
         consumed = (size_t)nbytes;
 
-        data = (const unsigned char *)fifo_buffer_read(decompressed_buffer, &length);
+        data = (const uint8_t *)fifo_buffer_read(decompressed_buffer, &length);
         if (data == nullptr)
             return consumed;
 
-        nbytes = client_packets_from_buffer(this, data, length);
+        nbytes = ParsePackets(data, length);
         if (nbytes < 0)
             return 0;
 
@@ -211,7 +207,7 @@ UO::Client::OnSocketData(const void *data0, size_t length)
 
         return consumed;
     } else {
-        ssize_t nbytes = client_packets_from_buffer(this, data, length);
+        ssize_t nbytes = ParsePackets(data, length);
         if (nbytes < 0)
             return 0;
 
@@ -269,20 +265,20 @@ uo_client_set_protocol(UO::Client *client,
 
 void uo_client_send(UO::Client *client,
                     const void *src, size_t length) {
-    assert(client->sock != nullptr || uo_client_is_aborted(client));
+    assert(client->sock != nullptr || client->aborted);
     assert(length > 0);
 
-    if (uo_client_is_aborted(client))
+    if (client->aborted)
         return;
 
     LogFormat(9, "sending packet to server, length=%u\n", (unsigned)length);
     log_hexdump(10, src, length);
 
-    if (*(const unsigned char*)src == PCK_GameLogin)
+    if (*(const uint8_t*)src == PCK_GameLogin)
         client->compression_enabled = true;
 
     if (!sock_buff_send(client->sock, src, length)) {
         LogFormat(1, "output buffer full in uo_client_send()\n");
-        uo_client_abort(client);
+        client->Abort();
     }
 }
