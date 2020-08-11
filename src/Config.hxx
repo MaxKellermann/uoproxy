@@ -33,31 +33,31 @@ struct game_server_config {
 };
 
 struct Config {
-    struct addrinfo *bind_address;
+    struct addrinfo *bind_address = nullptr;
 
     /**
      * The address of the SOCKS4 proxy server.
      */
-    struct addrinfo *socks4_address;
+    struct addrinfo *socks4_address = nullptr;
 
-    struct addrinfo *login_address;
+    struct addrinfo *login_address = nullptr;
 
-    unsigned num_game_servers;
-    struct game_server_config *game_servers;
-    bool background, autoreconnect, antispy, razor_workaround;
+    unsigned num_game_servers = 0;
+    struct game_server_config *game_servers = nullptr;
+    bool background = false, autoreconnect = true, antispy = false, razor_workaround = false;
 
     /**
      * Always full light level?
      */
-    bool light;
+    bool light = false;
 
-    char *client_version;
+    char *client_version = nullptr;
     /* daemon config */
 #ifndef DISABLE_DAEMON_CODE
-    int no_daemon;
-    char *pidfile, *logger, *chroot_dir;
-    uid_t uid;
-    gid_t gid;
+    int no_daemon = 0;
+    char *pidfile = nullptr, *logger = nullptr, *chroot_dir = nullptr;
+    uid_t uid = 0;
+    gid_t gid = 0;
 #endif
 };
 

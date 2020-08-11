@@ -79,9 +79,6 @@ static void config_get(Config *config, int argc, char **argv) {
     char path[4096];
     int ret;
 
-    memset(config, 0, sizeof(*config));
-    config->autoreconnect = true;
-
     home = getenv("HOME");
     if (home == nullptr) {
         ret = 1;
