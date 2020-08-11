@@ -154,6 +154,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     void DeleteMobiles() noexcept;
 
 private:
+    void DoReconnect() noexcept;
     static void ReconnectTimerCallback(int, short, void *ctx) noexcept;
 
     /* virtual methods from UO::ClientHandler */

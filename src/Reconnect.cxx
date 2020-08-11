@@ -47,66 +47,66 @@ Connection::Disconnect() noexcept
     ClearWorld();
 }
 
-static void
-connection_try_reconnect(Connection *c)
+void
+Connection::DoReconnect() noexcept
 {
-    const auto &config = c->instance.config;
+    const auto &config = instance.config;
     uint32_t seed;
     int ret;
 
-    assert(c->IsInGame());
-    assert(c->client.reconnecting);
-    assert(c->client.client == nullptr);
+    assert(IsInGame());
+    assert(client.reconnecting);
+    assert(client.client == nullptr);
 
-    if (c->client_version.seed != nullptr)
-        seed = c->client_version.seed->seed;
+    if (client_version.seed != nullptr)
+        seed = client_version.seed->seed;
     else
         seed = 0xc0a80102; /* 192.168.1.2 */
 
     if (config.login_address == nullptr) {
         /* connect to game server */
         struct addrinfo *server_address
-            = config.game_servers[c->server_index].address;
+            = config.game_servers[server_index].address;
 
         assert(config.game_servers != nullptr);
-        assert(c->server_index < config.num_game_servers);
+        assert(server_index < config.num_game_servers);
 
-        ret = c->Connect(server_address->ai_addr,
-                         server_address->ai_addrlen, seed);
+        ret = Connect(server_address->ai_addr,
+                      server_address->ai_addrlen, seed);
         if (ret == 0) {
             const struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
                 .auth_id = seed,
-                .credentials = c->credentials,
+                .credentials = credentials,
             };
 
             LogFormat(2, "connected, doing GameLogin\n");
 
-            uo_client_send(c->client.client, &p, sizeof(p));
+            uo_client_send(client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            c->client.reconnecting = false;
-            c->ScheduleReconnect();
+            client.reconnecting = false;
+            ScheduleReconnect();
         }
     } else {
         /* connect to login server */
-        ret = c->Connect(config.login_address->ai_addr,
-                         config.login_address->ai_addrlen,
-                         seed);
+        ret = Connect(config.login_address->ai_addr,
+                      config.login_address->ai_addrlen,
+                      seed);
         if (ret == 0) {
             const struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,
-                .credentials = c->credentials,
+                .credentials = credentials,
                 .unknown1 = {},
             };
 
             LogFormat(2, "connected, doing AccountLogin\n");
 
-            uo_client_send(c->client.client, &p, sizeof(p));
+            uo_client_send(client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            c->client.reconnecting = false;
-            c->ScheduleReconnect();
+            client.reconnecting = false;
+            ScheduleReconnect();
         }
     }
 }
@@ -116,7 +116,7 @@ Connection::ReconnectTimerCallback(int, short, void *ctx) noexcept
 {
     auto c = (Connection *)ctx;
 
-    connection_try_reconnect(c);
+    c->DoReconnect();
 }
 
 void
@@ -132,7 +132,7 @@ Connection::Reconnect()
 
     client.reconnecting = true;
 
-    connection_try_reconnect(this);
+    DoReconnect();
 }
 
 void
