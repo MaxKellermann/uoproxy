@@ -24,6 +24,8 @@
 #include "version.h"
 #include "Log.hxx"
 
+#include <exception>
+
 #ifndef WIN32
 #include <sys/signal.h>
 #include <signal.h>
@@ -115,7 +117,8 @@ setup_signal_handlers(Instance *instance)
 #endif
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+try {
     Config config;
     Instance instance(config);
 
@@ -157,5 +160,8 @@ int main(int argc, char **argv) {
 
     event_base_free(event_base);
 
-    return 0;
+    return EXIT_SUCCESS;
+} catch (const std::exception &e) {
+    fprintf(stderr, "%s\n", e.what());
+    return EXIT_FAILURE;
 }
