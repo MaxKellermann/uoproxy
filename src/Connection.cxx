@@ -59,10 +59,3 @@ Connection::~Connection() noexcept
     if (client.reconnecting)
         event_del(&client.reconnect_event);
 }
-
-void
-connection_delete(Connection *c)
-{
-    c->unlink();
-    delete c;
-}

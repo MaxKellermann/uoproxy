@@ -57,7 +57,7 @@ Connection::OnClientPacket(const void *data, size_t length)
             Disconnect();
             ScheduleReconnect();
         } else {
-            connection_delete(this);
+            Destroy();
         }
         return false;
 
@@ -80,7 +80,7 @@ Connection::OnClientDisconnect() noexcept
         ScheduleReconnect();
     } else {
         LogFormat(1, "server disconnected\n");
-        connection_delete(this);
+        Destroy();
     }
 }
 

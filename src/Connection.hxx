@@ -104,6 +104,11 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     Connection(const Connection &) = delete;
     Connection &operator=(const Connection &) = delete;
 
+    void Destroy() noexcept {
+        unlink();
+        delete this;
+    }
+
     bool CanAttach() const noexcept {
         return in_game && client.world.packet_start.serial != 0 &&
             client.num_characters > 0;
@@ -142,8 +147,6 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 int connection_new(Instance *instance,
                    int server_socket,
                    Connection **connectionp);
-
-void connection_delete(Connection *c);
 
 void connection_speak_console(Connection *c, const char *msg);
 

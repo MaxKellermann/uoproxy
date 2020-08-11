@@ -70,7 +70,7 @@ exit_event_callback(int, short, void *ctx)
     }
 
     instance->connections.clear_and_dispose([](Connection *c) {
-        connection_delete(c);
+        delete c;
     });
 }
 

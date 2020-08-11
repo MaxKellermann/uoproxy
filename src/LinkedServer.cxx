@@ -85,7 +85,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
             if (c->background)
                 LogFormat(1, "backgrounding\n");
             else
-                connection_delete(c);
+                c->Destroy();
         }
         return false;
 
@@ -118,7 +118,7 @@ LinkedServer::OnServerDisconnect() noexcept
         LogFormat(1, "client disconnected, backgrounding\n");
     } else {
         LogFormat(1, "last client disconnected, removing connection\n");
-        connection_delete(c);
+        c->Destroy();
     }
 
     delete this;

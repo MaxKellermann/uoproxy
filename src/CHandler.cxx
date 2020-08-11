@@ -481,7 +481,7 @@ handle_game_login(LinkedServer *ls,
 
                 /* remove the object from the old connection */
                 c->Remove(*ls);
-                connection_delete(c);
+                c->Destroy();
 
                 LogFormat(2, "attaching redirected client to its previous connection\n");
 
@@ -573,7 +573,7 @@ handle_play_server(LinkedServer *ls,
     if (c2 != nullptr) {
         /* remove the object from the old connection */
         c->Remove(*ls);
-        connection_delete(c);
+        c->Destroy();
 
         if (c2->instance.config.razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
