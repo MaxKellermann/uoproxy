@@ -46,8 +46,6 @@ struct Instance {
 
     IntrusiveList<Connection> connections;
 
-    struct timeval tv;
-
     explicit Instance(Config &_config) noexcept
         :config(&_config) {}
 
