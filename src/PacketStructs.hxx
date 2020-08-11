@@ -610,7 +610,7 @@ struct uo_packet_gump_response {
     uint8_t cmd;
     PackedBE16 length;
     PackedBE32 serial, type_id, button_id;
-    uint8_t rest[];
+    // uint8_t rest[];
 };
 
 static_assert(alignof(struct uo_packet_gump_response) == 1);
