@@ -32,9 +32,7 @@
 #include <errno.h>
 #include <netdb.h>
 
-struct SocketBuffer {
-    PendingFlush flush;
-
+struct SocketBuffer final : PendingFlush {
     const int fd;
 
     struct event recv_event, send_event;
@@ -47,6 +45,12 @@ struct SocketBuffer {
                  size_t output_max,
                  SocketBufferHandler &_handler);
     ~SocketBuffer() noexcept;
+
+    using PendingFlush::ScheduleFlush;
+
+protected:
+    /* virtual methods from PendingFlush */
+    void DoFlush() noexcept override;
 };
 
 
@@ -84,11 +88,6 @@ sock_buff_invoke_free(SocketBuffer *sb, int error)
 {
     assert(sb->fd >= 0);
 
-    event_del(&sb->recv_event);
-    event_del(&sb->send_event);
-
-    sb->flush.Cancel();
-
     sb->handler.OnSocketDisconnect(error);
 }
 
@@ -119,16 +118,14 @@ sock_buff_flush(SocketBuffer *sb)
     return true;
 }
 
-static void
-sock_buff_flush_callback(PendingFlush *flush)
+void
+SocketBuffer::DoFlush() noexcept
 {
-    SocketBuffer *sb = (SocketBuffer *)flush;
-
-    if (!sock_buff_flush(sb))
+    if (!sock_buff_flush(this))
         return;
 
-    if (fifo_buffer_empty(sb->output))
-        event_del(&sb->send_event);
+    if (fifo_buffer_empty(output))
+        event_del(&send_event);
 }
 
 
@@ -199,7 +196,7 @@ sock_buff_append(SocketBuffer *sb, size_t length)
     fifo_buffer_append(sb->output, length);
 
     event_add(&sb->send_event, nullptr);
-    flush_add(&sb->flush);
+    sb->ScheduleFlush();
 }
 
 bool
@@ -250,7 +247,7 @@ inline
 SocketBuffer::SocketBuffer(int _fd, size_t input_max,
                            size_t output_max,
                            SocketBufferHandler &_handler)
-    :flush(sock_buff_flush_callback), fd(_fd),
+    :fd(_fd),
      input(fifo_buffer_new(input_max)),
      output(fifo_buffer_new(output_max)),
      handler(_handler)

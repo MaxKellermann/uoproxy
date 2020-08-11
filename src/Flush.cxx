@@ -47,17 +47,18 @@ flush_end()
     flush_postponed = false;
 
     flush_pending.clear_and_dispose([](PendingFlush *flush){
-        flush->flush(flush);
+        flush->DoFlush();
     });
 }
 
 void
-flush_add(PendingFlush *flush)
+PendingFlush::ScheduleFlush() noexcept
 {
     if (!flush_postponed)
-        flush->flush(flush);
-    else if (!flush->is_linked) {
-        flush->is_linked = true;
-        flush_pending.push_back(*flush);
+        DoFlush();
+    else if (!is_linked) {
+        is_linked = true;
+
+        flush_pending.push_back(*this);
     }
 }

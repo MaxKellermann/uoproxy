@@ -33,22 +33,25 @@
 /**
  * An operation that has to be flushed.
  */
-struct PendingFlush final : IntrusiveListHook {
+class PendingFlush : public IntrusiveListHook {
     bool is_linked = false;
 
-    void (*flush)(PendingFlush *flush);
-
-    explicit PendingFlush(void (*_callback)(PendingFlush *)) noexcept
-        :flush(_callback) {}
+public:
+    PendingFlush() = default;
 
     ~PendingFlush() noexcept {
-        Cancel();
+        CancelFlush();
     }
 
     PendingFlush(const PendingFlush &) = delete;
     PendingFlush &operator=(const PendingFlush &) = delete;
 
-    void Cancel() noexcept {
+    virtual void DoFlush() noexcept = 0;
+
+protected:
+    void ScheduleFlush() noexcept;
+
+    void CancelFlush() noexcept {
         if (is_linked) {
             is_linked = false;
             unlink();
@@ -61,8 +64,5 @@ flush_begin();
 
 void
 flush_end();
-
-void
-flush_add(PendingFlush *flush);
 
 #endif
