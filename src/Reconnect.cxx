@@ -85,7 +85,6 @@ Connection::DoReconnect() noexcept
             uo_client_send(client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            client.reconnecting = false;
             ScheduleReconnect();
         }
     } else {
@@ -105,7 +104,6 @@ Connection::DoReconnect() noexcept
             uo_client_send(client.client, &p, sizeof(p));
         } else {
             log_error("reconnect failed", ret);
-            client.reconnecting = false;
             ScheduleReconnect();
         }
     }
@@ -122,9 +120,6 @@ Connection::ReconnectTimerCallback(int, short, void *ctx) noexcept
 void
 Connection::Reconnect()
 {
-    if (client.reconnecting)
-        return;
-
     Disconnect();
 
     assert(IsInGame());
@@ -138,9 +133,6 @@ Connection::Reconnect()
 void
 Connection::ScheduleReconnect() noexcept
 {
-    if (client.reconnecting)
-        return;
-
     Disconnect();
 
     assert(IsInGame());

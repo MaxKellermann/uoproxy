@@ -54,7 +54,6 @@ Connection::OnClientPacket(const void *data, size_t length)
 
         if (autoreconnect && IsInGame()) {
             LogFormat(2, "auto-reconnecting\n");
-            Disconnect();
             ScheduleReconnect();
         } else {
             Destroy();
@@ -76,7 +75,6 @@ Connection::OnClientDisconnect() noexcept
     if (autoreconnect && IsInGame()) {
         LogFormat(2, "server disconnected, auto-reconnecting\n");
         connection_speak_console(this, "uoproxy was disconnected, auto-reconnecting...");
-        Disconnect();
         ScheduleReconnect();
     } else {
         LogFormat(1, "server disconnected\n");

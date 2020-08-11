@@ -59,14 +59,9 @@ connection_handle_command(LinkedServer *server, const char *command)
         uo_server_speak_console(server->server,
                                 "uoproxy commands: % %reconnect %char %drop %verbose");
     } else if (strcmp(command, "reconnect") == 0) {
-        if (c->client.client == nullptr || c->client.reconnecting) {
-            uo_server_speak_console(server->server,
-                                    "uoproxy: not connected");
-        } else {
-            uo_server_speak_console(server->server,
-                                    "uoproxy: reconnecting");
-            c->Reconnect();
-        }
+        uo_server_speak_console(server->server,
+                                "uoproxy: reconnecting");
+        c->Reconnect();
     } else if (strcmp(command, "char") == 0) {
         char msg[1024] = "uoproxy:";
 

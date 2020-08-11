@@ -8,6 +8,7 @@ uoproxy (0.5) unstable; urgency=low
   * hide client IP in CreateCharacter packet (antispy)
   * support new character creation packet (0xF8) from client 7.0.16.0
   * support new Buff/Debuff packet (0xDF)
+  * fix "%char" command bug
   * fix character creation with antispy
   * fix Razor support due to protocol mismatch bug
 
