@@ -59,6 +59,7 @@ if get_option('buildtype') != 'debug'
   ]
   test_ldflags += [
     '-Wl,--gc-sections',
+    '-Wl,--icf=all',
   ]
 endif
 
