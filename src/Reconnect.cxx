@@ -51,7 +51,7 @@ connection_try_reconnect(Connection *c)
     uint32_t seed;
     int ret;
 
-    assert(c->client.IsInGame());
+    assert(c->IsInGame());
     assert(c->client.reconnecting);
     assert(c->client.client == nullptr);
 
@@ -124,7 +124,7 @@ Connection::Reconnect()
 
     Disconnect();
 
-    assert(client.IsInGame());
+    assert(IsInGame());
     assert(client.client == nullptr);
 
     client.reconnecting = true;
@@ -140,7 +140,7 @@ Connection::ScheduleReconnect() noexcept
 
     Disconnect();
 
-    assert(client.IsInGame());
+    assert(IsInGame());
     assert(client.client == nullptr);
 
     client.reconnecting = true;

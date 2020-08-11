@@ -191,7 +191,7 @@ attach_send_world(LinkedServer *ls)
 void
 attach_after_play_server(Connection *c, LinkedServer *ls)
 {
-    assert(c->client.IsInGame());
+    assert(c->IsInGame());
 
     LogFormat(2, "attaching connection\n");
 

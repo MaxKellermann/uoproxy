@@ -107,8 +107,12 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
         delete this;
     }
 
+    bool IsInGame() const noexcept {
+        return client.IsInGame();
+    }
+
     bool CanAttach() const noexcept {
-        return client.IsInGame() && client.num_characters > 0;
+        return IsInGame() && client.num_characters > 0;
     }
 
     int Connect(const struct sockaddr *server_address,

@@ -104,7 +104,7 @@ handle_walk(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    if (!ls->connection->client.IsInGame())
+    if (!ls->connection->IsInGame())
         return PacketAction::DISCONNECT;
 
     if (ls->connection->client.reconnecting) {
@@ -312,7 +312,7 @@ handle_account_login(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    if (c->client.IsInGame())
+    if (c->IsInGame())
         return PacketAction::DISCONNECT;
 
 #ifdef DUMP_LOGIN
@@ -494,7 +494,7 @@ handle_game_login(LinkedServer *ls,
         uo_server_set_compression(ls->server, true);
         ls->got_gamelogin = true;
         ls->attaching = false;
-        if (ls->connection->client.IsInGame() && was_attach) {
+        if (ls->connection->IsInGame() && was_attach) {
             /* already in game .. this was likely an attach connection */
             attach_send_world(ls);
         } else if (ls->enqueued_charlist) {
@@ -556,7 +556,7 @@ handle_play_server(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    if (c->client.IsInGame())
+    if (c->IsInGame())
         return PacketAction::DISCONNECT;
 
     assert(std::next(c->servers.iterator_to(*ls)) == c->servers.end());
@@ -834,4 +834,3 @@ const struct server_packet_binding client_packet_bindings[] = {
     { PCK_Seed, handle_seed }, /* 0xef */
     {}
 };
-
