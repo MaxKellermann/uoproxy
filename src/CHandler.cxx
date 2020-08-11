@@ -444,26 +444,7 @@ handle_game_login(LinkedServer *ls,
                correct zombie so that we can re-use its connection to the UO
                server. */
             LinkedServer *zombie = instance.FindZombie(*p);
-            if (zombie != nullptr) {
-                /* found it! Eureka! */
-                zombie->expecting_reconnect = false;
-                was_attach = zombie->attaching;
-                zombie->attaching = false;
-
-                Connection *c = ls->connection;
-
-                /* copy the previously detected protocol version */
-                if (!was_attach)
-                    zombie->connection->client_version.protocol = c->client_version.protocol;
-
-                /* remove the object from the old connection */
-                c->Remove(*ls);
-                c->Destroy();
-
-                LogFormat(2, "attaching redirected client to its previous connection\n");
-
-                zombie->connection->Add(*ls);
-            } else {
+            if (zombie == nullptr) {
                 /* houston, we have a problem -- reject the game login -- it
                    either came in too slowly (and so we already reaped the
                    zombie) or it was a hack attempt (wrong password) */
@@ -471,6 +452,25 @@ handle_game_login(LinkedServer *ls,
                           " -- disconnecting client!\n");
                 return PacketAction::DISCONNECT;
             }
+
+            /* found it! Eureka! */
+            zombie->expecting_reconnect = false;
+            was_attach = zombie->attaching;
+            zombie->attaching = false;
+
+            Connection *c = ls->connection;
+
+            /* copy the previously detected protocol version */
+            if (!was_attach)
+                zombie->connection->client_version.protocol = c->client_version.protocol;
+
+            /* remove the object from the old connection */
+            c->Remove(*ls);
+            c->Destroy();
+
+            LogFormat(2, "attaching redirected client to its previous connection\n");
+
+            zombie->connection->Add(*ls);
         } else
             was_attach = ls->attaching;
         /* after GameLogin, must enable compression. */
