@@ -67,7 +67,7 @@ Connection::FindZombie(const struct uo_packet_game_login &game_login) noexcept
         return nullptr;
 
     for (auto &i : servers) {
-        if (i.is_zombie && i.auth_id == game_login.auth_id)
+        if (i.IsZombie() && i.auth_id == game_login.auth_id)
             return &i;
     }
 

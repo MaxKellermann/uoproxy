@@ -186,4 +186,5 @@ attach_send_world(LinkedServer *ls)
     uo_server_send(ls->server, &login_complete,
                    sizeof(login_complete));
 
+    ls->state = LinkedServer::State::IN_GAME;
 }

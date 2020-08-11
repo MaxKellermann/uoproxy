@@ -128,6 +128,9 @@ handle_start(Connection &c, const void *data, [[maybe_unused]] size_t length)
 
     c.walk.seq_next = 0;
 
+    for (auto &ls : c.servers)
+        ls.state = LinkedServer::State::IN_GAME;
+
     return PacketAction::ACCEPT;
 }
 
@@ -464,16 +467,16 @@ handle_char_list(Connection &c, const void *data, size_t length)
         uo_client_send(c.client.client, &p2, sizeof(p2));
 
         return PacketAction::DROP;
-    } else if (c.instance.config.razor_workaround) {
-        /* razor workaround -- we don't send the char list right away necessarily until they sent us GameLogin.. */
+    } else {
         for (auto &ls : c.servers) {
-            if (ls.got_gamelogin && !ls.attaching && !ls.is_zombie)
+            if (ls.state == LinkedServer::State::GAME_LOGIN ||
+                ls.state == LinkedServer::State::PLAY_SERVER) {
                 uo_server_send(ls.server, data, length);
+                ls.state = LinkedServer::State::CHAR_LIST;
+            }
         }
         return PacketAction::DROP;
     }
-
-    return PacketAction::ACCEPT;
 }
 
 static PacketAction
@@ -606,7 +609,16 @@ handle_server_list(Connection &c, const void *data, size_t length)
                   (unsigned)server_info->address);
     }
 
-    return PacketAction::ACCEPT;
+    /* forward only to the clients which are waiting for the server
+       list (should be only one) */
+    for (auto &ls : c.servers) {
+        if (ls.state == LinkedServer::State::ACCOUNT_LOGIN) {
+            ls.state = LinkedServer::State::SERVER_LIST;
+            uo_server_send(ls.server, data, length);
+        }
+    }
+
+    return PacketAction::DROP;
 }
 
 static PacketAction

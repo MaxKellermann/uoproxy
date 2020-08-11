@@ -308,8 +308,22 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 
     assert(length == sizeof(*p));
 
-    if (c->IsInGame())
+    switch (ls.state) {
+    case LinkedServer::State::INIT:
+        break;
+
+    case LinkedServer::State::ACCOUNT_LOGIN:
+    case LinkedServer::State::SERVER_LIST:
+    case LinkedServer::State::RELAY_SERVER:
+    case LinkedServer::State::PLAY_SERVER:
+    case LinkedServer::State::GAME_LOGIN:
+    case LinkedServer::State::CHAR_LIST:
+    case LinkedServer::State::PLAY_CHAR:
+    case LinkedServer::State::IN_GAME:
         return PacketAction::DISCONNECT;
+    }
+
+    ls.state = LinkedServer::State::ACCOUNT_LOGIN;
 
 #ifdef DUMP_LOGIN
     LogFormat(7, "account_login: username=%s password=%s\n",
@@ -341,6 +355,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         p2.game_servers[0].address = 0xdeadbeef;
 
         uo_server_send(ls.server, &p2, sizeof(p2));
+        ls.state = LinkedServer::State::SERVER_LIST;
         return PacketAction::DROP;
     }
 
@@ -429,6 +444,31 @@ handle_game_login(LinkedServer &ls,
            from them */
         return PacketAction::DISCONNECT;
 
+    bool find_zombie = false;
+
+    switch (ls.state) {
+    case LinkedServer::State::INIT:
+        assert(!ls.connection->client.IsConnected());
+        find_zombie = true;
+        break;
+
+    case LinkedServer::State::ACCOUNT_LOGIN:
+    case LinkedServer::State::SERVER_LIST:
+    case LinkedServer::State::PLAY_SERVER:
+        return PacketAction::DISCONNECT;
+
+    case LinkedServer::State::RELAY_SERVER:
+        break;
+
+    case LinkedServer::State::GAME_LOGIN:
+    case LinkedServer::State::CHAR_LIST:
+    case LinkedServer::State::PLAY_CHAR:
+    case LinkedServer::State::IN_GAME:
+        return PacketAction::DISCONNECT;
+    }
+
+    ls.state = LinkedServer::State::GAME_LOGIN;
+
     /* I have observed the Razor client ignoring the redirect if the IP
        address differs from what it connected to.  (I guess this is a bug in
        RunUO & Razor).  In that case it does a gamelogin on the old
@@ -436,7 +476,7 @@ handle_game_login(LinkedServer &ls,
 
        So we apply the zombie-lookup only if the remote UO client actually
        did bother to reconnet to us. */
-    if (!ls.connection->client.IsConnected()) {
+    if (find_zombie) {
         auto &obsolete_connection = *ls.connection;
         auto &instance = obsolete_connection.instance;
 
@@ -453,12 +493,8 @@ handle_game_login(LinkedServer &ls,
             return PacketAction::DISCONNECT;
         }
 
-        auto &existing_connection = *zombie->connection;
-
         /* found it! Eureka! */
-        zombie->expecting_reconnect = false;
-        zombie->attaching = false;
-
+        auto &existing_connection = *zombie->connection;
 
         /* copy the previously detected protocol version */
         if (!existing_connection.IsInGame())
@@ -478,8 +514,6 @@ handle_game_login(LinkedServer &ls,
     }
     /* after GameLogin, must enable compression. */
     uo_server_set_compression(ls.server, true);
-    ls.got_gamelogin = true;
-    ls.attaching = false;
     if (ls.connection->IsInGame()) {
         /* already in game .. this was likely an attach connection */
         attach_send_world(&ls);
@@ -487,8 +521,8 @@ handle_game_login(LinkedServer &ls,
         uo_server_send(ls.server,
                        ls.connection->client.char_list.get(),
                        ls.connection->client.char_list.size());
+        ls.state = LinkedServer::State::CHAR_LIST;
     }
-    ls.expecting_reconnect = false;
     return PacketAction::DROP;
 }
 
@@ -500,7 +534,26 @@ handle_play_character(LinkedServer &ls,
 
     assert(length == sizeof(*p));
 
+    switch (ls.state) {
+    case LinkedServer::State::INIT:
+    case LinkedServer::State::ACCOUNT_LOGIN:
+    case LinkedServer::State::SERVER_LIST:
+    case LinkedServer::State::RELAY_SERVER:
+    case LinkedServer::State::PLAY_SERVER:
+    case LinkedServer::State::GAME_LOGIN:
+        return PacketAction::DISCONNECT;
+
+    case LinkedServer::State::CHAR_LIST:
+        break;
+
+    case LinkedServer::State::PLAY_CHAR:
+    case LinkedServer::State::IN_GAME:
+        return PacketAction::DISCONNECT;
+    }
+
     ls.connection->character_index = p->slot;
+
+    ls.state = LinkedServer::State::PLAY_CHAR;
 
     return PacketAction::ACCEPT;
 }
@@ -521,8 +574,8 @@ redirect_to_self(LinkedServer &ls)
     LogFormat(8, "redirecting to: %s:%u\n",
               inet_ntoa(addr), (unsigned)relay.port);;
     relay.auth_id = ls.auth_id = authid++;
-    ls.expecting_reconnect = true;
     uo_server_send(ls.server, &relay, sizeof(relay));
+    ls.state = LinkedServer::State::RELAY_SERVER;
 }
 
 static PacketAction
@@ -537,8 +590,24 @@ handle_play_server(LinkedServer &ls,
 
     assert(length == sizeof(*p));
 
-    if (c.IsInGame())
+    switch (ls.state) {
+    case LinkedServer::State::INIT:
+    case LinkedServer::State::RELAY_SERVER:
+    case LinkedServer::State::ACCOUNT_LOGIN:
         return PacketAction::DISCONNECT;
+
+    case LinkedServer::State::SERVER_LIST:
+        break;
+
+    case LinkedServer::State::PLAY_SERVER:
+    case LinkedServer::State::GAME_LOGIN:
+    case LinkedServer::State::CHAR_LIST:
+    case LinkedServer::State::PLAY_CHAR:
+    case LinkedServer::State::IN_GAME:
+        return PacketAction::DISCONNECT;
+    }
+
+    ls.state = LinkedServer::State::PLAY_SERVER;
 
     assert(std::next(c.servers.iterator_to(ls)) == c.servers.end());
 
@@ -554,11 +623,11 @@ handle_play_server(LinkedServer &ls,
 
         if (config.razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
-            ls.attaching = true;
         }  else {
             /* attach it to the new connection and begin playing right away */
             LogFormat(2, "attaching connection\n");
             attach_send_world(&ls);
+            return PacketAction::DROP;
         }
 
         retaction = PacketAction::DROP;

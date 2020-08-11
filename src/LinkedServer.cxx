@@ -37,18 +37,10 @@ void
 LinkedServer::ZombieTimeoutCallback(int, short, void *ctx) noexcept
 {
     auto &ls = *(LinkedServer *)ctx;
+    assert(ls.state == LinkedServer::State::RELAY_SERVER);
 
     auto &c = *ls.connection;
     c.RemoveCheckEmpty(ls);
-}
-
-inline void
-LinkedServer::Zombify() noexcept
-{
-    is_zombie = true;
-
-    static constexpr struct timeval tv{5, 0};
-    evtimer_add(&zombie_timeout, &tv);
 }
 
 bool
@@ -57,7 +49,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
     Connection *c = connection;
 
     assert(c != nullptr);
-    assert(!is_zombie);
+    assert(server != nullptr);
 
     const auto action = handle_packet_from_client(client_packet_bindings,
                                                   *this, data, length);
@@ -101,9 +93,11 @@ LinkedServer::OnServerDisconnect() noexcept
     assert(server != nullptr);
     uo_server_dispose(std::exchange(server, nullptr));
 
-    if (expecting_reconnect) {
+    if (state == State::RELAY_SERVER) {
         LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
-        Zombify();
+
+        static constexpr struct timeval tv{5, 0};
+        evtimer_add(&zombie_timeout, &tv);
         return;
     }
 
