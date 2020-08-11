@@ -99,9 +99,8 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
 void
 LinkedServer::OnServerDisconnect() noexcept
 {
-    Connection *c = connection;
-
-    assert(c != nullptr);
+    assert(server != nullptr);
+    uo_server_dispose(std::exchange(server, nullptr));
 
     if (expecting_reconnect) {
         LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
@@ -109,6 +108,8 @@ LinkedServer::OnServerDisconnect() noexcept
         return;
     }
 
+    Connection *c = connection;
+    assert(c != nullptr);
     c->Remove(*this);
 
     if (!c->servers.empty()) {
