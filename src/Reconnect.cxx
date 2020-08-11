@@ -47,7 +47,7 @@ Connection::Disconnect() noexcept
 static void
 connection_try_reconnect(Connection *c)
 {
-    const auto &config = c->instance->config;
+    const auto &config = c->instance.config;
     uint32_t seed;
     int ret;
 

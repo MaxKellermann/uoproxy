@@ -61,7 +61,7 @@ struct WalkState {
 };
 
 struct Connection final : IntrusiveListHook, UO::ClientHandler {
-    Instance *const instance;
+    Instance &instance;
 
     /* flags */
     const bool background;
@@ -94,7 +94,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 
     Connection(Instance &_instance, bool _background,
                bool _autoreconnect)
-        :instance(&_instance), background(_background),
+        :instance(_instance), background(_background),
          autoreconnect(_autoreconnect)
     {
     }
