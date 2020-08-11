@@ -65,4 +65,18 @@ flush_begin();
 void
 flush_end();
 
+class ScopeLockFlush {
+public:
+    ScopeLockFlush() noexcept {
+        flush_begin();
+    }
+
+    ~ScopeLockFlush() noexcept {
+        flush_end();
+    }
+
+    ScopeLockFlush(const ScopeLockFlush &) = delete;
+    ScopeLockFlush &operator=(const ScopeLockFlush &) = delete;
+};
+
 #endif

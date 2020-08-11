@@ -73,9 +73,9 @@ sock_buff_invoke_data(SocketBuffer *sb)
     if (data == nullptr)
         return true;
 
-    flush_begin();
+    const ScopeLockFlush lock_flush;
+
     nbytes = sb->handler.OnSocketData(data, length);
-    flush_end();
     if (nbytes == 0)
         return false;
 
