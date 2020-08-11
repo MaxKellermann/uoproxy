@@ -59,13 +59,13 @@ struct Config {
     uid_t uid = 0;
     gid_t gid = 0;
 #endif
+
+    ~Config() noexcept;
 };
 
 /** read configuration options from the command line */
 void parse_cmdline(Config *config, int argc, char **argv);
 
 int config_read_file(Config *config, const char *path);
-
-void config_dispose(Config *config);
 
 #endif

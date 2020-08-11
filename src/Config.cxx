@@ -600,46 +600,32 @@ int config_read_file(Config *config, const char *path) {
     return 0;
 }
 
-void config_dispose(Config *config) {
-    if (config->bind_address != nullptr) {
-        freeaddrinfo(config->bind_address);
-        config->bind_address = nullptr;
-    }
+Config::~Config() noexcept
+{
+    if (bind_address != nullptr)
+        freeaddrinfo(bind_address);
 
-    if (config->socks4_address != nullptr) {
-        freeaddrinfo(config->socks4_address);
-        config->socks4_address = nullptr;
-    }
+    if (socks4_address != nullptr)
+        freeaddrinfo(socks4_address);
 
-    if (config->login_address != nullptr) {
-        freeaddrinfo(config->login_address);
-        config->login_address = nullptr;
-    }
+    if (login_address != nullptr)
+        freeaddrinfo(login_address);
 
-    if (config->game_servers != nullptr) {
+    if (game_servers != nullptr) {
         unsigned i;
-        for (i = 0; i < config->num_game_servers; i++) {
-            if (config->game_servers[i].name != nullptr)
-                free(config->game_servers[i].name);
-            if (config->game_servers[i].address != nullptr)
-                freeaddrinfo(config->game_servers[i].address);
+        for (i = 0; i < num_game_servers; i++) {
+            free(game_servers[i].name);
+            if (game_servers[i].address != nullptr)
+                freeaddrinfo(game_servers[i].address);
         }
-        free(config->game_servers);
+        free(game_servers);
     }
 
-    if (config->client_version != nullptr) {
-        free(config->client_version);
-        config->client_version = nullptr;
-    }
+    free(client_version);
 
 #ifndef DISABLE_DAEMON_CODE
-    if (config->pidfile != nullptr)
-        free(config->pidfile);
-
-    if (config->logger != nullptr)
-        free(config->logger);
-
-    if (config->chroot_dir != nullptr)
-        free(config->chroot_dir);
+    free(pidfile);
+    free(logger);
+    free(chroot_dir);
 #endif
 }

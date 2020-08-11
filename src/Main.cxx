@@ -157,7 +157,5 @@ int main(int argc, char **argv) {
 
     event_base_free(event_base);
 
-    config_dispose(&config);
-
     return 0;
 }
