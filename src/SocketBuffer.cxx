@@ -33,7 +33,7 @@
 #include <netdb.h>
 
 struct SocketBuffer {
-    struct pending_flush flush;
+    PendingFlush flush;
 
     const int fd;
 
@@ -120,7 +120,7 @@ sock_buff_flush(SocketBuffer *sb)
 }
 
 static void
-sock_buff_flush_callback(struct pending_flush *flush)
+sock_buff_flush_callback(PendingFlush *flush)
 {
     SocketBuffer *sb = (SocketBuffer *)flush;
 

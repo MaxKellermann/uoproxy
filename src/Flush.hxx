@@ -33,20 +33,20 @@
 /**
  * An operation that has to be flushed.
  */
-struct pending_flush final : IntrusiveListHook {
+struct PendingFlush final : IntrusiveListHook {
     bool is_linked = false;
 
-    void (*flush)(struct pending_flush *flush);
+    void (*flush)(PendingFlush *flush);
 
-    explicit pending_flush(void (*_callback)(struct pending_flush *)) noexcept
+    explicit PendingFlush(void (*_callback)(PendingFlush *)) noexcept
         :flush(_callback) {}
 
-    ~pending_flush() noexcept {
+    ~PendingFlush() noexcept {
         Cancel();
     }
 
-    pending_flush(const pending_flush &) = delete;
-    pending_flush &operator=(const pending_flush &) = delete;
+    PendingFlush(const PendingFlush &) = delete;
+    PendingFlush &operator=(const PendingFlush &) = delete;
 
     void Cancel() noexcept {
         if (is_linked) {
@@ -63,6 +63,6 @@ void
 flush_end();
 
 void
-flush_add(struct pending_flush *flush);
+flush_add(PendingFlush *flush);
 
 #endif

@@ -29,7 +29,7 @@
 
 #include <assert.h>
 
-static IntrusiveList<struct pending_flush> flush_pending;
+static IntrusiveList<PendingFlush> flush_pending;
 static bool flush_postponed = false;
 
 void
@@ -46,13 +46,13 @@ flush_end()
     assert(flush_postponed);
     flush_postponed = false;
 
-    flush_pending.clear_and_dispose([](struct pending_flush *flush){
+    flush_pending.clear_and_dispose([](PendingFlush *flush){
         flush->flush(flush);
     });
 }
 
 void
-flush_add(struct pending_flush *flush)
+flush_add(PendingFlush *flush)
 {
     if (!flush_postponed)
         flush->flush(flush);
