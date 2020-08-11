@@ -40,6 +40,11 @@ Connection::Disconnect() noexcept
     if (client.client == nullptr)
         return;
 
+    if (client.reconnecting) {
+        client.reconnecting = false;
+        event_del(&reconnect_event);
+    }
+
     client.Disconnect();
     ClearWorld();
 }
@@ -146,7 +151,7 @@ Connection::ScheduleReconnect() noexcept
     client.reconnecting = true;
 
     static constexpr struct timeval tv{5, 0};
-    evtimer_set(&client.reconnect_event,
+    evtimer_set(&reconnect_event,
                 connection_reconnect_event_callback, this);
-    evtimer_add(&client.reconnect_event, &tv);
+    evtimer_add(&reconnect_event, &tv);
 }

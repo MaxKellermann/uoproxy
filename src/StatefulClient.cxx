@@ -94,11 +94,6 @@ StatefulClient::Disconnect() noexcept
 {
     assert(client != nullptr);
 
-    if (reconnecting) {
-        event_del(&reconnect_event);
-        reconnecting = false;
-    }
-
     version_requested = false;
 
     event_del(&ping_event);

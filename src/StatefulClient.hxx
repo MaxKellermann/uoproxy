@@ -33,7 +33,6 @@ class ClientHandler;
 
 struct StatefulClient {
     bool reconnecting = false, version_requested = false;
-    struct event reconnect_event;
 
     UO::Client *client = nullptr;
     struct event ping_event;
@@ -52,11 +51,6 @@ struct StatefulClient {
     World world;
 
     StatefulClient() noexcept;
-
-    ~StatefulClient() noexcept {
-        if (reconnecting)
-            event_del(&reconnect_event);
-    }
 
     StatefulClient(const StatefulClient &) = delete;
     StatefulClient &operator=(const StatefulClient &) = delete;

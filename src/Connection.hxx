@@ -73,6 +73,11 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 
     StatefulClient client;
 
+    /**
+     * A timer which is used to schedule a reconnect.
+     */
+    struct event reconnect_event;
+
     /* state */
     UO::CredentialsFragment credentials{};
 
