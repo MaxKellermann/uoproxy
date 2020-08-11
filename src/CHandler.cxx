@@ -540,6 +540,8 @@ handle_play_server(LinkedServer *ls,
 {
     auto p = (const struct uo_packet_play_server *)data;
     Connection *c = ls->connection, *c2;
+    auto &instance = c->instance;
+    const auto &config = instance.config;
     PacketAction retaction = PacketAction::DROP;
 
     assert(length == sizeof(*p));
@@ -551,7 +553,7 @@ handle_play_server(LinkedServer *ls,
 
     c->server_index = p->index;
 
-    c2 = c->instance.FindAttachConnection(*c);
+    c2 = instance.FindAttachConnection(*c);
     if (c2 != nullptr) {
         /* remove the object from the old connection */
         c->Remove(*ls);
@@ -559,7 +561,7 @@ handle_play_server(LinkedServer *ls,
 
         c2->Add(*ls);
 
-        if (c2->instance.config.razor_workaround) { ///< need to send redirect
+        if (config.razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
             ls->attaching = true;
         }  else {
@@ -570,10 +572,10 @@ handle_play_server(LinkedServer *ls,
 
         retaction = PacketAction::DROP;
         c = c2;
-    } else if (c->instance.config.login_address == nullptr &&
-               c->instance.config.game_servers != nullptr &&
-               c->instance.config.num_game_servers > 0) {
-        const unsigned num_game_servers = c->instance.config.num_game_servers;
+    } else if (config.login_address == nullptr &&
+               config.game_servers != nullptr &&
+               config.num_game_servers > 0) {
+        const unsigned num_game_servers = config.num_game_servers;
         int ret;
         struct uo_packet_game_login login;
         uint32_t seed;
@@ -585,7 +587,7 @@ handle_play_server(LinkedServer *ls,
         if (i >= num_game_servers)
             return PacketAction::DISCONNECT;
 
-        const auto &config = c->instance.config.game_servers[i];
+        const auto &server_config = config.game_servers[i];
 
         /* connect to new server */
 
@@ -594,8 +596,8 @@ handle_play_server(LinkedServer *ls,
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
-        ret = c->Connect(config.address->ai_addr,
-                         config.address->ai_addrlen, seed);
+        ret = c->Connect(server_config.address->ai_addr,
+                         server_config.address->ai_addrlen, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PacketAction::DISCONNECT;
@@ -612,7 +614,7 @@ handle_play_server(LinkedServer *ls,
     } else
         retaction = PacketAction::ACCEPT;
 
-    if (c->instance.config.razor_workaround) {
+    if (config.razor_workaround) {
         /* Razor workaround -> send the redirect packet to the client and tell
            them to redirect to self!  This is because Razor refuses to work if
            it doesn't see a redirect packet.  Note that after the redirect,
