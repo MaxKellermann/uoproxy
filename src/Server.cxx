@@ -34,6 +34,9 @@
 
 #include <event.h>
 
+static void
+uo_server_abort_event_callback(int fd, short event, void *ctx) noexcept;
+
 namespace UO {
 
 class Server {
@@ -54,6 +57,8 @@ public:
     explicit Server(ServerHandler &_handler) noexcept
         :handler(&_handler)
     {
+        evtimer_set(&abort_event,
+                    uo_server_abort_event_callback, this);
     }
 
     ~Server() noexcept {
@@ -62,8 +67,7 @@ public:
         if (sock != nullptr)
             sock_buff_dispose(sock);
 
-        if (aborted)
-            evtimer_del(&abort_event);
+        evtimer_del(&abort_event);
     }
 };
 
@@ -98,8 +102,6 @@ uo_server_abort(UO::Server *server)
 
     /* this is a trick to delay the destruction of this object until
        everything is done */
-    evtimer_set(&server->abort_event,
-                uo_server_abort_event_callback, server);
     evtimer_add(&server->abort_event, &tv);
 
     server->aborted = true;
