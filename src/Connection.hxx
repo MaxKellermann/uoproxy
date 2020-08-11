@@ -66,8 +66,6 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     /* flags */
     const bool background;
 
-    bool in_game = false;
-
     /* reconnect */
     const bool autoreconnect;
 
@@ -110,8 +108,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     }
 
     bool CanAttach() const noexcept {
-        return in_game && client.world.packet_start.serial != 0 &&
-            client.num_characters > 0;
+        return client.IsInGame() && client.num_characters > 0;
     }
 
     int Connect(const struct sockaddr *server_address,

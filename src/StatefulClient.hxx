@@ -59,6 +59,10 @@ struct StatefulClient {
     StatefulClient(const StatefulClient &) = delete;
     StatefulClient &operator=(const StatefulClient &) = delete;
 
+    bool IsInGame() const noexcept {
+        return world.HasStart();
+    }
+
     void Connect(int fd, const ClientVersion &version,
                  uint32_t seed,
                  UO::ClientHandler &handler);

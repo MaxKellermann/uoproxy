@@ -122,7 +122,6 @@ handle_start(Connection *c, const void *data, [[maybe_unused]] size_t length)
     assert(length == sizeof(*p));
 
     c->client.world.packet_start = *p;
-    c->in_game = true;
 
     /* if we're auto-reconnecting, this is the point where it
        succeeded */
@@ -173,7 +172,7 @@ handle_walk_cancel(Connection *c, const void *data, [[maybe_unused]] size_t leng
 
     assert(length == sizeof(*p));
 
-    if (!c->in_game)
+    if (!c->client.IsInGame())
         return PacketAction::DISCONNECT;
 
     connection_walk_cancel(c, p);
@@ -536,7 +535,7 @@ handle_account_login_reject(Connection *c, const void *data, [[maybe_unused]] si
         return PacketAction::DROP;
     }
 
-    if (c->in_game)
+    if (c->client.IsInGame())
         return PacketAction::DISCONNECT;
 
     return PacketAction::ACCEPT;
@@ -555,7 +554,7 @@ handle_relay(Connection *c, const void *data, [[maybe_unused]] size_t length)
 
     assert(length == sizeof(*p));
 
-    if (c->in_game && !c->client.reconnecting)
+    if (c->client.IsInGame() && !c->client.reconnecting)
         return PacketAction::DISCONNECT;
 
     LogFormat(2, "changing to game connection\n");
@@ -572,7 +571,7 @@ handle_relay(Connection *c, const void *data, [[maybe_unused]] size_t length)
        start of this function ensures that c->in_game is only set
        during reconnecting. */
 
-    c->client.reconnecting = c->in_game;
+    c->client.reconnecting = c->client.IsInGame();
 
     /* extract new server's address */
 

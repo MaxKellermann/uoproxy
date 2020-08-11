@@ -51,7 +51,7 @@ connection_handle_command(LinkedServer *server, const char *command)
 {
     Connection *c = server->connection;
 
-    if (!c->in_game || server->server == nullptr)
+    if (!c->client.IsInGame() || server->server == nullptr)
         return;
 
     if (*command == 0) {

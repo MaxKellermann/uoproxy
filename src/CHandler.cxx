@@ -104,7 +104,7 @@ handle_walk(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    if (!ls->connection->in_game)
+    if (!ls->connection->client.IsInGame())
         return PacketAction::DISCONNECT;
 
     if (ls->connection->client.reconnecting) {
@@ -228,7 +228,7 @@ handle_drop(LinkedServer *ls,
 {
     auto *client = &ls->connection->client;
 
-    if (!ls->connection->in_game || client->reconnecting ||
+    if (!client->IsInGame() || client->reconnecting ||
         client->client == nullptr)
         return PacketAction::DROP;
 
@@ -312,7 +312,7 @@ handle_account_login(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    if (c->in_game)
+    if (c->client.IsInGame())
         return PacketAction::DISCONNECT;
 
 #ifdef DUMP_LOGIN
@@ -494,7 +494,7 @@ handle_game_login(LinkedServer *ls,
         uo_server_set_compression(ls->server, true);
         ls->got_gamelogin = true;
         ls->attaching = false;
-        if (ls->connection->in_game && was_attach) {
+        if (ls->connection->client.IsInGame() && was_attach) {
             /* already in game .. this was likely an attach connection */
             attach_send_world(ls);
         } else if (ls->enqueued_charlist) {
@@ -556,7 +556,7 @@ handle_play_server(LinkedServer *ls,
 
     assert(length == sizeof(*p));
 
-    if (c->in_game)
+    if (c->client.IsInGame())
         return PacketAction::DISCONNECT;
 
     assert(std::next(c->servers.iterator_to(*ls)) == c->servers.end());

@@ -129,6 +129,10 @@ struct World {
     IntrusiveList<Item> items;
     unsigned item_attach_sequence = 0;
 
+    bool HasStart() const noexcept {
+        return packet_start.serial != 0;
+    }
+
     Item *FindItem(uint32_t serial) noexcept;
     Item &MakeItem(uint32_t serial) noexcept;
 
