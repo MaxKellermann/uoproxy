@@ -56,7 +56,7 @@ struct login_key {
     uint32_t key1, key2;
 };
 
-static const struct login_key login_keys[] = {
+static constexpr struct login_key login_keys[] = {
     { "7.0.18.0", 0x2C612CDD, 0xA328227F },
     { "7.0.17", 0x2C29E6ED, 0xA30EFE7F },
     { "7.0.16", 0x2C11A4FD, 0xA313527F },
