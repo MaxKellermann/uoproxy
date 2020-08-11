@@ -1,7 +1,6 @@
-project('uoproxy', ['cpp', 'c'], version: '0.5',
+project('uoproxy', 'cpp', version: '0.5',
   meson_version: '>= 0.47',
   default_options: [
-    'c_std=gnu99',
     'cpp_std=gnu++17',
     'warning_level=3',
   ],
@@ -9,7 +8,6 @@ project('uoproxy', ['cpp', 'c'], version: '0.5',
 )
 
 compiler = meson.get_compiler('cpp')
-c_compiler = meson.get_compiler('c')
 
 common_cppflags = [
   '-D_GNU_SOURCE',
@@ -25,16 +23,6 @@ test_common_flags = [
 
   '-ffast-math',
   '-ftree-vectorize',
-]
-
-test_cflags = test_common_flags + [
-  '-Wmissing-prototypes',
-  '-Wshadow',
-  '-Wpointer-arith',
-  '-Wstrict-prototypes',
-  '-Wcast-qual',
-  '-Wwrite-strings',
-  '-pedantic',
 ]
 
 test_cxxflags = test_common_flags + [
@@ -78,7 +66,6 @@ if get_option('buildtype') != 'debug'
   ]
 endif
 
-add_global_arguments(common_cppflags + c_compiler.get_supported_arguments(test_cflags), language: 'c')
 add_global_arguments(common_cppflags + compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
 add_global_link_arguments(compiler.get_supported_link_arguments(test_ldflags), language: 'cpp')
 
