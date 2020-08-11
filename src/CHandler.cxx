@@ -423,77 +423,77 @@ handle_game_login(LinkedServer &ls,
 
     assert(length == sizeof(*p));
 
-    if (ls.connection->instance.config.razor_workaround) {
-        bool was_attach = false;
+    if (!ls.connection->instance.config.razor_workaround)
+        /* unless we're in Razor workaround mode, valid UO clients
+           will never send this packet since we're hiding redirects
+           from them */
+        return PacketAction::DISCONNECT;
 
-        /* I have observed the Razor client ignoring the redirect if the IP
-           address differs from what it connected to.  (I guess this is a bug in
-           RunUO & Razor).  In that case it does a gamelogin on the old
-           linked_server without reconnecting to us.
+    bool was_attach = false;
 
-           So we apply the zombie-lookup only if the remote UO client actually
-           did bother to reconnet to us. */
-        if (!ls.connection->client.IsConnected()) {
-            auto &obsolete_connection = *ls.connection;
-            auto &instance = obsolete_connection.instance;
+    /* I have observed the Razor client ignoring the redirect if the IP
+       address differs from what it connected to.  (I guess this is a bug in
+       RunUO & Razor).  In that case it does a gamelogin on the old
+       linked_server without reconnecting to us.
 
-            /* this should only happen in redirect mode.. so look for the
-               correct zombie so that we can re-use its connection to the UO
-               server. */
-            LinkedServer *zombie = instance.FindZombie(*p);
-            if (zombie == nullptr) {
-                /* houston, we have a problem -- reject the game login -- it
-                   either came in too slowly (and so we already reaped the
-                   zombie) or it was a hack attempt (wrong password) */
-                LogFormat(2, "could not find previous connection for redirected client"
-                          " -- disconnecting client!\n");
-                return PacketAction::DISCONNECT;
-            }
+       So we apply the zombie-lookup only if the remote UO client actually
+       did bother to reconnet to us. */
+    if (!ls.connection->client.IsConnected()) {
+        auto &obsolete_connection = *ls.connection;
+        auto &instance = obsolete_connection.instance;
 
-            auto &existing_connection = *zombie->connection;
-
-            /* found it! Eureka! */
-            zombie->expecting_reconnect = false;
-            was_attach = zombie->attaching;
-            zombie->attaching = false;
-
-
-            /* copy the previously detected protocol version */
-            if (!was_attach)
-                existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
-
-            /* remove the object from the old connection */
-            obsolete_connection.Remove(ls);
-            obsolete_connection.Destroy();
-
-            LogFormat(2, "attaching redirected client to its previous connection\n");
-
-            existing_connection.Add(ls);
-
-            /* delete the zombie, we don't need it anymore */
-            existing_connection.Remove(*zombie);
-            delete zombie;
-        } else
-            was_attach = ls.attaching;
-        /* after GameLogin, must enable compression. */
-        uo_server_set_compression(ls.server, true);
-        ls.got_gamelogin = true;
-        ls.attaching = false;
-        if (ls.connection->IsInGame() && was_attach) {
-            /* already in game .. this was likely an attach connection */
-            attach_send_world(&ls);
-        } else if (ls.connection->client.char_list) {
-            uo_server_send(ls.server,
-                           ls.connection->client.char_list.get(),
-                           ls.connection->client.char_list.size());
+        /* this should only happen in redirect mode.. so look for the
+           correct zombie so that we can re-use its connection to the UO
+           server. */
+        LinkedServer *zombie = instance.FindZombie(*p);
+        if (zombie == nullptr) {
+            /* houston, we have a problem -- reject the game login -- it
+               either came in too slowly (and so we already reaped the
+               zombie) or it was a hack attempt (wrong password) */
+            LogFormat(2, "could not find previous connection for redirected client"
+                      " -- disconnecting client!\n");
+            return PacketAction::DISCONNECT;
         }
-        ls.expecting_reconnect = false;
-        return PacketAction::DROP;
-    }
 
-    /* Unless we're in razor workaround mode, valid UO clients will never send
-       this packet since we're hiding redirects from them. */
-    return PacketAction::DISCONNECT;
+        auto &existing_connection = *zombie->connection;
+
+        /* found it! Eureka! */
+        zombie->expecting_reconnect = false;
+        was_attach = zombie->attaching;
+        zombie->attaching = false;
+
+
+        /* copy the previously detected protocol version */
+        if (!was_attach)
+            existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
+
+        /* remove the object from the old connection */
+        obsolete_connection.Remove(ls);
+        obsolete_connection.Destroy();
+
+        LogFormat(2, "attaching redirected client to its previous connection\n");
+
+        existing_connection.Add(ls);
+
+        /* delete the zombie, we don't need it anymore */
+        existing_connection.Remove(*zombie);
+        delete zombie;
+    } else
+        was_attach = ls.attaching;
+    /* after GameLogin, must enable compression. */
+    uo_server_set_compression(ls.server, true);
+    ls.got_gamelogin = true;
+    ls.attaching = false;
+    if (ls.connection->IsInGame() && was_attach) {
+        /* already in game .. this was likely an attach connection */
+        attach_send_world(&ls);
+    } else if (ls.connection->client.char_list) {
+        uo_server_send(ls.server,
+                       ls.connection->client.char_list.get(),
+                       ls.connection->client.char_list.size());
+    }
+    ls.expecting_reconnect = false;
+    return PacketAction::DROP;
 }
 
 static PacketAction
