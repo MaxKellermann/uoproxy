@@ -68,12 +68,11 @@ static char *simple_unicode_to_ascii(char *dest, const PackedBE16 *src,
 }
 
 static PacketAction
-handle_talk(LinkedServer *ls,
-            const char *text)
+handle_talk(LinkedServer &ls, const char *text)
 {
     /* the percent sign introduces an uoproxy command */
     if (text[0] == '%') {
-        connection_handle_command(ls, text + 1);
+        connection_handle_command(&ls, text + 1);
         return PacketAction::DROP;
     }
 
@@ -81,34 +80,34 @@ handle_talk(LinkedServer *ls,
 }
 
 static PacketAction
-handle_create_character(LinkedServer *ls,
+handle_create_character(LinkedServer &ls,
                         const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_create_character *)data;
     assert(length == sizeof(*p));
 
-    if (ls->connection->instance.config.antispy) {
+    if (ls.connection->instance.config.antispy) {
         struct uo_packet_create_character q = *p;
         q.client_ip = 0xc0a80102;
-        uo_client_send(ls->connection->client.client, &q, sizeof(q));
+        uo_client_send(ls.connection->client.client, &q, sizeof(q));
         return PacketAction::DROP;
     } else
         return PacketAction::ACCEPT;
 }
 
 static PacketAction
-handle_walk(LinkedServer *ls,
+handle_walk(LinkedServer &ls,
             const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_walk *)data;
 
     assert(length == sizeof(*p));
 
-    if (!ls->connection->IsInGame())
+    if (!ls.connection->IsInGame())
         return PacketAction::DISCONNECT;
 
-    if (ls->connection->client.reconnecting) {
-        World *world = &ls->connection->client.world;
+    if (ls.connection->client.reconnecting) {
+        World *world = &ls.connection->client.world;
 
         /* while reconnecting, reject all walk requests */
         struct uo_packet_walk_cancel p2 = {
@@ -120,19 +119,18 @@ handle_walk(LinkedServer *ls,
             .z = (int8_t)world->packet_start.z,
         };
 
-        uo_server_send(ls->server, &p2, sizeof(p2));
+        uo_server_send(ls.server, &p2, sizeof(p2));
 
         return PacketAction::DROP;
     }
 
-    connection_walk_request(ls, p);
+    connection_walk_request(&ls, p);
 
     return PacketAction::DROP;
 }
 
 static PacketAction
-handle_talk_ascii(LinkedServer *ls,
-                  const void *data, size_t length)
+handle_talk_ascii(LinkedServer &ls, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_talk_ascii *)data;
 
@@ -147,15 +145,15 @@ handle_talk_ascii(LinkedServer *ls,
 }
 
 static PacketAction
-handle_use(LinkedServer *ls,
+handle_use(LinkedServer &ls,
            const void *data, [[maybe_unused]] size_t length)
 {
     [[maybe_unused]] auto p = (const struct uo_packet_use *)data;
 
     assert(length == sizeof(*p));
 
-    if (ls->connection->client.reconnecting) {
-        uo_server_speak_console(ls->server,
+    if (ls.connection->client.reconnecting) {
+        uo_server_speak_console(ls.server,
                                 "please wait until uoproxy finishes reconnecting");
         return PacketAction::DROP;
     }
@@ -188,10 +186,10 @@ handle_use(LinkedServer *ls,
 }
 
 static PacketAction
-handle_action(LinkedServer *ls, const void *, size_t)
+handle_action(LinkedServer &ls, const void *, size_t)
 {
-    if (ls->connection->client.reconnecting) {
-        uo_server_speak_console(ls->server,
+    if (ls.connection->client.reconnecting) {
+        uo_server_speak_console(ls.server,
                                 "please wait until uoproxy finishes reconnecting");
         return PacketAction::DROP;
     }
@@ -200,21 +198,21 @@ handle_action(LinkedServer *ls, const void *, size_t)
 }
 
 static PacketAction
-handle_lift_request(LinkedServer *ls,
+handle_lift_request(LinkedServer &ls,
                     const void *data, [[maybe_unused]] size_t length)
 {
     [[maybe_unused]] auto p = (const struct uo_packet_lift_request *)data;
 
     assert(length == sizeof(*p));
 
-    if (ls->connection->client.reconnecting) {
+    if (ls.connection->client.reconnecting) {
         /* while reconnecting, reject all lift requests */
         struct uo_packet_lift_reject p2 = {
             .cmd = PCK_LiftReject,
             .reason = 0x00, /* CannotLift */
         };
 
-        uo_server_send(ls->server, &p2, sizeof(p2));
+        uo_server_send(ls.server, &p2, sizeof(p2));
 
         return PacketAction::DROP;
     }
@@ -223,21 +221,21 @@ handle_lift_request(LinkedServer *ls,
 }
 
 static PacketAction
-handle_drop(LinkedServer *ls,
+handle_drop(LinkedServer &ls,
             const void *data, [[maybe_unused]] size_t length)
 {
-    auto *client = &ls->connection->client;
+    auto *client = &ls.connection->client;
 
     if (!client->IsInGame() || client->reconnecting ||
         client->client == nullptr)
         return PacketAction::DROP;
 
-    if (ls->client_version.protocol < PROTOCOL_6) {
+    if (ls.client_version.protocol < PROTOCOL_6) {
         auto p = (const struct uo_packet_drop *)data;
 
         assert(length == sizeof(*p));
 
-        if (ls->connection->client_version.protocol < PROTOCOL_6)
+        if (ls.connection->client_version.protocol < PROTOCOL_6)
             return PacketAction::ACCEPT;
 
         struct uo_packet_drop_6 p6;
@@ -248,7 +246,7 @@ handle_drop(LinkedServer *ls,
 
         assert(length == sizeof(*p));
 
-        if (ls->connection->client_version.protocol >= PROTOCOL_6)
+        if (ls.connection->client_version.protocol >= PROTOCOL_6)
             return PacketAction::ACCEPT;
 
         struct uo_packet_drop p5;
@@ -260,21 +258,21 @@ handle_drop(LinkedServer *ls,
 }
 
 static PacketAction
-handle_resynchronize(LinkedServer *ls, const void *, size_t)
+handle_resynchronize(LinkedServer &ls, const void *, size_t)
 {
     LogFormat(3, "Resync!\n");
 
-    ls->connection->walk.seq_next = 0;
+    ls.connection->walk.seq_next = 0;
 
     return PacketAction::ACCEPT;
 }
 
 static PacketAction
-handle_target(LinkedServer *ls,
+handle_target(LinkedServer &ls,
               const void *data, [[maybe_unused]] size_t length)
 {
     [[maybe_unused]] auto p = (const struct uo_packet_target *)data;
-    World *world = &ls->connection->client.world;
+    World *world = &ls.connection->client.world;
 
     assert(length == sizeof(*p));
 
@@ -286,28 +284,26 @@ handle_target(LinkedServer *ls,
         world->packet_target.cmd = PCK_Target;
         world->packet_target.flags = 3;
 
-        ls->connection->BroadcastToInGameClientsExcept(&world->packet_target,
+        ls.connection->BroadcastToInGameClientsExcept(&world->packet_target,
                                                        sizeof(world->packet_target),
-                                                       *ls);
+                                                       ls);
     }
 
     return PacketAction::ACCEPT;
 }
 
 static PacketAction
-handle_ping(LinkedServer *ls,
-            const void *data, size_t length)
+handle_ping(LinkedServer &ls, const void *data, size_t length)
 {
-    uo_server_send(ls->server, data, length);
+    uo_server_send(ls.server, data, length);
     return PacketAction::DROP;
 }
 
 static PacketAction
-handle_account_login(LinkedServer *ls,
-                     const void *data, size_t length)
+handle_account_login(LinkedServer &ls, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_account_login *)data;
-    Connection *c = ls->connection;
+    Connection *c = ls.connection;
     const Config &config = c->instance.config;
 
     assert(length == sizeof(*p));
@@ -344,7 +340,7 @@ handle_account_login(LinkedServer *ls,
         strcpy(p2.game_servers[0].name, "attach");
         p2.game_servers[0].address = 0xdeadbeef;
 
-        uo_server_send(ls->server, &p2, sizeof(p2));
+        uo_server_send(ls.server, &p2, sizeof(p2));
         return PacketAction::DROP;
     }
 
@@ -380,7 +376,7 @@ handle_account_login(LinkedServer *ls,
             p2->game_servers[i].address = sin->sin_addr.s_addr;
         }
 
-        uo_server_send(ls->server, p2_.get(), p2_.size());
+        uo_server_send(ls.server, p2_.get(), p2_.size());
         return PacketAction::DROP;
     } else if (config.login_address != nullptr) {
         /* connect to the real login server */
@@ -393,7 +389,7 @@ handle_account_login(LinkedServer *ls,
                generic enough to be useless */
             seed = 0xc0a80102;
         else
-            seed = uo_server_seed(ls->server);
+            seed = uo_server_seed(ls.server);
 
         int ret = c->Connect(config.login_address->ai_addr,
                              config.login_address->ai_addrlen,
@@ -406,7 +402,7 @@ handle_account_login(LinkedServer *ls,
             response.cmd = PCK_AccountLoginReject;
             response.reason = 0x02; /* blocked */
 
-            uo_server_send(ls->server, &response,
+            uo_server_send(ls.server, &response,
                            sizeof(response));
             return PacketAction::DROP;
         }
@@ -420,14 +416,14 @@ handle_account_login(LinkedServer *ls,
 }
 
 static PacketAction
-handle_game_login(LinkedServer *ls,
+handle_game_login(LinkedServer &ls,
                   const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_game_login *)data;
 
     assert(length == sizeof(*p));
 
-    if (ls->connection->instance.config.razor_workaround) {
+    if (ls.connection->instance.config.razor_workaround) {
         bool was_attach = false;
 
         /* I have observed the Razor client ignoring the redirect if the IP
@@ -437,8 +433,8 @@ handle_game_login(LinkedServer *ls,
 
            So we apply the zombie-lookup only if the remote UO client actually
            did bother to reconnet to us. */
-        if (!ls->connection->client.IsConnected()) {
-            auto &obsolete_connection = *ls->connection;
+        if (!ls.connection->client.IsConnected()) {
+            auto &obsolete_connection = *ls.connection;
             auto &instance = obsolete_connection.instance;
 
             /* this should only happen in redirect mode.. so look for the
@@ -467,31 +463,31 @@ handle_game_login(LinkedServer *ls,
                 existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
 
             /* remove the object from the old connection */
-            obsolete_connection.Remove(*ls);
+            obsolete_connection.Remove(ls);
             obsolete_connection.Destroy();
 
             LogFormat(2, "attaching redirected client to its previous connection\n");
 
-            existing_connection.Add(*ls);
+            existing_connection.Add(ls);
 
             /* delete the zombie, we don't need it anymore */
             existing_connection.Remove(*zombie);
             delete zombie;
         } else
-            was_attach = ls->attaching;
+            was_attach = ls.attaching;
         /* after GameLogin, must enable compression. */
-        uo_server_set_compression(ls->server, true);
-        ls->got_gamelogin = true;
-        ls->attaching = false;
-        if (ls->connection->IsInGame() && was_attach) {
+        uo_server_set_compression(ls.server, true);
+        ls.got_gamelogin = true;
+        ls.attaching = false;
+        if (ls.connection->IsInGame() && was_attach) {
             /* already in game .. this was likely an attach connection */
-            attach_send_world(ls);
-        } else if (ls->connection->client.char_list) {
-            uo_server_send(ls->server,
-                           ls->connection->client.char_list.get(),
-                           ls->connection->client.char_list.size());
+            attach_send_world(&ls);
+        } else if (ls.connection->client.char_list) {
+            uo_server_send(ls.server,
+                           ls.connection->client.char_list.get(),
+                           ls.connection->client.char_list.size());
         }
-        ls->expecting_reconnect = false;
+        ls.expecting_reconnect = false;
         return PacketAction::DROP;
     }
 
@@ -501,20 +497,20 @@ handle_game_login(LinkedServer *ls,
 }
 
 static PacketAction
-handle_play_character(LinkedServer *ls,
+handle_play_character(LinkedServer &ls,
                       const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_play_character *)data;
 
     assert(length == sizeof(*p));
 
-    ls->connection->character_index = p->slot;
+    ls.connection->character_index = p->slot;
 
     return PacketAction::ACCEPT;
 }
 
 static void
-redirect_to_self(LinkedServer *ls)
+redirect_to_self(LinkedServer &ls)
 {
     struct uo_packet_relay relay;
     static uint32_t authid = 0;
@@ -523,22 +519,22 @@ redirect_to_self(LinkedServer *ls)
     if (!authid) authid = time(0);
 
     relay.cmd = PCK_Relay;
-    relay.port = PackedBE16::FromBE(uo_server_getsockport(ls->server));
-    relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls->server));
+    relay.port = PackedBE16::FromBE(uo_server_getsockport(ls.server));
+    relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls.server));
     addr.s_addr = relay.ip.raw();
     LogFormat(8, "redirecting to: %s:%u\n",
               inet_ntoa(addr), (unsigned)relay.port);;
-    relay.auth_id = ls->auth_id = authid++;
-    ls->expecting_reconnect = true;
-    uo_server_send(ls->server, &relay, sizeof(relay));
+    relay.auth_id = ls.auth_id = authid++;
+    ls.expecting_reconnect = true;
+    uo_server_send(ls.server, &relay, sizeof(relay));
 }
 
 static PacketAction
-handle_play_server(LinkedServer *ls,
+handle_play_server(LinkedServer &ls,
                    const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_play_server *)data;
-    auto &c = *ls->connection;
+    auto &c = *ls.connection;
     auto &instance = c.instance;
     const auto &config = instance.config;
     PacketAction retaction = PacketAction::DROP;
@@ -548,25 +544,25 @@ handle_play_server(LinkedServer *ls,
     if (c.IsInGame())
         return PacketAction::DISCONNECT;
 
-    assert(std::next(c.servers.iterator_to(*ls)) == c.servers.end());
+    assert(std::next(c.servers.iterator_to(ls)) == c.servers.end());
 
     c.server_index = p->index;
 
     auto *const c2 = instance.FindAttachConnection(c);
     if (c2 != nullptr) {
         /* remove the object from the old connection */
-        c.Remove(*ls);
+        c.Remove(ls);
         c.Destroy();
 
-        c2->Add(*ls);
+        c2->Add(ls);
 
         if (config.razor_workaround) { ///< need to send redirect
             /* attach it to the new connection and send redirect (below) */
-            ls->attaching = true;
+            ls.attaching = true;
         }  else {
             /* attach it to the new connection and begin playing right away */
             LogFormat(2, "attaching connection\n");
-            attach_send_world(ls);
+            attach_send_world(&ls);
         }
 
         retaction = PacketAction::DROP;
@@ -625,21 +621,19 @@ handle_play_server(LinkedServer *ls,
 }
 
 static PacketAction
-handle_spy(LinkedServer *ls,
-           const void *data, size_t length)
+handle_spy(LinkedServer &ls, const void *data, size_t length)
 {
     (void)data;
     (void)length;
 
-    if (ls->connection->instance.config.antispy)
+    if (ls.connection->instance.config.antispy)
         return PacketAction::DROP;
 
     return PacketAction::ACCEPT;
 }
 
 static PacketAction
-handle_talk_unicode(LinkedServer *ls,
-                    const void *data, size_t length)
+handle_talk_unicode(LinkedServer &ls, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_talk_unicode *)data;
 
@@ -679,8 +673,7 @@ handle_talk_unicode(LinkedServer *ls,
 }
 
 static PacketAction
-handle_gump_response(LinkedServer *ls,
-                     const void *data, size_t length)
+handle_gump_response(LinkedServer &ls, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_gump_response *)data;
 
@@ -696,29 +689,28 @@ handle_gump_response(LinkedServer *ls,
         .button_id = 0,
     };
 
-    ls->connection->BroadcastToInGameClientsExcept(&close, sizeof(close), *ls);
+    ls.connection->BroadcastToInGameClientsExcept(&close, sizeof(close), ls);
 
     return PacketAction::ACCEPT;
 }
 
 static PacketAction
-handle_client_version(LinkedServer *ls,
-                      const void *data, size_t length)
+handle_client_version(LinkedServer &ls, const void *data, size_t length)
 {
-    Connection *c = ls->connection;
+    Connection *c = ls.connection;
     auto p = (const struct uo_packet_client_version *)data;
 
-    if (!ls->client_version.IsDefined()) {
-        bool was_unkown = ls->client_version.protocol == PROTOCOL_UNKNOWN;
-        int ret = ls->client_version.Set(p, length);
+    if (!ls.client_version.IsDefined()) {
+        bool was_unkown = ls.client_version.protocol == PROTOCOL_UNKNOWN;
+        int ret = ls.client_version.Set(p, length);
         if (ret > 0) {
             if (was_unkown)
-                uo_server_set_protocol(ls->server,
-                                       ls->client_version.protocol);
+                uo_server_set_protocol(ls.server,
+                                       ls.client_version.protocol);
 
             LogFormat(2, "client version '%s', protocol '%s'\n",
-                      ls->client_version.packet->version,
-                      protocol_name(ls->client_version.protocol));
+                      ls.client_version.packet->version,
+                      protocol_name(ls.client_version.protocol));
         }
     }
 
@@ -748,7 +740,7 @@ handle_client_version(LinkedServer *ls,
 }
 
 static PacketAction
-handle_extended(LinkedServer *, const void *data, size_t length)
+handle_extended(LinkedServer &, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_extended *)data;
 
@@ -761,24 +753,24 @@ handle_extended(LinkedServer *, const void *data, size_t length)
 }
 
 static PacketAction
-handle_hardware(LinkedServer *ls, const void *, size_t)
+handle_hardware(LinkedServer &ls, const void *, size_t)
 {
-    if (ls->connection->instance.config.antispy)
+    if (ls.connection->instance.config.antispy)
         return PacketAction::DROP;
 
     return PacketAction::ACCEPT;
 }
 
 static PacketAction
-handle_seed(LinkedServer *ls, const void *data, [[maybe_unused]] size_t length)
+handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_seed *)data;
 
     assert(length == sizeof(*p));
 
-    if (ls->client_version.seed == nullptr) {
-        ls->client_version.Seed(*p);
-        uo_server_set_protocol(ls->server, ls->client_version.protocol);
+    if (ls.client_version.seed == nullptr) {
+        ls.client_version.Seed(*p);
+        uo_server_set_protocol(ls.server, ls.client_version.protocol);
 
         LogFormat(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
                   (unsigned)p->client_major,
@@ -787,13 +779,13 @@ handle_seed(LinkedServer *ls, const void *data, [[maybe_unused]] size_t length)
                   (unsigned)p->client_patch);
     }
 
-    if (!ls->connection->client_version.IsDefined() &&
-        ls->connection->client_version.seed == nullptr) {
-        ls->connection->client_version.Seed(*p);
+    if (!ls.connection->client_version.IsDefined() &&
+        ls.connection->client_version.seed == nullptr) {
+        ls.connection->client_version.Seed(*p);
 
-        if (ls->connection->client.client != nullptr)
-            uo_client_set_protocol(ls->connection->client.client,
-                                   ls->connection->client_version.protocol);
+        if (ls.connection->client.client != nullptr)
+            uo_client_set_protocol(ls.connection->client.client,
+                                   ls.connection->client_version.protocol);
     }
 
     return PacketAction::DROP;

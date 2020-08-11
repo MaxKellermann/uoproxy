@@ -43,13 +43,13 @@ enum class PacketAction {
 
 struct client_packet_binding {
     unsigned char cmd;
-    PacketAction (*handler)(Connection *c,
+    PacketAction (*handler)(Connection &c,
                             const void *data, size_t length);
 };
 
 struct server_packet_binding {
     unsigned char cmd;
-    PacketAction (*handler)(LinkedServer *ls,
+    PacketAction (*handler)(LinkedServer &ls,
                             const void *data, size_t length);
 };
 
@@ -58,12 +58,12 @@ extern const struct server_packet_binding client_packet_bindings[];
 
 PacketAction
 handle_packet_from_server(const struct client_packet_binding *bindings,
-                          Connection *c,
+                          Connection &c,
                           const void *data, size_t length);
 
 PacketAction
 handle_packet_from_client(const struct server_packet_binding *bindings,
-                          LinkedServer *ls,
+                          LinkedServer &ls,
                           const void *data, size_t length);
 
 #endif

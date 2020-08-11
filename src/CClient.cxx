@@ -36,7 +36,7 @@ Connection::OnClientPacket(const void *data, size_t length)
     assert(client.client != nullptr);
 
     const auto action = handle_packet_from_server(server_packet_bindings,
-                                                  this, data, length);
+                                                  *this, data, length);
     switch (action) {
     case PacketAction::ACCEPT:
         if (!client.reconnecting)

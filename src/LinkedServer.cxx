@@ -60,7 +60,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
     assert(!is_zombie);
 
     const auto action = handle_packet_from_client(client_packet_bindings,
-                                                  this, data, length);
+                                                  *this, data, length);
     switch (action) {
     case PacketAction::ACCEPT:
         if (c->client.client != nullptr &&
