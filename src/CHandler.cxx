@@ -438,7 +438,8 @@ handle_game_login(LinkedServer *ls,
            So we apply the zombie-lookup only if the remote UO client actually
            did bother to reconnet to us. */
         if (!ls->connection->client.client) {
-            auto &instance = ls->connection->instance;
+            auto &obsolete_connection = *ls->connection;
+            auto &instance = obsolete_connection.instance;
 
             /* this should only happen in redirect mode.. so look for the
                correct zombie so that we can re-use its connection to the UO
@@ -453,24 +454,25 @@ handle_game_login(LinkedServer *ls,
                 return PacketAction::DISCONNECT;
             }
 
+            auto &existing_connection = *zombie->connection;
+
             /* found it! Eureka! */
             zombie->expecting_reconnect = false;
             was_attach = zombie->attaching;
             zombie->attaching = false;
 
-            Connection *c = ls->connection;
 
             /* copy the previously detected protocol version */
             if (!was_attach)
-                zombie->connection->client_version.protocol = c->client_version.protocol;
+                existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
 
             /* remove the object from the old connection */
-            c->Remove(*ls);
-            c->Destroy();
+            obsolete_connection.Remove(*ls);
+            obsolete_connection.Destroy();
 
             LogFormat(2, "attaching redirected client to its previous connection\n");
 
-            zombie->connection->Add(*ls);
+            existing_connection.Add(*ls);
         } else
             was_attach = ls->attaching;
         /* after GameLogin, must enable compression. */
