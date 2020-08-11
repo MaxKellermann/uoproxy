@@ -437,7 +437,7 @@ handle_game_login(LinkedServer *ls,
 
            So we apply the zombie-lookup only if the remote UO client actually
            did bother to reconnet to us. */
-        if (!ls->connection->client.client) {
+        if (!ls->connection->client.IsConnected()) {
             auto &obsolete_connection = *ls->connection;
             auto &instance = obsolete_connection.instance;
 
