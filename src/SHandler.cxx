@@ -348,7 +348,7 @@ handle_popup_message(Connection *c, const void *data, [[maybe_unused]] size_t le
         }
 
         c->ScheduleReconnect();
-        return PacketAction::DROP;
+        return PacketAction::DELETED;
     }
 
     return PacketAction::ACCEPT;
@@ -490,7 +490,7 @@ handle_account_login_reject(Connection *c, const void *data, [[maybe_unused]] si
                   p->reason);
 
         c->ScheduleReconnect();
-        return PacketAction::DROP;
+        return PacketAction::DELETED;
     }
 
     if (c->IsInGame())
