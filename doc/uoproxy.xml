@@ -45,24 +45,6 @@
       <programlisting>/etc/init.d/uoproxy restart</programlisting>
     </section>
 
-    <section id="install_redhat">
-      <title>Installation on RedHat / Ubuntu / SuSE</title>
-
-      <para>
-        Download the RPM package from the <filename>uoproxy</filename>
-        home page.  Install it with <command>rpm -i</command> as root:
-      </para>
-
-      <programlisting>rpm -i uoproxy-0.2-1.i386.rpm</programlisting>
-
-      <para>
-        Edit the file <filename>/etc/uoproxy.conf</filename> and
-        start the daemon:
-      </para>
-
-      <programlisting>uoproxy -D</programlisting>
-    </section>
-
     <section id="compile">
       <title>Compiling <filename>uoproxy</filename> from sources</title>
 
