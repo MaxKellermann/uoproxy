@@ -76,7 +76,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     StatefulClient client;
 
     /* state */
-    char username[30]{}, password[30]{};
+    UO::CredentialsFragment credentials{};
 
     unsigned server_index = 0;
 

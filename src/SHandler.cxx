@@ -598,9 +598,7 @@ handle_relay(Connection *c, const void *data, [[maybe_unused]] size_t length)
 
     login.cmd = PCK_GameLogin;
     login.auth_id = relay.auth_id;
-
-    memcpy(login.credentials.username, c->username, sizeof(login.credentials.username));
-    memcpy(login.credentials.password, c->password, sizeof(login.credentials.password));
+    login.credentials = c->credentials;
 
     uo_client_send(c->client.client, &login, sizeof(login));
 

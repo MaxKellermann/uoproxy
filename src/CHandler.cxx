@@ -311,8 +311,6 @@ handle_account_login(LinkedServer *ls,
     const Config &config = c->instance.config;
 
     assert(length == sizeof(*p));
-    assert(sizeof(p->credentials.username) == sizeof(ls->connection->username));
-    assert(sizeof(p->credentials.password) == sizeof(ls->connection->password));
 
     if (c->in_game)
         return PacketAction::DISCONNECT;
@@ -327,8 +325,7 @@ handle_account_login(LinkedServer *ls,
         return PacketAction::DISCONNECT;
     }
 
-    memcpy(c->username, p->credentials.username, sizeof(c->username));
-    memcpy(c->password, p->credentials.password, sizeof(c->password));
+    c->credentials = p->credentials;
 
     Connection *other = c->instance.FindAttachConnection(*c);
     if (other != nullptr) {
@@ -433,8 +430,6 @@ handle_game_login(LinkedServer *ls,
     auto p = (const struct uo_packet_game_login *)data;
 
     assert(length == sizeof(*p));
-    assert(sizeof(p->credentials.username) == sizeof(ls->connection->username));
-    assert(sizeof(p->credentials.password) == sizeof(ls->connection->password));
 
     if (ls->connection->instance.config.razor_workaround) {
         bool was_attach = false;
@@ -457,8 +452,7 @@ handle_game_login(LinkedServer *ls,
                 for (auto &ls2 : c.servers) {
                     if (ls2.is_zombie
                         && ls2.auth_id == p->auth_id
-                        && !strcmp(c.username, p->credentials.username)
-                        && !strcmp(c.password, p->credentials.password)) {
+                        && c.credentials == p->credentials) {
                         /* found it! Eureka! */
                         reuse_conn = &c;
                         ls2.expecting_reconnect = false;
@@ -620,9 +614,7 @@ handle_play_server(LinkedServer *ls,
         /* send game login to new server */
         login.cmd = PCK_GameLogin;
         login.auth_id = seed;
-
-        memcpy(login.credentials.username, c->username, sizeof(login.credentials.username));
-        memcpy(login.credentials.password, c->password, sizeof(login.credentials.password));
+        login.credentials = c->credentials;
 
         uo_client_send(c->client.client, &login, sizeof(login));
 

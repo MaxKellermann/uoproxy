@@ -81,8 +81,7 @@ Instance::FindAttachConnection(Connection &c) noexcept
 {
     for (auto &i : connections)
         if (&i != &c && i.CanAttach() &&
-            strncmp(c.username, i.username, sizeof(c.username)) == 0 &&
-            strncmp(c.password, i.password, sizeof(c.password)) == 0 &&
+            c.credentials == i.credentials &&
             c.server_index == i.server_index)
             return &i;
 

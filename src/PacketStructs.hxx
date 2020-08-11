@@ -29,12 +29,18 @@
 #endif
 
 #include <stdint.h>
+#include <string.h>
 
 namespace UO {
 
 struct CredentialsFragment {
     char username[30];
     char password[30];
+
+    bool operator==(const CredentialsFragment &other) const noexcept {
+        return strncmp(username, other.username, sizeof(username)) == 0 &&
+            strncmp(password, other.password, sizeof(password)) == 0;
+    }
 };
 
 static_assert(alignof(CredentialsFragment) == 1);

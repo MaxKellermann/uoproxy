@@ -71,16 +71,13 @@ connection_try_reconnect(Connection *c)
         ret = c->Connect(server_address->ai_addr,
                          server_address->ai_addrlen, seed);
         if (ret == 0) {
-            struct uo_packet_game_login p = {
+            const struct uo_packet_game_login p = {
                 .cmd = PCK_GameLogin,
                 .auth_id = seed,
-                .credentials = {},
+                .credentials = c->credentials,
             };
 
             LogFormat(2, "connected, doing GameLogin\n");
-
-            memcpy(p.credentials.username, c->username, sizeof(p.credentials.username));
-            memcpy(p.credentials.password, c->password, sizeof(p.credentials.password));
 
             uo_client_send(c->client.client, &p, sizeof(p));
         } else {
@@ -94,16 +91,13 @@ connection_try_reconnect(Connection *c)
                          config.login_address->ai_addrlen,
                          seed);
         if (ret == 0) {
-            struct uo_packet_account_login p = {
+            const struct uo_packet_account_login p = {
                 .cmd = PCK_AccountLogin,
-                .credentials = {},
+                .credentials = c->credentials,
                 .unknown1 = {},
             };
 
             LogFormat(2, "connected, doing AccountLogin\n");
-
-            memcpy(p.credentials.username, c->username, sizeof(p.credentials.username));
-            memcpy(p.credentials.password, c->password, sizeof(p.credentials.password));
 
             uo_client_send(c->client.client, &p, sizeof(p));
         } else {
