@@ -38,8 +38,9 @@ static void
 zombie_timeout_event_callback(int, short, void *ctx) noexcept
 {
     auto &ls = *(LinkedServer *)ctx;
-    ls.expecting_reconnect = false;
-    ls.OnServerDisconnect();
+
+    auto &c = *ls.connection;
+    c.RemoveCheckEmpty(ls);
 }
 
 inline void
