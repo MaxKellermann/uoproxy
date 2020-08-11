@@ -794,110 +794,40 @@ handle_protocol_extension(Connection *c, const void *data, size_t length)
 }
 
 const struct client_packet_binding server_packet_bindings[] = {
-    { .cmd = PCK_MobileStatus, /* 0x11 */
-      .handler = handle_mobile_status,
-    },
-    { .cmd = PCK_WorldItem, /* 0x1a */
-      .handler = handle_world_item,
-    },
-    { .cmd = PCK_Start, /* 0x1b */
-      .handler = handle_start,
-    },
-    { .cmd = PCK_SpeakAscii, /* 0x1c */
-      .handler = handle_speak_ascii,
-    },
-    { .cmd = PCK_Delete, /* 0x1d */
-      .handler = handle_delete,
-    },
-    { .cmd = PCK_MobileUpdate, /* 0x20 */
-      .handler = handle_mobile_update,
-    },
-    { .cmd = PCK_WalkCancel, /* 0x21 */
-      .handler = handle_walk_cancel,
-    },
-    { .cmd = PCK_WalkAck, /* 0x22 */
-      .handler = handle_walk_ack,
-    },
-    { .cmd = PCK_ContainerOpen, /* 0x24 */
-      .handler = handle_container_open,
-    },
-    { .cmd = PCK_ContainerUpdate, /* 0x25 */
-      .handler = handle_container_update,
-    },
-    { .cmd = PCK_Equip, /* 0x2e */
-      .handler = handle_equip,
-    },
-    { .cmd = PCK_ContainerContent, /* 0x3c */
-      .handler = handle_container_content,
-    },
-    { .cmd = PCK_PersonalLightLevel, /* 0x4e */
-      .handler = handle_personal_light_level,
-    },
-    { .cmd = PCK_GlobalLightLevel, /* 0x4f */
-      .handler = handle_global_light_level,
-    },
-    { .cmd = PCK_PopupMessage, /* 0x53 */
-      .handler = handle_popup_message,
-    },
-    { .cmd = PCK_ReDrawAll, /* 0x55 */
-      .handler = handle_login_complete,
-    },
-    { .cmd = PCK_Target, /* 0x6c */
-      .handler = handle_target,
-    },
-    { .cmd = PCK_WarMode, /* 0x72 */
-      .handler = handle_war_mode,
-    },
-    { .cmd = PCK_Ping, /* 0x73 */
-      .handler = handle_ping,
-    },
-    { .cmd = PCK_ZoneChange, /* 0x76 */
-      .handler = handle_zone_change,
-    },
-    { .cmd = PCK_MobileMoving, /* 0x77 */
-      .handler = handle_mobile_moving,
-    },
-    { .cmd = PCK_MobileIncoming, /* 0x78 */
-      .handler = handle_mobile_incoming,
-    },
-    { .cmd = PCK_CharList3, /* 0x81 */
-      .handler = handle_char_list,
-    },
-    { .cmd = PCK_AccountLoginReject, /* 0x82 */
-      .handler = handle_account_login_reject,
-    },
-    { .cmd = PCK_CharList2, /* 0x86 */
-      .handler = handle_char_list,
-    },
-    { .cmd = PCK_Relay, /* 0x8c */
-      .handler = handle_relay,
-    },
-    { .cmd = PCK_ServerList, /* 0xa8 */
-      .handler = handle_server_list,
-    },
-    { .cmd = PCK_CharList, /* 0xa9 */
-      .handler = handle_char_list,
-    },
-    { .cmd = PCK_SpeakUnicode, /* 0xae */
-      .handler = handle_speak_unicode,
-    },
-    { .cmd = PCK_SupportedFeatures, /* 0xb9 */
-      .handler = handle_supported_features,
-    },
-    { .cmd = PCK_Season, /* 0xbc */
-      .handler = handle_season,
-    },
-    { .cmd = PCK_ClientVersion, /* 0xbd */
-      .handler = handle_client_version,
-    },
-    { .cmd = PCK_Extended, /* 0xbf */
-      .handler = handle_extended,
-    },
-    { .cmd = PCK_WorldItem7, /* 0xf3*/
-      .handler = handle_world_item_7,
-    },
-    { .cmd = PCK_ProtocolExtension, /* 0xf0 */
-      .handler = handle_protocol_extension,
-    },
+    { PCK_MobileStatus, handle_mobile_status }, /* 0x11 */
+    { PCK_WorldItem, handle_world_item }, /* 0x1a */
+    { PCK_Start, handle_start }, /* 0x1b */
+    { PCK_SpeakAscii, handle_speak_ascii }, /* 0x1c */
+    { PCK_Delete, handle_delete }, /* 0x1d */
+    { PCK_MobileUpdate, handle_mobile_update }, /* 0x20 */
+    { PCK_WalkCancel, handle_walk_cancel }, /* 0x21 */
+    { PCK_WalkAck, handle_walk_ack }, /* 0x22 */
+    { PCK_ContainerOpen, handle_container_open }, /* 0x24 */
+    { PCK_ContainerUpdate, handle_container_update }, /* 0x25 */
+    { PCK_Equip, handle_equip }, /* 0x2e */
+    { PCK_ContainerContent, handle_container_content }, /* 0x3c */
+    { PCK_PersonalLightLevel, handle_personal_light_level }, /* 0x4e */
+    { PCK_GlobalLightLevel, handle_global_light_level }, /* 0x4f */
+    { PCK_PopupMessage, handle_popup_message }, /* 0x53 */
+    { PCK_ReDrawAll, handle_login_complete }, /* 0x55 */
+    { PCK_Target, handle_target }, /* 0x6c */
+    { PCK_WarMode, handle_war_mode }, /* 0x72 */
+    { PCK_Ping, handle_ping }, /* 0x73 */
+    { PCK_ZoneChange, handle_zone_change }, /* 0x76 */
+    { PCK_MobileMoving, handle_mobile_moving }, /* 0x77 */
+    { PCK_MobileIncoming, handle_mobile_incoming }, /* 0x78 */
+    { PCK_CharList3, handle_char_list }, /* 0x81 */
+    { PCK_AccountLoginReject, handle_account_login_reject }, /* 0x82 */
+    { PCK_CharList2, handle_char_list }, /* 0x86 */
+    { PCK_Relay, handle_relay }, /* 0x8c */
+    { PCK_ServerList, handle_server_list }, /* 0xa8 */
+    { PCK_CharList, handle_char_list }, /* 0xa9 */
+    { PCK_SpeakUnicode, handle_speak_unicode }, /* 0xae */
+    { PCK_SupportedFeatures, handle_supported_features }, /* 0xb9 */
+    { PCK_Season, handle_season }, /* 0xbc */
+    { PCK_ClientVersion, handle_client_version }, /* 0xbd */
+    { PCK_Extended, handle_extended }, /* 0xbf */
+    { PCK_WorldItem7, handle_world_item_7 }, /* 0xf3 */
+    { PCK_ProtocolExtension, handle_protocol_extension }, /* 0xf0 */
     {}
 };

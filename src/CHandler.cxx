@@ -817,72 +817,28 @@ handle_seed(LinkedServer *ls, const void *data, [[maybe_unused]] size_t length)
 }
 
 const struct server_packet_binding client_packet_bindings[] = {
-    { .cmd = PCK_CreateCharacter,
-      .handler = handle_create_character,
-    },
-    { .cmd = PCK_Walk,
-      .handler = handle_walk,
-    },
-    { .cmd = PCK_TalkAscii,
-      .handler = handle_talk_ascii,
-    },
-    { .cmd = PCK_Use,
-      .handler = handle_use,
-    },
-    { .cmd = PCK_Action,
-      .handler = handle_action,
-    },
-    { .cmd = PCK_LiftRequest,
-      .handler = handle_lift_request,
-    },
-    { .cmd = PCK_Drop, /* 0x08 */
-      .handler = handle_drop,
-    },
-    { .cmd = PCK_Resynchronize,
-      .handler = handle_resynchronize,
-    },
-    { .cmd = PCK_Target, /* 0x6c */
-      .handler = handle_target,
-    },
-    { .cmd = PCK_Ping,
-      .handler = handle_ping,
-    },
-    { .cmd = PCK_AccountLogin,
-      .handler = handle_account_login,
-    },
-    { .cmd = PCK_AccountLogin2,
-      .handler = handle_account_login,
-    },
-    { .cmd = PCK_GameLogin,
-      .handler = handle_game_login,
-    },
-    { .cmd = PCK_PlayCharacter,
-      .handler = handle_play_character,
-    },
-    { .cmd = PCK_PlayServer,
-      .handler = handle_play_server,
-    },
-    { .cmd = PCK_Spy, /* 0xa4 */
-      .handler = handle_spy,
-    },
-    { .cmd = PCK_TalkUnicode,
-      .handler = handle_talk_unicode,
-    },
-    { .cmd = PCK_GumpResponse,
-      .handler = handle_gump_response,
-    },
-    { .cmd = PCK_ClientVersion, /* 0xbd */
-      .handler = handle_client_version,
-    },
-    { .cmd = PCK_Extended,
-      .handler = handle_extended,
-    },
-    { .cmd = PCK_Hardware, /* 0xd9 */
-      .handler = handle_hardware,
-    },
-    { .cmd = PCK_Seed, /* 0xef */
-      .handler = handle_seed,
-    },
+    { PCK_CreateCharacter, handle_create_character },
+    { PCK_Walk, handle_walk },
+    { PCK_TalkAscii, handle_talk_ascii },
+    { PCK_Use, handle_use },
+    { PCK_Action, handle_action },
+    { PCK_LiftRequest, handle_lift_request },
+    { PCK_Drop, handle_drop }, /* 0x08 */
+    { PCK_Resynchronize, handle_resynchronize },
+    { PCK_Target, handle_target }, /* 0x6c */
+    { PCK_Ping, handle_ping },
+    { PCK_AccountLogin, handle_account_login },
+    { PCK_AccountLogin2, handle_account_login },
+    { PCK_GameLogin, handle_game_login },
+    { PCK_PlayCharacter, handle_play_character },
+    { PCK_PlayServer, handle_play_server },
+    { PCK_Spy, handle_spy }, /* 0xa4 */
+    { PCK_TalkUnicode, handle_talk_unicode },
+    { PCK_GumpResponse, handle_gump_response },
+    { PCK_ClientVersion, handle_client_version }, /* 0xbd */
+    { PCK_Extended, handle_extended },
+    { PCK_Hardware, handle_hardware }, /* 0xd9 */
+    { PCK_Seed, handle_seed }, /* 0xef */
     {}
 };
 
