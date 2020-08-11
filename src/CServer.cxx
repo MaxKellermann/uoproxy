@@ -20,6 +20,7 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
+#include "Log.hxx"
 
 #include <assert.h>
 
@@ -41,4 +42,19 @@ Connection::Remove(LinkedServer &ls) noexcept
 
     ls.connection = nullptr;
     ls.unlink();
+}
+
+void
+Connection::RemoveCheckEmpty(LinkedServer &ls) noexcept
+{
+    Remove(ls);
+
+    if (!servers.empty()) {
+        LogFormat(2, "client disconnected, server connection still in use\n");
+    } else if (background && in_game) {
+        LogFormat(1, "client disconnected, backgrounding\n");
+    } else {
+        LogFormat(1, "last client disconnected, removing connection\n");
+        Destroy();
+    }
 }

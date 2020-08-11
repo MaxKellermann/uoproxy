@@ -124,6 +124,13 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     void Add(LinkedServer &ls) noexcept;
     void Remove(LinkedServer &ls) noexcept;
 
+    /**
+     * Remove the specified #LinkedServer and check if this is the
+     * last connection from a client; if so, it may destroy the whole
+     * #Connection.
+     */
+    void RemoveCheckEmpty(LinkedServer &ls) noexcept;
+
     void BroadcastToInGameClients(const void *data, size_t length) noexcept;
     void BroadcastToInGameClientsExcept(const void *data, size_t length,
                                         LinkedServer &except) noexcept;

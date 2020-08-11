@@ -110,16 +110,7 @@ LinkedServer::OnServerDisconnect() noexcept
 
     Connection *c = connection;
     assert(c != nullptr);
-    c->Remove(*this);
-
-    if (!c->servers.empty()) {
-        LogFormat(2, "client disconnected, server connection still in use\n");
-    } else if (c->background && c->in_game) {
-        LogFormat(1, "client disconnected, backgrounding\n");
-    } else {
-        LogFormat(1, "last client disconnected, removing connection\n");
-        c->Destroy();
-    }
+    c->RemoveCheckEmpty(*this);
 
     delete this;
 }
