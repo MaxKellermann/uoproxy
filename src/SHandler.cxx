@@ -577,6 +577,15 @@ handle_server_list(Connection &c, const void *data, size_t length)
     if (length < sizeof(*p) || p->unknown_0x5d != 0x5d)
         return PacketAction::DISCONNECT;
 
+    const unsigned count = p->num_game_servers;
+    LogFormat(5, "serverlist: %u servers\n", count);
+
+    const auto *server_info = p->game_servers;
+    if (length != sizeof(*p) + (count - 1) * sizeof(*server_info))
+        return PacketAction::DISCONNECT;
+
+    c.client.server_list = {p, length};
+
     if (c.instance.config.antispy)
         send_antispy(c.client.client);
 
@@ -590,13 +599,6 @@ handle_server_list(Connection &c, const void *data, size_t length)
 
         return PacketAction::DROP;
     }
-
-    const unsigned count = p->num_game_servers;
-    LogFormat(5, "serverlist: %u servers\n", count);
-
-    const auto *server_info = p->game_servers;
-    if (length != sizeof(*p) + (count - 1) * sizeof(*server_info))
-        return PacketAction::DISCONNECT;
 
     for (unsigned i = 0; i < count; i++, server_info++) {
         const unsigned k = server_info->index;

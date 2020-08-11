@@ -38,6 +38,13 @@ struct StatefulClient {
     struct event ping_event;
 
     /**
+     * The most recent game server list packet received from the
+     * server.  This does not get cleared when reconnecting, but gets
+     * overwritten when a new one is received.
+     */
+    VarStructPtr<struct uo_packet_server_list> server_list;
+
+    /**
      * The most recent character list packet received from the server.
      * This does not get cleared when reconnecting, but gets
      * overwritten when a new one is received.
