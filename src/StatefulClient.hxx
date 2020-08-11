@@ -63,6 +63,10 @@ struct StatefulClient {
         return world.HasStart();
     }
 
+    bool IsConnected() const noexcept {
+        return client != nullptr;
+    }
+
     void Connect(int fd, const ClientVersion &version,
                  uint32_t seed,
                  UO::ClientHandler &handler);

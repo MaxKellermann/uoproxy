@@ -51,7 +51,7 @@ Connection::RemoveCheckEmpty(LinkedServer &ls) noexcept
 
     if (!servers.empty()) {
         LogFormat(2, "client disconnected, server connection still in use\n");
-    } else if (background && client.IsInGame()) {
+    } else if (background && client.IsConnected() && client.IsInGame()) {
         LogFormat(1, "client disconnected, backgrounding\n");
     } else {
         LogFormat(1, "last client disconnected, removing connection\n");
