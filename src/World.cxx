@@ -22,7 +22,6 @@
 #include "Log.hxx"
 #include "Bridge.hxx"
 #include "PacketLengths.hxx"
-#include "pversion.h"
 
 #include <assert.h>
 #include <stdlib.h>

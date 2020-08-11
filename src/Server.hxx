@@ -21,7 +21,7 @@
 #ifndef __SERVER_H
 #define __SERVER_H
 
-#include "pversion.h"
+#include "PVersion.hxx"
 
 #include <stdint.h>
 #include <stddef.h>

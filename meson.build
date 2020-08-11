@@ -103,7 +103,7 @@ executable(
   'src/Encryption.cxx',
   'src/Server.cxx', 'src/Client.cxx',
   'src/PacketLengths.cxx', 'src/Compression.cxx',
-  'src/pversion.c',
+  'src/PVersion.cxx',
   'src/CVersion.cxx', 'src/Bridge.cxx',
   'src/Connection.cxx', 'src/CClient.cxx', 'src/CServer.cxx', 'src/CNet.cxx',
   'src/LinkedServer.cxx',

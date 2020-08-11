@@ -21,7 +21,7 @@
 #ifndef __PACKETS_H
 #define __PACKETS_H
 
-#include "pversion.h"
+#include "PVersion.hxx"
 
 #include <cstddef>
 

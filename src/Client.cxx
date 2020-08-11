@@ -24,7 +24,6 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
-#include "pversion.h"
 #include "FifoBuffer.hxx"
 #include "Log.hxx"
 #include "SocketUtil.hxx"

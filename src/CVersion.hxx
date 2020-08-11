@@ -21,7 +21,7 @@
 #ifndef __UOPROXY_CVERSION_H
 #define __UOPROXY_CVERSION_H
 
-#include "pversion.h"
+#include "PVersion.hxx"
 
 #include <stddef.h>
 

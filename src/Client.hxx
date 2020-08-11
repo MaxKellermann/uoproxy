@@ -21,7 +21,7 @@
 #ifndef __CLIENT_H
 #define __CLIENT_H
 
-#include "pversion.h"
+#include "PVersion.hxx"
 
 #include <stdint.h>
 #include <stddef.h>

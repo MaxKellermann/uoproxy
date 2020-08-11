@@ -18,23 +18,17 @@
  *
  */
 
-#include "pversion.h"
+#pragma once
 
-#include <assert.h>
-
-static const char *protocol_names[PROTOCOL_COUNT] = {
-    [PROTOCOL_UNKNOWN] = "unknown",
-    [PROTOCOL_5] = "5 or older",
-    [PROTOCOL_6] = "6.0.1.7",
-    [PROTOCOL_6_0_5] = "6.0.5.0",
-    [PROTOCOL_6_0_14] = "6.0.14.2",
-    [PROTOCOL_7] = "7",
+enum protocol_version {
+    PROTOCOL_UNKNOWN = 0,
+    PROTOCOL_5,
+    PROTOCOL_6,
+    PROTOCOL_6_0_5,
+    PROTOCOL_6_0_14,
+    PROTOCOL_7,
+    PROTOCOL_COUNT
 };
 
 const char *
-protocol_name(enum protocol_version protocol)
-{
-    assert((unsigned)protocol < PROTOCOL_COUNT);
-
-    return protocol_names[protocol];
-}
+protocol_name(enum protocol_version protocol) noexcept;

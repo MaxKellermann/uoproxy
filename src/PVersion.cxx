@@ -18,28 +18,26 @@
  *
  */
 
-#ifndef __UOPROXY_PVERSION_H
-#define __UOPROXY_PVERSION_H
+#include "PVersion.hxx"
 
-enum protocol_version {
-    PROTOCOL_UNKNOWN = 0,
-    PROTOCOL_5,
-    PROTOCOL_6,
-    PROTOCOL_6_0_5,
-    PROTOCOL_6_0_14,
-    PROTOCOL_7,
-    PROTOCOL_COUNT
+#include <cassert>
+#include <iterator> // for std::size()
+
+static constexpr const char *protocol_names[] = {
+    "unknown",
+    "5 or older",
+    "6.0.1.7",
+    "6.0.5.0",
+    "6.0.14.2",
+    "7",
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static_assert(std::size(protocol_names) == PROTOCOL_COUNT);
 
 const char *
-protocol_name(enum protocol_version protocol);
+protocol_name(enum protocol_version protocol) noexcept
+{
+    assert((unsigned)protocol < PROTOCOL_COUNT);
 
-#ifdef __cplusplus
+    return protocol_names[protocol];
 }
-#endif
-
-#endif
