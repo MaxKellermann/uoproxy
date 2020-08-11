@@ -59,7 +59,7 @@ StatefulClient::Connect(int fd, const ClientVersion &version,
     struct uo_packet_seed seed_buffer;
 
     if (seed_packet == nullptr &&
-        client_version_defined(&version) &&
+        version.IsDefined() &&
         version.protocol >= PROTOCOL_6_0_14) {
         seed_buffer.cmd = PCK_Seed;
         seed_buffer.seed = seed;

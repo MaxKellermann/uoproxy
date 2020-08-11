@@ -198,7 +198,7 @@ handle_walk_ack(Connection *c, const void *data, [[maybe_unused]] size_t length)
 static PacketAction
 handle_container_open(Connection *c, const void *data, size_t length)
 {
-    if (client_version_defined(&c->client_version) &&
+    if (c->client_version.IsDefined() &&
         c->client_version.protocol >= PROTOCOL_7) {
         auto p = (const struct uo_packet_container_open_7 *)data;
 
@@ -709,7 +709,7 @@ handle_season(Connection *c, const void *data, [[maybe_unused]] size_t length)
 static PacketAction
 handle_client_version(Connection *c, const void *, size_t)
 {
-    if (client_version_defined(&c->client_version)) {
+    if (c->client_version.IsDefined()) {
         LogFormat(3, "sending cached client version '%s'\n",
                   c->client_version.packet->version);
 

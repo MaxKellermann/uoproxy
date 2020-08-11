@@ -726,9 +726,9 @@ handle_client_version(LinkedServer *ls,
     Connection *c = ls->connection;
     auto p = (const struct uo_packet_client_version *)data;
 
-    if (!client_version_defined(&ls->client_version)) {
+    if (!ls->client_version.IsDefined()) {
         bool was_unkown = ls->client_version.protocol == PROTOCOL_UNKNOWN;
-        int ret = client_version_copy(&ls->client_version, p, length);
+        int ret = ls->client_version.Set(p, length);
         if (ret > 0) {
             if (was_unkown)
                 uo_server_set_protocol(ls->server,
@@ -740,7 +740,7 @@ handle_client_version(LinkedServer *ls,
         }
     }
 
-    if (client_version_defined(&c->client_version)) {
+    if (c->client_version.IsDefined()) {
         if (c->client.version_requested) {
             uo_client_send(c->client.client, c->client_version.packet,
                            c->client_version.packet_length);
@@ -751,7 +751,7 @@ handle_client_version(LinkedServer *ls,
     } else {
         const bool was_unkown = c->client_version.protocol == PROTOCOL_UNKNOWN;
 
-        int ret = client_version_copy(&c->client_version, p, length);
+        int ret = c->client_version.Set(p, length);
         if (ret > 0) {
             if (was_unkown && c->client.client != nullptr)
                 uo_client_set_protocol(c->client.client,
@@ -795,7 +795,7 @@ handle_seed(LinkedServer *ls, const void *data, [[maybe_unused]] size_t length)
     assert(length == sizeof(*p));
 
     if (ls->client_version.seed == nullptr) {
-        client_version_seed(&ls->client_version, p);
+        ls->client_version.Seed(*p);
         uo_server_set_protocol(ls->server, ls->client_version.protocol);
 
         LogFormat(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
@@ -805,9 +805,9 @@ handle_seed(LinkedServer *ls, const void *data, [[maybe_unused]] size_t length)
                   (unsigned)p->client_patch);
     }
 
-    if (!client_version_defined(&ls->connection->client_version) &&
+    if (!ls->connection->client_version.IsDefined() &&
         ls->connection->client_version.seed == nullptr) {
-        client_version_seed(&ls->connection->client_version, p);
+        ls->connection->client_version.Seed(*p);
 
         if (ls->connection->client.client != nullptr)
             uo_client_set_protocol(ls->connection->client.client,

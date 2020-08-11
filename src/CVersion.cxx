@@ -28,7 +28,7 @@
 ClientVersion::~ClientVersion() noexcept
 {
     free(packet);
-    free(seed);
+    delete seed;
 }
 
 static int
@@ -80,65 +80,52 @@ determine_protocol_version(const char *version)
 }
 
 int
-client_version_copy(ClientVersion *cv,
-                    const struct uo_packet_client_version *packet,
-                    size_t length)
+ClientVersion::Set(const struct uo_packet_client_version *_packet,
+                   size_t length) noexcept
 {
-    if (!packet_verify_client_version(packet, length))
+    if (!packet_verify_client_version(_packet, length))
         return 0;
 
-    cv->packet = (struct uo_packet_client_version *)malloc(length);
-    if (cv->packet == nullptr)
+    packet = (struct uo_packet_client_version *)malloc(length);
+    if (packet == nullptr)
         return -1;
 
-    cv->packet_length = length;
+    packet_length = length;
 
-    memcpy(cv->packet, packet, length);
+    memcpy(packet, _packet, length);
 
-    if (cv->protocol == PROTOCOL_UNKNOWN)
-        cv->protocol = determine_protocol_version(packet->version);
+    if (protocol == PROTOCOL_UNKNOWN)
+        protocol = determine_protocol_version(_packet->version);
     return 1;
 }
 
-int
-client_version_set(ClientVersion *cv,
-                   const char *version)
+void
+ClientVersion::Set(const char *version) noexcept
 {
     size_t length = strlen(version);
 
-    cv->packet = (struct uo_packet_client_version *)malloc(sizeof(*cv->packet) + length);
-    if (cv->packet == nullptr)
-        return -1;
+    packet = (struct uo_packet_client_version *)malloc(sizeof(*packet) + length);
+    packet_length = sizeof(*packet) + length;
 
-    cv->packet_length = sizeof(*cv->packet) + length;
+    packet->cmd = PCK_ClientVersion;
+    packet->length = packet_length;
+    memcpy(packet->version, version, length + 1);
 
-    cv->packet->cmd = PCK_ClientVersion;
-    cv->packet->length = cv->packet_length;
-    memcpy(cv->packet->version, version, length + 1);
-
-    cv->protocol = determine_protocol_version(version);
-    return 1;
+    protocol = determine_protocol_version(version);
 }
 
-int
-client_version_seed(ClientVersion *cv,
-                    const struct uo_packet_seed *seed)
+void
+ClientVersion::Seed(const struct uo_packet_seed &_seed) noexcept
 {
-    assert(cv->seed == nullptr);
-    assert(seed->cmd == PCK_Seed);
+    assert(seed == nullptr);
+    assert(_seed.cmd == PCK_Seed);
 
-    cv->seed = (struct uo_packet_seed *)malloc(sizeof(*cv->seed));
-    if (cv->seed == nullptr)
-        return -1;
-
-    memcpy(cv->seed, seed, sizeof(*cv->seed));
+    seed = new struct uo_packet_seed(_seed);
 
     /* this packet is only know to 6.0.5.0 clients, so we don't check
        the packet contents here */
-    if (seed->client_major >= 7)
-        cv->protocol = PROTOCOL_7;
+    if (_seed.client_major >= 7)
+        protocol = PROTOCOL_7;
     else
-        cv->protocol = PROTOCOL_6_0_5;
-
-    return 1;
+        protocol = PROTOCOL_6_0_5;
 }

@@ -36,25 +36,17 @@ struct ClientVersion {
 
     ClientVersion(const ClientVersion &) = delete;
     ClientVersion &operator=(const ClientVersion &) = delete;
+
+    bool IsDefined() const noexcept {
+        return packet != nullptr;
+    }
+
+    int Set(const struct uo_packet_client_version *_packet,
+            size_t length) noexcept;
+
+    void Set(const char *version) noexcept;
+
+    void Seed(const struct uo_packet_seed &_seed) noexcept;
 };
-
-static inline int
-client_version_defined(const ClientVersion *cv)
-{
-    return cv->packet != nullptr;
-}
-
-int
-client_version_copy(ClientVersion *cv,
-                    const struct uo_packet_client_version *packet,
-                    size_t length);
-
-int
-client_version_set(ClientVersion *cv,
-                   const char *version);
-
-int
-client_version_seed(ClientVersion *cv,
-                    const struct uo_packet_seed *seed);
 
 #endif

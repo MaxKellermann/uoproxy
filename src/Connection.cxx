@@ -31,19 +31,15 @@
 int connection_new(Instance *instance,
                    int server_socket,
                    Connection **connectionp) {
-    int ret;
-
     auto *c = new Connection(*instance,
                              instance->config.background,
                              instance->config.autoreconnect);
 
     if (instance->config.client_version != nullptr) {
-        ret = client_version_set(&c->client_version,
-                                 instance->config.client_version);
-        if (ret > 0)
-            LogFormat(2, "configured client version '%s', protocol '%s'\n",
-                      c->client_version.packet->version,
-                      protocol_name(c->client_version.protocol));
+        c->client_version.Set(instance->config.client_version);
+        LogFormat(2, "configured client version '%s', protocol '%s'\n",
+                  c->client_version.packet->version,
+                  protocol_name(c->client_version.protocol));
     }
 
     auto *ls = new LinkedServer(server_socket);
