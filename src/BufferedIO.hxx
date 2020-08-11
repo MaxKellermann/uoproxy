@@ -45,8 +45,4 @@ read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
 ssize_t
 write_from_buffer(int fd, struct fifo_buffer *buffer);
 
-ssize_t
-buffered_quick_write(int fd, struct fifo_buffer *output_buffer,
-                     const void *data, size_t length);
-
 #endif
