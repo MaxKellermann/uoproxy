@@ -24,21 +24,22 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct SocketBufferHandler {
+class SocketBufferHandler {
+public:
     /**
      * Data is available.
      *
      * @return the number of bytes consumed, or 0 if the sock_buff
      * has been closed within the function
      */
-    size_t (*data)(const void *data, size_t length, void *ctx);
+    virtual size_t OnSocketData(const void *data, size_t length) = 0;
 
     /**
      * The socket has been closed due to an error or because the peer
      * closed his side.  sock_buff_dispose() does not trigger this
      * callback, and the callee has to invoke this function.
      */
-    void (*free)(int error, void *ctx);
+    virtual void OnSocketDisconnect(int error) noexcept = 0;
 };
 
 struct SocketBuffer;
@@ -46,8 +47,7 @@ struct SocketBuffer;
 SocketBuffer *
 sock_buff_create(int fd, size_t input_max,
                  size_t output_max,
-                 const SocketBufferHandler *handler,
-                 void *handler_ctx);
+                 SocketBufferHandler &handler);
 
 void sock_buff_dispose(SocketBuffer *sb);
 

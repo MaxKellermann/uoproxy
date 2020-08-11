@@ -50,9 +50,9 @@ uo_client_abort_event_callback(int fd,
 
 namespace UO {
 
-class Client {
+class Client final : SocketBufferHandler {
 public:
-    SocketBuffer *sock = nullptr;
+    SocketBuffer *sock;
     bool compression_enabled = false;
     struct uo_decompression decompression;
     struct fifo_buffer *decompressed_buffer = nullptr;
@@ -64,8 +64,9 @@ public:
     bool aborted = false;
     struct event abort_event;
 
-    explicit Client(ClientHandler &_handler) noexcept
-        :handler(&_handler)
+    explicit Client(int fd, ClientHandler &_handler) noexcept
+        :sock(sock_buff_create(fd, 8192, 65536, *this)),
+         handler(&_handler)
     {
         uo_decompression_init(&decompression);
 
@@ -82,6 +83,11 @@ public:
 
         evtimer_del(&abort_event);
     }
+
+private:
+    /* virtual methods from SocketBufferHandler */
+    size_t OnSocketData(const void *data, size_t length) override;
+    void OnSocketDisconnect(int error) noexcept override;
 };
 
 } // namespace UO
@@ -189,34 +195,33 @@ client_packets_from_buffer(UO::Client *client,
     return (ssize_t)consumed;
 }
 
-static size_t
-client_sock_buff_data(const void *data0, size_t length, void *ctx)
+size_t
+UO::Client::OnSocketData(const void *data0, size_t length)
 {
-    auto client = (UO::Client *)ctx;
     const unsigned char *data = (const unsigned char *)data0;
 
-    if (client->compression_enabled) {
+    if (compression_enabled) {
         ssize_t nbytes;
         size_t consumed;
 
-        nbytes = client_decompress(client, data, length);
+        nbytes = client_decompress(this, data, length);
         if (nbytes <= 0)
             return 0;
         consumed = (size_t)nbytes;
 
-        data = (const unsigned char *)fifo_buffer_read(client->decompressed_buffer, &length);
+        data = (const unsigned char *)fifo_buffer_read(decompressed_buffer, &length);
         if (data == nullptr)
             return consumed;
 
-        nbytes = client_packets_from_buffer(client, data, length);
+        nbytes = client_packets_from_buffer(this, data, length);
         if (nbytes < 0)
             return 0;
 
-        fifo_buffer_consume(client->decompressed_buffer, (size_t)nbytes);
+        fifo_buffer_consume(decompressed_buffer, (size_t)nbytes);
 
         return consumed;
     } else {
-        ssize_t nbytes = client_packets_from_buffer(client, data, length);
+        ssize_t nbytes = client_packets_from_buffer(this, data, length);
         if (nbytes < 0)
             return 0;
 
@@ -224,26 +229,19 @@ client_sock_buff_data(const void *data0, size_t length, void *ctx)
     }
 }
 
-static void
-client_sock_buff_free(int error, void *ctx)
+void
+UO::Client::OnSocketDisconnect(int error) noexcept
 {
-    auto client = (UO::Client *)ctx;
-
     if (error == 0)
         LogFormat(2, "server closed the connection\n");
     else
         log_error("error during communication with server", error);
 
-    sock_buff_dispose(client->sock);
-    client->sock = nullptr;
+    sock_buff_dispose(sock);
+    sock = nullptr;
 
-    uo_client_invoke_free(client);
+    uo_client_invoke_free(this);
 }
-
-static constexpr SocketBufferHandler client_sock_buff_handler = {
-    .data = client_sock_buff_data,
-    .free = client_sock_buff_free,
-};
 
 UO::Client *
 uo_client_create(int fd, uint32_t seed,
@@ -252,10 +250,7 @@ uo_client_create(int fd, uint32_t seed,
 {
     socket_set_nodelay(fd, 1);
 
-    auto *client = new UO::Client(handler);
-
-    client->sock = sock_buff_create(fd, 8192, 65536,
-                                    &client_sock_buff_handler, client);
+    auto *client = new UO::Client(fd, handler);
 
     client->decompressed_buffer = fifo_buffer_new(65536);
 

@@ -39,7 +39,7 @@ uo_server_abort_event_callback(int fd, short event, void *ctx) noexcept;
 
 namespace UO {
 
-class Server {
+class Server final : SocketBufferHandler  {
 public:
     SocketBuffer *sock = nullptr;
     uint32_t seed = 0;
@@ -54,8 +54,9 @@ public:
     bool aborted = false;
     struct event abort_event;
 
-    explicit Server(ServerHandler &_handler) noexcept
-        :handler(&_handler)
+    explicit Server(int fd, ServerHandler &_handler) noexcept
+        :sock(sock_buff_create(fd, 8192, 65536, *this)),
+         handler(&_handler)
     {
         evtimer_set(&abort_event,
                     uo_server_abort_event_callback, this);
@@ -69,6 +70,11 @@ public:
 
         evtimer_del(&abort_event);
     }
+
+private:
+    /* virtual methods from SocketBufferHandler */
+    size_t OnSocketData(const void *data, size_t length) override;
+    void OnSocketDisconnect(int error) noexcept override;
 };
 
 } // namespace UO
@@ -148,12 +154,10 @@ server_packets_from_buffer(UO::Server *server,
     return (ssize_t)consumed;
 }
 
-static size_t
-server_sock_buff_data(const void *data0, size_t length, void *ctx)
+size_t
+UO::Server::OnSocketData(const void *data0, size_t length)
 {
-    auto server = (UO::Server *)ctx;
-
-    data0 = encryption_from_client(server->encryption, data0, length);
+    data0 = encryption_from_client(encryption, data0, length);
     if (data0 == nullptr)
         /* need more data */
         return 0;
@@ -161,7 +165,7 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
     const unsigned char *data = (const unsigned char *)data0;
     size_t consumed = 0;
 
-    if (server->seed == 0 && data[0] == 0xef) {
+    if (seed == 0 && data[0] == 0xef) {
         /* client 6.0.5.0 sends a "0xef" seed packet instead of the
            raw 32 bit seed */
         auto p = (const struct uo_packet_seed *)data0;
@@ -169,31 +173,31 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
         if (length < sizeof(*p))
             return 0;
 
-        server->seed = p->seed;
-        if (server->seed == 0) {
+        seed = p->seed;
+        if (seed == 0) {
             LogFormat(2, "zero seed from client\n");
-            uo_server_abort(server);
+            uo_server_abort(this);
             return 0;
         }
     }
 
-    if (server->seed == 0) {
+    if (seed == 0) {
         /* the first packet from a client is the seed, 4 bytes without
            header */
         if (length < 4)
             return 0;
 
-        server->seed = *(const uint32_t*)(data + consumed);
-        if (server->seed == 0) {
+        seed = *(const uint32_t*)(data + consumed);
+        if (seed == 0) {
             LogFormat(2, "zero seed from client\n");
-            uo_server_abort(server);
+            uo_server_abort(this);
             return 0;
         }
 
         consumed += sizeof(uint32_t);
     }
 
-    ssize_t nbytes = server_packets_from_buffer(server, data + consumed,
+    ssize_t nbytes = server_packets_from_buffer(this, data + consumed,
                                                 length - consumed);
     if (nbytes < 0)
         return 0;
@@ -201,26 +205,19 @@ server_sock_buff_data(const void *data0, size_t length, void *ctx)
     return consumed + (size_t)nbytes;
 }
 
-static void
-server_sock_buff_free(int error, void *ctx)
+void
+UO::Server::OnSocketDisconnect(int error) noexcept
 {
-    auto server = (UO::Server *)ctx;
-
     if (error == 0)
         LogFormat(2, "client closed the connection\n");
     else
         log_error("error during communication with client", error);
 
-    sock_buff_dispose(server->sock);
-    server->sock = nullptr;
+    sock_buff_dispose(sock);
+    sock = nullptr;
 
-    uo_server_invoke_free(server);
+    uo_server_invoke_free(this);
 }
-
-static constexpr SocketBufferHandler server_sock_buff_handler = {
-    .data = server_sock_buff_data,
-    .free = server_sock_buff_free,
-};
 
 UO::Server *
 uo_server_create(int sockfd,
@@ -228,12 +225,7 @@ uo_server_create(int sockfd,
 {
     socket_set_nodelay(sockfd, 1);
 
-    auto *server = new UO::Server(handler);
-
-    server->sock = sock_buff_create(sockfd, 8192, 65536,
-                                    &server_sock_buff_handler, server);
-
-    return server;
+    return new UO::Server(sockfd, handler);
 }
 
 void uo_server_dispose(UO::Server *server) {

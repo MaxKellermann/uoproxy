@@ -41,13 +41,11 @@ struct SocketBuffer {
 
     struct fifo_buffer *input = nullptr, *output = nullptr;
 
-    const SocketBufferHandler *handler;
-    void *const handler_ctx;
+    SocketBufferHandler &handler;
 
     SocketBuffer(int _fd, size_t input_max,
                  size_t output_max,
-                 const SocketBufferHandler &_handler,
-                 void *_handler_ctx);
+                 SocketBufferHandler &_handler);
     ~SocketBuffer() noexcept;
 };
 
@@ -67,15 +65,12 @@ sock_buff_invoke_data(SocketBuffer *sb)
     size_t length;
     ssize_t nbytes;
 
-    assert(sb->handler != nullptr);
-    assert(sb->handler->data != nullptr);
-
     data = fifo_buffer_read(sb->input, &length);
     if (data == nullptr)
         return true;
 
     flush_begin();
-    nbytes = sb->handler->data(data, length, sb->handler_ctx);
+    nbytes = sb->handler.OnSocketData(data, length);
     flush_end();
     if (nbytes == 0)
         return false;
@@ -87,9 +82,6 @@ sock_buff_invoke_data(SocketBuffer *sb)
 static void
 sock_buff_invoke_free(SocketBuffer *sb, int error)
 {
-    const SocketBufferHandler *handler;
-
-    assert(sb->handler != nullptr);
     assert(sb->fd >= 0);
 
     event_del(&sb->recv_event);
@@ -97,10 +89,7 @@ sock_buff_invoke_free(SocketBuffer *sb, int error)
 
     sb->flush.Cancel();
 
-    handler = sb->handler;
-    sb->handler = nullptr;
-
-    handler->free(error, sb->handler_ctx);
+    sb->handler.OnSocketDisconnect(error);
 }
 
 
@@ -260,12 +249,11 @@ uint16_t sock_buff_port(const SocketBuffer *sb)
 inline
 SocketBuffer::SocketBuffer(int _fd, size_t input_max,
                            size_t output_max,
-                           const SocketBufferHandler &_handler,
-                           void *_handler_ctx)
+                           SocketBufferHandler &_handler)
     :flush(sock_buff_flush_callback), fd(_fd),
      input(fifo_buffer_new(input_max)),
      output(fifo_buffer_new(output_max)),
-     handler(&_handler), handler_ctx(_handler_ctx)
+     handler(_handler)
 {
     event_set(&recv_event, fd, EV_READ|EV_PERSIST,
               sock_buff_recv_callback, this);
@@ -278,15 +266,9 @@ SocketBuffer::SocketBuffer(int _fd, size_t input_max,
 SocketBuffer *
 sock_buff_create(int fd, size_t input_max,
                  size_t output_max,
-                 const SocketBufferHandler *handler,
-                 void *handler_ctx)
+                 SocketBufferHandler &handler)
 {
-    assert(handler != nullptr);
-    assert(handler->data != nullptr);
-    assert(handler->free != nullptr);
-
-    return new SocketBuffer(fd, input_max, output_max,
-                            *handler, handler_ctx);
+    return new SocketBuffer(fd, input_max, output_max, handler);
 }
 
 SocketBuffer::~SocketBuffer() noexcept
