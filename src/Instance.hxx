@@ -31,6 +31,7 @@
 
 struct Config;
 struct Connection;
+namespace UO { struct CredentialsFragment; }
 
 struct Instance {
     /* configuration */
@@ -49,6 +50,7 @@ struct Instance {
     explicit Instance(Config &_config) noexcept
         :config(_config) {}
 
+    Connection *FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept;
     Connection *FindAttachConnection(Connection &c) noexcept;
 };
 

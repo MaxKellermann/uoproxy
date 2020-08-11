@@ -77,6 +77,16 @@ instance_setup_server_socket(Instance *instance)
 }
 
 Connection *
+Instance::FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept
+{
+    for (auto &i : connections)
+        if (i.CanAttach() && credentials == i.credentials)
+            return &i;
+
+    return nullptr;
+}
+
+Connection *
 Instance::FindAttachConnection(Connection &c) noexcept
 {
     for (auto &i : connections)

@@ -327,7 +327,8 @@ handle_account_login(LinkedServer *ls,
 
     c->credentials = p->credentials;
 
-    Connection *other = c->instance.FindAttachConnection(*c);
+    Connection *other = c->instance.FindAttachConnection(c->credentials);
+    assert(other != c);
     if (other != nullptr) {
         /* attaching to an existing connection, fake the server
            list */
