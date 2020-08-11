@@ -25,36 +25,36 @@
 
 #include <stddef.h>
 
-struct client_version {
+struct ClientVersion {
     struct uo_packet_client_version *packet = nullptr;
     struct uo_packet_seed *seed = nullptr;
     size_t packet_length = 0;
     enum protocol_version protocol = PROTOCOL_UNKNOWN;
 
-    client_version() = default;
-    ~client_version() noexcept;
+    ClientVersion() = default;
+    ~ClientVersion() noexcept;
 
-    client_version(const client_version &) = delete;
-    client_version &operator=(const client_version &) = delete;
+    ClientVersion(const ClientVersion &) = delete;
+    ClientVersion &operator=(const ClientVersion &) = delete;
 };
 
 static inline int
-client_version_defined(const struct client_version *cv)
+client_version_defined(const ClientVersion *cv)
 {
     return cv->packet != nullptr;
 }
 
 int
-client_version_copy(struct client_version *cv,
+client_version_copy(ClientVersion *cv,
                     const struct uo_packet_client_version *packet,
                     size_t length);
 
 int
-client_version_set(struct client_version *cv,
+client_version_set(ClientVersion *cv,
                    const char *version);
 
 int
-client_version_seed(struct client_version *cv,
+client_version_seed(ClientVersion *cv,
                     const struct uo_packet_seed *seed);
 
 #endif

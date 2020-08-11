@@ -49,7 +49,7 @@ StatefulClient::StatefulClient() noexcept
 }
 
 void
-StatefulClient::Connect(int fd, const struct client_version &version,
+StatefulClient::Connect(int fd, const ClientVersion &version,
                         uint32_t seed,
                         UO::ClientHandler &handler)
 {

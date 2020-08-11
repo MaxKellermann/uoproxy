@@ -86,7 +86,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 
     /* client version */
 
-    struct client_version client_version;
+    ClientVersion client_version;
 
     /* sub-objects */
 

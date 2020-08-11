@@ -43,7 +43,7 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
 
     UO::Server *server = nullptr;
 
-    struct client_version client_version;
+    ClientVersion client_version;
 
     /** Razor_workaround support here: we save the charlist until
         the client says gamelogin, at which point we turn compression on in our

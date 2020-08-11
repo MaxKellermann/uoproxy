@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-client_version::~client_version() noexcept
+ClientVersion::~ClientVersion() noexcept
 {
     free(packet);
     free(seed);
@@ -80,7 +80,7 @@ determine_protocol_version(const char *version)
 }
 
 int
-client_version_copy(struct client_version *cv,
+client_version_copy(ClientVersion *cv,
                     const struct uo_packet_client_version *packet,
                     size_t length)
 {
@@ -101,7 +101,7 @@ client_version_copy(struct client_version *cv,
 }
 
 int
-client_version_set(struct client_version *cv,
+client_version_set(ClientVersion *cv,
                    const char *version)
 {
     size_t length = strlen(version);
@@ -121,7 +121,7 @@ client_version_set(struct client_version *cv,
 }
 
 int
-client_version_seed(struct client_version *cv,
+client_version_seed(ClientVersion *cv,
                     const struct uo_packet_seed *seed)
 {
     assert(cv->seed == nullptr);

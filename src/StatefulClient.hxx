@@ -26,6 +26,8 @@
 
 #define MAX_CHARACTERS 16
 
+struct ClientVersion;
+
 namespace UO {
 class Client;
 class ClientHandler;
@@ -57,7 +59,7 @@ struct StatefulClient {
     StatefulClient(const StatefulClient &) = delete;
     StatefulClient &operator=(const StatefulClient &) = delete;
 
-    void Connect(int fd, const struct client_version &version,
+    void Connect(int fd, const ClientVersion &version,
                  uint32_t seed,
                  UO::ClientHandler &handler);
 
