@@ -23,10 +23,6 @@
 
 #include <sys/types.h> /* for uid_t/gid_t */
 
-#ifdef WIN32
-#define DISABLE_DAEMON_CODE
-#endif
-
 struct game_server_config {
     char *name;
     struct addrinfo *address;
@@ -52,13 +48,6 @@ struct Config {
     bool light = false;
 
     char *client_version = nullptr;
-    /* daemon config */
-#ifndef DISABLE_DAEMON_CODE
-    int no_daemon = 0;
-    char *pidfile = nullptr, *logger = nullptr, *chroot_dir = nullptr;
-    uid_t uid = 0;
-    gid_t gid = 0;
-#endif
 
     ~Config() noexcept;
 };

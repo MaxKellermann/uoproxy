@@ -25,10 +25,6 @@
 
 #include <event.h>
 
-#ifdef WIN32
-#define DISABLE_DAEMON_CODE
-#endif
-
 struct Config;
 struct Connection;
 namespace UO { struct CredentialsFragment; }
@@ -56,15 +52,5 @@ struct Instance {
 
 void
 instance_setup_server_socket(Instance *instance);
-
-#ifdef DISABLE_DAEMON_CODE
-static inline void
-instance_daemonize(Instance *instance)
-{
-    (void)instance;
-}
-#else
-void instance_daemonize(Instance *instance);
-#endif
 
 #endif

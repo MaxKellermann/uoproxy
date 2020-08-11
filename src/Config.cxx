@@ -30,11 +30,6 @@
 #ifdef __GLIBC__
 #include <getopt.h>
 #endif
-#ifndef DISABLE_DAEMON_CODE
-#include <sys/stat.h>
-#include <pwd.h>
-#include <unistd.h>
-#endif
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -71,25 +66,6 @@ usage()
          " --bind IP:port\n"
 #endif
          " -b IP:port     listen on this IP and port (default *:2593)\n"
-#ifndef DISABLE_DAEMON_CODE
-#ifdef __GLIBC__
-         " --logger program\n"
-#endif
-         " -l program     specifies a logger program (executed by /bin/sh)\n"
-#ifdef __GLIBC__
-         " --chroot dir\n"
-#endif
-         " -r dir         chroot into this directory (requires root)\n"
-#ifdef __GLIBC__
-         " --user username\n"
-#endif
-         " -u username    change user id (don't run uoamhub as root!)\n"
-         " -D             don't detach (daemonize)\n"
-#ifdef __GLIBC__
-         " --pidfile file\n"
-#endif
-         " -P file        create a pid file\n"
-#endif
          "\n"
          );
 }
@@ -144,31 +120,21 @@ void parse_cmdline(Config *config, int argc, char **argv) {
         {"quiet", 1, 0, 'q'},
         {"port", 1, 0, 'p'},
         {"bind", 1, 0, 'b'},
-#ifndef DISABLE_DAEMON_CODE
-        {"chroot", 1, 0, 'r'},
-        {"user", 1, 0, 'u'},
-        {"logger", 1, 0, 'l'},
-        {"pidfile", 1, 0, 'P'},
-#endif
         {0,0,0,0}
     };
 #endif
     int bind_port = 0;
     const char *bind_address = nullptr, *login_address = nullptr;
     struct addrinfo hints;
-#ifndef DISABLE_DAEMON_CODE
-    struct passwd *pw;
-    struct stat st;
-#endif
 
     while (1) {
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqp:DP:l:r:u:",
+        ret = getopt_long(argc, argv, "hVvqp:D",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqp:DP:l:r:u:");
+        ret = getopt(argc, argv, "hVvqp:D");
 #endif
         if (ret == -1)
             break;
@@ -205,55 +171,9 @@ void parse_cmdline(Config *config, int argc, char **argv) {
             bind_address = optarg;
             break;
 
-#ifndef DISABLE_DAEMON_CODE
         case 'D':
-            config->no_daemon = 1;
+            /* obsolete, ignore for compatibility */
             break;
-
-        case 'P':
-            if (config->pidfile != nullptr)
-                free(config->pidfile);
-            config->pidfile = strdup(optarg);
-            break;
-
-        case 'l':
-            if (config->logger != nullptr)
-                free(config->logger);
-            config->logger = strdup(optarg);
-            break;
-
-        case 'r':
-            ret = stat(optarg, &st);
-            if (ret < 0) {
-                fprintf(stderr, "failed to stat '%s': %s\n",
-                        optarg, strerror(errno));
-                exit(1);
-            }
-            if (!S_ISDIR(st.st_mode)) {
-                fprintf(stderr, "not a directory: '%s'\n",
-                        optarg);
-                exit(1);
-            }
-
-            if (config->chroot_dir != nullptr)
-                free(config->chroot_dir);
-            config->chroot_dir = strdup(optarg);
-            break;
-
-        case 'u':
-            pw = getpwnam(optarg);
-            if (pw == nullptr) {
-                fprintf(stderr, "user '%s' not found\n", optarg);
-                exit(1);
-            }
-            if (pw->pw_uid == 0) {
-                fprintf(stderr, "setuid root is not allowed\n");
-                exit(1);
-            }
-            config->uid = pw->pw_uid;
-            config->gid = pw->pw_gid;
-            break;
-#endif
 
         default:
             exit(1);
@@ -499,38 +419,6 @@ int config_read_file(Config *config, const char *path) {
                         value, gai_strerror(ret));
                 exit(1);
             }
-        } else if (strcmp(key, "pidfile") == 0) {
-#ifndef DISABLE_DAEMON_CODE
-            assign_string(&config->pidfile, value);
-#endif
-        } else if (strcmp(key, "logger") == 0) {
-#ifndef DISABLE_DAEMON_CODE
-            assign_string(&config->logger, value);
-#endif
-        } else if (strcmp(key, "chroot") == 0) {
-#ifndef DISABLE_DAEMON_CODE
-            assign_string(&config->chroot_dir, value);
-#endif
-        } else if (strcmp(key, "user") == 0) {
-#ifndef DISABLE_DAEMON_CODE
-            struct passwd *pw;
-
-            pw = getpwnam(value);
-            if (pw == nullptr) {
-                fprintf(stderr, "%s line %u: user '%s' not found\n",
-                        path, no, value);
-                exit(2);
-            }
-
-            if (pw->pw_uid == 0) {
-                fprintf(stderr, "%s line %u: setuid root is not allowed\n",
-                        path, no);
-                exit(1);
-            }
-
-            config->uid = pw->pw_uid;
-            config->gid = pw->pw_gid;
-#endif
         } else if (strcmp(key, "server_list") == 0) {
             unsigned i;
 
@@ -622,10 +510,4 @@ Config::~Config() noexcept
     }
 
     free(client_version);
-
-#ifndef DISABLE_DAEMON_CODE
-    free(pidfile);
-    free(logger);
-    free(chroot_dir);
-#endif
 }

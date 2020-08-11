@@ -18,8 +18,6 @@
  *
  */
 
-#ifndef DISABLE_DAEMON_CODE
-
 #include "Log.hxx"
 
 #include <stdio.h>
@@ -38,5 +36,3 @@ do_log(const char *fmt, ...)
 
     fflush(stdout);
 }
-
-#endif

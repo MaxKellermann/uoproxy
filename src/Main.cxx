@@ -155,8 +155,6 @@ try {
 
     instance_setup_server_socket(&instance);
 
-    instance_daemonize(&instance);
-
     /* main loop */
 
 #ifdef HAVE_LIBSYSTEMD

@@ -7,7 +7,7 @@ After=network-online.target
 Type=notify
 User=uoproxy
 DynamicUser=yes
-ExecStart=@prefix@/bin/uoproxy -D
+ExecStart=@prefix@/bin/uoproxy
 
 # resource limits
 MemoryMax=64M

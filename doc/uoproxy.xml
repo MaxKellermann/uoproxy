@@ -193,50 +193,6 @@
           </row>
           <row>
             <entry>
-              <varname>pidfile</varname>
-            </entry>
-            <entry>
-              The path for <filename>uoproxy</filename>'s pid file.
-            </entry>
-            <entry>
-              no pid file
-            </entry>
-          </row>
-          <row>
-            <entry>
-              <varname>logger</varname>
-            </entry>
-            <entry>
-              The program which is used for logging.
-            </entry>
-            <entry>
-              log to standard output
-            </entry>
-          </row>
-          <row>
-            <entry>
-              <varname>chroot</varname>
-            </entry>
-            <entry>
-              Change root directory after initialization.
-            </entry>
-            <entry>
-              disabled
-            </entry>
-          </row>
-          <row>
-            <entry>
-              <varname></varname>
-            </entry>
-            <entry>
-              Change to this user after initialization.
-            </entry>
-            <entry>
-              don't change user
-            </entry>
-          </row>
-          <row>
-            <entry>
               <varname>server_list</varname>
             </entry>
             <entry>

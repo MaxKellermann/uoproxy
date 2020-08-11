@@ -91,7 +91,6 @@ executable(
   'src/Main.cxx',
   'src/Config.cxx',
   'src/Instance.cxx',
-  'src/Daemon.cxx',
   'src/Log.cxx',
   'src/SocketConnect.cxx',
   'src/Flush.cxx', 'src/SocketBuffer.cxx',
