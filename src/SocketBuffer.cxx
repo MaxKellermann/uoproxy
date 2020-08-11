@@ -48,67 +48,49 @@ struct SocketBuffer final : PendingFlush {
 
     using PendingFlush::ScheduleFlush;
 
+    /**
+     * @return false on error or if nothing was consumed
+     */
+    bool SubmitData();
+
+    /**
+     * Try to flush the output buffer.  Note that this function will
+     * not trigger the free() callback.
+     *
+     * @return true on success, false on i/o error (see errno)
+     */
+    bool FlushOutput();
+
 protected:
     /* virtual methods from PendingFlush */
     void DoFlush() noexcept override;
 };
 
-
-/*
- * invoke wrappers
- *
- */
-
-/**
- * @return false on error or if nothing was consumed
- */
-static bool
-sock_buff_invoke_data(SocketBuffer *sb)
+inline bool
+SocketBuffer::SubmitData()
 {
     const void *data;
     size_t length;
     ssize_t nbytes;
 
-    data = fifo_buffer_read(sb->input, &length);
+    data = fifo_buffer_read(input, &length);
     if (data == nullptr)
         return true;
 
     const ScopeLockFlush lock_flush;
 
-    nbytes = sb->handler.OnSocketData(data, length);
+    nbytes = handler.OnSocketData(data, length);
     if (nbytes == 0)
         return false;
 
-    fifo_buffer_consume(sb->input, (size_t)nbytes);
+    fifo_buffer_consume(input, (size_t)nbytes);
     return true;
 }
 
-static void
-sock_buff_invoke_free(SocketBuffer *sb, int error)
+bool
+SocketBuffer::FlushOutput()
 {
-    assert(sb->fd >= 0);
-
-    sb->handler.OnSocketDisconnect(error);
-}
-
-
-/*
- * flush
- *
- */
-
-/**
- * Try to flush the output buffer.  Note that this function will not
- * trigger the free() callback.
- *
- * @return true on success, false on i/o error (see errno)
- */
-static bool
-sock_buff_flush(SocketBuffer *sb)
-{
-    ssize_t nbytes;
-
-    nbytes = write_from_buffer(sb->fd, sb->output);
+    ssize_t nbytes = write_from_buffer(fd, output);
     if (nbytes == -2)
         return true;
 
@@ -121,7 +103,7 @@ sock_buff_flush(SocketBuffer *sb)
 void
 SocketBuffer::DoFlush() noexcept
 {
-    if (!sock_buff_flush(this))
+    if (!FlushOutput())
         return;
 
     if (fifo_buffer_empty(output))
@@ -145,13 +127,13 @@ sock_buff_recv_callback(int fd, short event, void *ctx)
 
     ssize_t nbytes = read_to_buffer(fd, sb->input, 65536);
     if (nbytes > 0) {
-        if (!sock_buff_invoke_data(sb))
+        if (!sb->SubmitData())
             return;
     } else if (nbytes == 0) {
-        sock_buff_invoke_free(sb, 0);
+        sb->handler.OnSocketDisconnect(0);
         return;
     } else if (nbytes == -1) {
-        sock_buff_invoke_free(sb, errno);
+        sb->handler.OnSocketDisconnect(errno);
         return;
     }
 
@@ -169,8 +151,8 @@ sock_buff_send_callback(int fd, short event, void *ctx)
 
     assert(fd == sb->fd);
 
-    if (!sock_buff_flush(sb)) {
-        sock_buff_invoke_free(sb, errno);
+    if (!sb->FlushOutput()) {
+        sb->handler.OnSocketDisconnect(errno);
         return;
     }
 
