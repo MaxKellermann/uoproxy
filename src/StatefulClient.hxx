@@ -24,8 +24,6 @@
 
 #include <event.h>
 
-#define MAX_CHARACTERS 16
-
 struct ClientVersion;
 
 namespace UO {
@@ -40,8 +38,12 @@ struct StatefulClient {
     UO::Client *client = nullptr;
     struct event ping_event;
 
-    struct uo_fragment_character_info characters[MAX_CHARACTERS];
-    unsigned num_characters = 0;
+    /**
+     * The most recent character list packet received from the server.
+     * This does not get cleared when reconnecting, but gets
+     * overwritten when a new one is received.
+     */
+    VarStructPtr<struct uo_packet_simple_character_list> char_list;
 
     uint32_t supported_features_flags = 0;
 

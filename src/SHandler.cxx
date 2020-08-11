@@ -440,29 +440,11 @@ static PacketAction
 handle_char_list(Connection *c, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_simple_character_list *)data;
-    const void *data_end = ((const char*)data) + length;
-
-    (void)data;
-    (void)length;
 
     /* save character list */
-    if (p->character_count > 0 && length >= sizeof(*p)) {
-        unsigned idx;
-
-        memset(c->client.characters, 0, sizeof(c->client.characters));
-
-        for (idx = 0, c->client.num_characters = 0;
-             idx < p->character_count &&
-             idx < MAX_CHARACTERS &&
-                 (const void*)&p->character_info[idx + 1] <= data_end;
-             ++idx) {
-            if (p->character_info[idx].name[0] != 0)
-                ++c->client.num_characters;
-        }
-
-        memcpy(c->client.characters, p->character_info,
-               idx * sizeof(c->client.characters[0]));
-    }
+    if (p->character_count > 0 &&
+        length >= sizeof(*p) + (p->character_count - 1) * sizeof(p->character_info[0]))
+        c->client.char_list = {p, length};
 
     /* respond directly during reconnect */
     if (c->client.reconnecting) {

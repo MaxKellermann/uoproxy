@@ -591,6 +591,11 @@ struct uo_packet_simple_character_list {
     struct uo_fragment_character_info character_info[1];
     uint8_t city_count;
     PackedBE32 flags;
+
+    bool IsValidCharacterIndex(unsigned i) const noexcept {
+        return i < character_count &&
+            character_info[i].name[0] != 0;
+    }
 };
 
 static_assert(alignof(struct uo_packet_simple_character_list) == 1);

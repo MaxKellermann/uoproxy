@@ -33,7 +33,8 @@ change_character(Connection *c,
                  LinkedServer *server,
                  unsigned idx)
 {
-    if (idx >= MAX_CHARACTERS || c->client.characters[idx].name[0] == 0) {
+    if (!c->client.char_list ||
+        !c->client.char_list->IsValidCharacterIndex(idx)) {
         uo_server_speak_console(server->server,
                                 "uoproxy: no character in slot");
         return;
@@ -68,18 +69,19 @@ connection_handle_command(LinkedServer *server, const char *command)
         }
     } else if (strcmp(command, "char") == 0) {
         char msg[1024] = "uoproxy:";
-        unsigned i;
 
-        if (c->client.num_characters == 0) {
+        if (!c->client.char_list) {
             uo_server_speak_console(server->server,
                                     "uoproxy: no characters in list");
             return;
         }
 
-        for (i = 0; i < MAX_CHARACTERS; i++) {
-            if (c->client.characters[i].name[0]) {
+        const auto &char_list = *c->client.char_list;
+        const unsigned n_chars = char_list.character_count;
+        for (unsigned i = 0; i < n_chars; i++) {
+            if (char_list.IsValidCharacterIndex(i)) {
                 snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg),
-                         " %u=%s", i, c->client.characters[i].name);
+                         " %u=%s", i, char_list.character_info[i].name);
             }
         }
 
