@@ -452,8 +452,6 @@ handle_game_login(LinkedServer *ls,
                         /* found it! Eureka! */
                         reuse_conn = &c;
                         ls2.expecting_reconnect = false;
-                        // copy over charlist (if any)..
-                        ls->enqueued_charlist = std::move(ls2.enqueued_charlist);
                         was_attach = ls2.attaching;
                         ls2.attaching = false;
                         break;
@@ -492,11 +490,11 @@ handle_game_login(LinkedServer *ls,
         if (ls->connection->IsInGame() && was_attach) {
             /* already in game .. this was likely an attach connection */
             attach_send_world(ls);
-        } else if (ls->enqueued_charlist) {
-            uo_server_send(ls->server, ls->enqueued_charlist.get(),
-                           ls->enqueued_charlist.size());
+        } else if (ls->connection->client.char_list) {
+            uo_server_send(ls->server,
+                           ls->connection->client.char_list.get(),
+                           ls->connection->client.char_list.size());
         }
-        ls->enqueued_charlist.reset();
         ls->expecting_reconnect = false;
         return PacketAction::DROP;
     }

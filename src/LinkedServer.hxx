@@ -23,7 +23,6 @@
 #include "Server.hxx"
 #include "CVersion.hxx"
 #include "util/IntrusiveList.hxx"
-#include "util/VarStructPtr.hxx"
 
 #include <event.h>
 
@@ -45,11 +44,6 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     UO::Server *server = nullptr;
 
     ClientVersion client_version;
-
-    /** Razor_workaround support here: we save the charlist until
-        the client says gamelogin, at which point we turn compression on in our
-        emulated server and send a charlist. */
-    VarStructPtr<struct uo_packet_simple_character_list> enqueued_charlist;
 
     struct event zombie_timeout; /**< zombies time out and auto-reap themselves
                                       after 5 seconds using this timer */

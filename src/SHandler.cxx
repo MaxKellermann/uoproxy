@@ -469,8 +469,6 @@ handle_char_list(Connection *c, const void *data, size_t length)
         for (auto &ls : c->servers) {
             if (ls.got_gamelogin && !ls.attaching && !ls.is_zombie)
                 uo_server_send(ls.server, data, length);
-            else
-                ls.enqueued_charlist = {p, length};
         }
         return PacketAction::DROP;
     }
