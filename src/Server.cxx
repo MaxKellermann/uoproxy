@@ -94,10 +94,7 @@ uo_server_abort(UO::Server *server)
     if (server->aborted)
         return;
 
-    struct timeval tv = {
-        .tv_sec = 0,
-        .tv_usec = 0,
-    };
+    static constexpr struct timeval tv{0, 0};
 
     /* this is a trick to delay the destruction of this object until
        everything is done */
