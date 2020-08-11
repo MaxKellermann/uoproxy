@@ -24,7 +24,6 @@
 #include "PacketLengths.hxx"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 
 inline void
@@ -177,12 +176,6 @@ World::RemoveItemSerial(uint32_t serial) noexcept
     RemoveItemTree(serial);
 }
 
-Mobile::~Mobile() noexcept
-{
-    free(packet_mobile_status);
-    free(packet_mobile_incoming);
-}
-
 Mobile *
 World::FindMobile(uint32_t serial) noexcept
 {
@@ -203,22 +196,6 @@ World::MakeMobile(uint32_t serial) noexcept
     m = new Mobile(serial);
     mobiles.push_front(*m);
     return *m;
-}
-
-static void replace_packet(void **destp, const void *src,
-                           size_t length) {
-    assert(length == get_packet_length(PROTOCOL_6, src, length));
-
-    if (*destp != nullptr)
-        free(*destp);
-
-    *destp = malloc(length);
-    if (*destp == nullptr) {
-        log_oom();
-        return;
-    }
-
-    memcpy(*destp, src, length);
 }
 
 static void
@@ -277,9 +254,7 @@ World::Apply(const struct uo_packet_mobile_incoming &p) noexcept
     }
 
     auto &m = MakeMobile(p.serial);
-
-    replace_packet((void**)&m.packet_mobile_incoming,
-                   &p, p.length);
+    m.packet_mobile_incoming = {&p, p.length};
 
     read_equipped(this, &p);
 }
@@ -294,8 +269,7 @@ World::Apply(const struct uo_packet_mobile_status &p) noexcept
     /* XXX: check if p.flags is available */
     if (m.packet_mobile_status == nullptr ||
         m.packet_mobile_status->flags <= p.flags)
-        replace_packet((void**)&m.packet_mobile_status,
-                       &p, p.length);
+        m.packet_mobile_status = {&p, p.length};
 }
 
 void

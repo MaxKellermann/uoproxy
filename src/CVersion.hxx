@@ -22,13 +22,13 @@
 #define __UOPROXY_CVERSION_H
 
 #include "PVersion.hxx"
+#include "util/VarStructPtr.hxx"
 
 #include <stddef.h>
 
 struct ClientVersion {
-    struct uo_packet_client_version *packet = nullptr;
+    VarStructPtr<struct uo_packet_client_version> packet;
     struct uo_packet_seed *seed = nullptr;
-    size_t packet_length = 0;
     enum protocol_version protocol = PROTOCOL_UNKNOWN;
 
     ClientVersion() = default;
@@ -38,7 +38,7 @@ struct ClientVersion {
     ClientVersion &operator=(const ClientVersion &) = delete;
 
     bool IsDefined() const noexcept {
-        return packet != nullptr;
+        return packet;
     }
 
     int Set(const struct uo_packet_client_version *_packet,

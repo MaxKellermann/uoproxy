@@ -29,7 +29,6 @@
 #include "PacketType.hxx"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 
 static void
@@ -85,9 +84,8 @@ container_update_6_to_5(struct uo_packet_container_update *dest,
 
 /* container_content */
 
-struct uo_packet_container_content_6 *
-container_content_5_to_6(const struct uo_packet_container_content *src,
-                         size_t *dest_length_r)
+VarStructPtr<struct uo_packet_container_content_6>
+container_content_5_to_6(const struct uo_packet_container_content *src) noexcept
 {
     size_t dest_length;
     struct uo_packet_container_content_6 *dest;
@@ -98,10 +96,9 @@ container_content_5_to_6(const struct uo_packet_container_content *src,
 
     dest_length = sizeof(*dest) - sizeof(dest->items) +
         num * sizeof(dest->items);
-    dest = (struct uo_packet_container_content_6 *)malloc(dest_length);
-    if (dest == nullptr)
-        return nullptr;
 
+    VarStructPtr<struct uo_packet_container_content_6> ptr(dest_length);
+    dest = ptr.get();
     dest->cmd = PCK_ContainerContent;
     dest->length = dest_length;
     dest->num = src->num;
@@ -109,13 +106,11 @@ container_content_5_to_6(const struct uo_packet_container_content *src,
     for (unsigned i = 0; i < num; ++i)
         container_item_5_to_6(&dest->items[i], &src->items[i]);
 
-    *dest_length_r = dest_length;
-    return dest;
+    return ptr;
 }
 
-struct uo_packet_container_content *
-container_content_6_to_5(const struct uo_packet_container_content_6 *src,
-                         size_t *dest_length_r)
+VarStructPtr<struct uo_packet_container_content>
+container_content_6_to_5(const struct uo_packet_container_content_6 *src) noexcept
 {
     size_t dest_length;
     struct uo_packet_container_content *dest;
@@ -126,10 +121,9 @@ container_content_6_to_5(const struct uo_packet_container_content_6 *src,
 
     dest_length = sizeof(*dest) - sizeof(dest->items) +
         num * sizeof(dest->items);
-    dest = (struct uo_packet_container_content *)malloc(dest_length);
-    if (dest == nullptr)
-        return nullptr;
 
+    VarStructPtr<struct uo_packet_container_content> ptr(dest_length);
+    dest = ptr.get();
     dest->cmd = PCK_ContainerContent;
     dest->length = dest_length;
     dest->num = src->num;
@@ -137,8 +131,7 @@ container_content_6_to_5(const struct uo_packet_container_content_6 *src,
     for (unsigned i = 0; i < num; ++i)
         container_item_6_to_5(&dest->items[i], &src->items[i]);
 
-    *dest_length_r = dest_length;
-    return dest;
+    return ptr;
 }
 
 /* drop */

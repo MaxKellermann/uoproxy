@@ -22,12 +22,10 @@
 #include "PacketType.hxx"
 #include "VerifyPacket.hxx"
 
-#include <stdlib.h>
 #include <string.h>
 
 ClientVersion::~ClientVersion() noexcept
 {
-    free(packet);
     delete seed;
 }
 
@@ -86,13 +84,7 @@ ClientVersion::Set(const struct uo_packet_client_version *_packet,
     if (!packet_verify_client_version(_packet, length))
         return 0;
 
-    packet = (struct uo_packet_client_version *)malloc(length);
-    if (packet == nullptr)
-        return -1;
-
-    packet_length = length;
-
-    memcpy(packet, _packet, length);
+    packet = {_packet, length};
 
     if (protocol == PROTOCOL_UNKNOWN)
         protocol = determine_protocol_version(_packet->version);
@@ -104,11 +96,9 @@ ClientVersion::Set(const char *version) noexcept
 {
     size_t length = strlen(version);
 
-    packet = (struct uo_packet_client_version *)malloc(sizeof(*packet) + length);
-    packet_length = sizeof(*packet) + length;
-
+    packet = VarStructPtr<struct uo_packet_client_version>(sizeof(*packet) + length);
     packet->cmd = PCK_ClientVersion;
-    packet->length = packet_length;
+    packet->length = packet.size();
     memcpy(packet->version, version, length + 1);
 
     protocol = determine_protocol_version(version);

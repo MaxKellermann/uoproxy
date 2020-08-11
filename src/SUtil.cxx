@@ -21,15 +21,9 @@
 #include "Server.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
+#include "util/VarStructPtr.hxx"
 
 #include <string.h>
-#include <stdlib.h>
-
-#ifdef WIN32
-#include <winsock2.h>
-#else
-#include <netinet/in.h>
-#endif
 
 static void write_fixed_string(char *dest, size_t max_length,
                                const char *src) {
@@ -53,17 +47,13 @@ uo_server_speak_ascii(UO::Server *server,
                       const char *text)
 {
     struct uo_packet_speak_ascii *p;
-    size_t text_length, length;
+    const size_t text_length = strlen(text);
 
-    text_length = strlen(text);
-    length = sizeof(*p) + text_length;
-
-    p = (struct uo_packet_speak_ascii *)malloc(length);
-    if (p == nullptr)
-        return;
+    VarStructPtr<struct uo_packet_speak_ascii> ptr(sizeof(*p) + text_length);
+    p = ptr.get();
 
     p->cmd = PCK_SpeakAscii;
-    p->length = length;
+    p->length = ptr.size();
     p->serial = serial;
     p->graphic = graphic;
     p->type = type;
@@ -72,9 +62,7 @@ uo_server_speak_ascii(UO::Server *server,
     write_fixed_string(p->name, sizeof(p->name), name);
     memcpy(p->text, text, text_length + 1);
 
-    uo_server_send(server, p, length);
-
-    free(p);
+    uo_server_send(server, ptr.get(), ptr.size());
 }
 
 void

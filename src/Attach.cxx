@@ -168,11 +168,11 @@ attach_send_world(LinkedServer *ls)
     /* mobiles */
     for (const auto &mobile : world->mobiles) {
         if (mobile.packet_mobile_incoming != nullptr)
-            uo_server_send(ls->server, mobile.packet_mobile_incoming,
-                           mobile.packet_mobile_incoming->length);
+            uo_server_send(ls->server, mobile.packet_mobile_incoming.get(),
+                           mobile.packet_mobile_incoming.size());
         if (mobile.packet_mobile_status != nullptr)
-            uo_server_send(ls->server, mobile.packet_mobile_status,
-                           mobile.packet_mobile_status->length);
+            uo_server_send(ls->server, mobile.packet_mobile_status.get(),
+                           mobile.packet_mobile_status.size());
     }
 
     /* items */

@@ -30,10 +30,10 @@
 #include "Log.hxx"
 #include "Bridge.hxx"
 #include "util/Compiler.h"
+#include "util/VarStructPtr.hxx"
 
 #include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #ifdef WIN32
@@ -359,11 +359,8 @@ handle_account_login(LinkedServer *ls,
         struct uo_packet_server_list *p2;
         length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
 
-        p2 = (struct uo_packet_server_list *)calloc(1, length);
-        if (p2 == nullptr) {
-            log_oom();
-            return PacketAction::DISCONNECT;
-        }
+        const VarStructPtr<struct uo_packet_server_list> p2_(length);
+        p2 = p2_.get();
 
         p2->cmd = PCK_ServerList;
         p2->length = length;
@@ -382,9 +379,7 @@ handle_account_login(LinkedServer *ls,
             p2->game_servers[i].address = sin->sin_addr.s_addr;
         }
 
-        uo_server_send(ls->server, p2, length);
-        free(p2);
-
+        uo_server_send(ls->server, p2_.get(), p2_.size());
         return PacketAction::DROP;
     } else if (config.login_address != nullptr) {
         /* connect to the real login server */
@@ -457,8 +452,7 @@ handle_game_login(LinkedServer *ls,
                         reuse_conn = &c;
                         ls2.expecting_reconnect = false;
                         // copy over charlist (if any)..
-                        ls->enqueued_charlist = ls2.enqueued_charlist;
-                        ls2.enqueued_charlist = nullptr;
+                        ls->enqueued_charlist = std::move(ls2.enqueued_charlist);
                         was_attach = ls2.attaching;
                         ls2.attaching = false;
                         break;
@@ -498,11 +492,10 @@ handle_game_login(LinkedServer *ls,
             /* already in game .. this was likely an attach connection */
             attach_send_world(ls);
         } else if (ls->enqueued_charlist) {
-            uo_server_send(ls->server, ls->enqueued_charlist,
-                           ls->enqueued_charlist->length);
+            uo_server_send(ls->server, ls->enqueued_charlist.get(),
+                           ls->enqueued_charlist.size());
         }
-        free(ls->enqueued_charlist);
-        ls->enqueued_charlist = nullptr;
+        ls->enqueued_charlist.reset();
         ls->expecting_reconnect = false;
         return PacketAction::DROP;
     }
@@ -734,8 +727,8 @@ handle_client_version(LinkedServer *ls,
 
     if (c->client_version.IsDefined()) {
         if (c->client.version_requested) {
-            uo_client_send(c->client.client, c->client_version.packet,
-                           c->client_version.packet_length);
+            uo_client_send(c->client.client, c->client_version.packet.get(),
+                           c->client_version.packet.size());
             c->client.version_requested = false;
         }
 

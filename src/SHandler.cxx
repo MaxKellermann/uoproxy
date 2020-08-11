@@ -32,7 +32,6 @@
 #include "Bridge.hxx"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 
 #ifdef WIN32
@@ -279,41 +278,24 @@ handle_container_content(Connection *c, const void *data, size_t length)
     if (packet_verify_container_content((const uo_packet_container_content *)data, length)) {
         /* protocol v5 */
         auto p = (const struct uo_packet_container_content *)data;
-        struct uo_packet_container_content_6 *p6;
-        size_t length6;
 
-        p6 = container_content_5_to_6(p, &length6);
-        if (p6 == nullptr) {
-            log_oom();
-            return PacketAction::DROP;
-        }
+        const auto p6 = container_content_5_to_6(p);
 
         c->client.world.Apply(*p6);
 
         c->BroadcastToInGameClientsDivert(PROTOCOL_6,
                                           data, length,
-                                          p6, length6);
-
-        free(p6);
+                                          p6.get(), p6.size());
     } else if (packet_verify_container_content_6((const uo_packet_container_content_6 *)data, length)) {
         /* protocol v6 */
         auto p = (const struct uo_packet_container_content_6 *)data;
-        struct uo_packet_container_content *p5;
-        size_t length5;
 
         c->client.world.Apply(*p);
 
-        p5 = container_content_6_to_5(p, &length5);
-        if (p5 == nullptr) {
-            log_oom();
-            return PacketAction::DROP;
-        }
-
+        const auto p5 = container_content_6_to_5(p);
         c->BroadcastToInGameClientsDivert(PROTOCOL_6,
-                                          p5, length5,
+                                          p5.get(), p5.size(),
                                           data, length);
-
-        free(p5);
     } else
         return PacketAction::DISCONNECT;
 
@@ -505,14 +487,8 @@ handle_char_list(Connection *c, const void *data, size_t length)
         for (auto &ls : c->servers) {
             if (ls.got_gamelogin && !ls.attaching && !ls.is_zombie)
                 uo_server_send(ls.server, data, length);
-            else {
-                if (ls.enqueued_charlist) free(ls.enqueued_charlist);
-                ls.enqueued_charlist = (struct uo_packet_simple_character_list *)calloc(1,length);
-                if (ls.enqueued_charlist) {
-                    memcpy(ls.enqueued_charlist, data, length);
-                } else
-                    log_oom();
-            }
+            else
+                ls.enqueued_charlist = {p, length};
         }
         return PacketAction::DROP;
     }
@@ -712,8 +688,8 @@ handle_client_version(Connection *c, const void *, size_t)
 
         /* respond to this packet directly if we know the version
            number */
-        uo_client_send(c->client.client, c->client_version.packet,
-                       c->client_version.packet_length);
+        uo_client_send(c->client.client, c->client_version.packet.get(),
+                       c->client_version.packet.size());
         return PacketAction::DROP;
     } else {
         /* we don't know the version - forward the request to all

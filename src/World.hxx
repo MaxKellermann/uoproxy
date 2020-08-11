@@ -22,6 +22,7 @@
 #define __UOPROXY_WORLD_H
 
 #include "util/IntrusiveList.hxx"
+#include "util/VarStructPtr.hxx"
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
 
@@ -93,15 +94,13 @@ struct Item final : IntrusiveListHook {
 
 struct Mobile final : IntrusiveListHook {
     const uint32_t serial;
-    struct uo_packet_mobile_incoming *packet_mobile_incoming = nullptr;
-    struct uo_packet_mobile_status *packet_mobile_status = nullptr;
+    VarStructPtr<struct uo_packet_mobile_incoming> packet_mobile_incoming;
+    VarStructPtr<struct uo_packet_mobile_status> packet_mobile_status;
 
     explicit Mobile(uint32_t _serial) noexcept
         :serial(_serial)
     {
     }
-
-    ~Mobile() noexcept;
 
     Mobile(const Mobile &) = delete;
     Mobile &operator=(const Mobile &) = delete;

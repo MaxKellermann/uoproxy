@@ -27,6 +27,8 @@
 #ifndef __UOPROXY_BRIDGE_H
 #define __UOPROXY_BRIDGE_H
 
+#include "util/VarStructPtr.hxx"
+
 #include <stddef.h>
 
 struct uo_packet_container_update;
@@ -43,13 +45,11 @@ container_update_6_to_5(struct uo_packet_container_update *dest,
 struct uo_packet_container_content;
 struct uo_packet_container_content_6;
 
-struct uo_packet_container_content_6 *
-container_content_5_to_6(const struct uo_packet_container_content *src,
-                         size_t *dest_length_r);
+VarStructPtr<struct uo_packet_container_content_6>
+container_content_5_to_6(const struct uo_packet_container_content *src) noexcept;
 
-struct uo_packet_container_content *
-container_content_6_to_5(const struct uo_packet_container_content_6 *src,
-                         size_t *dest_length_r);
+VarStructPtr<struct uo_packet_container_content>
+container_content_6_to_5(const struct uo_packet_container_content_6 *src) noexcept;
 
 struct uo_packet_drop;
 struct uo_packet_drop_6;
