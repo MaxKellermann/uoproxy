@@ -70,7 +70,11 @@ public:
         evtimer_del(&abort_event);
     }
 
+    void Abort() noexcept;
+
 private:
+    ssize_t ParsePackets(const uint8_t *data, size_t length);
+
     /* virtual methods from SocketBufferHandler */
     size_t OnSocketData(const void *data, size_t length) override;
     void OnSocketDisconnect(int error) noexcept override;
@@ -88,40 +92,33 @@ uo_server_abort_event_callback(int, short, void *ctx) noexcept
     server->handler.OnServerDisconnect();
 }
 
-static void
-uo_server_abort(UO::Server *server)
+void
+UO::Server::Abort() noexcept
 {
-    if (server->aborted)
+    if (aborted)
         return;
 
     static constexpr struct timeval tv{0, 0};
 
     /* this is a trick to delay the destruction of this object until
        everything is done */
-    evtimer_add(&server->abort_event, &tv);
+    evtimer_add(&abort_event, &tv);
 
-    server->aborted = true;
+    aborted = true;
 }
 
-static int
-uo_server_is_aborted(UO::Server *server)
-{
-    return server->aborted;
-}
-
-static ssize_t
-server_packets_from_buffer(UO::Server *server,
-                           const unsigned char *data, size_t length)
+inline ssize_t
+UO::Server::ParsePackets(const uint8_t *data, size_t length)
 {
     size_t consumed = 0;
 
     while (length > 0) {
-        size_t packet_length = get_packet_length(server->protocol_version,
+        size_t packet_length = get_packet_length(protocol_version,
                                                  data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
             LogFormat(1, "malformed packet from client\n");
             log_hexdump(5, data, length);
-            uo_server_abort(server);
+            Abort();
             return 0;
         }
 
@@ -133,7 +130,7 @@ server_packets_from_buffer(UO::Server *server,
 
         log_hexdump(10, data, packet_length);
 
-        if (!server->handler.OnServerPacket(data, packet_length))
+        if (!handler.OnServerPacket(data, packet_length))
             return -1;
 
         consumed += packet_length;
@@ -152,7 +149,7 @@ UO::Server::OnSocketData(const void *data0, size_t length)
         /* need more data */
         return 0;
 
-    const unsigned char *data = (const unsigned char *)data0;
+    const uint8_t *data = (const uint8_t *)data0;
     size_t consumed = 0;
 
     if (seed == 0 && data[0] == 0xef) {
@@ -166,7 +163,7 @@ UO::Server::OnSocketData(const void *data0, size_t length)
         seed = p->seed;
         if (seed == 0) {
             LogFormat(2, "zero seed from client\n");
-            uo_server_abort(this);
+            Abort();
             return 0;
         }
     }
@@ -180,15 +177,14 @@ UO::Server::OnSocketData(const void *data0, size_t length)
         seed = *(const uint32_t*)(data + consumed);
         if (seed == 0) {
             LogFormat(2, "zero seed from client\n");
-            uo_server_abort(this);
+            Abort();
             return 0;
         }
 
         consumed += sizeof(uint32_t);
     }
 
-    ssize_t nbytes = server_packets_from_buffer(this, data + consumed,
-                                                length - consumed);
+    ssize_t nbytes = ParsePackets(data + consumed, length - consumed);
     if (nbytes < 0)
         return 0;
 
@@ -248,11 +244,11 @@ uint16_t uo_server_getsockport(const UO::Server *server)
 
 void uo_server_send(UO::Server *server,
                     const void *src, size_t length) {
-    assert(server->sock != nullptr || uo_server_is_aborted(server));
+    assert(server->sock != nullptr || server->aborted);
     assert(length > 0);
     assert(get_packet_length(server->protocol_version, src, length) == length);
 
-    if (uo_server_is_aborted(server))
+    if (server->aborted)
         return;
 
     LogFormat(9, "sending packet to client, length=%u\n", (unsigned)length);
@@ -263,7 +259,7 @@ void uo_server_send(UO::Server *server,
         void *dest = sock_buff_write(server->sock, &max_length);
         if (dest == nullptr) {
             LogFormat(1, "output buffer full in uo_server_send()\n");
-            uo_server_abort(server);
+            server->Abort();
             return;
         }
 
@@ -271,7 +267,7 @@ void uo_server_send(UO::Server *server,
                                      (const unsigned char *)src, length);
         if (nbytes < 0) {
             LogFormat(1, "uo_compress() failed\n");
-            uo_server_abort(server);
+            server->Abort();
             return;
         }
 
@@ -279,7 +275,7 @@ void uo_server_send(UO::Server *server,
     } else {
         if (!sock_buff_send(server->sock, src, length)) {
             LogFormat(1, "output buffer full in uo_server_send()\n");
-            uo_server_abort(server);
+            server->Abort();
         }
     }
 }
