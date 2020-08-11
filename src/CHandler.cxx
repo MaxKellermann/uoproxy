@@ -538,25 +538,25 @@ handle_play_server(LinkedServer *ls,
                    const void *data, [[maybe_unused]] size_t length)
 {
     auto p = (const struct uo_packet_play_server *)data;
-    Connection *c = ls->connection, *c2;
-    auto &instance = c->instance;
+    auto &c = *ls->connection;
+    auto &instance = c.instance;
     const auto &config = instance.config;
     PacketAction retaction = PacketAction::DROP;
 
     assert(length == sizeof(*p));
 
-    if (c->IsInGame())
+    if (c.IsInGame())
         return PacketAction::DISCONNECT;
 
-    assert(std::next(c->servers.iterator_to(*ls)) == c->servers.end());
+    assert(std::next(c.servers.iterator_to(*ls)) == c.servers.end());
 
-    c->server_index = p->index;
+    c.server_index = p->index;
 
-    c2 = instance.FindAttachConnection(*c);
+    auto *const c2 = instance.FindAttachConnection(c);
     if (c2 != nullptr) {
         /* remove the object from the old connection */
-        c->Remove(*ls);
-        c->Destroy();
+        c.Remove(*ls);
+        c.Destroy();
 
         c2->Add(*ls);
 
@@ -578,7 +578,7 @@ handle_play_server(LinkedServer *ls,
         struct uo_packet_game_login login;
         uint32_t seed;
 
-        assert(c->client.client == nullptr);
+        assert(c.client.client == nullptr);
 
         /* locate the selected game server */
         unsigned i = p->index;
@@ -589,13 +589,13 @@ handle_play_server(LinkedServer *ls,
 
         /* connect to new server */
 
-        if (c->client_version.seed != nullptr)
-            seed = c->client_version.seed->seed;
+        if (c.client_version.seed != nullptr)
+            seed = c.client_version.seed->seed;
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
-        ret = c->Connect(server_config.address->ai_addr,
-                         server_config.address->ai_addrlen, seed);
+        ret = c.Connect(server_config.address->ai_addr,
+                        server_config.address->ai_addrlen, seed);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PacketAction::DISCONNECT;
@@ -604,9 +604,9 @@ handle_play_server(LinkedServer *ls,
         /* send game login to new server */
         login.cmd = PCK_GameLogin;
         login.auth_id = seed;
-        login.credentials = c->credentials;
+        login.credentials = c.credentials;
 
-        uo_client_send(c->client.client, &login, sizeof(login));
+        uo_client_send(c.client.client, &login, sizeof(login));
 
         retaction = PacketAction::DROP;
     } else
