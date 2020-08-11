@@ -100,6 +100,7 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
         :instance(_instance), background(_background),
          autoreconnect(_autoreconnect)
     {
+        evtimer_set(&reconnect_event, ReconnectTimerCallback, this);
     }
 
     ~Connection() noexcept;
@@ -151,6 +152,9 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 
     void DeleteItems() noexcept;
     void DeleteMobiles() noexcept;
+
+private:
+    static void ReconnectTimerCallback(int, short, void *ctx) noexcept;
 
     /* virtual methods from UO::ClientHandler */
     bool OnClientPacket(const void *data, size_t length) override;

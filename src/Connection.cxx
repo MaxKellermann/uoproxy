@@ -56,6 +56,5 @@ Connection::~Connection() noexcept
 
     Disconnect();
 
-    if (client.reconnecting)
-        evtimer_del(&reconnect_event);
+    evtimer_del(&reconnect_event);
 }
