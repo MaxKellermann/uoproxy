@@ -509,6 +509,17 @@ handle_game_login(LinkedServer &ls,
 
         existing_connection.Add(ls);
 
+        /* copy the protocol version from the old (zombie) client
+           connection; it is likely that we know this version already,
+           because AccountLogin is usually preceded by a Seed packet
+           which declares the protocol version, but the GameLogin
+           packet is not */
+        if (ls.client_version.protocol == PROTOCOL_UNKNOWN &&
+            zombie->client_version.protocol != PROTOCOL_UNKNOWN) {
+            ls.client_version.protocol = zombie->client_version.protocol;
+            uo_server_set_protocol(ls.server, ls.client_version.protocol);
+        }
+
         /* delete the zombie, we don't need it anymore */
         existing_connection.Remove(*zombie);
         delete zombie;
