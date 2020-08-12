@@ -172,18 +172,21 @@ void connection_speak_console(Connection *c, const char *msg);
 
 /* walk */
 
-void connection_walk_server_removed(WalkState *state,
-                                    LinkedServer *server);
+void
+connection_walk_server_removed(WalkState &state,
+                               LinkedServer &ls) noexcept;
 
 void
-connection_walk_request(LinkedServer *server,
-                        const struct uo_packet_walk *p);
+connection_walk_request(LinkedServer &ls,
+                        const struct uo_packet_walk &p);
 
-void connection_walk_cancel(Connection *c,
-                            const struct uo_packet_walk_cancel *p);
+void
+connection_walk_cancel(Connection &c,
+                       const struct uo_packet_walk_cancel &p);
 
-void connection_walk_ack(Connection *c,
-                         const struct uo_packet_walk_ack *p);
+void
+connection_walk_ack(Connection &c,
+                    const struct uo_packet_walk_ack &p);
 
 /* attach */
 

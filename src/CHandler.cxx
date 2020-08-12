@@ -124,7 +124,7 @@ handle_walk(LinkedServer &ls,
         return PacketAction::DROP;
     }
 
-    connection_walk_request(&ls, p);
+    connection_walk_request(ls, *p);
 
     return PacketAction::DROP;
 }

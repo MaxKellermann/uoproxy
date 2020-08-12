@@ -39,7 +39,7 @@ Connection::Remove(LinkedServer &ls) noexcept
 {
     assert(ls.connection == this);
 
-    connection_walk_server_removed(&walk, &ls);
+    connection_walk_server_removed(walk, ls);
 
     ls.connection = nullptr;
     ls.unlink();

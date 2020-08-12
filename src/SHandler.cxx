@@ -177,7 +177,7 @@ handle_walk_cancel(Connection &c, const void *data, [[maybe_unused]] size_t leng
     if (!c.IsInGame())
         return PacketAction::DISCONNECT;
 
-    connection_walk_cancel(&c, p);
+    connection_walk_cancel(c, *p);
 
     return PacketAction::DROP;
 }
@@ -189,7 +189,7 @@ handle_walk_ack(Connection &c, const void *data, [[maybe_unused]] size_t length)
 
     assert(length == sizeof(*p));
 
-    connection_walk_ack(&c, p);
+    connection_walk_ack(c, *p);
 
     /* XXX: x/y/z etc. */
 
