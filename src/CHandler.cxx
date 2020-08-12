@@ -72,7 +72,7 @@ handle_talk(LinkedServer &ls, const char *text)
 {
     /* the percent sign introduces an uoproxy command */
     if (text[0] == '%') {
-        connection_handle_command(&ls, text + 1);
+        connection_handle_command(ls, text + 1);
         return PacketAction::DROP;
     }
 

@@ -196,6 +196,6 @@ attach_send_world(LinkedServer *ls);
 /* command */
 
 void
-connection_handle_command(LinkedServer *server, const char *command);
+connection_handle_command(LinkedServer &ls, const char *command);
 
 #endif
