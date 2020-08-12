@@ -29,6 +29,7 @@
 #include "Config.hxx"
 
 #include <assert.h>
+#include <unistd.h>
 
 bool
 Connection::OnClientPacket(const void *data, size_t length)
@@ -99,8 +100,11 @@ Connection::Connect(const struct sockaddr *server_address,
         if (fd < 0)
             return errno;
 
-        if (!socks_connect(fd, server_address))
-            return errno;
+        if (!socks_connect(fd, server_address)) {
+            int e = errno;
+            close(fd);
+            return e;
+        }
     } else {
         fd = socket_connect(server_address->sa_family, SOCK_STREAM, 0,
                             server_address, server_address_length);
