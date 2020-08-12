@@ -121,6 +121,9 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
         return IsInGame() && client.char_list;
     }
 
+    /**
+     * @return 0 on success or an errno value
+     */
     int Connect(const struct sockaddr *server_address,
                 size_t server_address_length,
                 uint32_t seed);

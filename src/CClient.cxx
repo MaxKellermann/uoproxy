@@ -97,15 +97,15 @@ Connection::Connect(const struct sockaddr *server_address,
         fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
                             socks4_address->ai_addr, socks4_address->ai_addrlen);
         if (fd < 0)
-            return -fd;
+            return errno;
 
         if (!socks_connect(fd, server_address))
-            return -1;
+            return errno;
     } else {
         fd = socket_connect(server_address->sa_family, SOCK_STREAM, 0,
                             server_address, server_address_length);
         if (fd < 0)
-            return -fd;
+            return errno;
     }
 
     client.Connect(fd, client_version, seed, *this);
