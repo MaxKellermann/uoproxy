@@ -51,11 +51,11 @@ Connection::RemoveCheckEmpty(LinkedServer &ls) noexcept
     Remove(ls);
 
     if (!servers.empty()) {
-        LogFormat(2, "client disconnected, server connection still in use\n");
+        ls.LogF(2, "client disconnected, server connection still in use");
     } else if (background && client.IsConnected() && client.IsInGame()) {
-        LogFormat(1, "client disconnected, backgrounding\n");
+        ls.LogF(1, "client disconnected, backgrounding");
     } else {
-        LogFormat(1, "last client disconnected, removing connection\n");
+        ls.LogF(1, "last client disconnected, removing connection");
         Destroy();
     }
 }

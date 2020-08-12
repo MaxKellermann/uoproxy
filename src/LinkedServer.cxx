@@ -24,6 +24,9 @@
 #include "Log.hxx"
 
 #include <cassert>
+#include <cstdarg>
+
+unsigned LinkedServer::id_counter;
 
 LinkedServer::~LinkedServer() noexcept
 {
@@ -31,6 +34,22 @@ LinkedServer::~LinkedServer() noexcept
 
     if (server != nullptr)
         uo_server_dispose(server);
+}
+
+void
+LinkedServer::LogF(unsigned level, const char *fmt, ...) noexcept
+{
+    if (level > verbose)
+        return;
+
+    char msg[1024];
+
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, ap);
+    va_end(ap);
+
+    do_log("[client %u] %s\n", id, msg);
 }
 
 void
@@ -65,19 +84,20 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
         break;
 
     case PacketAction::DISCONNECT:
-        LogFormat(2, "aborting connection to client after packet 0x%x\n",
+        LogF(2, "aborting connection to client after packet 0x%x",
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
         c->Remove(*this);
-        delete this;
 
         if (c->servers.empty()) {
             if (c->background)
-                LogFormat(1, "backgrounding\n");
+                LogF(1, "backgrounding");
             else
                 c->Destroy();
         }
+
+        delete this;
         return false;
 
     case PacketAction::DELETED:
@@ -94,7 +114,7 @@ LinkedServer::OnServerDisconnect() noexcept
     uo_server_dispose(std::exchange(server, nullptr));
 
     if (state == State::RELAY_SERVER) {
-        LogFormat(2, "client disconnected, zombifying server connection for 5 seconds\n");
+        LogF(2, "client disconnected, zombifying server connection for 5 seconds");
 
         static constexpr struct timeval tv{5, 0};
         evtimer_add(&zombie_timeout, &tv);

@@ -115,14 +115,14 @@ connection_walk_request(LinkedServer &ls,
     auto &state = connection.walk;
 
     if (state.queue_size > 0 && &ls != state.server) {
-        LogFormat(2, "rejecting walk\n");
+        ls.LogF(2, "rejecting walk");
         walk_cancel(connection.client.world, *ls.server, p);
         return;
     }
 
     if (state.queue_size >= MAX_WALK_QUEUE) {
         /* XXX */
-        LogFormat(2, "queue full\n");
+        ls.LogF(2, "walk queue full");
         walk_cancel(connection.client.world, *ls.server,
                     state.queue[0].packet);
         walk_shift(state);
@@ -132,8 +132,8 @@ connection_walk_request(LinkedServer &ls,
     auto *i = &state.queue[state.queue_size++];
     i->packet = p;
 
-    LogFormat(7, "walk seq_from_client=%u seq_to_server=%u\n",
-              p.seq, state.seq_next);
+    ls.LogF(7, "walk seq_from_client=%u seq_to_server=%u",
+            p.seq, state.seq_next);
 
     auto walk = p;
     walk.seq = i->seq = (uint8_t)state.seq_next++;

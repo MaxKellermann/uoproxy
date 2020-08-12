@@ -22,6 +22,7 @@
 
 #include "Server.hxx"
 #include "CVersion.hxx"
+#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 
 #include <event.h>
@@ -48,7 +49,15 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     ClientVersion client_version;
 
     struct event zombie_timeout; /**< zombies time out and auto-reap themselves
-                                      after 5 seconds using this timer */
+                                    after 5 seconds using this timer */
+
+    /**
+     * Identifier for this object in log messages.
+     */
+    const unsigned id;
+
+    static unsigned id_counter;
+
     uint32_t auth_id; /**< unique identifier for this linked_server used in
                            redirect handling to locate the zombied
                            linked_server */
@@ -119,7 +128,8 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     } state = State::INIT;
 
     explicit LinkedServer(int fd)
-        :server(uo_server_create(fd, *this))
+        :server(uo_server_create(fd, *this)),
+         id(++id_counter)
     {
         evtimer_set(&zombie_timeout, ZombieTimeoutCallback, this);
     }
@@ -140,6 +150,9 @@ struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
     bool IsInGame() const noexcept {
         return state == State::IN_GAME;
     }
+
+    gcc_printf(3, 4)
+    void LogF(unsigned level, const char *fmt, ...) noexcept;
 
 private:
     static void ZombieTimeoutCallback(int, short, void *ctx) noexcept;

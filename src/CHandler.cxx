@@ -162,7 +162,7 @@ handle_use(LinkedServer &ls,
     do {
         Item *i = connection_find_item(c, p->serial);
         if (i == nullptr) {
-            LogFormat(7, "Use 0x%x\n", (unsigned)p->serial);
+            ls.LogF(7, "Use 0x%x", (unsigned)p->serial);
         } else {
             uint16_t item_id;
 
@@ -175,8 +175,8 @@ handle_use(LinkedServer &ls,
             else
                 item_id = 0xffff;
 
-            LogFormat(7, "Use 0x%x item_id=0x%x\n",
-                      (unsigned)p->serial, (unsigned)item_id);
+            ls.LogF(7, "Use 0x%x item_id=0x%x",
+                    (unsigned)p->serial, (unsigned)item_id);
         }
         fflush(stdout);
     } while (0);
@@ -260,7 +260,7 @@ handle_drop(LinkedServer &ls,
 static PacketAction
 handle_resynchronize(LinkedServer &ls, const void *, size_t)
 {
-    LogFormat(3, "Resync!\n");
+    ls.LogF(3, "Resync!");
 
     ls.connection->walk.seq_next = 0;
 
@@ -326,12 +326,12 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
     ls.state = LinkedServer::State::ACCOUNT_LOGIN;
 
 #ifdef DUMP_LOGIN
-    LogFormat(7, "account_login: username=%s password=%s\n",
-              p->username, p->password);
+    ls.LogF(7, "account_login: username=%s password=%s",
+            p->username, p->password);
 #endif
 
     if (c->client.client != nullptr) {
-        LogFormat(2, "already logged in\n");
+        ls.LogF(2, "already logged in");
         return PacketAction::DISCONNECT;
     }
 
@@ -488,8 +488,8 @@ handle_game_login(LinkedServer &ls,
             /* houston, we have a problem -- reject the game login -- it
                either came in too slowly (and so we already reaped the
                zombie) or it was a hack attempt (wrong password) */
-            LogFormat(2, "could not find previous connection for redirected client"
-                      " -- disconnecting client!\n");
+            ls.LogF(2, "could not find previous connection for redirected client"
+                    " -- disconnecting client!");
             return PacketAction::DISCONNECT;
         }
 
@@ -504,7 +504,7 @@ handle_game_login(LinkedServer &ls,
         obsolete_connection.Remove(ls);
         obsolete_connection.Destroy();
 
-        LogFormat(2, "attaching redirected client to its previous connection\n");
+        ls.LogF(2, "attaching redirected client to its previous connection");
 
         existing_connection.Add(ls);
 
@@ -571,8 +571,8 @@ redirect_to_self(LinkedServer &ls)
     relay.port = PackedBE16::FromBE(uo_server_getsockport(ls.server));
     relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls.server));
     addr.s_addr = relay.ip.raw();
-    LogFormat(8, "redirecting to: %s:%u\n",
-              inet_ntoa(addr), (unsigned)relay.port);;
+    ls.LogF(8, "redirecting to: %s:%u",
+            inet_ntoa(addr), (unsigned)relay.port);;
     relay.auth_id = ls.auth_id = authid++;
     uo_server_send(ls.server, &relay, sizeof(relay));
     ls.state = LinkedServer::State::RELAY_SERVER;
@@ -625,7 +625,7 @@ handle_play_server(LinkedServer &ls,
             /* attach it to the new connection and send redirect (below) */
         }  else {
             /* attach it to the new connection and begin playing right away */
-            LogFormat(2, "attaching connection\n");
+            ls.LogF(2, "attaching connection");
             attach_send_world(&ls);
             return PacketAction::DROP;
         }
@@ -773,9 +773,9 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
                 uo_server_set_protocol(ls.server,
                                        ls.client_version.protocol);
 
-            LogFormat(2, "client version '%s', protocol '%s'\n",
-                      ls.client_version.packet->version,
-                      protocol_name(ls.client_version.protocol));
+            ls.LogF(2, "client version '%s', protocol '%s'",
+                    ls.client_version.packet->version,
+                    protocol_name(ls.client_version.protocol));
         }
     }
 
@@ -795,24 +795,24 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
             if (was_unkown && c->client.client != nullptr)
                 uo_client_set_protocol(c->client.client,
                                        c->client_version.protocol);
-            LogFormat(2, "emulating client version '%s', protocol '%s'\n",
-                      c->client_version.packet->version,
-                      protocol_name(c->client_version.protocol));
+            ls.LogF(2, "emulating client version '%s', protocol '%s'",
+                    c->client_version.packet->version,
+                    protocol_name(c->client_version.protocol));
         } else if (ret == 0)
-            LogFormat(2, "invalid client version\n");
+            ls.LogF(2, "invalid client version");
         return PacketAction::ACCEPT;
     }
 }
 
 static PacketAction
-handle_extended(LinkedServer &, const void *data, size_t length)
+handle_extended(LinkedServer &ls, const void *data, size_t length)
 {
     auto p = (const struct uo_packet_extended *)data;
 
     if (length < sizeof(*p))
         return PacketAction::DISCONNECT;
 
-    LogFormat(8, "from client: extended 0x%04x\n", (unsigned)p->extended_cmd);
+    ls.LogF(8, "from client: extended 0x%04x", (unsigned)p->extended_cmd);
 
     return PacketAction::ACCEPT;
 }
@@ -837,11 +837,11 @@ handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
         ls.client_version.Seed(*p);
         uo_server_set_protocol(ls.server, ls.client_version.protocol);
 
-        LogFormat(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)\n",
-                  (unsigned)p->client_major,
-                  (unsigned)p->client_minor,
-                  (unsigned)p->client_revision,
-                  (unsigned)p->client_patch);
+        ls.LogF(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)",
+                (unsigned)p->client_major,
+                (unsigned)p->client_minor,
+                (unsigned)p->client_revision,
+                (unsigned)p->client_patch);
     }
 
     if (!ls.connection->client_version.IsDefined() &&
