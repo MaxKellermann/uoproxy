@@ -497,7 +497,8 @@ handle_game_login(LinkedServer &ls,
         auto &existing_connection = *zombie->connection;
 
         /* copy the previously detected protocol version */
-        if (!existing_connection.IsInGame())
+        if (!existing_connection.IsInGame() &&
+            obsolete_connection.client_version.protocol != PROTOCOL_UNKNOWN)
             existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
 
         /* remove the object from the old connection */
