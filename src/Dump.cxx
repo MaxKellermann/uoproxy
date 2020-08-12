@@ -76,7 +76,7 @@ min_size_t(size_t a, size_t b)
 }
 
 void
-log_hexdump(int level, const void *data, size_t length)
+log_hexdump(unsigned level, const void *data, size_t length) noexcept
 {
     const unsigned char *p = (const unsigned char *)data;
     size_t row;

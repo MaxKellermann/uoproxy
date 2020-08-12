@@ -23,10 +23,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-int verbose = 1;
+unsigned verbose = 1;
 
 void
-do_log(const char *fmt, ...)
+do_log(const char *fmt, ...) noexcept
 {
     va_list ap;
 

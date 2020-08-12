@@ -35,10 +35,10 @@
 #define log_hexdump(level, data, length)
 #else
 
-extern int verbose;
+extern unsigned verbose;
 
 void
-do_log(const char *fmt, ...)
+do_log(const char *fmt, ...) noexcept
     gcc_printf(1, 2);
 
 #define LogFormat(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
@@ -65,7 +65,7 @@ log_errno(const char *msg)
 }
 
 void
-log_hexdump(int level, const void *data, size_t length);
+log_hexdump(unsigned level, const void *data, size_t length) noexcept;
 
 #endif
 
