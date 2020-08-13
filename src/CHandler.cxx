@@ -340,6 +340,13 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
     Connection *other = c->instance.FindAttachConnection(c->credentials);
     assert(other != c);
     if (other != nullptr) {
+        if (other->client.server_list) {
+            uo_server_send(ls.server, other->client.server_list.get(),
+                           other->client.server_list.size());
+            ls.state = LinkedServer::State::SERVER_LIST;
+            return PacketAction::DROP;
+        }
+
         /* attaching to an existing connection, fake the server
            list */
         struct uo_packet_server_list p2;
