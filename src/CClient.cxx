@@ -112,6 +112,6 @@ Connection::Connect(const struct sockaddr *server_address,
             return errno;
     }
 
-    client.Connect(fd, client_version, seed, *this);
+    client.Connect(fd, seed, *this);
     return 0;
 }

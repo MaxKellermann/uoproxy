@@ -20,11 +20,10 @@
 
 #pragma once
 
+#include "CVersion.hxx"
 #include "World.hxx"
 
 #include <event.h>
-
-struct ClientVersion;
 
 namespace UO {
 class Client;
@@ -36,6 +35,8 @@ struct StatefulClient {
 
     UO::Client *client = nullptr;
     struct event ping_event;
+
+    ClientVersion version;
 
     /**
      * The most recent game server list packet received from the
@@ -70,7 +71,7 @@ struct StatefulClient {
         return client != nullptr;
     }
 
-    void Connect(int fd, const ClientVersion &version,
+    void Connect(int fd,
                  uint32_t seed,
                  UO::ClientHandler &handler);
 

@@ -24,7 +24,6 @@
 #include "util/IntrusiveList.hxx"
 #include "PacketStructs.hxx"
 #include "World.hxx"
-#include "CVersion.hxx"
 #include "Client.hxx"
 #include "StatefulClient.hxx"
 
@@ -86,10 +85,6 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
     unsigned character_index = 0;
 
     WalkState walk;
-
-    /* client version */
-
-    ClientVersion client_version;
 
     /* sub-objects */
 

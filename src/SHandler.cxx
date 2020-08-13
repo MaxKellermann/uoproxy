@@ -199,8 +199,7 @@ handle_walk_ack(Connection &c, const void *data, [[maybe_unused]] size_t length)
 static PacketAction
 handle_container_open(Connection &c, const void *data, size_t length)
 {
-    if (c.client_version.IsDefined() &&
-        c.client_version.protocol >= PROTOCOL_7) {
+    if (c.client.version.protocol >= PROTOCOL_7) {
         auto p = (const struct uo_packet_container_open_7 *)data;
 
         c.client.world.Apply(*p);
@@ -232,7 +231,7 @@ handle_container_open(Connection &c, const void *data, size_t length)
 static PacketAction
 handle_container_update(Connection &c, const void *data, size_t length)
 {
-    if (c.client_version.protocol < PROTOCOL_6) {
+    if (c.client.version.protocol < PROTOCOL_6) {
         auto p = (const struct uo_packet_container_update *)data;
         struct uo_packet_container_update_6 p6;
 
@@ -541,8 +540,8 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
 
     /* connect to new server */
 
-    if (c.client_version.seed != nullptr)
-        c.client_version.seed->seed = relay.auth_id;
+    if (c.client.version.seed != nullptr)
+        c.client.version.seed->seed = relay.auth_id;
 
     ret = c.Connect((const struct sockaddr *)&sin,
                      sizeof(sin), relay.auth_id);
@@ -634,7 +633,7 @@ handle_speak_unicode(Connection &c, const void *, size_t)
 static PacketAction
 handle_supported_features(Connection &c, const void *data, size_t length)
 {
-    if (c.client_version.protocol >= PROTOCOL_6_0_14) {
+    if (c.client.version.protocol >= PROTOCOL_6_0_14) {
         auto p = (const struct uo_packet_supported_features_6014 *)data;
         assert(length == sizeof(*p));
 
@@ -676,14 +675,14 @@ handle_season(Connection &c, const void *data, [[maybe_unused]] size_t length)
 static PacketAction
 handle_client_version(Connection &c, const void *, size_t)
 {
-    if (c.client_version.IsDefined()) {
+    if (c.client.version.IsDefined()) {
         LogFormat(3, "sending cached client version '%s'\n",
-                  c.client_version.packet->version);
+                  c.client.version.packet->version);
 
         /* respond to this packet directly if we know the version
            number */
-        uo_client_send(c.client.client, c.client_version.packet.get(),
-                       c.client_version.packet.size());
+        uo_client_send(c.client.client, c.client.version.packet.get(),
+                       c.client.version.packet.size());
         return PacketAction::DROP;
     } else {
         /* we don't know the version - forward the request to all

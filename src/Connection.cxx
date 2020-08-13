@@ -38,10 +38,10 @@ int connection_new(Instance *instance,
                              instance->config.autoreconnect);
 
     if (instance->config.client_version != nullptr) {
-        c->client_version.Set(instance->config.client_version);
+        c->client.version.Set(instance->config.client_version);
         ls->LogF(2, "configured client version '%s', protocol '%s'",
-                 c->client_version.packet->version,
-                 protocol_name(c->client_version.protocol));
+                 c->client.version.packet->version,
+                 protocol_name(c->client.version.protocol));
     }
 
     c->Add(*ls);

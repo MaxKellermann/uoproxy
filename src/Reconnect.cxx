@@ -58,8 +58,8 @@ Connection::DoReconnect() noexcept
     assert(client.reconnecting);
     assert(client.client == nullptr);
 
-    if (client_version.seed != nullptr)
-        seed = client_version.seed->seed;
+    if (client.version.seed != nullptr)
+        seed = client.version.seed->seed;
     else
         seed = 0xc0a80102; /* 192.168.1.2 */
 

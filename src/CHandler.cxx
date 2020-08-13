@@ -235,7 +235,7 @@ handle_drop(LinkedServer &ls,
 
         assert(length == sizeof(*p));
 
-        if (ls.connection->client_version.protocol < PROTOCOL_6)
+        if (ls.connection->client.version.protocol < PROTOCOL_6)
             return PacketAction::ACCEPT;
 
         struct uo_packet_drop_6 p6;
@@ -246,7 +246,7 @@ handle_drop(LinkedServer &ls,
 
         assert(length == sizeof(*p));
 
-        if (ls.connection->client_version.protocol >= PROTOCOL_6)
+        if (ls.connection->client.version.protocol >= PROTOCOL_6)
             return PacketAction::ACCEPT;
 
         struct uo_packet_drop p5;
@@ -498,8 +498,8 @@ handle_game_login(LinkedServer &ls,
 
         /* copy the previously detected protocol version */
         if (!existing_connection.IsInGame() &&
-            obsolete_connection.client_version.protocol != PROTOCOL_UNKNOWN)
-            existing_connection.client_version.protocol = obsolete_connection.client_version.protocol;
+            obsolete_connection.client.version.protocol != PROTOCOL_UNKNOWN)
+            existing_connection.client.version.protocol = obsolete_connection.client.version.protocol;
 
         /* remove the object from the old connection */
         obsolete_connection.Remove(ls);
@@ -662,8 +662,8 @@ handle_play_server(LinkedServer &ls,
 
         /* connect to new server */
 
-        if (c.client_version.seed != nullptr)
-            seed = c.client_version.seed->seed;
+        if (c.client.version.seed != nullptr)
+            seed = c.client.version.seed->seed;
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
@@ -791,25 +791,25 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
         }
     }
 
-    if (c->client_version.IsDefined()) {
+    if (c->client.version.IsDefined()) {
         if (c->client.version_requested) {
-            uo_client_send(c->client.client, c->client_version.packet.get(),
-                           c->client_version.packet.size());
+            uo_client_send(c->client.client, c->client.version.packet.get(),
+                           c->client.version.packet.size());
             c->client.version_requested = false;
         }
 
         return PacketAction::DROP;
     } else {
-        const bool was_unkown = c->client_version.protocol == PROTOCOL_UNKNOWN;
+        const bool was_unkown = c->client.version.protocol == PROTOCOL_UNKNOWN;
 
-        int ret = c->client_version.Set(p, length);
+        int ret = c->client.version.Set(p, length);
         if (ret > 0) {
             if (was_unkown && c->client.client != nullptr)
                 uo_client_set_protocol(c->client.client,
-                                       c->client_version.protocol);
+                                       c->client.version.protocol);
             ls.LogF(2, "emulating client version '%s', protocol '%s'",
-                    c->client_version.packet->version,
-                    protocol_name(c->client_version.protocol));
+                    c->client.version.packet->version,
+                    protocol_name(c->client.version.protocol));
         } else if (ret == 0)
             ls.LogF(2, "invalid client version");
         return PacketAction::ACCEPT;
@@ -856,13 +856,13 @@ handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
                 (unsigned)p->client_patch);
     }
 
-    if (!ls.connection->client_version.IsDefined() &&
-        ls.connection->client_version.seed == nullptr) {
-        ls.connection->client_version.Seed(*p);
+    if (!ls.connection->client.version.IsDefined() &&
+        ls.connection->client.version.seed == nullptr) {
+        ls.connection->client.version.Seed(*p);
 
         if (ls.connection->client.client != nullptr)
             uo_client_set_protocol(ls.connection->client.client,
-                                   ls.connection->client_version.protocol);
+                                   ls.connection->client.version.protocol);
     }
 
     return PacketAction::DROP;
