@@ -45,39 +45,39 @@
 #endif
 
 constexpr bool
-IsLittleEndian()
+IsLittleEndian() noexcept
 {
 	return IS_LITTLE_ENDIAN;
 }
 
 constexpr bool
-IsBigEndian()
+IsBigEndian() noexcept
 {
 	return IS_BIG_ENDIAN;
 }
 
 constexpr uint16_t
-GenericByteSwap16(uint16_t value)
+GenericByteSwap16(uint16_t value) noexcept
 {
 	return (value >> 8) | (value << 8);
 }
 
 constexpr uint32_t
-GenericByteSwap32(uint32_t value)
+GenericByteSwap32(uint32_t value) noexcept
 {
 	return (value >> 24) | ((value >> 8) & 0x0000ff00) |
 		((value << 8) & 0x00ff0000) | (value << 24);
 }
 
 constexpr uint64_t
-GenericByteSwap64(uint64_t value)
+GenericByteSwap64(uint64_t value) noexcept
 {
 	return uint64_t(GenericByteSwap32(uint32_t(value >> 32)))
 		| (uint64_t(GenericByteSwap32(value)) << 32);
 }
 
 constexpr uint16_t
-ByteSwap16(uint16_t value)
+ByteSwap16(uint16_t value) noexcept
 {
 #ifdef __GNUC__
 	return __builtin_bswap16(value);
@@ -87,7 +87,7 @@ ByteSwap16(uint16_t value)
 }
 
 constexpr uint32_t
-ByteSwap32(uint32_t value)
+ByteSwap32(uint32_t value) noexcept
 {
 #ifdef __GNUC__
 	return __builtin_bswap32(value);
@@ -97,7 +97,7 @@ ByteSwap32(uint32_t value)
 }
 
 constexpr uint64_t
-ByteSwap64(uint64_t value)
+ByteSwap64(uint64_t value) noexcept
 {
 #ifdef __GNUC__
 	return __builtin_bswap64(value);
