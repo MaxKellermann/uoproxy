@@ -146,6 +146,10 @@ public:
 		:hi(uint8_t(src >> 8)),
 		 lo(uint8_t(src)) {}
 
+	/**
+	 * Construct an instance from an integer which is already
+	 * big-endian.
+	 */
 	static constexpr auto FromBE(uint16_t src) noexcept {
 		union {
 			uint16_t in;
@@ -207,6 +211,10 @@ public:
 		 c(uint8_t(src >> 8)),
 		 d(uint8_t(src)) {}
 
+	/**
+	 * Construct an instance from an integer which is already
+	 * big-endian.
+	 */
 	static constexpr auto FromBE(uint32_t src) noexcept {
 		union {
 			uint32_t in;
