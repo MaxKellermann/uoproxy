@@ -12,6 +12,7 @@ uoproxy (0.5) unstable; urgency=low
   * fix character creation with antispy
   * fix Razor support due to protocol mismatch bug
   * fix seed for game login (ModernUO 0.9 compatibility)
+  * work around target+walk desync
   * log to stderr instead of stdout
   * systemd support
 

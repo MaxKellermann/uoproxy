@@ -270,6 +270,18 @@ handle_target(LinkedServer &ls,
 							      ls);
 	}
 
+
+	if (p->allow_ground == 0 && p->serial == 0) {
+		/* AFAICT, the only time we both don't allow ground
+		   targetting and don't have a serial for a target is
+		   when we are sending cancel target
+		   requests.. otherwise what would the target be? */
+	} else {
+		ls.connection->walk.seq_next = 0;
+		ls.connection->walk.queue_size = 0;
+		ls.connection->walk.server = nullptr;
+	}
+
 	return PacketAction::ACCEPT;
 }
 
