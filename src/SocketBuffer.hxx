@@ -3,8 +3,9 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
+#include <span>
 
 class SocketBufferHandler {
 public:
@@ -25,7 +26,6 @@ public:
 };
 
 struct SocketBuffer;
-template<typename T> struct WritableBuffer;
 
 SocketBuffer *
 sock_buff_create(int fd, size_t input_max,
@@ -34,7 +34,7 @@ sock_buff_create(int fd, size_t input_max,
 
 void sock_buff_dispose(SocketBuffer *sb);
 
-WritableBuffer<void>
+std::span<std::byte>
 sock_buff_write(SocketBuffer *sb) noexcept;
 
 void

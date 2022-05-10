@@ -112,7 +112,7 @@ UO::Client::Decompress(const uint8_t *data, size_t length)
     }
 
     ssize_t nbytes = uo_decompress(&decompression,
-                                   w.data, w.size,
+                                   w.data(), w.size(),
                                    data, length);
     if (nbytes < 0) {
         LogFormat(1, "decompression failed\n");
@@ -176,7 +176,7 @@ UO::Client::OnSocketData(const void *data0, size_t length)
         if (r.empty())
             return consumed;
 
-        nbytes = ParsePackets(r.data, r.size);
+        nbytes = ParsePackets(r.data(), r.size());
         if (nbytes < 0)
             return 0;
 

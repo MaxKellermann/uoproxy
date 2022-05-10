@@ -26,7 +26,7 @@ read_to_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer, size_t length)
     if (w.empty())
         return -2;
 
-    ssize_t nbytes = recv(fd, w.data, std::min(w.size, length), MSG_DONTWAIT);
+    ssize_t nbytes = recv(fd, w.data(), std::min(w.size(), length), MSG_DONTWAIT);
     if (nbytes > 0)
         buffer.Append(nbytes);
 
@@ -40,13 +40,13 @@ write_from_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer)
     if (r.empty())
         return -2;
 
-    ssize_t nbytes = send(fd, r.data, r.size, MSG_DONTWAIT);
+    ssize_t nbytes = send(fd, r.data(), r.size(), MSG_DONTWAIT);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 
     if (nbytes <= 0)
-        return r.size;
+        return r.size();
 
     buffer.Consume(nbytes);
-    return (ssize_t)r.size - nbytes;
+    return (ssize_t)r.size() - nbytes;
 }

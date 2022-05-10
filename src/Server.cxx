@@ -9,7 +9,6 @@
 #include "Log.hxx"
 #include "SocketUtil.hxx"
 #include "Encryption.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <utility>
 
@@ -239,14 +238,14 @@ void uo_server_send(UO::Server *server,
     log_hexdump(10, src, length);
 
     if (server->compression_enabled) {
-        auto w = WritableBuffer<uint8_t>::FromVoid(sock_buff_write(server->sock));
+        auto w = sock_buff_write(server->sock);
         if (w.empty()) {
             LogFormat(1, "output buffer full in uo_server_send()\n");
             server->Abort();
             return;
         }
 
-        ssize_t nbytes = uo_compress(w.data, w.size,
+        ssize_t nbytes = uo_compress((unsigned char *)w.data(), w.size(),
                                      (const unsigned char *)src, length);
         if (nbytes < 0) {
             LogFormat(1, "uo_compress() failed\n");

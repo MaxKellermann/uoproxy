@@ -58,7 +58,7 @@ SocketBuffer::SubmitData()
 
     const ScopeLockFlush lock_flush;
 
-    ssize_t nbytes = handler.OnSocketData(r.data, r.size);
+    ssize_t nbytes = handler.OnSocketData(r.data(), r.size());
     if (nbytes == 0)
         return false;
 
@@ -145,10 +145,10 @@ sock_buff_send_callback(int fd, short event, void *ctx)
  *
  */
 
-WritableBuffer<void>
+std::span<std::byte>
 sock_buff_write(SocketBuffer *sb) noexcept
 {
-    return sb->output.Write().ToVoid();
+    return sb->output.Write();
 }
 
 void
@@ -164,10 +164,10 @@ bool
 sock_buff_send(SocketBuffer *sb, const void *data, size_t length)
 {
     auto w = sock_buff_write(sb);
-    if (length > w.size)
+    if (length > w.size())
         return false;
 
-    memcpy(w.data, data, length);
+    memcpy(w.data(), data, length);
     sock_buff_append(sb, length);
     return true;
 }
