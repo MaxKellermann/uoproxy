@@ -8,7 +8,7 @@
 /**
  * An operation that has to be flushed.
  */
-class PendingFlush : public IntrusiveListHook {
+class PendingFlush : public IntrusiveListHook<> {
     bool is_linked = false;
 
 public:

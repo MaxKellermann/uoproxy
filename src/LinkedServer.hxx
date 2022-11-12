@@ -24,7 +24,7 @@ class Server;
  * It may be one of of several clients sharing the connection to the
  * real UO server.
  */
-struct LinkedServer final : IntrusiveListHook, UO::ServerHandler {
+struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
     Connection *connection = nullptr;
 
     UO::Server *server = nullptr;

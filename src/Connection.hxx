@@ -41,7 +41,7 @@ struct WalkState {
     uint8_t seq_next = 0;
 };
 
-struct Connection final : IntrusiveListHook, UO::ClientHandler {
+struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
     Instance &instance;
 
     /* flags */

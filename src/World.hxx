@@ -8,7 +8,7 @@
 #include "PacketStructs.hxx"
 #include "PacketType.hxx"
 
-struct Item final : IntrusiveListHook {
+struct Item final : IntrusiveListHook<> {
     const uint32_t serial;
 
     union {
@@ -74,7 +74,7 @@ struct Item final : IntrusiveListHook {
     }
 };
 
-struct Mobile final : IntrusiveListHook {
+struct Mobile final : IntrusiveListHook<> {
     const uint32_t serial;
     VarStructPtr<struct uo_packet_mobile_incoming> packet_mobile_incoming;
     VarStructPtr<struct uo_packet_mobile_status> packet_mobile_status;
