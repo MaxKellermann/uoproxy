@@ -65,7 +65,7 @@ following to compile it:
 
 Type::
 
- meson . output
+ meson setup output
  ninja -C output install
 
 Then you can start uoproxy on the command line::
