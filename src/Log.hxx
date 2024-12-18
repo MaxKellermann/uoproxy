@@ -5,6 +5,8 @@
 
 #include "util/Compiler.h"
 
+#include <exception>
+
 #include <string.h>
 #include <errno.h>
 #include <stddef.h>
@@ -30,6 +32,9 @@ log_oom()
 {
     LogFormat(1, "Out of memory\n");
 }
+
+void
+log_error(const char *msg, std::exception_ptr error) noexcept;
 
 static inline void
 log_error(const char *msg, int error)

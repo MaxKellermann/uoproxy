@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Log.hxx"
+#include "util/Exception.hxx"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -18,4 +19,10 @@ do_log(const char *fmt, ...) noexcept
     va_end(ap);
 
     fflush(stdout);
+}
+
+void
+log_error(const char *msg, std::exception_ptr error) noexcept
+{
+    LogFormat(1, "%s: %s\n", msg, GetFullMessage(std::move(error)).c_str());
 }

@@ -83,6 +83,7 @@ inc = include_directories(
   '.',
 )
 
+subdir('src/util')
 subdir('src/net')
 
 executable(
@@ -115,6 +116,7 @@ executable(
     libevent,
     libsystemd,
     net_dep,
+    util_dep,
   ],
   install: true,
 )
