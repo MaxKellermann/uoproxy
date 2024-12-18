@@ -13,9 +13,6 @@ common_cppflags = [
   '-D_GNU_SOURCE',
 ]
 
-common_cflags = [
-]
-
 test_common_flags = [
   '-Wvla',
 
