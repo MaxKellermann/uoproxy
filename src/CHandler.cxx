@@ -12,7 +12,6 @@
 #include "Config.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
-#include "util/Compiler.h"
 #include "util/VarStructPtr.hxx"
 
 #include <assert.h>
