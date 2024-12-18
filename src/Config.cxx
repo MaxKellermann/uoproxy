@@ -248,7 +248,7 @@ static char *next_word(char **pp) {
             ++(*pp);
     } else {
         word = *pp;
-        while (**pp < 0 || **pp > 0x20)
+        while ((unsigned char)**pp > 0x20)
             ++(*pp);
     }
 
