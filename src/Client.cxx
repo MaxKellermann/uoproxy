@@ -38,7 +38,6 @@ public:
 
     ClientHandler &handler;
 
-    bool aborted = false;
     DeferEvent abort_event;
 
     explicit Client(EventLoop &event_loop, UniqueSocketDescriptor &&s, ClientHandler &_handler) noexcept
@@ -68,8 +67,6 @@ private:
 inline void
 Client::DeferredAbort() noexcept
 {
-    assert(aborted);
-
     handler.OnClientDisconnect();
 }
 
@@ -78,13 +75,9 @@ Client::DeferredAbort() noexcept
 void
 UO::Client::Abort() noexcept
 {
-    if (aborted)
-        return;
-
     /* this is a trick to delay the destruction of this object until
        everything is done */
 
-    aborted = true;
     abort_event.Schedule();
 }
 
@@ -227,10 +220,10 @@ uo_client_set_protocol(UO::Client *client,
 
 void uo_client_send(UO::Client *client,
                     const void *src, size_t length) {
-    assert(client->sock != nullptr || client->aborted);
+    assert(client->sock != nullptr || client->abort_event.IsPending());
     assert(length > 0);
 
-    if (client->aborted)
+    if (client->abort_event.IsPending())
         return;
 
     LogFmt(9, "sending packet to server, length={}\n", length);

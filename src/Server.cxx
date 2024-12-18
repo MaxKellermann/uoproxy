@@ -30,7 +30,6 @@ public:
 
     ServerHandler &handler;
 
-    bool aborted = false;
     DeferEvent abort_event;
 
     explicit Server(EventLoop &event_loop,
@@ -62,8 +61,6 @@ private:
 inline void
 Server::DeferredAbort() noexcept
 {
-    assert(aborted);
-
     handler.OnServerDisconnect();
 }
 
@@ -72,13 +69,9 @@ Server::DeferredAbort() noexcept
 void
 UO::Server::Abort() noexcept
 {
-    if (aborted)
-        return;
-
     /* this is a trick to delay the destruction of this object until
        everything is done */
 
-    aborted = true;
     abort_event.Schedule();
 }
 
@@ -219,11 +212,11 @@ uint16_t uo_server_getsockport(const UO::Server *server)
 
 void uo_server_send(UO::Server *server,
                     const void *src, size_t length) {
-    assert(server->sock != nullptr || server->aborted);
+    assert(server->sock != nullptr || server->abort_event.IsPending());
     assert(length > 0);
     assert(get_packet_length(server->protocol_version, src, length) == length);
 
-    if (server->aborted)
+    if (server->abort_event.IsPending())
         return;
 
     LogFmt(9, "sending packet to client, length={}\n", length);
