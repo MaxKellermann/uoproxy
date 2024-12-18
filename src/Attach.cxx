@@ -20,9 +20,6 @@ attach_item(LinkedServer *ls,
     item->attach_sequence = world->item_attach_sequence;
 
     switch (item->socket.cmd) {
-        uint32_t parent_serial;
-        Item *parent;
-
     case UO::Command::WorldItem:
         if (ls->client_version.protocol >= PROTOCOL_7) {
             uo_server_send(ls->server, &item->socket.ground,
@@ -37,9 +34,8 @@ attach_item(LinkedServer *ls,
 
     case UO::Command::ContainerUpdate:
         /* attach parent first */
-        parent_serial = item->socket.container.item.parent_serial;
-        parent = world->FindItem(parent_serial);
-        if (parent != nullptr &&
+        if (Item *parent = world->FindItem(item->socket.container.item.parent_serial);
+            parent != nullptr &&
             parent->attach_sequence != world->item_attach_sequence)
             attach_item(ls, parent);
 
