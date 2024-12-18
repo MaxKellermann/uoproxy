@@ -4,6 +4,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 struct game_server_config {
     std::string name;
@@ -20,8 +21,7 @@ struct Config {
 
     struct addrinfo *login_address = nullptr;
 
-    unsigned num_game_servers = 0;
-    struct game_server_config *game_servers = nullptr;
+    std::vector<struct game_server_config> game_servers;
     bool background = false, autoreconnect = true, antispy = false, razor_workaround = false;
 
     /**

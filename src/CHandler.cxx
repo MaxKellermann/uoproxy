@@ -349,14 +349,11 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         return PacketAction::DROP;
     }
 
-    if (config.num_game_servers > 0) {
+    if (!config.game_servers.empty()) {
         /* we have a game server list and thus we emulate the login
            server */
-        unsigned i, num_game_servers = config.num_game_servers;
-        struct game_server_config *game_servers = config.game_servers;
+        std::size_t i, num_game_servers = config.game_servers.size();
         struct sockaddr_in *sin;
-
-        assert(config.game_servers != nullptr);
 
         struct uo_packet_server_list *p2;
         length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
@@ -372,12 +369,12 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         for (i = 0; i < num_game_servers; i++) {
             p2->game_servers[i].index = i;
             snprintf(p2->game_servers[i].name, sizeof(p2->game_servers[i].name),
-                     "%s", game_servers[i].name.c_str());
+                     "%s", config.game_servers[i].name.c_str());
 
-            if (game_servers[i].address->ai_family != AF_INET)
+            if (config.game_servers[i].address->ai_family != AF_INET)
                 continue;
 
-            sin = (struct sockaddr_in*)game_servers[i].address->ai_addr;
+            sin = (struct sockaddr_in*)config.game_servers[i].address->ai_addr;
             p2->game_servers[i].address = sin->sin_addr.s_addr;
         }
 
@@ -633,17 +630,15 @@ handle_play_server(LinkedServer &ls,
 
         retaction = PacketAction::DROP;
     } else if (config.login_address == nullptr &&
-               config.game_servers != nullptr &&
-               config.num_game_servers > 0) {
-        const unsigned num_game_servers = config.num_game_servers;
+               !config.game_servers.empty()) {
         struct uo_packet_game_login login;
         uint32_t seed;
 
         assert(c.client.client == nullptr);
 
         /* locate the selected game server */
-        unsigned i = p->index;
-        if (i >= num_game_servers)
+        const std::size_t i = p->index;
+        if (i >= config.game_servers.size())
             return PacketAction::DISCONNECT;
 
         const auto &server_config = config.game_servers[i];

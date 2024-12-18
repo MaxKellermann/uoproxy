@@ -48,11 +48,9 @@ Connection::DoReconnect() noexcept
 
     if (config.login_address == nullptr) {
         /* connect to game server */
+        assert(server_index < config.game_servers.size());
         struct addrinfo *server_address
             = config.game_servers[server_index].address;
-
-        assert(config.game_servers != nullptr);
-        assert(server_index < config.num_game_servers);
 
         try {
             Connect({server_address->ai_addr, server_address->ai_addrlen},

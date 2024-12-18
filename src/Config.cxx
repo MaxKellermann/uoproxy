@@ -178,7 +178,7 @@ void parse_cmdline(Config *config, int argc, char **argv) {
     }
 
     if (login_address == nullptr && config->login_address == nullptr &&
-        config->num_game_servers == 0) {
+        config->game_servers.empty()) {
         fmt::print(stderr, "uoproxy: login server missing\n");
         fmt::print(stderr, "Try 'uoproxy -h' for more information\n");
         exit(1);
@@ -275,9 +275,8 @@ parse_bool(const char *path, unsigned no, const char *val) {
     }
 }
 
-static void
-parse_game_server(const char *path, unsigned no,
-                  struct game_server_config *config, char *string)
+static struct game_server_config
+parse_game_server(const char *path, unsigned no, char *string)
 {
     char *eq = strchr(string, '=');
     struct addrinfo hints;
@@ -291,18 +290,23 @@ parse_game_server(const char *path, unsigned no,
 
     *eq = 0;
 
-    config->name = string;
+    struct game_server_config config{
+        .name = string,
+        .address = nullptr,
+    };
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = getaddrinfo_helper(eq + 1, 2593, &hints, &config->address);
+    ret = getaddrinfo_helper(eq + 1, 2593, &hints, &config.address);
     if (ret < 0) {
         fmt::print(stderr, "failed to resolve {:?}: {}\n",
                    eq + 1, gai_strerror(ret));
         exit(1);
     }
+
+    return config;
 }
 
 int config_read_file(Config *config, const char *path) {
@@ -393,46 +397,22 @@ int config_read_file(Config *config, const char *path) {
                 exit(1);
             }
         } else if (strcmp(key, "server_list") == 0) {
-            unsigned i;
-
-            if (config->game_servers != nullptr) {
-                for (i = 0; i < config->num_game_servers; i++) {
-                    if (config->game_servers[i].address != nullptr)
-                        freeaddrinfo(config->game_servers[i].address);
-                }
-
-                config->game_servers = nullptr;
-            }
-
-            config->num_game_servers = 0;
+            config->game_servers.clear();
 
             if (*value == 0)
                 continue;
 
-            ++config->num_game_servers;
-
-            for (p = value; (p = strchr(p, ',')) != nullptr; ++p)
-                ++config->num_game_servers;
-
-            config->game_servers = (struct game_server_config *)calloc(config->num_game_servers,
-                                          sizeof(*config->game_servers));
-            if (config->game_servers == nullptr) {
-                log_oom();
-                exit(2);
-            }
-
-            for (p = value, i = 0; i < config->num_game_servers; ++i) {
+            p = value;
+            while (true) {
                 char *o = p;
 
                 p = strchr(o, ',');
                 if (p == nullptr) {
-                    parse_game_server(path, no,
-                                      config->game_servers + i, o);
+                    config->game_servers.push_back(parse_game_server(path, no, o));
                     break;
                 } else {
                     *p++ = 0;
-                    parse_game_server(path, no,
-                                      config->game_servers + i, o);
+                    config->game_servers.push_back(parse_game_server(path, no, o));
                 }
             }
         } else if (strcmp(key, "background") == 0) {
@@ -470,12 +450,8 @@ Config::~Config() noexcept
     if (login_address != nullptr)
         freeaddrinfo(login_address);
 
-    if (game_servers != nullptr) {
-        unsigned i;
-        for (i = 0; i < num_game_servers; i++) {
-            if (game_servers[i].address != nullptr)
-                freeaddrinfo(game_servers[i].address);
-        }
-        free(game_servers);
+    for (const auto &i : game_servers) {
+        if (i.address != nullptr)
+            freeaddrinfo(i.address);
     }
 }
