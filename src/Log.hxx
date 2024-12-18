@@ -13,6 +13,7 @@
 
 #ifdef DISABLE_LOGGING
 #define LogFormat(level, ...)
+#define Log(level, msg)
 #define log_oom()
 #define log_error(msg, error)
 #define log_errno(msg)
@@ -25,12 +26,19 @@ void
 do_log(const char *fmt, ...) noexcept
     gcc_printf(1, 2);
 
+inline void
+Log(unsigned level, const char *msg) noexcept
+{
+    if (verbose >= level)
+        do_log("%s", msg);
+}
+
 #define LogFormat(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
 
 static inline void
 log_oom()
 {
-    LogFormat(1, "Out of memory\n");
+    Log(1, "Out of memory\n");
 }
 
 void

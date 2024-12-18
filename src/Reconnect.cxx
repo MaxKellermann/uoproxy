@@ -69,7 +69,7 @@ Connection::DoReconnect() noexcept
             .credentials = credentials,
         };
 
-        LogFormat(2, "connected, doing GameLogin\n");
+        Log(2, "connected, doing GameLogin\n");
 
         uo_client_send(client.client, &p, sizeof(p));
     } else {
@@ -90,7 +90,7 @@ Connection::DoReconnect() noexcept
             .unknown1 = {},
         };
 
-        LogFormat(2, "connected, doing AccountLogin\n");
+        Log(2, "connected, doing AccountLogin\n");
 
         uo_client_send(client.client, &p, sizeof(p));
     }

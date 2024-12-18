@@ -20,7 +20,7 @@ ping_event_callback(int, short, void *ctx) noexcept
     ping.cmd = UO::Command::Ping;
     ping.id = ++client->ping_request;
 
-    LogFormat(2, "sending ping\n");
+    Log(2, "sending ping\n");
     uo_client_send(client->client, &ping, sizeof(ping));
 
     /* schedule next ping */

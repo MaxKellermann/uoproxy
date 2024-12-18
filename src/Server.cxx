@@ -99,7 +99,7 @@ UO::Server::ParsePackets(const uint8_t *data, size_t length)
         size_t packet_length = get_packet_length(protocol_version,
                                                  data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
-            LogFormat(1, "malformed packet from client\n");
+            Log(1, "malformed packet from client\n");
             log_hexdump(5, data, length);
             Abort();
             return 0;
@@ -145,7 +145,7 @@ UO::Server::OnSocketData(const void *data0, size_t length)
 
         seed = p->seed;
         if (seed == 0) {
-            LogFormat(2, "zero seed from client\n");
+            Log(2, "zero seed from client\n");
             Abort();
             return 0;
         }
@@ -159,7 +159,7 @@ UO::Server::OnSocketData(const void *data0, size_t length)
 
         seed = *(const uint32_t*)(data + consumed);
         if (seed == 0) {
-            LogFormat(2, "zero seed from client\n");
+            Log(2, "zero seed from client\n");
             Abort();
             return 0;
         }
@@ -178,7 +178,7 @@ void
 UO::Server::OnSocketDisconnect(int error) noexcept
 {
     if (error == 0)
-        LogFormat(2, "client closed the connection\n");
+        Log(2, "client closed the connection\n");
     else
         log_error("error during communication with client", error);
 
@@ -240,7 +240,7 @@ void uo_server_send(UO::Server *server,
     if (server->compression_enabled) {
         auto w = sock_buff_write(server->sock);
         if (w.empty()) {
-            LogFormat(1, "output buffer full in uo_server_send()\n");
+            Log(1, "output buffer full in uo_server_send()\n");
             server->Abort();
             return;
         }
@@ -248,7 +248,7 @@ void uo_server_send(UO::Server *server,
         ssize_t nbytes = uo_compress((unsigned char *)w.data(), w.size(),
                                      {(const unsigned char *)src, length});
         if (nbytes < 0) {
-            LogFormat(1, "uo_compress() failed\n");
+            Log(1, "uo_compress() failed\n");
             server->Abort();
             return;
         }
@@ -256,7 +256,7 @@ void uo_server_send(UO::Server *server,
         sock_buff_append(server->sock, (size_t)nbytes);
     } else {
         if (!sock_buff_send(server->sock, src, length)) {
-            LogFormat(1, "output buffer full in uo_server_send()\n");
+            Log(1, "output buffer full in uo_server_send()\n");
             server->Abort();
         }
     }

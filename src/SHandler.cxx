@@ -445,7 +445,7 @@ handle_char_list(Connection &c, const void *data, size_t length)
             .client_ip = 0xc0a80102, /* 192.168.1.2 */
         };
 
-        LogFormat(2, "sending PlayCharacter\n");
+        Log(2, "sending PlayCharacter\n");
 
         uo_client_send(c.client.client, &p2, sizeof(p2));
 
@@ -498,7 +498,7 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
     if (c.IsInGame() && !c.client.reconnecting)
         return PacketAction::DISCONNECT;
 
-    LogFormat(2, "changing to game connection\n");
+    Log(2, "changing to game connection\n");
 
     /* save the relay packet - its buffer will be freed soon */
     relay = *p;
@@ -535,7 +535,7 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
     }
 
     /* send game login to new server */
-    LogFormat(2, "connected, doing GameLogin\n");
+    Log(2, "connected, doing GameLogin\n");
 
     login.cmd = UO::Command::GameLogin;
     login.auth_id = relay.auth_id;

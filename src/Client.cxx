@@ -104,7 +104,7 @@ UO::Client::Decompress(std::span<const uint8_t> src)
 {
     auto w = decompressed_buffer.Write();
     if (w.empty()) {
-        LogFormat(1, "decompression buffer full\n");
+        Log(1, "decompression buffer full\n");
         Abort();
         return -1;
     }
@@ -113,7 +113,7 @@ UO::Client::Decompress(std::span<const uint8_t> src)
                                    w.data(), w.size(),
                                    src);
     if (nbytes < 0) {
-        LogFormat(1, "decompression failed\n");
+        Log(1, "decompression failed\n");
         Abort();
         return -1;
     }
@@ -131,7 +131,7 @@ UO::Client::ParsePackets(const uint8_t *data, size_t length)
     while (length > 0) {
         packet_length = get_packet_length(protocol_version, data, length);
         if (packet_length == PACKET_LENGTH_INVALID) {
-            LogFormat(1, "malformed packet from server\n");
+            Log(1, "malformed packet from server\n");
             log_hexdump(5, data, length);
             Abort();
             return 0;
@@ -194,7 +194,7 @@ void
 UO::Client::OnSocketDisconnect(int error) noexcept
 {
     if (error == 0)
-        LogFormat(2, "server closed the connection\n");
+        Log(2, "server closed the connection\n");
     else
         log_error("error during communication with server", error);
 
@@ -251,7 +251,7 @@ void uo_client_send(UO::Client *client,
         client->compression_enabled = true;
 
     if (!sock_buff_send(client->sock, src, length)) {
-        LogFormat(1, "output buffer full in uo_client_send()\n");
+        Log(1, "output buffer full in uo_client_send()\n");
         client->Abort();
     }
 }

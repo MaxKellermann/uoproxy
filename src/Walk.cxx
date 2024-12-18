@@ -177,7 +177,7 @@ connection_walk_ack(Connection &c,
 
     auto *i = find_by_seq(state, p.seq);
     if (i == nullptr) {
-        LogFormat(1, "WalkAck out of sync\n");
+        Log(1, "WalkAck out of sync\n");
         connection_resync(c);
         return;
     }

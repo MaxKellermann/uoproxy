@@ -230,7 +230,7 @@ encryption_from_client(struct encryption *e,
             }
 
             if (!encryption_login_init(&e->login, e->seed, p)) {
-                LogFormat(2, "login encryption failure\n");
+                Log(2, "login encryption failure\n");
                 e->state = STATE_DISABLED;
                 return data;
             }
@@ -247,7 +247,7 @@ encryption_from_client(struct encryption *e,
             e->state = STATE_GAME;
         } else {
             /* unrecognized; assume it's not encrypted */
-            LogFormat(2, "unrecognized encryption\n");
+            Log(2, "unrecognized encryption\n");
             e->state = STATE_DISABLED;
             return data;
         }
