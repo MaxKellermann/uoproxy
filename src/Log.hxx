@@ -13,7 +13,6 @@
 
 #ifdef DISABLE_LOGGING
 #define Log(level, msg)
-#define log_oom()
 #define log_error(msg, error)
 #define log_errno(msg)
 #define log_hexdump(level, data, length)
@@ -29,12 +28,6 @@ Log(unsigned level, const char *msg) noexcept
 }
 
 #define LogFmt(level, ...) do { if (verbose >= (level)) fmt::print(stderr, __VA_ARGS__); } while (0)
-
-static inline void
-log_oom()
-{
-    Log(1, "Out of memory\n");
-}
 
 void
 log_error(const char *msg, std::exception_ptr error) noexcept;
