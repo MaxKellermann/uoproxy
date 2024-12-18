@@ -19,10 +19,9 @@ Connection::Connection(Instance &_instance,
     evtimer_set(&reconnect_event, ReconnectTimerCallback, this);
 }
 
-void
+Connection *
 connection_new(Instance *instance,
-               UniqueSocketDescriptor &&socket,
-               Connection **connectionp)
+               UniqueSocketDescriptor &&socket)
 {
     auto *ls = new LinkedServer(std::move(socket));
 
@@ -39,7 +38,7 @@ connection_new(Instance *instance,
 
     c->Add(*ls);
 
-    *connectionp = c;
+    return c;
 }
 
 Connection::~Connection() noexcept

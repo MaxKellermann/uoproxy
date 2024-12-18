@@ -140,10 +140,10 @@ private:
     void OnClientDisconnect() noexcept override;
 };
 
-void
+[[nodiscard]]
+Connection *
 connection_new(Instance *instance,
-               UniqueSocketDescriptor &&socket,
-               Connection **connectionp);
+               UniqueSocketDescriptor &&socket);
 
 void connection_speak_console(Connection *c, const char *msg);
 

@@ -12,7 +12,6 @@ static void
 listener_event_callback(int, short, void *ctx)
 {
     auto instance = (Instance *)ctx;
-    Connection *c;
 
     auto remote_fd = instance->server_socket.AcceptNonBlock();
     if (!remote_fd.IsDefined()) {
@@ -21,7 +20,7 @@ listener_event_callback(int, short, void *ctx)
         return;
     }
 
-    connection_new(instance, std::move(remote_fd), &c);
+    auto *c = connection_new(instance, std::move(remote_fd));
     instance->connections.push_front(*c);
 }
 
