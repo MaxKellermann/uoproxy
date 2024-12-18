@@ -3,23 +3,29 @@
 
 #pragma once
 
+#include "net/AddressInfo.hxx"
+
 #include <string>
 #include <vector>
 
 struct game_server_config {
-    std::string name;
-    struct addrinfo *address;
+    const std::string name;
+    AddressInfoList address;
+
+    [[nodiscard]]
+    explicit game_server_config(const char *_name) noexcept
+        :name(_name) {}
 };
 
 struct Config {
-    struct addrinfo *bind_address = nullptr;
+    AddressInfoList bind_address;
 
     /**
      * The address of the SOCKS4 proxy server.
      */
-    struct addrinfo *socks4_address = nullptr;
+    AddressInfoList socks4_address;
 
-    struct addrinfo *login_address = nullptr;
+    AddressInfoList login_address;
 
     std::vector<struct game_server_config> game_servers;
     bool background = false, autoreconnect = true, antispy = false, razor_workaround = false;

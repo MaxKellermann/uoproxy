@@ -12,6 +12,7 @@
 #include "Config.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
+#include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/VarStructPtr.hxx"
 
@@ -19,17 +20,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <time.h>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <arpa/inet.h>
 #endif
-
-#include <time.h>
 
 #define TALK_MAX 128
 
@@ -353,7 +351,6 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         /* we have a game server list and thus we emulate the login
            server */
         std::size_t i, num_game_servers = config.game_servers.size();
-        struct sockaddr_in *sin;
 
         struct uo_packet_server_list *p2;
         length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
@@ -371,16 +368,19 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
             snprintf(p2->game_servers[i].name, sizeof(p2->game_servers[i].name),
                      "%s", config.game_servers[i].name.c_str());
 
-            if (config.game_servers[i].address->ai_family != AF_INET)
+            assert(!config.game_servers[i].address.empty());
+
+            const SocketAddress _address{config.game_servers[i].address.GetBest()};
+            if (_address.GetFamily() != AF_INET)
                 continue;
 
-            sin = (struct sockaddr_in*)config.game_servers[i].address->ai_addr;
-            p2->game_servers[i].address = sin->sin_addr.s_addr;
+            const auto &address = IPv4Address::Cast(_address);
+            p2->game_servers[i].address = address.GetNumericAddressBE();
         }
 
         uo_server_send(ls.server, p2_.get(), p2_.size());
         return PacketAction::DROP;
-    } else if (config.login_address != nullptr) {
+    } else if (!config.login_address.empty()) {
         /* connect to the real login server */
         uint32_t seed;
 
@@ -394,8 +394,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
             seed = uo_server_seed(ls.server);
 
         try {
-            c->Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
-                       seed, false);
+            c->Connect(config.login_address.GetBest(), seed, false);
         } catch (...) {
             log_error("connection to login server failed", std::current_exception());
 
@@ -629,7 +628,7 @@ handle_play_server(LinkedServer &ls,
         }
 
         retaction = PacketAction::DROP;
-    } else if (config.login_address == nullptr &&
+    } else if (config.login_address.empty() &&
                !config.game_servers.empty()) {
         struct uo_packet_game_login login;
         uint32_t seed;
@@ -651,8 +650,7 @@ handle_play_server(LinkedServer &ls,
             seed = 0xc0a80102; /* 192.168.1.2 */
 
         try {
-            c.Connect({server_config.address->ai_addr, server_config.address->ai_addrlen},
-                      seed, true);
+            c.Connect(server_config.address.GetBest(), seed, true);
         } catch (...) {
             log_error("connect to game server failed", std::current_exception());
             return PacketAction::DISCONNECT;

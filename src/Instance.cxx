@@ -27,7 +27,7 @@ listener_event_callback(int, short, void *ctx)
 void
 instance_setup_server_socket(Instance *instance)
 {
-    instance->server_socket = setup_server_socket(instance->config.bind_address);
+    instance->server_socket = setup_server_socket(instance->config.bind_address.GetBest());
 
     event_set(&instance->server_socket_event, instance->server_socket.Get(),
               EV_READ|EV_PERSIST,

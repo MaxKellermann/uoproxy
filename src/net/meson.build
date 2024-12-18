@@ -7,7 +7,13 @@ net = static_library(
   'SocketError.cxx',
   'StaticSocketAddress.cxx',
   'FormatAddress.cxx',
+  'HostParser.cxx',
+  'AddressInfo.cxx',
+  'Resolver.cxx',
   include_directories: inc,
+  dependencies: [
+    fmt_dep,
+  ],
 )
 
 net_dep = declare_dependency(

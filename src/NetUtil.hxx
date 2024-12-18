@@ -3,16 +3,12 @@
 
 #pragma once
 
-struct addrinfo;
 class UniqueSocketDescriptor;
-
-int getaddrinfo_helper(const char *host_and_port, int default_port,
-                       const struct addrinfo *hints,
-                       struct addrinfo **aip);
+class SocketAddress;
 
 /**
  * Throws on error.
  */
 [[nodiscard]]
 UniqueSocketDescriptor
-setup_server_socket(const struct addrinfo *bind_address);
+setup_server_socket(SocketAddress bind_address);

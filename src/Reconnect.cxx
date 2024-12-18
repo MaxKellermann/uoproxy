@@ -46,15 +46,14 @@ Connection::DoReconnect() noexcept
     else
         seed = 0xc0a80102; /* 192.168.1.2 */
 
-    if (config.login_address == nullptr) {
+    if (config.login_address.empty()) {
         /* connect to game server */
         assert(server_index < config.game_servers.size());
-        struct addrinfo *server_address
+        const auto &server_address
             = config.game_servers[server_index].address;
 
         try {
-            Connect({server_address->ai_addr, server_address->ai_addrlen},
-                    seed, true);
+            Connect(server_address.GetBest(), seed, true);
         } catch (...) {
             log_error("reconnect failed", std::current_exception());
             ScheduleReconnect();
@@ -74,8 +73,7 @@ Connection::DoReconnect() noexcept
         /* connect to login server */
 
         try {
-            Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
-                    seed, false);
+            Connect(config.login_address.GetBest(), seed, false);
         } catch (...) {
             log_error("reconnect failed", std::current_exception());
             ScheduleReconnect();

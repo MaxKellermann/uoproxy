@@ -2,9 +2,9 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Config.hxx"
-#include "NetUtil.hxx"
 #include "version.h"
 #include "Log.hxx"
+#include "net/Resolver.hxx"
 
 #include <fmt/core.h>
 
@@ -54,43 +54,26 @@ usage()
          );
 }
 
-static struct addrinfo *port_to_addrinfo(int port) {
-    struct addrinfo hints, *ai;
-    int ret;
-
+static AddressInfoList
+port_to_addrinfo(int port)
+{
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = getaddrinfo_helper("*", port, &hints,
-                             &ai);
-    if (ret != 0) {
-        fmt::print(stderr, "getaddrinfo_helper failed: {}\n",
-                   gai_strerror(ret));
-        exit(2);
-    }
-
-    return ai;
+    return Resolve("*", port, &hints);
 }
 
-static struct addrinfo *
+static AddressInfoList
 parse_address(const char *host_and_port)
 {
-    struct addrinfo hints, *ai;
-    int ret;
-
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = getaddrinfo_helper(host_and_port, 2593, &hints, &ai);
-    if (ret != 0) {
-        fmt::print(stderr, "getaddrinfo_helper failed: {}\n",
-                   gai_strerror(ret));
-        exit(2);
-    }
-
-    return ai;
+    return Resolve(host_and_port, 2593, &hints);
 }
 
 /** read configuration options from the command line */
@@ -177,7 +160,7 @@ void parse_cmdline(Config *config, int argc, char **argv) {
         exit(1);
     }
 
-    if (login_address == nullptr && config->login_address == nullptr &&
+    if (login_address == nullptr && config->login_address.empty() &&
         config->game_servers.empty()) {
         fmt::print(stderr, "uoproxy: login server missing\n");
         fmt::print(stderr, "Try 'uoproxy -h' for more information\n");
@@ -187,20 +170,11 @@ void parse_cmdline(Config *config, int argc, char **argv) {
     /* resolve login_address */
 
     if (login_address != nullptr) {
-        if (config->login_address != nullptr)
-            freeaddrinfo(config->login_address);
-
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = PF_INET;
         hints.ai_socktype = SOCK_STREAM;
 
-        ret = getaddrinfo_helper(login_address, 2593, &hints,
-                                 &config->login_address);
-        if (ret < 0) {
-            fmt::print(stderr, "failed to resolve {:?}: {}\n",
-                    login_address, gai_strerror(ret));
-            exit(1);
-        }
+        config->login_address = Resolve(login_address, 2593, &hints);
     }
 
     /* resolve bind_address */
@@ -217,19 +191,13 @@ void parse_cmdline(Config *config, int argc, char **argv) {
             exit(1);
         }
 
-        if (config->bind_address != nullptr)
-            freeaddrinfo(config->bind_address);
-
         config->bind_address = parse_address(bind_address);
     }
 
-    if (bind_port == 0 && config->bind_address == nullptr)
+    if (bind_port == 0 && config->bind_address.empty())
         bind_port = 2593;
 
     if (bind_port != 0) {
-        if (config->bind_address != nullptr)
-            freeaddrinfo(config->bind_address);
-
         config->bind_address = port_to_addrinfo(bind_port);
     }
 }
@@ -280,7 +248,6 @@ parse_game_server(const char *path, unsigned no, char *string)
 {
     char *eq = strchr(string, '=');
     struct addrinfo hints;
-    int ret;
 
     if (eq == nullptr) {
         fmt::print(stderr, "{} line {}: no address for server ('=' missing)\n",
@@ -290,21 +257,13 @@ parse_game_server(const char *path, unsigned no, char *string)
 
     *eq = 0;
 
-    struct game_server_config config{
-        .name = string,
-        .address = nullptr,
-    };
+    struct game_server_config config{string};
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = getaddrinfo_helper(eq + 1, 2593, &hints, &config.address);
-    if (ret < 0) {
-        fmt::print(stderr, "failed to resolve {:?}: {}\n",
-                   eq + 1, gai_strerror(ret));
-        exit(1);
-    }
+    config.address = Resolve(eq + 1, 2593, &hints);
 
     return config;
 }
@@ -314,7 +273,6 @@ int config_read_file(Config *config, const char *path) {
     char line[2048], *p;
     char *key, *value;
     unsigned no = 0;
-    int ret;
 
     file = fopen(path, "r");
     if (file == nullptr)
@@ -353,49 +311,23 @@ int config_read_file(Config *config, const char *path) {
                 exit(2);
             }
 
-            if (config->bind_address != nullptr)
-                freeaddrinfo(config->bind_address);
-
             config->bind_address = port_to_addrinfo((unsigned)port);
         } else if (strcmp(key, "bind") == 0) {
-            if (config->bind_address != nullptr)
-                freeaddrinfo(config->bind_address);
-
             config->bind_address = parse_address(value);
         } else if (strcmp(key, "socks4") == 0) {
             struct addrinfo hints;
-
-            if (config->socks4_address != nullptr)
-                freeaddrinfo(config->socks4_address);
-
             memset(&hints, 0, sizeof(hints));
             hints.ai_family = PF_INET;
             hints.ai_socktype = SOCK_STREAM;
 
-            ret = getaddrinfo_helper(value, 9050, &hints,
-                                     &config->socks4_address);
-            if (ret < 0) {
-                fmt::print(stderr, "failed to resolve {:?}: {}\n",
-                           value, gai_strerror(ret));
-                exit(1);
-            }
+            config->socks4_address = Resolve(value, 9050, &hints);
         } else if (strcmp(key, "server") == 0) {
             struct addrinfo hints;
-
-            if (config->login_address != nullptr)
-                freeaddrinfo(config->login_address);
-
             memset(&hints, 0, sizeof(hints));
             hints.ai_family = PF_INET;
             hints.ai_socktype = SOCK_STREAM;
 
-            ret = getaddrinfo_helper(value, 2593, &hints,
-                                     &config->login_address);
-            if (ret < 0) {
-                fmt::print(stderr, "failed to resolve {:?}: {}\n",
-                           value, gai_strerror(ret));
-                exit(1);
-            }
+            config->login_address = Resolve(value, 2593, &hints);
         } else if (strcmp(key, "server_list") == 0) {
             config->game_servers.clear();
 
@@ -439,19 +371,4 @@ int config_read_file(Config *config, const char *path) {
     return 0;
 }
 
-Config::~Config() noexcept
-{
-    if (bind_address != nullptr)
-        freeaddrinfo(bind_address);
-
-    if (socks4_address != nullptr)
-        freeaddrinfo(socks4_address);
-
-    if (login_address != nullptr)
-        freeaddrinfo(login_address);
-
-    for (const auto &i : game_servers) {
-        if (i.address != nullptr)
-            freeaddrinfo(i.address);
-    }
-}
+Config::~Config() noexcept = default;

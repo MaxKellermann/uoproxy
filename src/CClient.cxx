@@ -75,16 +75,13 @@ Connection::Connect(SocketAddress server_address,
 
     UniqueSocketDescriptor fd;
 
-    const struct addrinfo *socks4_address =
-        instance.config.socks4_address;
-    if (socks4_address != nullptr) {
-        fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
-                            {socks4_address->ai_addr, socks4_address->ai_addrlen});
+    if (!instance.config.socks4_address.empty()) {
+        const auto &socks4_address = instance.config.socks4_address.GetBest();
+        fd = socket_connect(socks4_address.GetFamily(), SOCK_STREAM, 0, socks4_address);
 
         socks_connect(fd, server_address);
     } else {
-        fd = socket_connect(server_address.GetFamily(), SOCK_STREAM, 0,
-                            server_address);
+        fd = socket_connect(server_address.GetFamily(), SOCK_STREAM, 0, server_address);
     }
 
     client.Connect(std::move(fd), seed, for_game_login, *this);
