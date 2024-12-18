@@ -66,7 +66,7 @@ public:
     void Abort() noexcept;
 
 private:
-    ssize_t Decompress(const uint8_t *data, size_t length);
+    ssize_t Decompress(std::span<const uint8_t> src);
     ssize_t ParsePackets(const uint8_t *data, size_t length);
 
     /* virtual methods from SocketBufferHandler */
@@ -102,7 +102,7 @@ UO::Client::Abort() noexcept
 }
 
 inline ssize_t
-UO::Client::Decompress(const uint8_t *data, size_t length)
+UO::Client::Decompress(std::span<const uint8_t> src)
 {
     auto w = decompressed_buffer.Write();
     if (w.empty()) {
@@ -113,7 +113,7 @@ UO::Client::Decompress(const uint8_t *data, size_t length)
 
     ssize_t nbytes = uo_decompress(&decompression,
                                    w.data(), w.size(),
-                                   data, length);
+                                   src);
     if (nbytes < 0) {
         LogFormat(1, "decompression failed\n");
         Abort();
@@ -122,7 +122,7 @@ UO::Client::Decompress(const uint8_t *data, size_t length)
 
     decompressed_buffer.Append((size_t)nbytes);
 
-    return (size_t)length;
+    return src.size();
 }
 
 ssize_t
@@ -167,7 +167,7 @@ UO::Client::OnSocketData(const void *data0, size_t length)
         ssize_t nbytes;
         size_t consumed;
 
-        nbytes = Decompress(data, length);
+        nbytes = Decompress({data, length});
         if (nbytes <= 0)
             return 0;
         consumed = (size_t)nbytes;

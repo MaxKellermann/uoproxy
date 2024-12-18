@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <span>
+
 #include <sys/types.h> /* for ssize_t */
 
 struct uo_decompression {
@@ -12,9 +14,11 @@ struct uo_decompression {
 
 void uo_decompression_init(struct uo_decompression *de);
 
-ssize_t uo_decompress(struct uo_decompression *de,
-                      unsigned char *dest, size_t dest_max_len,
-                      const unsigned char *src, size_t src_len);
+ssize_t
+uo_decompress(struct uo_decompression *de,
+              unsigned char *dest, size_t dest_max_len,
+              std::span<const unsigned char> src);
 
-ssize_t uo_compress(unsigned char *dest, size_t dest_max_len,
-                    const unsigned char *src, size_t src_len);
+ssize_t
+uo_compress(unsigned char *dest, size_t dest_max_len,
+            std::span<const unsigned char> src);

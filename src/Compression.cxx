@@ -279,18 +279,20 @@ void uo_decompression_init(struct uo_decompression *de) {
     de->value = 0;
 }
 
-ssize_t uo_decompress(struct uo_decompression *de,
-                      unsigned char *dest, size_t dest_max_len,
-                      const unsigned char *src, size_t src_len) {
+ssize_t
+uo_decompress(struct uo_decompression *de,
+              unsigned char *dest, size_t dest_max_len,
+              std::span<const unsigned char> src)
+{
     size_t dest_index = 0;
 
     while (1) {
         if (de->bit >= 8) {
-            if (src_len == 0)
+            if (src.empty())
                 return (ssize_t)dest_index;
 
-            de->value = *src++;
-            src_len--;
+            de->value = src.front();
+            src = src.subspan(1);
 
             de->bit = 0;
             de->mask = 0x80;
@@ -418,15 +420,15 @@ static int output_bits(struct uo_compression *co,
     return 0;
 }
 
-ssize_t uo_compress(unsigned char *dest, size_t dest_max_len,
-                    const unsigned char *src, size_t src_len) {
+ssize_t
+uo_compress(unsigned char *dest, size_t dest_max_len,
+            std::span<const unsigned char> src)
+{
     struct uo_compression co = { .bit = 0, .out_data = 0 };
-    size_t src_index, dest_index = 0;
+    size_t dest_index = 0;
     int num_bits;
 
-    for (src_index = 0; src_index < src_len; src_index++) {
-        const unsigned char src_char = src[src_index];
-
+    for (const auto src_char : src) {
         num_bits = bit_table[src_char][0];
         co.bit += num_bits;
         assert(co.bit < 31);

@@ -246,7 +246,7 @@ void uo_server_send(UO::Server *server,
         }
 
         ssize_t nbytes = uo_compress((unsigned char *)w.data(), w.size(),
-                                     (const unsigned char *)src, length);
+                                     {(const unsigned char *)src, length});
         if (nbytes < 0) {
             LogFormat(1, "uo_compress() failed\n");
             server->Abort();
