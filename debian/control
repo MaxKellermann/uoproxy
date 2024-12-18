@@ -3,7 +3,7 @@ Section: games
 Priority: extra
 Maintainer: Max Kellermann <max.kellermann@gmail.com>
 Build-Depends: debhelper (>= 12~),
- meson (>= 0.47),
+ meson (>= 1.0),
  libsystemd-dev,
  libevent-dev (>= 1.1)
 Standards-Version: 4.0.0

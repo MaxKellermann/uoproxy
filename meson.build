@@ -1,5 +1,5 @@
 project('uoproxy', 'cpp', version: '0.5',
-  meson_version: '>= 0.47',
+  meson_version: '>= 1.0',
   default_options: [
     'cpp_std=gnu++17',
     'warning_level=3',

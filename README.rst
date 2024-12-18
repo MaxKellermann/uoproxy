@@ -59,7 +59,7 @@ following to compile it:
 
 - a C++17 compiler (`GCC <https://gcc.gnu.org/>`__ or `clang
   <https://clang.llvm.org/>`__)
-- `Meson 0.47 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
+- `Meson 1.0 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 - `libevent <https://github.com/libevent/libevent/>`__ development
   files (package ``libevent-dev`` or ``libevent-devel``)
 

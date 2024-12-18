@@ -1,6 +1,7 @@
 uoproxy (0.5) unstable; urgency=medium
 
   * use debhelper 12
+  * require Meson 1.0
 
  --
 
