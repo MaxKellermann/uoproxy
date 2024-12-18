@@ -105,3 +105,122 @@ ByteSwap64(uint64_t value) noexcept
 	return GenericByteSwap64(value);
 #endif
 }
+
+/**
+ * Converts a 16bit value from big endian to the system's byte order
+ */
+constexpr uint16_t
+FromBE16(uint16_t value) noexcept
+{
+	return IsBigEndian() ? value : ByteSwap16(value);
+}
+
+/**
+ * Converts a 32bit value from big endian to the system's byte order
+ */
+constexpr uint32_t
+FromBE32(uint32_t value) noexcept
+{
+	return IsBigEndian() ? value : ByteSwap32(value);
+}
+
+/**
+ * Converts a 64bit value from big endian to the system's byte order
+ */
+constexpr uint64_t
+FromBE64(uint64_t value) noexcept
+{
+	return IsBigEndian() ? value : ByteSwap64(value);
+}
+
+/**
+ * Converts a 16bit value from little endian to the system's byte order
+ */
+constexpr uint16_t
+FromLE16(uint16_t value) noexcept
+{
+	return IsLittleEndian() ? value : ByteSwap16(value);
+}
+
+/**
+ * Converts a 32bit value from little endian to the system's byte order
+ */
+constexpr uint32_t
+FromLE32(uint32_t value) noexcept
+{
+	return IsLittleEndian() ? value : ByteSwap32(value);
+}
+
+/**
+ * Converts a 64bit value from little endian to the system's byte order
+ */
+constexpr uint64_t
+FromLE64(uint64_t value) noexcept
+{
+	return IsLittleEndian() ? value : ByteSwap64(value);
+}
+
+/**
+ * Converts a 16bit value from the system's byte order to big endian
+ */
+constexpr uint16_t
+ToBE16(uint16_t value) noexcept
+{
+	return IsBigEndian() ? value : ByteSwap16(value);
+}
+
+/**
+ * Converts a 32bit value from the system's byte order to big endian
+ */
+constexpr uint32_t
+ToBE32(uint32_t value) noexcept
+{
+	return IsBigEndian() ? value : ByteSwap32(value);
+}
+
+/**
+ * Converts a 64bit value from the system's byte order to big endian
+ */
+constexpr uint64_t
+ToBE64(uint64_t value) noexcept
+{
+	return IsBigEndian() ? value : ByteSwap64(value);
+}
+
+/**
+ * Converts a 16bit value from the system's byte order to little endian
+ */
+constexpr uint16_t
+ToLE16(uint16_t value) noexcept
+{
+	return IsLittleEndian() ? value : ByteSwap16(value);
+}
+
+/**
+ * Converts a 32bit value from the system's byte order to little endian
+ */
+constexpr uint32_t
+ToLE32(uint32_t value) noexcept
+{
+	return IsLittleEndian() ? value : ByteSwap32(value);
+}
+
+/**
+ * Converts a 64bit value from the system's byte order to little endian
+ */
+constexpr uint64_t
+ToLE64(uint64_t value) noexcept
+{
+	return IsLittleEndian() ? value : ByteSwap64(value);
+}
+
+/**
+ * Converts a 16 bit integer from little endian to the host byte order
+ * and returns it as a signed integer.
+ */
+constexpr int16_t
+FromLE16S(uint16_t value) noexcept
+{
+	/* assuming two's complement representation */
+	return static_cast<int16_t>(FromLE16(value));
+}
