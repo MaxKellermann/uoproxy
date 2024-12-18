@@ -46,9 +46,6 @@ test_cxxflags = test_common_flags + [
   '-Wused-but-marked-unused',
 
   '-Wno-non-virtual-dtor',
-
-  # TODO: remove those after the C++ transition is complete
-  '-Wno-pedantic',
 ]
 
 test_ldflags = [
