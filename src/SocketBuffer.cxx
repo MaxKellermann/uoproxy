@@ -20,7 +20,7 @@ struct SocketBuffer final : PendingFlush {
 
     struct event recv_event, send_event;
 
-    DynamicFifoBuffer<uint8_t> input, output;
+    DynamicFifoBuffer<std::byte> input, output;
 
     SocketBufferHandler &handler;
 

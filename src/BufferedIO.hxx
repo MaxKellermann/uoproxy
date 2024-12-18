@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <cstddef>
 
 #include <sys/types.h>
 
@@ -17,7 +17,7 @@ template<typename T> class DynamicFifoBuffer;
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
 ssize_t
-read_to_buffer(int fd, DynamicFifoBuffer<uint8_t> &buffer, size_t length);
+read_to_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer, size_t length);
 
 /**
  * Writes data from the buffer to the file.
@@ -27,4 +27,4 @@ read_to_buffer(int fd, DynamicFifoBuffer<uint8_t> &buffer, size_t length);
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
 ssize_t
-write_from_buffer(int fd, DynamicFifoBuffer<uint8_t> &buffer);
+write_from_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer);
