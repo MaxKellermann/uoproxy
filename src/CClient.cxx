@@ -67,7 +67,7 @@ Connection::OnClientDisconnect() noexcept
     }
 }
 
-int
+void
 Connection::Connect(SocketAddress server_address,
                     uint32_t seed, bool for_game_login)
 {
@@ -80,21 +80,17 @@ Connection::Connect(SocketAddress server_address,
     if (socks4_address != nullptr) {
         fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
                             {socks4_address->ai_addr, socks4_address->ai_addrlen});
-        if (fd < 0)
-            return errno;
 
-        if (!socks_connect(fd, server_address)) {
-            int e = errno;
+        try {
+            socks_connect(fd, server_address);
+        } catch (...) {
             close(fd);
-            return e;
+            throw;
         }
     } else {
         fd = socket_connect(server_address.GetFamily(), SOCK_STREAM, 0,
                             server_address);
-        if (fd < 0)
-            return errno;
     }
 
     client.Connect(fd, seed, for_game_login, *this);
-    return 0;
 }

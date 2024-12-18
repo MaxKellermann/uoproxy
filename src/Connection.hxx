@@ -95,10 +95,10 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
     }
 
     /**
-     * @return 0 on success or an errno value
+     * Throws on error.
      */
-    int Connect(SocketAddress server_address,
-                uint32_t seed, bool for_game_login);
+    void Connect(SocketAddress server_address,
+                 uint32_t seed, bool for_game_login);
     void Disconnect() noexcept;
     void Reconnect();
     void ScheduleReconnect() noexcept;

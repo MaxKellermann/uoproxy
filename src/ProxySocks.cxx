@@ -2,10 +2,12 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "ProxySocks.hxx"
-#include "Log.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketError.hxx"
 
-#include <stdint.h>
+#include <cstdint>
+#include <stdexcept>
+
 #include <sys/types.h>
 
 #ifdef _WIN32
@@ -22,13 +24,11 @@ struct socks4_header {
     uint32_t ip;
 };
 
-bool
+void
 socks_connect(int fd, SocketAddress address)
 {
-    if (address.GetFamily() != AF_INET) {
-        LogFormat(1, "Not an IPv4 address\n");
-        return false;
-    }
+    if (address.GetFamily() != AF_INET)
+        throw std::invalid_argument{"Not an IPv4 address"};
 
     const struct sockaddr_in *in = (const struct sockaddr_in *)address.GetAddress();
     struct socks4_header header = {
@@ -39,38 +39,24 @@ socks_connect(int fd, SocketAddress address)
     };
 
     ssize_t nbytes = send(fd, (const char *)&header, sizeof(header), 0);
-    if (nbytes < 0) {
-        log_errno("Failed to send SOCKS4 request");
-        return false;
-    }
+    if (nbytes < 0)
+        throw MakeSocketError("Failed to send SOCKS4 request");
 
-    if (nbytes != sizeof(header)) {
-        LogFormat(1, "Failed to send SOCKS4 request\n");
-        return false;
-    }
+    if (nbytes != sizeof(header))
+        throw std::runtime_error{"Failed to send SOCKS4 request"};
 
     static const char user[] = "";
     nbytes = send(fd, user, sizeof(user), 0);
-    if (nbytes < 0) {
-        log_errno("Failed to send SOCKS4 user");
-        return false;
-    }
+    if (nbytes < 0)
+        throw MakeSocketError("Failed to send SOCKS4 user");
 
     nbytes = recv(fd, (char *)&header, sizeof(header), 0);
-    if (nbytes < 0) {
-        log_errno("Failed to receive SOCKS4 response");
-        return false;
-    }
+    if (nbytes < 0)
+        throw MakeSocketError("Failed to receive SOCKS4 response");
 
-    if (nbytes != sizeof(header)) {
-        LogFormat(1, "Failed to receive SOCKS4 response\n");
-        return false;
-    }
+    if (nbytes != sizeof(header))
+        throw std::runtime_error{"Failed to receive SOCKS4 request"};
 
-    if (header.command != 0x5a) {
-        LogFormat(2, "SOCKS4 request rejected: 0x%02x\n", header.command);
-        return false;
-    }
-
-    return true;
+    if (header.command != 0x5a)
+        throw std::runtime_error{"SOCKS4 request rejected"};
 }

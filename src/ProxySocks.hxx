@@ -5,5 +5,8 @@
 
 class SocketAddress;
 
-bool
+/**
+ * Throws on error.
+ */
+void
 socks_connect(int fd, SocketAddress address);

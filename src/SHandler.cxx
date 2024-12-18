@@ -491,7 +491,6 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
        the new server */
     auto p = (const struct uo_packet_relay *)data;
     struct uo_packet_relay relay;
-    int ret;
     struct uo_packet_game_login login;
 
     assert(length == sizeof(*p));
@@ -527,10 +526,11 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
     if (c.client.version.seed != nullptr)
         c.client.version.seed->seed = relay.auth_id;
 
-    ret = c.Connect({(const struct sockaddr *)&sin, sizeof(sin)},
-                    relay.auth_id, true);
-    if (ret != 0) {
-        log_error("connect to game server failed", ret);
+    try {
+        c.Connect({(const struct sockaddr *)&sin, sizeof(sin)},
+                  relay.auth_id, true);
+    } catch (...) {
+        log_error("connect to game server failed", std::current_exception());
         return PacketAction::DISCONNECT;
     }
 

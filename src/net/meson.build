@@ -1,6 +1,7 @@
 net = static_library(
   'net',
   'SocketAddress.cxx',
+  'SocketError.cxx',
   include_directories: inc,
 )
 

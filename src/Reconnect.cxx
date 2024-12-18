@@ -36,7 +36,6 @@ Connection::DoReconnect() noexcept
 {
     const auto &config = instance.config;
     uint32_t seed;
-    int ret;
 
     assert(IsInGame());
     assert(client.reconnecting);
@@ -55,40 +54,45 @@ Connection::DoReconnect() noexcept
         assert(config.game_servers != nullptr);
         assert(server_index < config.num_game_servers);
 
-        ret = Connect({server_address->ai_addr, server_address->ai_addrlen},
-                      seed, true);
-        if (ret == 0) {
-            const struct uo_packet_game_login p = {
-                .cmd = UO::Command::GameLogin,
-                .auth_id = seed,
-                .credentials = credentials,
-            };
-
-            LogFormat(2, "connected, doing GameLogin\n");
-
-            uo_client_send(client.client, &p, sizeof(p));
-        } else {
-            log_error("reconnect failed", ret);
+        try {
+            Connect({server_address->ai_addr, server_address->ai_addrlen},
+                    seed, true);
+        } catch (...) {
+            log_error("reconnect failed", std::current_exception());
             ScheduleReconnect();
+            return;
         }
+
+        const struct uo_packet_game_login p = {
+            .cmd = UO::Command::GameLogin,
+            .auth_id = seed,
+            .credentials = credentials,
+        };
+
+        LogFormat(2, "connected, doing GameLogin\n");
+
+        uo_client_send(client.client, &p, sizeof(p));
     } else {
         /* connect to login server */
-        ret = Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
-                      seed, false);
-        if (ret == 0) {
-            const struct uo_packet_account_login p = {
-                .cmd = UO::Command::AccountLogin,
-                .credentials = credentials,
-                .unknown1 = {},
-            };
 
-            LogFormat(2, "connected, doing AccountLogin\n");
-
-            uo_client_send(client.client, &p, sizeof(p));
-        } else {
-            log_error("reconnect failed", ret);
+        try {
+            Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
+                    seed, false);
+        } catch (...) {
+            log_error("reconnect failed", std::current_exception());
             ScheduleReconnect();
+            return;
         }
+
+        const struct uo_packet_account_login p = {
+            .cmd = UO::Command::AccountLogin,
+            .credentials = credentials,
+            .unknown1 = {},
+        };
+
+        LogFormat(2, "connected, doing AccountLogin\n");
+
+        uo_client_send(client.client, &p, sizeof(p));
     }
 }
 

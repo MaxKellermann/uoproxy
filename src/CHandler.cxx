@@ -396,13 +396,13 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         else
             seed = uo_server_seed(ls.server);
 
-        int ret = c->Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
-                             seed, false);
-        if (ret != 0) {
+        try {
+            c->Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
+                       seed, false);
+        } catch (...) {
+            log_error("connection to login server failed", std::current_exception());
+
             struct uo_packet_account_login_reject response;
-
-            log_error("connection to login server failed", ret);
-
             response.cmd = UO::Command::AccountLoginReject;
             response.reason = 0x02; /* blocked */
 
@@ -636,7 +636,6 @@ handle_play_server(LinkedServer &ls,
                config.game_servers != nullptr &&
                config.num_game_servers > 0) {
         const unsigned num_game_servers = config.num_game_servers;
-        int ret;
         struct uo_packet_game_login login;
         uint32_t seed;
 
@@ -656,10 +655,11 @@ handle_play_server(LinkedServer &ls,
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
-        ret = c.Connect({server_config.address->ai_addr, server_config.address->ai_addrlen},
-                        seed, true);
-        if (ret != 0) {
-            log_error("connect to game server failed", ret);
+        try {
+            c.Connect({server_config.address->ai_addr, server_config.address->ai_addrlen},
+                      seed, true);
+        } catch (...) {
+            log_error("connect to game server failed", std::current_exception());
             return PacketAction::DISCONNECT;
         }
 

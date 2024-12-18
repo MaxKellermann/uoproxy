@@ -5,6 +5,9 @@
 
 class SocketAddress;
 
+/**
+ * Throws on error.
+ */
 int
 socket_connect(int domain, int type, int protocol,
 	       SocketAddress address);

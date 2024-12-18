@@ -3,6 +3,7 @@
 
 #include "SocketConnect.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketError.hxx"
 
 #include <errno.h>
 #include <unistd.h>
@@ -21,13 +22,13 @@ socket_connect(int domain, int type, int protocol,
 {
     int fd = socket(domain, type, protocol);
     if (fd < 0)
-        return -errno;
+        throw MakeSocketError("Failed to create socket");
 
     int ret = connect(fd, address.GetAddress(), address.GetSize());
     if (ret < 0) {
-        int save_errno = errno;
+        const auto e = GetSocketError();
         close(fd);
-        return -save_errno;
+        throw MakeSocketError(e, "Failed to connect");
     }
 
     return fd;

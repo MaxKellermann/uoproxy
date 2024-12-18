@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "NetUtil.hxx"
+#include "net/SocketError.hxx"
 
 #include <assert.h>
 #include <errno.h>
@@ -55,41 +56,26 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 }
 
 int setup_server_socket(const struct addrinfo *bind_address) {
-    int sockfd, ret;
+    int sockfd;
 
     assert(bind_address != nullptr);
 
     sockfd = socket(bind_address->ai_family, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        fprintf(stderr, "failed to create socket: %s\n",
-                strerror(errno));
-        exit(1);
-    }
+    if (sockfd < 0)
+        throw MakeSocketError("Failed to create socket");
 
 #ifndef _WIN32
     int param = 1;
-    ret = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
-    if (ret < 0) {
-        fprintf(stderr, "setsockopt failed: %s\n",
-                strerror(errno));
-        exit(1);
-    }
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param)) < 0)
+        throw MakeSocketError("setsockopt() failed");
 #endif
 
-    ret = bind(sockfd, bind_address->ai_addr,
-               bind_address->ai_addrlen);
-    if (ret < 0) {
-        fprintf(stderr, "failed to bind: %s\n",
-                strerror(errno));
-        exit(1);
-    }
+    if (bind(sockfd, bind_address->ai_addr,
+             bind_address->ai_addrlen) < 0)
+        throw MakeSocketError("Failed to bind");
 
-    ret = listen(sockfd, 4);
-    if (ret < 0) {
-        fprintf(stderr, "listen failed: %s\n",
-                strerror(errno));
-        exit(1);
-    }
+    if (listen(sockfd, 4) < 0)
+        throw MakeSocketError("listen() failed");
 
     return sockfd;
 }
