@@ -272,13 +272,6 @@ static constexpr int huffman_tree[] = {
     /* 255 */ -245, -247,
 };
 
-void uo_decompression_init(struct uo_decompression *de) {
-    de->bit = 8;
-    de->treepos = 0;
-    de->mask = 0;
-    de->value = 0;
-}
-
 ssize_t
 uo_decompress(struct uo_decompression *de,
               unsigned char *dest, size_t dest_max_len,
@@ -402,8 +395,8 @@ static constexpr unsigned bit_table[257][2] =
 };
 
 struct uo_compression {
-    int bit;
-    unsigned out_data;
+    int bit = 0;
+    unsigned out_data = 0;
 };
 
 static int output_bits(struct uo_compression *co,
@@ -424,7 +417,7 @@ ssize_t
 uo_compress(unsigned char *dest, size_t dest_max_len,
             std::span<const unsigned char> src)
 {
-    struct uo_compression co = { .bit = 0, .out_data = 0 };
+    struct uo_compression co;
     size_t dest_index = 0;
     int num_bits;
 

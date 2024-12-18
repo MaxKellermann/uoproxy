@@ -8,11 +8,9 @@
 #include <sys/types.h> /* for ssize_t */
 
 struct uo_decompression {
-    int bit, treepos, mask;
-    unsigned char value;
+    int bit = 8, treepos = 0, mask = 0;
+    unsigned char value = 0;
 };
-
-void uo_decompression_init(struct uo_decompression *de);
 
 ssize_t
 uo_decompress(struct uo_decompression *de,

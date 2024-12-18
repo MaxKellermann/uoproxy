@@ -51,8 +51,6 @@ public:
         :sock(sock_buff_create(fd, 8192, 65536, *this)),
          handler(_handler)
     {
-        uo_decompression_init(&decompression);
-
         evtimer_set(&abort_event,
                     uo_client_abort_event_callback, this);
     }
