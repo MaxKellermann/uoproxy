@@ -527,7 +527,7 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
         c.client.version.seed->seed = relay.auth_id;
 
     ret = c.Connect((const struct sockaddr *)&sin,
-                     sizeof(sin), relay.auth_id);
+                    sizeof(sin), relay.auth_id, true);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
         return PacketAction::DISCONNECT;

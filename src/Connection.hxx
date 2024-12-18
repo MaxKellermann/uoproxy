@@ -98,7 +98,7 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
      */
     int Connect(const struct sockaddr *server_address,
                 size_t server_address_length,
-                uint32_t seed);
+                uint32_t seed, bool for_game_login);
     void Disconnect() noexcept;
     void Reconnect();
     void ScheduleReconnect() noexcept;

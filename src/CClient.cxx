@@ -69,7 +69,7 @@ Connection::OnClientDisconnect() noexcept
 int
 Connection::Connect(const struct sockaddr *server_address,
                     size_t server_address_length,
-                    uint32_t seed)
+                    uint32_t seed, bool for_game_login)
 {
     assert(client.client == nullptr);
 
@@ -95,6 +95,6 @@ Connection::Connect(const struct sockaddr *server_address,
             return errno;
     }
 
-    client.Connect(fd, seed, *this);
+    client.Connect(fd, seed, for_game_login, *this);
     return 0;
 }

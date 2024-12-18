@@ -55,7 +55,7 @@ struct StatefulClient {
     }
 
     void Connect(int fd,
-                 uint32_t seed,
+                 uint32_t seed, bool for_game_login,
                  UO::ClientHandler &handler);
 
     void Disconnect() noexcept;

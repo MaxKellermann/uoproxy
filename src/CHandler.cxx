@@ -397,7 +397,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 
         int ret = c->Connect(config.login_address->ai_addr,
                              config.login_address->ai_addrlen,
-                             seed);
+                             seed, false);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
 
@@ -657,7 +657,8 @@ handle_play_server(LinkedServer &ls,
             seed = 0xc0a80102; /* 192.168.1.2 */
 
         ret = c.Connect(server_config.address->ai_addr,
-                        server_config.address->ai_addrlen, seed);
+                        server_config.address->ai_addrlen,
+                        seed, true);
         if (ret != 0) {
             log_error("connect to game server failed", ret);
             return PacketAction::DISCONNECT;

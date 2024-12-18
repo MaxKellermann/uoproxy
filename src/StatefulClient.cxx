@@ -33,15 +33,17 @@ StatefulClient::StatefulClient() noexcept
 
 void
 StatefulClient::Connect(int fd,
-                        uint32_t seed,
+                        uint32_t seed, bool for_game_login,
                         UO::ClientHandler &handler)
 {
     assert(client == nullptr);
 
-    const struct uo_packet_seed *seed_packet = version.seed;
+    const struct uo_packet_seed *seed_packet = for_game_login
+        ? nullptr
+        : version.seed;
     struct uo_packet_seed seed_buffer;
 
-    if (seed_packet == nullptr &&
+    if (!for_game_login && seed_packet == nullptr &&
         version.IsDefined() &&
         version.protocol >= PROTOCOL_6_0_14) {
         seed_buffer.cmd = UO::Command::Seed;

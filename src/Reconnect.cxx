@@ -55,7 +55,8 @@ Connection::DoReconnect() noexcept
         assert(server_index < config.num_game_servers);
 
         ret = Connect(server_address->ai_addr,
-                      server_address->ai_addrlen, seed);
+                      server_address->ai_addrlen,
+                      seed, true);
         if (ret == 0) {
             const struct uo_packet_game_login p = {
                 .cmd = UO::Command::GameLogin,
@@ -74,7 +75,7 @@ Connection::DoReconnect() noexcept
         /* connect to login server */
         ret = Connect(config.login_address->ai_addr,
                       config.login_address->ai_addrlen,
-                      seed);
+                      seed, false);
         if (ret == 0) {
             const struct uo_packet_account_login p = {
                 .cmd = UO::Command::AccountLogin,
