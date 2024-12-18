@@ -1,8 +1,6 @@
 uoproxy
 =======
 
-Copyright 2005-2020 Max Kellermann <max@blarg.de>
-
 
 What is uoproxy?
 ----------------
@@ -177,7 +175,7 @@ development, namely: RunUO, UOX3, Wolfpack, Iris and others.
 Legal
 -----
 
-Copyright 2005-2020 Max Kellermann <max@blarg.de>
+Copyright 2005-2024 Max Kellermann <max.kellermann@gmail.com>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
