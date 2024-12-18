@@ -16,7 +16,7 @@ ping_event_callback(int, short, void *ctx) noexcept
 
     assert(client->client != nullptr);
 
-    ping.cmd = PCK_Ping;
+    ping.cmd = UO::Command::Ping;
     ping.id = ++client->ping_request;
 
     LogFormat(2, "sending ping\n");
@@ -44,7 +44,7 @@ StatefulClient::Connect(int fd,
     if (seed_packet == nullptr &&
         version.IsDefined() &&
         version.protocol >= PROTOCOL_6_0_14) {
-        seed_buffer.cmd = PCK_Seed;
+        seed_buffer.cmd = UO::Command::Seed;
         seed_buffer.seed = seed;
 
         if (version.protocol >= PROTOCOL_7) {

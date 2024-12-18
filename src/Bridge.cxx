@@ -9,7 +9,7 @@
 
 #include "Bridge.hxx"
 #include "PacketStructs.hxx"
-#include "PacketType.hxx"
+#include "uo/Command.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -35,9 +35,9 @@ void
 container_update_5_to_6(struct uo_packet_container_update_6 *dest,
                         const struct uo_packet_container_update *src)
 {
-    assert(src->cmd == PCK_ContainerUpdate);
+    assert(src->cmd == UO::Command::ContainerUpdate);
 
-    dest->cmd = PCK_ContainerUpdate;
+    dest->cmd = UO::Command::ContainerUpdate;
     container_item_5_to_6(&dest->item, &src->item);
 }
 
@@ -59,9 +59,9 @@ void
 container_update_6_to_5(struct uo_packet_container_update *dest,
                         const struct uo_packet_container_update_6 *src)
 {
-    assert(src->cmd == PCK_ContainerUpdate);
+    assert(src->cmd == UO::Command::ContainerUpdate);
 
-    dest->cmd = PCK_ContainerUpdate;
+    dest->cmd = UO::Command::ContainerUpdate;
     container_item_6_to_5(&dest->item, &src->item);
 }
 
@@ -73,7 +73,7 @@ container_content_5_to_6(const struct uo_packet_container_content *src) noexcept
     size_t dest_length;
     struct uo_packet_container_content_6 *dest;
 
-    assert(src->cmd == PCK_ContainerContent);
+    assert(src->cmd == UO::Command::ContainerContent);
 
     const unsigned num = src->num;
 
@@ -82,7 +82,7 @@ container_content_5_to_6(const struct uo_packet_container_content *src) noexcept
 
     VarStructPtr<struct uo_packet_container_content_6> ptr(dest_length);
     dest = ptr.get();
-    dest->cmd = PCK_ContainerContent;
+    dest->cmd = UO::Command::ContainerContent;
     dest->length = dest_length;
     dest->num = src->num;
 
@@ -98,7 +98,7 @@ container_content_6_to_5(const struct uo_packet_container_content_6 *src) noexce
     size_t dest_length;
     struct uo_packet_container_content *dest;
 
-    assert(src->cmd == PCK_ContainerContent);
+    assert(src->cmd == UO::Command::ContainerContent);
 
     const unsigned num = src->num;
 
@@ -107,7 +107,7 @@ container_content_6_to_5(const struct uo_packet_container_content_6 *src) noexce
 
     VarStructPtr<struct uo_packet_container_content> ptr(dest_length);
     dest = ptr.get();
-    dest->cmd = PCK_ContainerContent;
+    dest->cmd = UO::Command::ContainerContent;
     dest->length = dest_length;
     dest->num = src->num;
 
@@ -123,9 +123,9 @@ void
 drop_5_to_6(struct uo_packet_drop_6 *dest,
             const struct uo_packet_drop *src)
 {
-    assert(src->cmd == PCK_Drop);
+    assert(src->cmd == UO::Command::Drop);
 
-    dest->cmd = PCK_Drop;
+    dest->cmd = UO::Command::Drop;
     dest->serial = src->serial;
     dest->x = src->x;
     dest->y = src->y;
@@ -138,9 +138,9 @@ void
 drop_6_to_5(struct uo_packet_drop *dest,
             const struct uo_packet_drop_6 *src)
 {
-    assert(src->cmd == PCK_Drop);
+    assert(src->cmd == UO::Command::Drop);
 
-    dest->cmd = PCK_Drop;
+    dest->cmd = UO::Command::Drop;
     dest->serial = src->serial;
     dest->x = src->x;
     dest->y = src->y;
@@ -152,7 +152,7 @@ void
 supported_features_6_to_6014(struct uo_packet_supported_features_6014 *dest,
                              const struct uo_packet_supported_features *src)
 {
-    dest->cmd = PCK_SupportedFeatures;
+    dest->cmd = UO::Command::SupportedFeatures;
     dest->flags = (unsigned)src->flags;
 }
 
@@ -160,7 +160,7 @@ void
 supported_features_6014_to_6(struct uo_packet_supported_features *dest,
                              const struct uo_packet_supported_features_6014 *src)
 {
-    dest->cmd = PCK_SupportedFeatures;
+    dest->cmd = UO::Command::SupportedFeatures;
     dest->flags = (unsigned)src->flags;
 }
 
@@ -210,7 +210,7 @@ world_item_to_7(struct uo_packet_world_item_7 *dest,
     if (have_flags)
         dest->flags = *p++;
 
-    dest->cmd = PCK_WorldItem7;
+    dest->cmd = UO::Command::WorldItem7;
     dest->one = 0x0001;
     dest->type = 0x00;
     dest->serial = serial;
@@ -221,7 +221,7 @@ void
 world_item_from_7(struct uo_packet_world_item *dest,
                   const struct uo_packet_world_item_7 *src)
 {
-    dest->cmd = PCK_WorldItem;
+    dest->cmd = UO::Command::WorldItem;
     dest->serial = src->serial;
     dest->item_id = src->item_id;
 

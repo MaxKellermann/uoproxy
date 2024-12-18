@@ -58,7 +58,7 @@ Connection::DoReconnect() noexcept
                       server_address->ai_addrlen, seed);
         if (ret == 0) {
             const struct uo_packet_game_login p = {
-                .cmd = PCK_GameLogin,
+                .cmd = UO::Command::GameLogin,
                 .auth_id = seed,
                 .credentials = credentials,
             };
@@ -77,7 +77,7 @@ Connection::DoReconnect() noexcept
                       seed);
         if (ret == 0) {
             const struct uo_packet_account_login p = {
-                .cmd = PCK_AccountLogin,
+                .cmd = UO::Command::AccountLogin,
                 .credentials = credentials,
                 .unknown1 = {},
             };

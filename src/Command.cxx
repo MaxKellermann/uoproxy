@@ -75,7 +75,7 @@ connection_handle_command(LinkedServer &ls, const char *command)
                                     "uoproxy: not connected");
         } else if (c.client.version.protocol < PROTOCOL_6) {
             struct uo_packet_drop p = {
-                .cmd = PCK_Drop,
+                .cmd = UO::Command::Drop,
                 .serial = 0,
                 .x = c.client.world.packet_start.x,
                 .y = c.client.world.packet_start.y,
@@ -86,7 +86,7 @@ connection_handle_command(LinkedServer &ls, const char *command)
             uo_client_send(c.client.client, &p, sizeof(p));
         } else {
             struct uo_packet_drop_6 p = {
-                .cmd = PCK_Drop,
+                .cmd = UO::Command::Drop,
                 .serial = 0,
                 .x = c.client.world.packet_start.x,
                 .y = c.client.world.packet_start.y,

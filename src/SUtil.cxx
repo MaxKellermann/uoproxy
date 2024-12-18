@@ -3,7 +3,7 @@
 
 #include "Server.hxx"
 #include "PacketStructs.hxx"
-#include "PacketType.hxx"
+#include "uo/Command.hxx"
 #include "util/VarStructPtr.hxx"
 
 #include <string.h>
@@ -35,7 +35,7 @@ uo_server_speak_ascii(UO::Server *server,
     VarStructPtr<struct uo_packet_speak_ascii> ptr(sizeof(*p) + text_length);
     p = ptr.get();
 
-    p->cmd = PCK_SpeakAscii;
+    p->cmd = UO::Command::SpeakAscii;
     p->length = ptr.size();
     p->serial = serial;
     p->graphic = graphic;

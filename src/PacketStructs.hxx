@@ -5,10 +5,13 @@
 
 #include "util/PackedBigEndian.hxx"
 
-#include <stdint.h>
+#include <cstdint>
+
 #include <string.h>
 
 namespace UO {
+
+enum Command : uint8_t;
 
 struct CredentialsFragment {
     char username[30];
@@ -31,7 +34,7 @@ static_assert(sizeof(CredentialsFragment) == 60);
 
 /* 0x00 CreateCharacter */
 struct uo_packet_create_character {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 unknown0, unknown1;
     uint8_t unknown2;
     char name[30];
@@ -57,7 +60,7 @@ static_assert(sizeof(uo_packet_create_character) == 0x68);
 
 /* 0x02 Walk */
 struct uo_packet_walk {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t direction, seq;
     PackedBE32 key;
 };
@@ -67,7 +70,7 @@ static_assert(sizeof(uo_packet_walk) == 0x7);
 
 /* 0x03 TalkAscii */
 struct uo_packet_talk_ascii {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     uint8_t type;
     PackedBE16 hue, font;
@@ -78,7 +81,7 @@ static_assert(alignof(struct uo_packet_talk_ascii) == 1);
 
 /* 0x06 Use */
 struct uo_packet_use {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
 };
 
@@ -86,7 +89,7 @@ static_assert(alignof(struct uo_packet_use) == 1);
 
 /* 0x07 LiftRequest */
 struct uo_packet_lift_request {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 amount;
 };
@@ -95,7 +98,7 @@ static_assert(alignof(struct uo_packet_lift_request) == 1);
 
 /* 0x08 Drop */
 struct uo_packet_drop {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 x, y;
     int8_t z;
@@ -106,7 +109,7 @@ static_assert(alignof(struct uo_packet_drop) == 1);
 
 /* 0x08 Drop (protocol v6) */
 struct uo_packet_drop_6 {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 x, y;
     int8_t z;
@@ -118,7 +121,7 @@ static_assert(alignof(struct uo_packet_drop_6) == 1);
 
 /* 0x11 MobileStatus */
 struct uo_packet_mobile_status {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE32 serial;
     char name[30];
@@ -146,7 +149,7 @@ static_assert(alignof(struct uo_packet_mobile_status) == 1);
 
 /* 0x12 Action */
 struct uo_packet_action {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     uint8_t type;
     char command[1];
@@ -156,7 +159,7 @@ static_assert(alignof(struct uo_packet_action) == 1);
 
 /* 0x1a WorldItem */
 struct uo_packet_world_item {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE32 serial;
     PackedBE16 item_id;
@@ -173,7 +176,7 @@ static_assert(alignof(struct uo_packet_world_item) == 1);
 
 /* 0x1b Start */
 struct uo_packet_start {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE32 unknown0;
     PackedBE16 body;
@@ -191,7 +194,7 @@ static_assert(alignof(struct uo_packet_start) == 1);
 
 /* 0x1c SpeakAscii */
 struct uo_packet_speak_ascii {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE32 serial;
     PackedSignedBE16 graphic;
@@ -206,7 +209,7 @@ static_assert(alignof(struct uo_packet_speak_ascii) == 1);
 
 /* 0x1d Delete */
 struct uo_packet_delete {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
 };
 
@@ -214,7 +217,7 @@ static_assert(alignof(struct uo_packet_delete) == 1);
 
 /* 0x20 MobileUpdate */
 struct uo_packet_mobile_update {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 body;
     uint8_t unknown0;
@@ -230,7 +233,7 @@ static_assert(alignof(struct uo_packet_mobile_update) == 1);
 
 /* 0x21 WalkCancel */
 struct uo_packet_walk_cancel {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t seq;
     PackedBE16 x, y;
     uint8_t direction;
@@ -241,7 +244,7 @@ static_assert(alignof(struct uo_packet_walk_cancel) == 1);
 
 /* 0x22 WalkAck */
 struct uo_packet_walk_ack {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t seq, notoriety;
 };
 
@@ -249,7 +252,7 @@ static_assert(alignof(struct uo_packet_walk_ack) == 1);
 
 /* 0x24 ContainerOpen */
 struct uo_packet_container_open {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 gump_id;
 };
@@ -295,7 +298,7 @@ static_assert(alignof(struct uo_packet_fragment_container_item_6) == 1);
 
 /* 0x25 ContainerUpdate */
 struct uo_packet_container_update {
-    uint8_t cmd;
+    UO::Command cmd;
     struct uo_packet_fragment_container_item item;
 };
 
@@ -303,7 +306,7 @@ static_assert(alignof(struct uo_packet_container_update) == 1);
 
 /* 0x25 ContainerUpdate (protocol v6) */
 struct uo_packet_container_update_6 {
-    uint8_t cmd;
+    UO::Command cmd;
     struct uo_packet_fragment_container_item_6 item;
 };
 
@@ -311,7 +314,7 @@ static_assert(alignof(struct uo_packet_container_update_6) == 1);
 
 /* 0x27 LiftReject */
 struct uo_packet_lift_reject {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t reason;
 };
 
@@ -319,7 +322,7 @@ static_assert(alignof(struct uo_packet_lift_reject) == 1);
 
 /* 0x2e Equip */
 struct uo_packet_equip {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 item_id;
     uint8_t unknown0;
@@ -332,7 +335,7 @@ static_assert(alignof(struct uo_packet_equip) == 1);
 
 /* 0x3c ContainerContent */
 struct uo_packet_container_content {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE16 num;
     struct uo_packet_fragment_container_item items[1];
@@ -342,7 +345,7 @@ static_assert(alignof(struct uo_packet_container_content) == 1);
 
 /* 0x3c ContainerContent (protocol v6) */
 struct uo_packet_container_content_6 {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE16 num;
     struct uo_packet_fragment_container_item_6 items[1];
@@ -352,7 +355,7 @@ static_assert(alignof(struct uo_packet_container_content_6) == 1);
 
 /* 0x4f GlobalLightLevel */
 struct uo_packet_global_light_level {
-    uint8_t cmd;
+    UO::Command cmd;
     int8_t level;
 };
 
@@ -360,7 +363,7 @@ static_assert(alignof(struct uo_packet_global_light_level) == 1);
 
 /* 0x4e PersonalLightLevel */
 struct uo_packet_personal_light_level {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     int8_t level;
 };
@@ -369,7 +372,7 @@ static_assert(alignof(struct uo_packet_personal_light_level) == 1);
 
 /* 0x53 PopupMessage */
 struct uo_packet_popup_message {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t msg;
 };
 
@@ -377,14 +380,14 @@ static_assert(alignof(struct uo_packet_popup_message) == 1);
 
 /* 0x55 ReDrawAll */
 struct uo_packet_login_complete {
-    uint8_t cmd;
+    UO::Command cmd;
 };
 
 static_assert(alignof(struct uo_packet_login_complete) == 1);
 
 /* 0x5d PlayCharacter */
 struct uo_packet_play_character {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 unknown0;
     char name[30];
     PackedBE16 unknown1;
@@ -397,7 +400,7 @@ static_assert(alignof(struct uo_packet_play_character) == 1);
 
 /* 0x6c Target */
 struct uo_packet_target {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t allow_ground;
     PackedBE32 target_id;
     uint8_t flags;
@@ -410,7 +413,7 @@ static_assert(alignof(struct uo_packet_target) == 1);
 
 /* 0x72 WarMode */
 struct uo_packet_war_mode {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t war_mode;
     uint8_t unknown0[3];
 };
@@ -419,7 +422,7 @@ static_assert(alignof(struct uo_packet_war_mode) == 1);
 
 /* 0x73 Ping */
 struct uo_packet_ping {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t id;
 };
 
@@ -427,7 +430,7 @@ static_assert(alignof(struct uo_packet_ping) == 1);
 
 /* 0x76 ZoneChange */
 struct uo_packet_zone_change {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 x, y;
     PackedSignedBE16 z;
     uint8_t unknown0;
@@ -439,7 +442,7 @@ static_assert(alignof(struct uo_packet_zone_change) == 1);
 
 /* 0x77 MobileMoving */
 struct uo_packet_mobile_moving {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 serial;
     PackedBE16 body;
     PackedBE16 x, y;
@@ -464,7 +467,7 @@ static_assert(alignof(struct uo_packet_fragment_mobile_item) == 1);
 
 /* 0x78 MobileIncoming */
 struct uo_packet_mobile_incoming {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE32 serial;
     PackedBE16 body;
@@ -482,7 +485,7 @@ static_assert(alignof(struct uo_packet_mobile_incoming) == 1);
 
 /* 0x80 AccountLogin */
 struct uo_packet_account_login {
-    uint8_t cmd;
+    UO::Command cmd;
     UO::CredentialsFragment credentials;
     uint8_t unknown1;
 };
@@ -492,7 +495,7 @@ static_assert(sizeof(struct uo_packet_account_login) == 62);
 
 /* 0x82 AccountLoginReject */
 struct uo_packet_account_login_reject {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t reason;
 };
 
@@ -500,7 +503,7 @@ static_assert(alignof(struct uo_packet_account_login_reject) == 1);
 
 /* 0x8c Relay */
 struct uo_packet_relay {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 ip;
     PackedBE16 port;
     PackedBE32 auth_id;
@@ -510,7 +513,7 @@ static_assert(alignof(struct uo_packet_relay) == 1);
 
 /* 0x91 GameLogin */
 struct uo_packet_game_login {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 auth_id;
     UO::CredentialsFragment credentials;
 };
@@ -520,7 +523,7 @@ static_assert(sizeof(struct uo_packet_game_login) == 65);
 
 /* 0x97 WalkForce */
 struct uo_packet_walk_force {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t direction;
 };
 
@@ -528,7 +531,7 @@ static_assert(alignof(struct uo_packet_walk_force) == 1);
 
 /* for 0xa0 PlayServer */
 struct uo_packet_play_server {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 index;
 };
 
@@ -547,7 +550,7 @@ static_assert(alignof(struct uo_fragment_server_info) == 1);
 
 /* 0xa8 ServerList */
 struct uo_packet_server_list {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     uint8_t unknown_0x5d;
     PackedBE16 num_game_servers;
@@ -566,7 +569,7 @@ static_assert(alignof(struct uo_fragment_character_info) == 1);
 
 /* 0xa9 CharList */
 struct uo_packet_simple_character_list {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     uint8_t character_count;
     struct uo_fragment_character_info character_info[1];
@@ -583,7 +586,7 @@ static_assert(alignof(struct uo_packet_simple_character_list) == 1);
 
 /* 0xb9 SupportedFeatures */
 struct uo_packet_supported_features {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 flags;
 };
 
@@ -591,7 +594,7 @@ static_assert(alignof(struct uo_packet_supported_features) == 1);
 
 /* 0xb9 SupportedFeatures (protocol 6.0.14.2) */
 struct uo_packet_supported_features_6014 {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 flags;
 };
 
@@ -599,7 +602,7 @@ static_assert(alignof(struct uo_packet_supported_features_6014) == 1);
 
 /* 0xad TalkUnicode */
 struct uo_packet_talk_unicode {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     uint8_t type;
     PackedBE16 hue, font;
@@ -611,7 +614,7 @@ static_assert(alignof(struct uo_packet_talk_unicode) == 1);
 
 /* 0xb1 GumpResponse */
 struct uo_packet_gump_response {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE32 serial, type_id, button_id;
     // uint8_t rest[];
@@ -621,7 +624,7 @@ static_assert(alignof(struct uo_packet_gump_response) == 1);
 
 /* 0xbc Season */
 struct uo_packet_season {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t season, play_sound;
 };
 
@@ -629,7 +632,7 @@ static_assert(alignof(struct uo_packet_season) == 1);
 
 /* 0xbd ClientVersion */
 struct uo_packet_client_version {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     char version[1];
 };
@@ -638,7 +641,7 @@ static_assert(alignof(struct uo_packet_client_version) == 1);
 
 /* 0xbf 0x0004 CloseGump */
 struct uo_packet_close_gump {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE16 extended_cmd; /* 0x0004 */
     PackedBE32 type_id, button_id;
@@ -648,7 +651,7 @@ static_assert(alignof(struct uo_packet_close_gump) == 1);
 
 /* 0xbf 0x0008 MapChange */
 struct uo_packet_map_change {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE16 extended_cmd; /* 0x0008 */
     uint8_t map_id;
@@ -666,7 +669,7 @@ static_assert(alignof(struct uo_fragment_map_patch) == 1);
 
 /* 0xbf 0x0018 MapPatch */
 struct uo_packet_map_patches {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE16 extended_cmd; /* 0x0018 */
     PackedBE32 map_count;
@@ -677,7 +680,7 @@ static_assert(alignof(struct uo_packet_map_patches) == 1);
 
 /* 0xbf Extended */
 struct uo_packet_extended {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     PackedBE16 extended_cmd;
 };
@@ -686,7 +689,7 @@ static_assert(alignof(struct uo_packet_extended) == 1);
 
 /* 0xd9 Hardware */
 struct uo_packet_hardware {
-    uint8_t cmd;
+    UO::Command cmd;
     uint8_t unknown0;
     PackedBE32 instance_id;
     PackedBE32 os_major, os_minor, os_revision;
@@ -708,7 +711,7 @@ static_assert(alignof(struct uo_packet_hardware) == 1);
 
 /* 0xef Seed */
 struct uo_packet_seed {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 seed;
     PackedBE32 client_major;
     PackedBE32 client_minor;
@@ -720,7 +723,7 @@ static_assert(alignof(struct uo_packet_seed) == 1);
 
 /* 0xf0 ProtocolExtension */
 struct uo_packet_protocol_extension {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 length;
     uint8_t extension;
 };
@@ -729,7 +732,7 @@ static_assert(alignof(struct uo_packet_protocol_extension) == 1);
 
 /* 0xf3 WorldItem7 */
 struct uo_packet_world_item_7 {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE16 one;
 
     /**
@@ -755,7 +758,7 @@ static_assert(alignof(struct uo_packet_world_item_7) == 1);
 
 /* 0xF8 CreateCharacter7 */
 struct uo_packet_create_character_7 {
-    uint8_t cmd;
+    UO::Command cmd;
     PackedBE32 unknown0, unknown1;
     uint8_t unknown2;
     char name[30];

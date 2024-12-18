@@ -6,9 +6,9 @@
 #include "Compression.hxx"
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
-#include "PacketType.hxx"
 #include "Log.hxx"
 #include "SocketUtil.hxx"
+#include "uo/Command.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 
 #include <utility>
@@ -249,7 +249,7 @@ void uo_client_send(UO::Client *client,
     LogFormat(9, "sending packet to server, length=%u\n", (unsigned)length);
     log_hexdump(10, src, length);
 
-    if (*(const uint8_t*)src == PCK_GameLogin)
+    if (*(const UO::Command *)src == UO::Command::GameLogin)
         client->compression_enabled = true;
 
     if (!sock_buff_send(client->sock, src, length)) {

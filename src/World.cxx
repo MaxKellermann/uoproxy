@@ -40,7 +40,7 @@ World::MakeItem(uint32_t serial) noexcept
 void
 World::Apply(const struct uo_packet_world_item &p) noexcept
 {
-    assert(p.cmd == PCK_WorldItem);
+    assert(p.cmd == UO::Command::WorldItem);
     assert(p.length <= sizeof(p));
 
     MakeItem(p.serial & PackedBE32(0x7fffffff)).Apply(p);
@@ -49,7 +49,7 @@ World::Apply(const struct uo_packet_world_item &p) noexcept
 void
 World::Apply(const struct uo_packet_world_item_7 &p) noexcept
 {
-    assert(p.cmd == PCK_WorldItem7);
+    assert(p.cmd == UO::Command::WorldItem7);
 
     MakeItem(p.serial).Apply(p);
 }
@@ -57,7 +57,7 @@ World::Apply(const struct uo_packet_world_item_7 &p) noexcept
 void
 World::Apply(const struct uo_packet_equip &p) noexcept
 {
-    assert(p.cmd == PCK_Equip);
+    assert(p.cmd == UO::Command::Equip);
 
     MakeItem(p.serial).Apply(p);
 }
@@ -65,7 +65,7 @@ World::Apply(const struct uo_packet_equip &p) noexcept
 void
 World::Apply(const struct uo_packet_container_open &p) noexcept
 {
-    assert(p.cmd == PCK_ContainerOpen);
+    assert(p.cmd == UO::Command::ContainerOpen);
 
     MakeItem(p.serial).Apply(p);
 }
@@ -84,7 +84,7 @@ World::SweepAfterContainerUpdate(uint32_t parent_serial) noexcept
 void
 World::Apply(const struct uo_packet_container_open_7 &p) noexcept
 {
-    assert(p.base.cmd == PCK_ContainerOpen);
+    assert(p.base.cmd == UO::Command::ContainerOpen);
 
     Apply(p.base);
 }
@@ -92,7 +92,7 @@ World::Apply(const struct uo_packet_container_open_7 &p) noexcept
 void
 World::Apply(const struct uo_packet_container_update_6 &p) noexcept
 {
-    assert(p.cmd == PCK_ContainerUpdate);
+    assert(p.cmd == UO::Command::ContainerUpdate);
 
     MakeItem(p.item.serial).Apply(p);
 }
@@ -100,7 +100,7 @@ World::Apply(const struct uo_packet_container_update_6 &p) noexcept
 void
 World::Apply(const struct uo_packet_container_content_6 &p) noexcept
 {
-    assert(p.cmd == PCK_ContainerContent);
+    assert(p.cmd == UO::Command::ContainerContent);
 
     const unsigned attach_sequence = ++item_attach_sequence;
 
@@ -109,7 +109,7 @@ World::Apply(const struct uo_packet_container_content_6 &p) noexcept
 
     for (; pi != end; ++pi) {
         auto &i = MakeItem(pi->serial);
-        i.socket.container.cmd = PCK_ContainerUpdate;
+        i.socket.container.cmd = UO::Command::ContainerUpdate;
         i.socket.container.item = *pi;
         i.attach_sequence = attach_sequence;
     }
@@ -186,7 +186,7 @@ read_equipped(World *world,
               const struct uo_packet_mobile_incoming *p)
 {
     struct uo_packet_equip equip{};
-    equip.cmd = PCK_Equip;
+    equip.cmd = UO::Command::Equip;
     equip.parent_serial = p->serial;
 
     const char *const p0 = (const char*)(const void*)p;
@@ -217,7 +217,7 @@ read_equipped(World *world,
 void
 World::Apply(const struct uo_packet_mobile_incoming &p) noexcept
 {
-    assert(p.cmd == PCK_MobileIncoming);
+    assert(p.cmd == UO::Command::MobileIncoming);
 
     if (p.serial == packet_start.serial) {
         /* update player's mobile */
@@ -245,7 +245,7 @@ World::Apply(const struct uo_packet_mobile_incoming &p) noexcept
 void
 World::Apply(const struct uo_packet_mobile_status &p) noexcept
 {
-    assert(p.cmd == PCK_MobileStatus);
+    assert(p.cmd == UO::Command::MobileStatus);
 
     auto &m = MakeMobile(p.serial);
 

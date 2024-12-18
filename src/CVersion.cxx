@@ -2,8 +2,8 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "CVersion.hxx"
-#include "PacketType.hxx"
 #include "VerifyPacket.hxx"
+#include "uo/Command.hxx"
 
 #include <string.h>
 
@@ -80,7 +80,7 @@ ClientVersion::Set(const char *version) noexcept
     size_t length = strlen(version);
 
     packet = VarStructPtr<struct uo_packet_client_version>(sizeof(*packet) + length);
-    packet->cmd = PCK_ClientVersion;
+    packet->cmd = UO::Command::ClientVersion;
     packet->length = packet.size();
     memcpy(packet->version, version, length + 1);
 
@@ -91,7 +91,7 @@ void
 ClientVersion::Seed(const struct uo_packet_seed &_seed) noexcept
 {
     assert(seed == nullptr);
-    assert(_seed.cmd == PCK_Seed);
+    assert(_seed.cmd == UO::Command::Seed);
 
     seed = new struct uo_packet_seed(_seed);
 

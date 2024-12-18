@@ -4,10 +4,10 @@
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
 #include "PacketStructs.hxx"
-#include "PacketType.hxx"
 #include "Server.hxx"
 #include "Client.hxx"
 #include "Log.hxx"
+#include "uo/Command.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -69,7 +69,7 @@ walk_cancel(const World &world,
             const struct uo_packet_walk &old)
 {
     const struct uo_packet_walk_cancel p = {
-        .cmd = PCK_WalkCancel,
+        .cmd = UO::Command::WalkCancel,
         .seq = old.seq,
         .x = world.packet_start.x,
         .y = world.packet_start.y,
@@ -132,7 +132,7 @@ connection_resync(Connection &c)
     walk_clear(c.walk);
 
     const struct uo_packet_walk_ack packet = {
-        .cmd = PCK_Resynchronize,
+        .cmd = UO::Command::Resynchronize,
         .seq = 0,
         .notoriety = 0,
     };
@@ -236,7 +236,7 @@ connection_walk_ack(Connection &c,
 #if 0
     /* unfortunately, this doesn't work anymore with client v7 */
     struct uo_packet_walk_force force = {
-        .cmd = PCK_WalkForce,
+        .cmd = UO::Command::WalkForce,
         .direction = i->packet.direction & 0x7,
     };
 #endif

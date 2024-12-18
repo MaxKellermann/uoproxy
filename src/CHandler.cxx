@@ -93,7 +93,7 @@ handle_walk(LinkedServer &ls,
 
         /* while reconnecting, reject all walk requests */
         struct uo_packet_walk_cancel p2 = {
-            .cmd = PCK_WalkCancel,
+            .cmd = UO::Command::WalkCancel,
             .seq = p->seq,
             .x = world->packet_start.x,
             .y = world->packet_start.y,
@@ -148,11 +148,11 @@ handle_use(LinkedServer &ls,
         } else {
             uint16_t item_id;
 
-            if (i->packet_world_item.cmd == PCK_WorldItem)
+            if (i->packet_world_item.cmd == UO::Command::WorldItem)
                 item_id = i->packet_world_item.item_id;
-            else if (i->packet_equip.cmd == PCK_Equip)
+            else if (i->packet_equip.cmd == UO::Command::Equip)
                 item_id = i->packet_equip.item_id;
-            else if (i->packet_container_update.cmd == PCK_ContainerUpdate)
+            else if (i->packet_container_update.cmd == UO::Command::ContainerUpdate)
                 item_id = i->packet_container_update.item.item_id;
             else
                 item_id = 0xffff;
@@ -190,7 +190,7 @@ handle_lift_request(LinkedServer &ls,
     if (ls.connection->client.reconnecting) {
         /* while reconnecting, reject all lift requests */
         struct uo_packet_lift_reject p2 = {
-            .cmd = PCK_LiftReject,
+            .cmd = UO::Command::LiftReject,
             .reason = 0x00, /* CannotLift */
         };
 
@@ -258,12 +258,12 @@ handle_target(LinkedServer &ls,
 
     assert(length == sizeof(*p));
 
-    if (world->packet_target.cmd == PCK_Target &&
+    if (world->packet_target.cmd == UO::Command::Target &&
         world->packet_target.target_id != 0) {
         /* cancel this target for all other clients */
         memset(&world->packet_target, 0,
                sizeof(world->packet_target));
-        world->packet_target.cmd = PCK_Target;
+        world->packet_target.cmd = UO::Command::Target;
         world->packet_target.flags = 3;
 
         ls.connection->BroadcastToInGameClientsExcept(&world->packet_target,
@@ -334,7 +334,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         struct uo_packet_server_list p2;
         memset(&p2, 0, sizeof(p2));
 
-        p2.cmd = PCK_ServerList;
+        p2.cmd = UO::Command::ServerList;
         p2.length = sizeof(p2);
         p2.unknown_0x5d = 0x5d;
         p2.num_game_servers = 1;
@@ -363,7 +363,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         const VarStructPtr<struct uo_packet_server_list> p2_(length);
         p2 = p2_.get();
 
-        p2->cmd = PCK_ServerList;
+        p2->cmd = UO::Command::ServerList;
         p2->length = length;
         p2->unknown_0x5d = 0x5d;
         p2->num_game_servers = num_game_servers;
@@ -403,7 +403,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 
             log_error("connection to login server failed", ret);
 
-            response.cmd = PCK_AccountLoginReject;
+            response.cmd = UO::Command::AccountLoginReject;
             response.reason = 0x02; /* blocked */
 
             uo_server_send(ls.server, &response,
@@ -568,7 +568,7 @@ redirect_to_self(LinkedServer &ls)
 
     if (!authid) authid = time(0);
 
-    relay.cmd = PCK_Relay;
+    relay.cmd = UO::Command::Relay;
     relay.port = PackedBE16::FromBE(uo_server_getsockport(ls.server));
     relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls.server));
     addr.s_addr = relay.ip.raw();
@@ -664,7 +664,7 @@ handle_play_server(LinkedServer &ls,
         }
 
         /* send game login to new server */
-        login.cmd = PCK_GameLogin;
+        login.cmd = UO::Command::GameLogin;
         login.auth_id = seed;
         login.credentials = c.credentials;
 
@@ -748,7 +748,7 @@ handle_gump_response(LinkedServer &ls, const void *data, size_t length)
 
     /* close the gump on all other clients */
     const struct uo_packet_close_gump close = {
-        .cmd = PCK_Extended,
+        .cmd = UO::Command::Extended,
         .length = sizeof(close),
         .extended_cmd = 0x0004,
         .type_id = p->type_id,
@@ -858,27 +858,27 @@ handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
 }
 
 const struct server_packet_binding client_packet_bindings[] = {
-    { PCK_CreateCharacter, handle_create_character },
-    { PCK_Walk, handle_walk },
-    { PCK_TalkAscii, handle_talk_ascii },
-    { PCK_Use, handle_use },
-    { PCK_Action, handle_action },
-    { PCK_LiftRequest, handle_lift_request },
-    { PCK_Drop, handle_drop }, /* 0x08 */
-    { PCK_Resynchronize, handle_resynchronize },
-    { PCK_Target, handle_target }, /* 0x6c */
-    { PCK_Ping, handle_ping },
-    { PCK_AccountLogin, handle_account_login },
-    { PCK_AccountLogin2, handle_account_login },
-    { PCK_GameLogin, handle_game_login },
-    { PCK_PlayCharacter, handle_play_character },
-    { PCK_PlayServer, handle_play_server },
-    { PCK_Spy, handle_spy }, /* 0xa4 */
-    { PCK_TalkUnicode, handle_talk_unicode },
-    { PCK_GumpResponse, handle_gump_response },
-    { PCK_ClientVersion, handle_client_version }, /* 0xbd */
-    { PCK_Extended, handle_extended },
-    { PCK_Hardware, handle_hardware }, /* 0xd9 */
-    { PCK_Seed, handle_seed }, /* 0xef */
+    { UO::Command::CreateCharacter, handle_create_character },
+    { UO::Command::Walk, handle_walk },
+    { UO::Command::TalkAscii, handle_talk_ascii },
+    { UO::Command::Use, handle_use },
+    { UO::Command::Action, handle_action },
+    { UO::Command::LiftRequest, handle_lift_request },
+    { UO::Command::Drop, handle_drop }, /* 0x08 */
+    { UO::Command::Resynchronize, handle_resynchronize },
+    { UO::Command::Target, handle_target }, /* 0x6c */
+    { UO::Command::Ping, handle_ping },
+    { UO::Command::AccountLogin, handle_account_login },
+    { UO::Command::AccountLogin2, handle_account_login },
+    { UO::Command::GameLogin, handle_game_login },
+    { UO::Command::PlayCharacter, handle_play_character },
+    { UO::Command::PlayServer, handle_play_server },
+    { UO::Command::Spy, handle_spy }, /* 0xa4 */
+    { UO::Command::TalkUnicode, handle_talk_unicode },
+    { UO::Command::GumpResponse, handle_gump_response },
+    { UO::Command::ClientVersion, handle_client_version }, /* 0xbd */
+    { UO::Command::Extended, handle_extended },
+    { UO::Command::Hardware, handle_hardware }, /* 0xd9 */
+    { UO::Command::Seed, handle_seed }, /* 0xef */
     {}
 };

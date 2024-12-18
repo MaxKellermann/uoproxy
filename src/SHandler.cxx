@@ -40,7 +40,7 @@ static void welcome(Connection &c) {
     information, to overwrite its old database entry */
 static void send_antispy(UO::Client *client) {
     static constexpr struct uo_packet_hardware p{
-        .cmd = PCK_Hardware,
+        .cmd = UO::Command::Hardware,
         .unknown0 = 2,
         .instance_id = 0xdeadbeef,
         .os_major = 5,
@@ -434,7 +434,7 @@ handle_char_list(Connection &c, const void *data, size_t length)
     /* respond directly during reconnect */
     if (c.client.reconnecting) {
         struct uo_packet_play_character p2 = {
-            .cmd = PCK_PlayCharacter,
+            .cmd = UO::Command::PlayCharacter,
             .unknown0 = {},
             .name = {},
             .unknown1 = {},
@@ -536,7 +536,7 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
     /* send game login to new server */
     LogFormat(2, "connected, doing GameLogin\n");
 
-    login.cmd = PCK_GameLogin;
+    login.cmd = UO::Command::GameLogin;
     login.auth_id = relay.auth_id;
     login.credentials = c.credentials;
 
@@ -573,7 +573,7 @@ handle_server_list(Connection &c, const void *data, size_t length)
 
     if (c.client.reconnecting) {
         struct uo_packet_play_server p2 = {
-            .cmd = PCK_PlayServer,
+            .cmd = UO::Command::PlayServer,
             .index = 0, /* XXX */
         };
 
@@ -730,7 +730,7 @@ handle_protocol_extension(Connection &c, const void *data, size_t length)
            kicked */
 
         struct uo_packet_protocol_extension response = {
-            .cmd = PCK_ProtocolExtension,
+            .cmd = UO::Command::ProtocolExtension,
             .length = sizeof(response),
             .extension = 0xff,
         };
@@ -743,40 +743,40 @@ handle_protocol_extension(Connection &c, const void *data, size_t length)
 }
 
 const struct client_packet_binding server_packet_bindings[] = {
-    { PCK_MobileStatus, handle_mobile_status }, /* 0x11 */
-    { PCK_WorldItem, handle_world_item }, /* 0x1a */
-    { PCK_Start, handle_start }, /* 0x1b */
-    { PCK_SpeakAscii, handle_speak_ascii }, /* 0x1c */
-    { PCK_Delete, handle_delete }, /* 0x1d */
-    { PCK_MobileUpdate, handle_mobile_update }, /* 0x20 */
-    { PCK_WalkCancel, handle_walk_cancel }, /* 0x21 */
-    { PCK_WalkAck, handle_walk_ack }, /* 0x22 */
-    { PCK_ContainerOpen, handle_container_open }, /* 0x24 */
-    { PCK_ContainerUpdate, handle_container_update }, /* 0x25 */
-    { PCK_Equip, handle_equip }, /* 0x2e */
-    { PCK_ContainerContent, handle_container_content }, /* 0x3c */
-    { PCK_PersonalLightLevel, handle_personal_light_level }, /* 0x4e */
-    { PCK_GlobalLightLevel, handle_global_light_level }, /* 0x4f */
-    { PCK_PopupMessage, handle_popup_message }, /* 0x53 */
-    { PCK_ReDrawAll, handle_login_complete }, /* 0x55 */
-    { PCK_Target, handle_target }, /* 0x6c */
-    { PCK_WarMode, handle_war_mode }, /* 0x72 */
-    { PCK_Ping, handle_ping }, /* 0x73 */
-    { PCK_ZoneChange, handle_zone_change }, /* 0x76 */
-    { PCK_MobileMoving, handle_mobile_moving }, /* 0x77 */
-    { PCK_MobileIncoming, handle_mobile_incoming }, /* 0x78 */
-    { PCK_CharList3, handle_char_list }, /* 0x81 */
-    { PCK_AccountLoginReject, handle_account_login_reject }, /* 0x82 */
-    { PCK_CharList2, handle_char_list }, /* 0x86 */
-    { PCK_Relay, handle_relay }, /* 0x8c */
-    { PCK_ServerList, handle_server_list }, /* 0xa8 */
-    { PCK_CharList, handle_char_list }, /* 0xa9 */
-    { PCK_SpeakUnicode, handle_speak_unicode }, /* 0xae */
-    { PCK_SupportedFeatures, handle_supported_features }, /* 0xb9 */
-    { PCK_Season, handle_season }, /* 0xbc */
-    { PCK_ClientVersion, handle_client_version }, /* 0xbd */
-    { PCK_Extended, handle_extended }, /* 0xbf */
-    { PCK_WorldItem7, handle_world_item_7 }, /* 0xf3 */
-    { PCK_ProtocolExtension, handle_protocol_extension }, /* 0xf0 */
+    { UO::Command::MobileStatus, handle_mobile_status }, /* 0x11 */
+    { UO::Command::WorldItem, handle_world_item }, /* 0x1a */
+    { UO::Command::Start, handle_start }, /* 0x1b */
+    { UO::Command::SpeakAscii, handle_speak_ascii }, /* 0x1c */
+    { UO::Command::Delete, handle_delete }, /* 0x1d */
+    { UO::Command::MobileUpdate, handle_mobile_update }, /* 0x20 */
+    { UO::Command::WalkCancel, handle_walk_cancel }, /* 0x21 */
+    { UO::Command::WalkAck, handle_walk_ack }, /* 0x22 */
+    { UO::Command::ContainerOpen, handle_container_open }, /* 0x24 */
+    { UO::Command::ContainerUpdate, handle_container_update }, /* 0x25 */
+    { UO::Command::Equip, handle_equip }, /* 0x2e */
+    { UO::Command::ContainerContent, handle_container_content }, /* 0x3c */
+    { UO::Command::PersonalLightLevel, handle_personal_light_level }, /* 0x4e */
+    { UO::Command::GlobalLightLevel, handle_global_light_level }, /* 0x4f */
+    { UO::Command::PopupMessage, handle_popup_message }, /* 0x53 */
+    { UO::Command::ReDrawAll, handle_login_complete }, /* 0x55 */
+    { UO::Command::Target, handle_target }, /* 0x6c */
+    { UO::Command::WarMode, handle_war_mode }, /* 0x72 */
+    { UO::Command::Ping, handle_ping }, /* 0x73 */
+    { UO::Command::ZoneChange, handle_zone_change }, /* 0x76 */
+    { UO::Command::MobileMoving, handle_mobile_moving }, /* 0x77 */
+    { UO::Command::MobileIncoming, handle_mobile_incoming }, /* 0x78 */
+    { UO::Command::CharList3, handle_char_list }, /* 0x81 */
+    { UO::Command::AccountLoginReject, handle_account_login_reject }, /* 0x82 */
+    { UO::Command::CharList2, handle_char_list }, /* 0x86 */
+    { UO::Command::Relay, handle_relay }, /* 0x8c */
+    { UO::Command::ServerList, handle_server_list }, /* 0xa8 */
+    { UO::Command::CharList, handle_char_list }, /* 0xa9 */
+    { UO::Command::SpeakUnicode, handle_speak_unicode }, /* 0xae */
+    { UO::Command::SupportedFeatures, handle_supported_features }, /* 0xb9 */
+    { UO::Command::Season, handle_season }, /* 0xbc */
+    { UO::Command::ClientVersion, handle_client_version }, /* 0xbd */
+    { UO::Command::Extended, handle_extended }, /* 0xbf */
+    { UO::Command::WorldItem7, handle_world_item_7 }, /* 0xf3 */
+    { UO::Command::ProtocolExtension, handle_protocol_extension }, /* 0xf0 */
     {}
 };

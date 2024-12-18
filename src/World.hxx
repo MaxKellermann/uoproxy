@@ -3,16 +3,16 @@
 
 #pragma once
 
+#include "uo/Command.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/VarStructPtr.hxx"
 #include "PacketStructs.hxx"
-#include "PacketType.hxx"
 
 struct Item final : IntrusiveListHook<> {
     const uint32_t serial;
 
     union {
-        uint8_t cmd;
+        UO::Command cmd;
 
         /**
          * Item on the ground.
@@ -36,7 +36,7 @@ struct Item final : IntrusiveListHook<> {
     explicit Item(uint32_t _serial) noexcept
         :serial(_serial)
     {
-        socket.cmd = 0;
+        socket.cmd = {};
     }
 
     Item(const Item &) = delete;
@@ -44,10 +44,10 @@ struct Item final : IntrusiveListHook<> {
 
     uint32_t GetParentSerial() const noexcept {
         switch (socket.cmd) {
-        case PCK_ContainerUpdate:
+        case UO::Command::ContainerUpdate:
             return socket.container.item.parent_serial;
 
-        case PCK_Equip:
+        case UO::Command::Equip:
             return socket.mobile.parent_serial;
 
         default:

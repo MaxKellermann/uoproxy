@@ -3,7 +3,10 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
+#include <cstdint>
+
+namespace UO { enum Command : uint8_t; }
 
 struct Connection;
 struct LinkedServer;
@@ -24,13 +27,13 @@ enum class PacketAction {
 };
 
 struct client_packet_binding {
-    unsigned char cmd;
+    UO::Command cmd;
     PacketAction (*handler)(Connection &c,
                             const void *data, size_t length);
 };
 
 struct server_packet_binding {
-    unsigned char cmd;
+    UO::Command cmd;
     PacketAction (*handler)(LinkedServer &ls,
                             const void *data, size_t length);
 };

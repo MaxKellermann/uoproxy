@@ -59,7 +59,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
     case PacketAction::ACCEPT:
         if (c->client.client != nullptr &&
             (!c->client.reconnecting ||
-             *(const unsigned char*)data == PCK_ClientVersion))
+             *(const UO::Command *)data == UO::Command::ClientVersion))
             uo_client_send(c->client.client, data, length);
         break;
 

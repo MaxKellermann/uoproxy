@@ -3,8 +3,8 @@
 
 #include "Encryption.hxx"
 #include "PacketStructs.hxx"
-#include "PacketType.hxx"
 #include "Log.hxx"
+#include "uo/Command.hxx"
 
 #include <assert.h>
 #include <stdint.h>
@@ -123,7 +123,7 @@ encryption_free(struct encryption *e)
 static bool
 account_login_valid(const struct uo_packet_account_login *p)
 {
-    return p->cmd == PCK_AccountLogin &&
+    return p->cmd == UO::Command::AccountLogin &&
         p->credentials.username[29] == 0x00 &&
         p->credentials.password[29] == 0x00;
 }
@@ -237,7 +237,7 @@ encryption_from_client(struct encryption *e,
 
             e->state = STATE_LOGIN;
         } else if (p + sizeof(*game_login) == end) {
-            if (game_login->cmd == PCK_GameLogin &&
+            if (game_login->cmd == UO::Command::GameLogin &&
                 game_login->auth_id == e->seed) {
                 /* unencrypted game login */
                 e->state = STATE_DISABLED;
