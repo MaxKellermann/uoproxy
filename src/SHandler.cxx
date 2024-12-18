@@ -13,6 +13,7 @@
 #include "Log.hxx"
 #include "version.h"
 #include "Bridge.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -526,8 +527,8 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
     if (c.client.version.seed != nullptr)
         c.client.version.seed->seed = relay.auth_id;
 
-    ret = c.Connect((const struct sockaddr *)&sin,
-                    sizeof(sin), relay.auth_id, true);
+    ret = c.Connect({(const struct sockaddr *)&sin, sizeof(sin)},
+                    relay.auth_id, true);
     if (ret != 0) {
         log_error("connect to game server failed", ret);
         return PacketAction::DISCONNECT;

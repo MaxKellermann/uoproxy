@@ -12,6 +12,7 @@
 #include "Config.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/VarStructPtr.hxx"
 
 #include <assert.h>
@@ -395,8 +396,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         else
             seed = uo_server_seed(ls.server);
 
-        int ret = c->Connect(config.login_address->ai_addr,
-                             config.login_address->ai_addrlen,
+        int ret = c->Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
                              seed, false);
         if (ret != 0) {
             struct uo_packet_account_login_reject response;
@@ -656,8 +656,7 @@ handle_play_server(LinkedServer &ls,
         else
             seed = 0xc0a80102; /* 192.168.1.2 */
 
-        ret = c.Connect(server_config.address->ai_addr,
-                        server_config.address->ai_addrlen,
+        ret = c.Connect({server_config.address->ai_addr, server_config.address->ai_addrlen},
                         seed, true);
         if (ret != 0) {
             log_error("connect to game server failed", ret);

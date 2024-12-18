@@ -3,6 +3,7 @@
 
 #include "ProxySocks.hxx"
 #include "Log.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -22,14 +23,14 @@ struct socks4_header {
 };
 
 bool
-socks_connect(int fd, const struct sockaddr *address)
+socks_connect(int fd, SocketAddress address)
 {
-    if (address->sa_family != AF_INET) {
+    if (address.GetFamily() != AF_INET) {
         LogFormat(1, "Not an IPv4 address\n");
         return false;
     }
 
-    const struct sockaddr_in *in = (const struct sockaddr_in *)address;
+    const struct sockaddr_in *in = (const struct sockaddr_in *)address.GetAddress();
     struct socks4_header header = {
         .version = 0x04,
         .command = 0x01,

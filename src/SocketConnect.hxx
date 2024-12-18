@@ -3,10 +3,8 @@
 
 #pragma once
 
-#include <stddef.h>
-
-struct sockaddr;
+class SocketAddress;
 
 int
 socket_connect(int domain, int type, int protocol,
-               const struct sockaddr *address, size_t address_length);
+	       SocketAddress address);

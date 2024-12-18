@@ -6,6 +6,7 @@
 #include "Client.hxx"
 #include "Config.hxx"
 #include "Log.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <assert.h>
 #include <time.h>
@@ -54,8 +55,7 @@ Connection::DoReconnect() noexcept
         assert(config.game_servers != nullptr);
         assert(server_index < config.num_game_servers);
 
-        ret = Connect(server_address->ai_addr,
-                      server_address->ai_addrlen,
+        ret = Connect({server_address->ai_addr, server_address->ai_addrlen},
                       seed, true);
         if (ret == 0) {
             const struct uo_packet_game_login p = {
@@ -73,8 +73,7 @@ Connection::DoReconnect() noexcept
         }
     } else {
         /* connect to login server */
-        ret = Connect(config.login_address->ai_addr,
-                      config.login_address->ai_addrlen,
+        ret = Connect({config.login_address->ai_addr, config.login_address->ai_addrlen},
                       seed, false);
         if (ret == 0) {
             const struct uo_packet_account_login p = {

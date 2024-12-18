@@ -83,6 +83,8 @@ inc = include_directories(
   '.',
 )
 
+subdir('src/net')
+
 executable(
   'uoproxy',
   'src/Main.cxx',
@@ -112,6 +114,7 @@ executable(
   dependencies: [
     libevent,
     libsystemd,
+    net_dep,
   ],
   install: true,
 )

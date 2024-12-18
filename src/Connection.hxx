@@ -13,6 +13,7 @@
 
 #define MAX_WALK_QUEUE 4
 
+class SocketAddress;
 struct Instance;
 struct Connection;
 struct LinkedServer;
@@ -96,8 +97,7 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
     /**
      * @return 0 on success or an errno value
      */
-    int Connect(const struct sockaddr *server_address,
-                size_t server_address_length,
+    int Connect(SocketAddress server_address,
                 uint32_t seed, bool for_game_login);
     void Disconnect() noexcept;
     void Reconnect();

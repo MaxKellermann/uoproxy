@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "SocketConnect.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <errno.h>
 #include <unistd.h>
@@ -16,13 +17,13 @@
 
 int
 socket_connect(int domain, int type, int protocol,
-               const struct sockaddr *address, size_t address_length)
+               SocketAddress address)
 {
     int fd = socket(domain, type, protocol);
     if (fd < 0)
         return -errno;
 
-    int ret = connect(fd, address, address_length);
+    int ret = connect(fd, address.GetAddress(), address.GetSize());
     if (ret < 0) {
         int save_errno = errno;
         close(fd);

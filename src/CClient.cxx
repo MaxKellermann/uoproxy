@@ -10,6 +10,7 @@
 #include "Log.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -67,8 +68,7 @@ Connection::OnClientDisconnect() noexcept
 }
 
 int
-Connection::Connect(const struct sockaddr *server_address,
-                    size_t server_address_length,
+Connection::Connect(SocketAddress server_address,
                     uint32_t seed, bool for_game_login)
 {
     assert(client.client == nullptr);
@@ -79,7 +79,7 @@ Connection::Connect(const struct sockaddr *server_address,
         instance.config.socks4_address;
     if (socks4_address != nullptr) {
         fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
-                            socks4_address->ai_addr, socks4_address->ai_addrlen);
+                            {socks4_address->ai_addr, socks4_address->ai_addrlen});
         if (fd < 0)
             return errno;
 
@@ -89,8 +89,8 @@ Connection::Connect(const struct sockaddr *server_address,
             return e;
         }
     } else {
-        fd = socket_connect(server_address->sa_family, SOCK_STREAM, 0,
-                            server_address, server_address_length);
+        fd = socket_connect(server_address.GetFamily(), SOCK_STREAM, 0,
+                            server_address);
         if (fd < 0)
             return errno;
     }

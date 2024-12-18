@@ -3,7 +3,7 @@
 
 #pragma once
 
-struct sockaddr;
+class SocketAddress;
 
 bool
-socks_connect(int fd, const struct sockaddr *address);
+socks_connect(int fd, SocketAddress address);
