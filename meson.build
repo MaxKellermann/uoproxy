@@ -40,8 +40,6 @@ test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
 
-  '-Wpointer-arith',
-  '-Wsign-compare',
   '-Wcomma',
   '-Wextra-semi',
   '-Wheader-hygiene',
