@@ -1,29 +1,11 @@
-/*
- * uoproxy
- *
- * Copyright 2005-2020 Max Kellermann <max.kellermann@gmail.com>
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; version 2 of the License.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- */
+// SPDX-License-Identifier: GPL-2.0-only
+// author: Max Kellermann <max.kellermann@gmail.com>
+
+#pragma once
 
 /*
  * Verify UO network packets.
  */
-
-#ifndef __UOPROXY_PVERIFY_H
-#define __UOPROXY_PVERIFY_H
 
 #include "PacketStructs.hxx"
 
@@ -100,5 +82,3 @@ packet_verify_container_content_6(const struct uo_packet_container_content_6 *p,
     return length >= sizeof(*p) - sizeof(p->items) &&
         length == sizeof(*p) - sizeof(p->items) + p->num * sizeof(p->items[0]);
 }
-
-#endif
