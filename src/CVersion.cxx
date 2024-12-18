@@ -5,6 +5,8 @@
 #include "VerifyPacket.hxx"
 #include "uo/Command.hxx"
 
+#include <string>
+
 #include <string.h>
 
 ClientVersion::~ClientVersion() noexcept
@@ -75,16 +77,15 @@ ClientVersion::Set(const struct uo_packet_client_version *_packet,
 }
 
 void
-ClientVersion::Set(const char *version) noexcept
+ClientVersion::Set(std::string_view version) noexcept
 {
-    size_t length = strlen(version);
-
-    packet = VarStructPtr<struct uo_packet_client_version>(sizeof(*packet) + length);
+    packet = VarStructPtr<struct uo_packet_client_version>(sizeof(*packet) + version.size());
     packet->cmd = UO::Command::ClientVersion;
     packet->length = packet.size();
-    memcpy(packet->version, version, length + 1);
+    *std::copy(version.begin(), version.end(), packet->version) = '\0';
 
-    protocol = determine_protocol_version(version);
+    // TODO eliminate temporary std::string
+    protocol = determine_protocol_version(std::string{version}.c_str());
 }
 
 void

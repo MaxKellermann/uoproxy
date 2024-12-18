@@ -372,7 +372,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
         for (i = 0; i < num_game_servers; i++) {
             p2->game_servers[i].index = i;
             snprintf(p2->game_servers[i].name, sizeof(p2->game_servers[i].name),
-                     "%s", game_servers[i].name);
+                     "%s", game_servers[i].name.c_str());
 
             if (game_servers[i].address->ai_family != AF_INET)
                 continue;

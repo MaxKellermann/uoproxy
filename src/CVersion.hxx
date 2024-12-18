@@ -6,7 +6,8 @@
 #include "PVersion.hxx"
 #include "util/VarStructPtr.hxx"
 
-#include <stddef.h>
+#include <cstddef>
+#include <string_view>
 
 struct ClientVersion {
     VarStructPtr<struct uo_packet_client_version> packet;
@@ -26,7 +27,7 @@ struct ClientVersion {
     int Set(const struct uo_packet_client_version *_packet,
             size_t length) noexcept;
 
-    void Set(const char *version) noexcept;
+    void Set(std::string_view version) noexcept;
 
     void Seed(const struct uo_packet_seed &_seed) noexcept;
 };

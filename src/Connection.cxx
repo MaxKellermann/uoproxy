@@ -29,7 +29,7 @@ connection_new(Instance *instance,
                              instance->config.background,
                              instance->config.autoreconnect);
 
-    if (instance->config.client_version != nullptr) {
+    if (!instance->config.client_version.empty()) {
         c->client.version.Set(instance->config.client_version);
         ls->LogF(2, "configured client version {:?}, protocol {:?}",
                  c->client.version.packet->version,

@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include <sys/types.h> /* for uid_t/gid_t */
+#include <string>
 
 struct game_server_config {
-    char *name;
+    std::string name;
     struct addrinfo *address;
 };
 
@@ -29,7 +29,7 @@ struct Config {
      */
     bool light = false;
 
-    char *client_version = nullptr;
+    std::string client_version;
 
     ~Config() noexcept;
 };

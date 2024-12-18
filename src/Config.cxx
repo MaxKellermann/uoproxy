@@ -275,13 +275,6 @@ parse_bool(const char *path, unsigned no, const char *val) {
     }
 }
 
-static void assign_string(char **destp, const char *src) {
-    if (*destp != nullptr)
-        free(*destp);
-
-    *destp = *src == 0 ? nullptr : strdup(src);
-}
-
 static void
 parse_game_server(const char *path, unsigned no,
                   struct game_server_config *config, char *string)
@@ -298,11 +291,7 @@ parse_game_server(const char *path, unsigned no,
 
     *eq = 0;
 
-    config->name = strdup(string);
-    if (config->name == nullptr) {
-        log_oom();
-        exit(2);
-    }
+    config->name = string;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_INET;
@@ -408,8 +397,6 @@ int config_read_file(Config *config, const char *path) {
 
             if (config->game_servers != nullptr) {
                 for (i = 0; i < config->num_game_servers; i++) {
-                    if (config->game_servers[i].name != nullptr)
-                        free(config->game_servers[i].name);
                     if (config->game_servers[i].address != nullptr)
                         freeaddrinfo(config->game_servers[i].address);
                 }
@@ -459,7 +446,7 @@ int config_read_file(Config *config, const char *path) {
         } else if (strcmp(key, "light") == 0) {
             config->light = parse_bool(path, no, value);
         } else if (strcmp(key, "client_version") == 0) {
-            assign_string(&config->client_version, value);
+            config->client_version = value;
         } else {
             fmt::print(stderr, "{} line {}: invalid keyword {:?}\n",
                        path, no, key);
@@ -486,12 +473,9 @@ Config::~Config() noexcept
     if (game_servers != nullptr) {
         unsigned i;
         for (i = 0; i < num_game_servers; i++) {
-            free(game_servers[i].name);
             if (game_servers[i].address != nullptr)
                 freeaddrinfo(game_servers[i].address);
         }
         free(game_servers);
     }
-
-    free(client_version);
 }
