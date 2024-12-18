@@ -8,6 +8,7 @@
  */
 
 #include "PacketStructs.hxx"
+#include "util/CharUtil.hxx"
 
 #ifndef NDEBUG
 #include "uo/Command.hxx"
@@ -16,17 +17,11 @@
 #include <assert.h>
 
 static inline bool
-char_is_printable(char ch)
-{
-    return (signed char)ch >= 0x20;
-}
-
-static inline bool
 verify_printable_asciiz(const char *p, size_t length)
 {
     size_t i;
     for (i = 0; i < length && p[i] != 0; ++i)
-        if (!char_is_printable(p[i]))
+        if (!IsPrintableASCII(p[i]))
             return false;
     return true;
 }
@@ -36,7 +31,7 @@ verify_printable_asciiz_n(const char *p, size_t length)
 {
     size_t i;
     for (i = 0; i < length; ++i)
-        if (!char_is_printable(p[i]))
+        if (!IsPrintableASCII(p[i]))
             return false;
     return p[length] == 0;
 }
