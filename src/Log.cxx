@@ -15,10 +15,8 @@ do_log(const char *fmt, ...) noexcept
     va_list ap;
 
     va_start(ap, fmt);
-    vprintf(fmt, ap);
+    vfprintf(stderr, fmt, ap);
     va_end(ap);
-
-    fflush(stdout);
 }
 
 void
