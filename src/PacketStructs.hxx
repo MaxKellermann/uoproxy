@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "util/ByteOrder.hxx"
+#include "util/PackedBigEndian.hxx"
 
 #include <stdint.h>
 #include <string.h>
