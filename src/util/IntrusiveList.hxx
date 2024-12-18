@@ -293,6 +293,8 @@ public:
 
 	/**
 	 * Like clear(), but invoke a disposer function on each item.
+	 *
+	 * The disposer is not allowed to destruct the list.
 	 */
 	void clear_and_dispose(Disposer<value_type> auto disposer) noexcept {
 		while (!empty()) {
