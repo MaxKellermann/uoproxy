@@ -6,6 +6,7 @@
 #include "Config.hxx"
 #include "version.h"
 #include "Log.hxx"
+#include "util/PrintException.hxx"
 #include "config.h"
 
 #ifdef HAVE_LIBSYSTEMD
@@ -152,7 +153,7 @@ try {
     event_base_free(event_base);
 
     return EXIT_SUCCESS;
-} catch (const std::exception &e) {
-    fprintf(stderr, "%s\n", e.what());
+} catch (...) {
+    PrintException(std::current_exception());
     return EXIT_FAILURE;
 }
