@@ -22,6 +22,7 @@ test_common_flags = [
   '-ftree-vectorize',
 
   '-Wcast-qual',
+  '-Wdouble-promotion',
   '-Wmissing-declarations',
   '-Wshadow',
   '-Wunused',
@@ -29,7 +30,7 @@ test_common_flags = [
   '-Wwrite-strings',
 
   # clang specific warning options:
-  '-Wunreachable-code-break',
+  '-Wunreachable-code-aggressive',
   '-Wused-but-marked-unused',
 ]
 
@@ -40,12 +41,21 @@ test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
 
-  '-Wcomma',
+  '-Wcomma-subscript',
   '-Wextra-semi',
+  '-Wmismatched-tags',
+  '-Woverloaded-virtual',
+  '-Wsign-promo',
+  '-Wvolatile',
+  '-Wvirtual-inheritance',
+
+  # a vtable without a dtor is just fine
+  '-Wno-non-virtual-dtor',
+
+  # clang specific warning options:
+  '-Wcomma',
   '-Wheader-hygiene',
   '-Winconsistent-missing-destructor-override',
-
-  '-Wno-non-virtual-dtor',
 ]
 
 test_ldflags = [
