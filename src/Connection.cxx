@@ -31,7 +31,7 @@ connection_new(Instance *instance,
 
     if (instance->config.client_version != nullptr) {
         c->client.version.Set(instance->config.client_version);
-        ls->LogF(2, "configured client version '%s', protocol '%s'",
+        ls->LogF(2, "configured client version {:?}, protocol {:?}",
                  c->client.version.packet->version,
                  protocol_name(c->client.version.protocol));
     }

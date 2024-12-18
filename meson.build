@@ -3,6 +3,12 @@ project('uoproxy', 'cpp', version: '0.5',
   default_options: [
     'cpp_std=c++20',
     'warning_level=3',
+
+    # This is only here to build subprojects as static libraries
+    'default_library=static',
+
+    'fmt:cpp_std=c++2a',
+    'fmt:warning_level=0',
   ],
   license: 'GPL-2.0-only',
 )
@@ -79,6 +85,11 @@ add_project_link_arguments(compiler.get_supported_link_arguments(test_ldflags), 
 
 conf = configuration_data()
 
+# using include_type:system to work around -Wfloat-equal
+libfmt = dependency('fmt', version: '>= 9',
+                    include_type: 'system',
+                    fallback: ['fmt', 'fmt_dep'])
+
 libevent = dependency('libevent')
 
 libsystemd = dependency('libsystemd', required: get_option('systemd'))
@@ -129,6 +140,7 @@ executable(
   include_directories: inc,
   dependencies: [
     libevent,
+    libfmt,
     libsystemd,
     io_dep,
     net_dep,

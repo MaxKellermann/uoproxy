@@ -58,6 +58,7 @@ following to compile it:
 - a C++20 compiler (`GCC <https://gcc.gnu.org/>`__ or `clang
   <https://clang.llvm.org/>`__)
 - `Meson 1.0 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
+- `libfmt <https://fmt.dev/>`__
 - `libevent <https://github.com/libevent/libevent/>`__ development
   files (package ``libevent-dev`` or ``libevent-devel``)
 

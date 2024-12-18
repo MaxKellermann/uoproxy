@@ -4,6 +4,7 @@ Priority: extra
 Maintainer: Max Kellermann <max.kellermann@gmail.com>
 Build-Depends: debhelper (>= 12~),
  meson (>= 1.0),
+ libfmt-dev (>= 9),
  libsystemd-dev,
  libevent-dev (>= 1.1)
 Standards-Version: 4.0.0

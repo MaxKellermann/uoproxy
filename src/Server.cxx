@@ -105,8 +105,8 @@ UO::Server::ParsePackets(const uint8_t *data, size_t length)
             return 0;
         }
 
-        LogFormat(9, "from client: 0x%02x length=%u\n",
-            data[0], (unsigned)packet_length);
+        LogFmt(9, "from client: {:#02x} length={}\n",
+            data[0], packet_length);
 
         if (packet_length == 0 || packet_length > length)
             break;
@@ -234,7 +234,7 @@ void uo_server_send(UO::Server *server,
     if (server->aborted)
         return;
 
-    LogFormat(9, "sending packet to client, length=%u\n", (unsigned)length);
+    LogFmt(9, "sending packet to client, length={}\n", length);
     log_hexdump(10, src, length);
 
     if (server->compression_enabled) {

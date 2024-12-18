@@ -271,8 +271,8 @@ World::Apply(const struct uo_packet_mobile_update &p) noexcept
 
     Mobile *m = FindMobile(p.serial);
     if (m == nullptr) {
-        LogFormat(3, "warning in connection_mobile_update: no such mobile 0x%x\n",
-                  (unsigned)p.serial);
+        LogFmt(3, "warning in connection_mobile_update: no such mobile {:#x}\n",
+               (uint32_t)p.serial);
         return;
     }
 
@@ -310,8 +310,8 @@ World::Apply(const struct uo_packet_mobile_moving &p) noexcept
 
     Mobile *m = FindMobile(p.serial);
     if (m == nullptr) {
-        LogFormat(3, "warning in connection_mobile_moving: no such mobile 0x%x\n",
-                  (unsigned)p.serial);
+        LogFmt(3, "warning in connection_mobile_moving: no such mobile {:#x}\n",
+               (uint32_t)p.serial);
         return;
     }
 

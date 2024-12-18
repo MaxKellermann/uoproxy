@@ -6,7 +6,8 @@
 #include "version.h"
 #include "Log.hxx"
 
-#include <stdio.h>
+#include <fmt/core.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -64,8 +65,8 @@ static struct addrinfo *port_to_addrinfo(int port) {
     ret = getaddrinfo_helper("*", port, &hints,
                              &ai);
     if (ret != 0) {
-        fprintf(stderr, "getaddrinfo_helper failed: %s\n",
-                gai_strerror(ret));
+        fmt::print(stderr, "getaddrinfo_helper failed: {}\n",
+                   gai_strerror(ret));
         exit(2);
     }
 
@@ -84,8 +85,8 @@ parse_address(const char *host_and_port)
 
     ret = getaddrinfo_helper(host_and_port, 2593, &hints, &ai);
     if (ret != 0) {
-        fprintf(stderr, "getaddrinfo_helper failed: %s\n",
-                gai_strerror(ret));
+        fmt::print(stderr, "getaddrinfo_helper failed: {}\n",
+                   gai_strerror(ret));
         exit(2);
     }
 
@@ -145,7 +146,7 @@ void parse_cmdline(Config *config, int argc, char **argv) {
         case 'p':
             bind_port = atoi(optarg);
             if (bind_port == 0) {
-                fprintf(stderr, "invalid port specification\n");
+                fmt::print(stderr, "invalid port specification\n");
                 exit(1);
             }
             break;
@@ -170,16 +171,16 @@ void parse_cmdline(Config *config, int argc, char **argv) {
 
 
     if (optind < argc) {
-        fprintf(stderr, "uoproxy: unrecognized argument: %s\n",
-                argv[optind]);
-        fprintf(stderr, "Try 'uoproxy -h' for more information\n");
+        fmt::print(stderr, "uoproxy: unrecognized argument: {:?}\n",
+                   argv[optind]);
+        fmt::print(stderr, "Try 'uoproxy -h' for more information\n");
         exit(1);
     }
 
     if (login_address == nullptr && config->login_address == nullptr &&
         config->num_game_servers == 0) {
-        fprintf(stderr, "uoproxy: login server missing\n");
-        fprintf(stderr, "Try 'uoproxy -h' for more information\n");
+        fmt::print(stderr, "uoproxy: login server missing\n");
+        fmt::print(stderr, "Try 'uoproxy -h' for more information\n");
         exit(1);
     }
 
@@ -196,7 +197,7 @@ void parse_cmdline(Config *config, int argc, char **argv) {
         ret = getaddrinfo_helper(login_address, 2593, &hints,
                                  &config->login_address);
         if (ret < 0) {
-            fprintf(stderr, "failed to resolve '%s': %s\n",
+            fmt::print(stderr, "failed to resolve {:?}: {}\n",
                     login_address, gai_strerror(ret));
             exit(1);
         }
@@ -206,13 +207,13 @@ void parse_cmdline(Config *config, int argc, char **argv) {
 
     if (bind_address != nullptr) {
         if (bind_port != 0) {
-            fprintf(stderr, "You cannot specifiy both "
+            fmt::print(stderr, "You cannot specifiy both "
 #ifdef __GLIBC__
-                    "--bind and --port"
+                       "--bind and --port"
 #else
-                    "-b and -p"
+                       "-b and -p"
 #endif
-                    "\n");
+                       "\n");
             exit(1);
         }
 
@@ -268,8 +269,8 @@ parse_bool(const char *path, unsigned no, const char *val) {
     } else if (strcmp(val, "no") == 0) {
         return false;
     } else {
-        fprintf(stderr, "%s line %u: specify either 'yes' or 'no'\n",
-                path, no);
+        fmt::print(stderr, "{} line {}: specify either 'yes' or 'no'\n",
+                   path, no);
         exit(2);
     }
 }
@@ -290,8 +291,8 @@ parse_game_server(const char *path, unsigned no,
     int ret;
 
     if (eq == nullptr) {
-        fprintf(stderr, "%s line %u: no address for server ('=' missing)\n",
-                path, no);
+        fmt::print(stderr, "{} line {}: no address for server ('=' missing)\n",
+                   path, no);
         exit(2);
     }
 
@@ -309,8 +310,8 @@ parse_game_server(const char *path, unsigned no,
 
     ret = getaddrinfo_helper(eq + 1, 2593, &hints, &config->address);
     if (ret < 0) {
-        fprintf(stderr, "failed to resolve '%s': %s\n",
-                eq + 1, gai_strerror(ret));
+        fmt::print(stderr, "failed to resolve {:?}: {}\n",
+                   eq + 1, gai_strerror(ret));
         exit(1);
     }
 }
@@ -338,14 +339,14 @@ int config_read_file(Config *config, const char *path) {
         /* parse line */
         value = next_word(&p);
         if (value == nullptr) {
-            fprintf(stderr, "%s line %u: value missing after keyword\n",
-                    path, no);
+            fmt::print(stderr, "{} line {}: value missing after keyword\n",
+                       path, no);
             exit(2);
         }
 
         if (next_word(&p) != nullptr) {
-            fprintf(stderr, "%s line %u: extra token after value\n",
-                    path, no);
+            fmt::print(stderr, "{} line {}: extra token after value\n",
+                       path, no);
             exit(2);
         }
 
@@ -354,8 +355,8 @@ int config_read_file(Config *config, const char *path) {
             unsigned long port = strtoul(value, nullptr, 0);
 
             if (port == 0 || port > 0xffff) {
-                fprintf(stderr, "%s line %u: invalid port\n",
-                        path, no);
+                fmt::print(stderr, "{} line {}: invalid port\n",
+                           path, no);
                 exit(2);
             }
 
@@ -381,8 +382,8 @@ int config_read_file(Config *config, const char *path) {
             ret = getaddrinfo_helper(value, 9050, &hints,
                                      &config->socks4_address);
             if (ret < 0) {
-                fprintf(stderr, "failed to resolve '%s': %s\n",
-                        value, gai_strerror(ret));
+                fmt::print(stderr, "failed to resolve {:?}: {}\n",
+                           value, gai_strerror(ret));
                 exit(1);
             }
         } else if (strcmp(key, "server") == 0) {
@@ -398,8 +399,8 @@ int config_read_file(Config *config, const char *path) {
             ret = getaddrinfo_helper(value, 2593, &hints,
                                      &config->login_address);
             if (ret < 0) {
-                fprintf(stderr, "failed to resolve '%s': %s\n",
-                        value, gai_strerror(ret));
+                fmt::print(stderr, "failed to resolve {:?}: {}\n",
+                           value, gai_strerror(ret));
                 exit(1);
             }
         } else if (strcmp(key, "server_list") == 0) {
@@ -460,8 +461,8 @@ int config_read_file(Config *config, const char *path) {
         } else if (strcmp(key, "client_version") == 0) {
             assign_string(&config->client_version, value);
         } else {
-            fprintf(stderr, "%s line %u: invalid keyword '%s'\n",
-                    path, no, key);
+            fmt::print(stderr, "{} line {}: invalid keyword {:?}\n",
+                       path, no, key);
             exit(2);
         }
     }

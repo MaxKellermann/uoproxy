@@ -145,7 +145,7 @@ handle_use(LinkedServer &ls,
     do {
         Item *i = connection_find_item(c, p->serial);
         if (i == nullptr) {
-            ls.LogF(7, "Use 0x%x", (unsigned)p->serial);
+            ls.LogF(7, "Use {:#x}", (uint32_t)p->serial);
         } else {
             uint16_t item_id;
 
@@ -158,8 +158,8 @@ handle_use(LinkedServer &ls,
             else
                 item_id = 0xffff;
 
-            ls.LogF(7, "Use 0x%x item_id=0x%x",
-                    (unsigned)p->serial, (unsigned)item_id);
+            ls.LogF(7, "Use {:#x} item_id={#:x}",
+                    (uint32_t)p->serial, (uint32_t)item_id);
         }
         fflush(stdout);
     } while (0);
@@ -309,7 +309,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
     ls.state = LinkedServer::State::ACCOUNT_LOGIN;
 
 #ifdef DUMP_LOGIN
-    ls.LogF(7, "account_login: username=%s password=%s",
+    ls.LogF(7, "account_login: username={:?} password={:?}",
             p->username, p->password);
 #endif
 
@@ -572,7 +572,7 @@ redirect_to_self(LinkedServer &ls)
     relay.port = PackedBE16::FromBE(uo_server_getsockport(ls.server));
     relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls.server));
     addr.s_addr = relay.ip.raw();
-    ls.LogF(8, "redirecting to: %s:%u",
+    ls.LogF(8, "redirecting to: {}:{}",
             inet_ntoa(addr), (unsigned)relay.port);;
     relay.auth_id = ls.auth_id = authid++;
     uo_server_send(ls.server, &relay, sizeof(relay));
@@ -774,7 +774,7 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
                 uo_server_set_protocol(ls.server,
                                        ls.client_version.protocol);
 
-            ls.LogF(2, "client version '%s', protocol '%s'",
+            ls.LogF(2, "client version {:?}, protocol {:?}",
                     ls.client_version.packet->version,
                     protocol_name(ls.client_version.protocol));
         }
@@ -796,7 +796,7 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
             if (was_unkown && c->client.client != nullptr)
                 uo_client_set_protocol(c->client.client,
                                        c->client.version.protocol);
-            ls.LogF(2, "emulating client version '%s', protocol '%s'",
+            ls.LogF(2, "emulating client version {:?}, protocol {:?}",
                     c->client.version.packet->version,
                     protocol_name(c->client.version.protocol));
         } else if (ret == 0)
@@ -813,7 +813,7 @@ handle_extended(LinkedServer &ls, const void *data, size_t length)
     if (length < sizeof(*p))
         return PacketAction::DISCONNECT;
 
-    ls.LogF(8, "from client: extended 0x%04x", (unsigned)p->extended_cmd);
+    ls.LogF(8, "from client: extended {:#04x}", (unsigned)p->extended_cmd);
 
     return PacketAction::ACCEPT;
 }
@@ -838,7 +838,7 @@ handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
         ls.client_version.Seed(*p);
         uo_server_set_protocol(ls.server, ls.client_version.protocol);
 
-        ls.LogF(2, "detected client 6.0.5.0 or newer (%u.%u.%u.%u)",
+        ls.LogF(2, "detected client 6.0.5.0 or newer ({}.{}.{}.{})",
                 (unsigned)p->client_major,
                 (unsigned)p->client_minor,
                 (unsigned)p->client_revision,

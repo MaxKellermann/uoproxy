@@ -6,8 +6,9 @@
 #include "Handler.hxx"
 #include "Log.hxx"
 
+#include <fmt/format.h>
+
 #include <cassert>
-#include <cstdarg>
 
 unsigned LinkedServer::id_counter;
 
@@ -20,19 +21,15 @@ LinkedServer::~LinkedServer() noexcept
 }
 
 void
-LinkedServer::LogF(unsigned level, const char *fmt, ...) noexcept
+LinkedServer::LogVFmt(unsigned level, fmt::string_view format_str, fmt::format_args args) noexcept
 {
     if (level > verbose)
         return;
 
-    char msg[1024];
+    fmt::memory_buffer buffer;
+    fmt::vformat_to(std::back_inserter(buffer), format_str, args);
 
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(msg, sizeof(msg), fmt, ap);
-    va_end(ap);
-
-    do_log("[client %u] %s\n", id, msg);
+    LogFmt(level, "[client {}] {}\n", id, fmt::string_view{buffer.data(), buffer.size()});
 }
 
 void
@@ -67,7 +64,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
         break;
 
     case PacketAction::DISCONNECT:
-        LogF(2, "aborting connection to client after packet 0x%x",
+        LogF(2, "aborting connection to client after packet {:#x}",
                   *(const unsigned char*)data);
         log_hexdump(6, data, length);
 

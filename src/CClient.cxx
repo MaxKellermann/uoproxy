@@ -33,8 +33,8 @@ Connection::OnClientPacket(const void *data, size_t length)
         break;
 
     case PacketAction::DISCONNECT:
-        LogFormat(2, "aborting connection to server after packet 0x%x\n",
-                  *(const unsigned char*)data);
+        LogFmt(2, "aborting connection to server after packet {:#02x}\n",
+               *(const unsigned char*)data);
         log_hexdump(6, data, length);
 
         if (autoreconnect && IsInGame()) {

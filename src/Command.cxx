@@ -105,7 +105,7 @@ connection_handle_command(LinkedServer &ls, const char *command)
 
             if (*endptr == 0) {
                 verbose = (int)new_verbose;
-                ls.LogF(1, "verbose modified, new value=%d", verbose);
+                ls.LogF(1, "verbose modified, new value={}", verbose);
                 return;
             }
         }

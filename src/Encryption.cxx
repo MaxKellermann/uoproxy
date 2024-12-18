@@ -169,7 +169,7 @@ encryption_login_init(struct login_encryption *e, uint32_t seed,
         struct uo_packet_account_login decrypted;
         login_decrypt(&tmp, data, &decrypted, sizeof(decrypted));
         if (account_login_valid(&decrypted)) {
-            LogFormat(2, "login encryption for client version %s\n", i->version);
+            LogFmt(2, "login encryption for client version {:?}\n", i->version);
             return true;
         }
     }

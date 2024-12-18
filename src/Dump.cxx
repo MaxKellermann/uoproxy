@@ -71,6 +71,6 @@ log_hexdump(unsigned level, const void *data, size_t length) noexcept
     for (row = 0; row < length; row += 0x10) {
         hexdump_line(line, row, p + row,
                      min_size_t(0x10, length - row));
-        LogFormat(level, "%s\n", line);
+        LogFmt(level, "{}\n", line);
     }
 }

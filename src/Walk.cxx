@@ -115,7 +115,7 @@ connection_walk_request(LinkedServer &ls,
     auto *i = &state.queue[state.queue_size++];
     i->packet = p;
 
-    ls.LogF(7, "walk seq_from_client=%u seq_to_server=%u",
+    ls.LogF(7, "walk seq_from_client={} seq_to_server={}",
             p.seq, state.seq_next);
 
     auto walk = p;
@@ -151,10 +151,10 @@ connection_walk_cancel(Connection &c,
     auto *i = find_by_seq(state, p.seq);
 
     if (i != nullptr)
-        LogFormat(7, "walk_cancel seq_to_client=%u seq_from_server=%u\n",
+        LogFmt(7, "walk_cancel seq_to_client={} seq_from_server={}\n",
                   i->packet.seq, p.seq);
     else
-        LogFormat(7, "walk_cancel seq_from_server=%u\n", p.seq);
+        LogFmt(7, "walk_cancel seq_from_server={}\n", p.seq);
 
     c.client.world.WalkCancel(p.x, p.y, p.direction);
 
@@ -182,8 +182,8 @@ connection_walk_ack(Connection &c,
         return;
     }
 
-    LogFormat(7, "walk_ack seq_to_client=%u seq_from_server=%u\n",
-              i->packet.seq, p.seq);
+    LogFmt(7, "walk_ack seq_to_client={} seq_from_server={}\n",
+           i->packet.seq, p.seq);
 
     unsigned x = c.client.world.packet_start.x;
     unsigned y = c.client.world.packet_start.y;

@@ -470,8 +470,7 @@ handle_account_login_reject(Connection &c, const void *data, [[maybe_unused]] si
     assert(length == sizeof(*p));
 
     if (c.client.reconnecting) {
-        LogFormat(1, "reconnect failed: AccountLoginReject reason=0x%x\n",
-                  p->reason);
+        LogFmt(1, "reconnect failed: AccountLoginReject reason={:#x}\n", p->reason);
 
         c.ScheduleReconnect();
         return PacketAction::DELETED;
@@ -561,7 +560,7 @@ handle_server_list(Connection &c, const void *data, size_t length)
         return PacketAction::DISCONNECT;
 
     const unsigned count = p->num_game_servers;
-    LogFormat(5, "serverlist: %u servers\n", count);
+    LogFmt(5, "serverlist: {} servers\n", count);
 
     const auto *server_info = p->game_servers;
     if (length != sizeof(*p) + (count - 1) * sizeof(*server_info))
@@ -588,10 +587,10 @@ handle_server_list(Connection &c, const void *data, size_t length)
         if (k != i)
             return PacketAction::DISCONNECT;
 
-        LogFormat(6, "server %u: name=%s address=0x%08x\n",
-                  (unsigned)server_info->index,
-                  server_info->name,
-                  (unsigned)server_info->address);
+        LogFmt(6, "server {}: name={:?} address={:#08x}\n",
+               (uint16_t)server_info->index,
+               server_info->name,
+               (uint32_t)server_info->address);
     }
 
     /* forward only to the clients which are waiting for the server
@@ -660,8 +659,8 @@ static PacketAction
 handle_client_version(Connection &c, const void *, size_t)
 {
     if (c.client.version.IsDefined()) {
-        LogFormat(3, "sending cached client version '%s'\n",
-                  c.client.version.packet->version);
+        LogFmt(3, "sending cached client version {:?}\n",
+               c.client.version.packet->version);
 
         /* respond to this packet directly if we know the version
            number */
@@ -684,7 +683,7 @@ handle_extended(Connection &c, const void *data, size_t length)
     if (length < sizeof(*p))
         return PacketAction::DISCONNECT;
 
-    LogFormat(8, "from server: extended 0x%04x\n", (unsigned)p->extended_cmd);
+    LogFmt(8, "from server: extended {:#04x}\n", (uint16_t)p->extended_cmd);
 
     switch (p->extended_cmd) {
     case 0x0008:

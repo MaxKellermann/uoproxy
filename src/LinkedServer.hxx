@@ -5,10 +5,11 @@
 
 #include "Server.hxx"
 #include "CVersion.hxx"
-#include "util/Compiler.h"
 #include "util/IntrusiveList.hxx"
 
 #include <event.h>
+
+#include <fmt/core.h>
 
 #include <cstdint>
 
@@ -134,8 +135,12 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
         return state == State::IN_GAME;
     }
 
-    gcc_printf(3, 4)
-    void LogF(unsigned level, const char *fmt, ...) noexcept;
+    void LogVFmt(unsigned level, fmt::string_view format_str, fmt::format_args args) noexcept;
+
+    template<typename S, typename... Args>
+    void LogF(unsigned level, const S &format_str, Args&&... args) noexcept {
+	return LogVFmt(level, format_str, fmt::make_format_args(args...));
+    }
 
 private:
     static void ZombieTimeoutCallback(int, short, void *ctx) noexcept;

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "util/Compiler.h"
+#include <fmt/core.h>
 
 #include <exception>
 
@@ -12,7 +12,6 @@
 #include <stddef.h>
 
 #ifdef DISABLE_LOGGING
-#define LogFormat(level, ...)
 #define Log(level, msg)
 #define log_oom()
 #define log_error(msg, error)
@@ -22,18 +21,14 @@
 
 extern unsigned verbose;
 
-void
-do_log(const char *fmt, ...) noexcept
-    gcc_printf(1, 2);
-
 inline void
 Log(unsigned level, const char *msg) noexcept
 {
     if (verbose >= level)
-        do_log("%s", msg);
+        fputs(msg, stderr);
 }
 
-#define LogFormat(level, ...) do { if (verbose >= (level)) do_log(__VA_ARGS__); } while (0)
+#define LogFmt(level, ...) do { if (verbose >= (level)) fmt::print(stderr, __VA_ARGS__); } while (0)
 
 static inline void
 log_oom()
@@ -48,15 +43,15 @@ static inline void
 log_error(const char *msg, int error)
 {
     if (error <= 0)
-        LogFormat(1, "%s: %d\n", msg, error);
+        LogFmt(1, "{}: {}\n", msg, error);
     else
-        LogFormat(1, "%s: %s\n", msg, strerror(error));
+        LogFmt(1, "{}: {}\n", msg, strerror(error));
 }
 
 static inline void
 log_errno(const char *msg)
 {
-    LogFormat(1, "%s: %s\n", msg, strerror(errno));
+    LogFmt(1, "{}: {}\n", msg, strerror(errno));
 }
 
 void
