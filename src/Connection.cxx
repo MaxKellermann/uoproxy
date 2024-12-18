@@ -11,6 +11,14 @@
 #include <stdlib.h>
 #include <errno.h>
 
+Connection::Connection(Instance &_instance,
+                       bool _background, bool _autoreconnect) noexcept
+    :instance(_instance), background(_background),
+     autoreconnect(_autoreconnect)
+{
+    evtimer_set(&reconnect_event, ReconnectTimerCallback, this);
+}
+
 int connection_new(Instance *instance,
                    int server_socket,
                    Connection **connectionp) {

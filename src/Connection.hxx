@@ -72,13 +72,8 @@ struct Connection final : IntrusiveListHook, UO::ClientHandler {
 
     IntrusiveList<LinkedServer> servers;
 
-    Connection(Instance &_instance, bool _background,
-               bool _autoreconnect)
-        :instance(_instance), background(_background),
-         autoreconnect(_autoreconnect)
-    {
-        evtimer_set(&reconnect_event, ReconnectTimerCallback, this);
-    }
+    Connection(Instance &_instance,
+               bool _background, bool _autoreconnect) noexcept;
 
     ~Connection() noexcept;
 
