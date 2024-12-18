@@ -85,11 +85,6 @@ add_project_link_arguments(compiler.get_supported_link_arguments(test_ldflags), 
 
 conf = configuration_data()
 
-# using include_type:system to work around -Wfloat-equal
-libfmt = dependency('fmt', version: '>= 9',
-                    include_type: 'system',
-                    fallback: ['fmt', 'fmt_dep'])
-
 libevent = dependency('libevent')
 
 libsystemd = dependency('libsystemd', required: get_option('systemd'))
@@ -108,6 +103,7 @@ inc = include_directories(
   '.',
 )
 
+subdir('src/lib/fmt')
 subdir('src/util')
 subdir('src/io')
 subdir('src/net')
@@ -140,7 +136,7 @@ executable(
   include_directories: inc,
   dependencies: [
     libevent,
-    libfmt,
+    fmt_dep,
     libsystemd,
     io_dep,
     net_dep,
