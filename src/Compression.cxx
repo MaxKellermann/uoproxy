@@ -13,7 +13,7 @@
  *
  * if drawn this tree is sorted from up to down (layer by layer) and left to right.
  */
-static const int huffman_tree[] = {
+static constexpr int huffman_tree[] = {
     /*   0 */ 1, 2,
     /*   1 */ 3, 4,
     /*   2 */ 5, 0,
@@ -329,7 +329,7 @@ ssize_t uo_decompress(struct uo_decompression *de,
  * This code was taken from Iris and is originally based on part of
  * UOX.
  */
-static unsigned bit_table[257][2] =
+static constexpr unsigned bit_table[257][2] =
 {
     { 0x02, 0x00 }, { 0x05, 0x1F }, { 0x06, 0x22 }, { 0x07, 0x34 },
     { 0x07, 0x75 }, { 0x06, 0x28 }, { 0x06, 0x3B }, { 0x07, 0x32 },
