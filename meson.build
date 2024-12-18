@@ -4,7 +4,7 @@ project('uoproxy', 'cpp', version: '0.5',
     'cpp_std=gnu++17',
     'warning_level=3',
   ],
-  license: 'GPLv2+',
+  license: 'GPL-2.0-only',
 )
 
 compiler = meson.get_compiler('cpp')
