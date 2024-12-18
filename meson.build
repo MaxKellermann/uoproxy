@@ -18,10 +18,19 @@ test_global_common_flags = [
 ]
 
 test_common_flags = [
-  '-Wvla',
-
   '-ffast-math',
   '-ftree-vectorize',
+
+  '-Wcast-qual',
+  '-Wmissing-declarations',
+  '-Wshadow',
+  '-Wunused',
+  '-Wvla',
+  '-Wwrite-strings',
+
+  # clang specific warning options:
+  '-Wunreachable-code-break',
+  '-Wused-but-marked-unused',
 ]
 
 test_global_cxxflags = test_global_common_flags + [
@@ -31,19 +40,12 @@ test_cxxflags = test_common_flags + [
   '-fno-threadsafe-statics',
   '-fmerge-all-constants',
 
-  '-Wmissing-declarations',
-  '-Wshadow',
   '-Wpointer-arith',
-  '-Wcast-qual',
-  '-Wwrite-strings',
   '-Wsign-compare',
   '-Wcomma',
   '-Wextra-semi',
   '-Wheader-hygiene',
   '-Winconsistent-missing-destructor-override',
-  '-Wunreachable-code-break',
-  '-Wunused',
-  '-Wused-but-marked-unused',
 
   '-Wno-non-virtual-dtor',
 ]
