@@ -1,7 +1,7 @@
 project('uoproxy', 'cpp', version: '0.5',
   meson_version: '>= 1.0',
   default_options: [
-    'cpp_std=gnu++17',
+    'cpp_std=c++20',
     'warning_level=3',
   ],
   license: 'GPL-2.0-only',
