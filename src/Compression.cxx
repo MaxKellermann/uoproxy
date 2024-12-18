@@ -273,47 +273,46 @@ static constexpr int huffman_tree[] = {
 };
 
 ssize_t
-uo_decompress(struct uo_decompression *de,
-              unsigned char *dest, size_t dest_max_len,
-              std::span<const unsigned char> src)
+UO::Decompression::Decompress(unsigned char *dest, size_t dest_max_len,
+                              std::span<const unsigned char> src) noexcept
 {
     size_t dest_index = 0;
 
     while (1) {
-        if (de->bit >= 8) {
+        if (bit >= 8) {
             if (src.empty())
                 return (ssize_t)dest_index;
 
-            de->value = src.front();
+            value = src.front();
             src = src.subspan(1);
 
-            de->bit = 0;
-            de->mask = 0x80;
+            bit = 0;
+            mask = 0x80;
         }
 
-        if (de->value & de->mask)
-            de->treepos = huffman_tree[de->treepos * 2];
+        if (value & mask)
+            treepos = huffman_tree[treepos * 2];
         else
-            de->treepos = huffman_tree[de->treepos * 2 + 1];
+            treepos = huffman_tree[treepos * 2 + 1];
 
-        de->mask >>= 1;
-        de->bit++;
+        mask >>= 1;
+        bit++;
 
-        if (de->treepos <= 0) {
+        if (treepos <= 0) {
             /* leaf */
-            if (de->treepos == -256) {
+            if (treepos == -256) {
                 /* special flush character */
-                de->bit = 8;    /* flush rest of byte */
-                de->treepos = 0;    /* start on tree top again */
+                bit = 8;    /* flush rest of byte */
+                treepos = 0;    /* start on tree top again */
                 continue;
             }
             if (dest_index >= dest_max_len)
                 /* Buffer full */
                 return -1;
 
-            *dest++ = (unsigned char)-de->treepos; /* data is negative value */
+            *dest++ = (unsigned char)-treepos; /* data is negative value */
             dest_index++;
-            de->treepos = 0; /* start on tree top again */
+            treepos = 0; /* start on tree top again */
         }
     }
 }

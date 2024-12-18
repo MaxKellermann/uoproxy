@@ -7,15 +7,18 @@
 
 #include <sys/types.h> /* for ssize_t */
 
-struct uo_decompression {
+namespace UO {
+
+class Decompression {
     int bit = 8, treepos = 0, mask = 0;
     unsigned char value = 0;
+
+public:
+    ssize_t Decompress(unsigned char *dest, size_t dest_max_len,
+                       std::span<const unsigned char> src) noexcept;
 };
 
-ssize_t
-uo_decompress(struct uo_decompression *de,
-              unsigned char *dest, size_t dest_max_len,
-              std::span<const unsigned char> src);
+} // namespace UO
 
 ssize_t
 uo_compress(unsigned char *dest, size_t dest_max_len,
