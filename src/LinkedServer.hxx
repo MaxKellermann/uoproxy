@@ -11,6 +11,7 @@
 #include <fmt/core.h>
 
 #include <cstdint>
+#include <memory>
 
 struct Connection;
 
@@ -27,7 +28,7 @@ class Server;
 struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
 	Connection *connection = nullptr;
 
-	UO::Server *server = nullptr;
+	std::unique_ptr<UO::Server> server;
 
 	ClientVersion client_version;
 
@@ -111,7 +112,7 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
 	} state = State::INIT;
 
 	LinkedServer(EventLoop &event_loop, UniqueSocketDescriptor &&s)
-		:server(uo_server_create(event_loop, std::move(s), *this)),
+		:server(new UO::Server(event_loop, std::move(s), *this)),
 		 zombie_timeout(event_loop, BIND_THIS_METHOD(ZombieTimeoutCallback)),
 		 id(++id_counter)
 	{

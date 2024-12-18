@@ -22,13 +22,12 @@ write_fixed_string(char *dest, size_t max_length, const char *src)
 }
 
 void
-uo_server_speak_ascii(UO::Server *server,
-		      uint32_t serial,
-		      int16_t graphic,
-		      uint8_t type,
-		      uint16_t hue, uint16_t font,
-		      const char *name,
-		      const char *text)
+UO::Server::SpeakAscii(uint32_t serial,
+		       int16_t graphic,
+		       uint8_t type,
+		       uint16_t hue, uint16_t font,
+		       const char *name,
+		       const char *text)
 {
 	struct uo_packet_speak_ascii *p;
 	const size_t text_length = strlen(text);
@@ -46,18 +45,11 @@ uo_server_speak_ascii(UO::Server *server,
 	write_fixed_string(p->name, sizeof(p->name), name);
 	memcpy(p->text, text, text_length + 1);
 
-	uo_server_send(server, ptr.get(), ptr.size());
+	Send(ptr.get(), ptr.size());
 }
 
 void
-uo_server_speak_console(UO::Server *server,
-			const char *text)
+UO::Server::SpeakConsole(const char *text)
 {
-	uo_server_speak_ascii(server,
-			      0xffffffff,
-			      -1,
-			      0x01,
-			      0x35,
-			      3,
-			      "uoproxy", text);
+	SpeakAscii(0xffffffff, -1, 0x01, 0x35, 3, "uoproxy", text);
 }

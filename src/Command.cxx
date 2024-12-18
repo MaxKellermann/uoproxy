@@ -16,14 +16,12 @@ change_character(Connection &c, LinkedServer &ls, unsigned idx)
 {
 	if (!c.client.char_list ||
 	    !c.client.char_list->IsValidCharacterIndex(idx)) {
-		uo_server_speak_console(ls.server,
-					"uoproxy: no character in slot");
+		ls.server->SpeakConsole("uoproxy: no character in slot");
 		return;
 	}
 
 	c.character_index = idx;
-	uo_server_speak_console(ls.server,
-				"uoproxy: changing character");
+	ls.server->SpeakConsole("uoproxy: changing character");
 
 	c.Reconnect();
 }
@@ -37,18 +35,15 @@ connection_handle_command(LinkedServer &ls, const char *command)
 		return;
 
 	if (*command == 0) {
-		uo_server_speak_console(ls.server,
-					"uoproxy commands: % %reconnect %char %drop %verbose");
+		ls.server->SpeakConsole("uoproxy commands: % %reconnect %char %drop %verbose");
 	} else if (strcmp(command, "reconnect") == 0) {
-		uo_server_speak_console(ls.server,
-					"uoproxy: reconnecting");
+		ls.server->SpeakConsole("uoproxy: reconnecting");
 		c.Reconnect();
 	} else if (strcmp(command, "char") == 0) {
 		char msg[1024] = "uoproxy:";
 
 		if (!c.client.char_list) {
-			uo_server_speak_console(ls.server,
-						"uoproxy: no characters in list");
+			ls.server->SpeakConsole("uoproxy: no characters in list");
 			return;
 		}
 
@@ -61,18 +56,16 @@ connection_handle_command(LinkedServer &ls, const char *command)
 			}
 		}
 
-		uo_server_speak_console(ls.server, msg);
+		ls.server->SpeakConsole(msg);
 	} else if (strncmp(command, "char ", 5) == 0) {
 		if (command[5] >= '0' && command[5] <= '9' && command[6] == 0) {
 			change_character(c, ls, command[5] - '0');
 		} else {
-			uo_server_speak_console(ls.server,
-						"uoproxy: invalid %char syntax");
+			ls.server->SpeakConsole("uoproxy: invalid %char syntax");
 		}
 	} else if (strcmp(command, "drop") == 0) {
 		if (c.client.client == nullptr || c.client.reconnecting) {
-			uo_server_speak_console(ls.server,
-						"uoproxy: not connected");
+			ls.server->SpeakConsole("uoproxy: not connected");
 		} else if (c.client.version.protocol < PROTOCOL_6) {
 			struct uo_packet_drop p = {
 				.cmd = UO::Command::Drop,
@@ -110,11 +103,9 @@ connection_handle_command(LinkedServer &ls, const char *command)
 			}
 		}
 
-		uo_server_speak_console(ls.server,
-					"uoproxy: invalid %verbose syntax");
+		ls.server->SpeakConsole("uoproxy: invalid %verbose syntax");
 #endif
 	} else {
-		uo_server_speak_console(ls.server,
-					"unknown uoproxy command, type '%' for help");
+		ls.server->SpeakConsole("unknown uoproxy command, type '%' for help");
 	}
 }

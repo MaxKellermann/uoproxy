@@ -15,7 +15,7 @@ connection_speak_console(Connection *c, const char *msg)
 		if (ls.IsInGame()) {
 			assert(ls.server != nullptr);
 
-			uo_server_speak_console(ls.server, msg);
+			ls.server->SpeakConsole(msg);
 		}
 	}
 }
@@ -25,7 +25,7 @@ Connection::BroadcastToInGameClients(const void *data, size_t length) noexcept
 {
 	for (auto &ls : servers)
 		if (ls.IsInGame())
-			uo_server_send(ls.server, data, length);
+			ls.server->Send(data, length);
 }
 
 void
@@ -34,7 +34,7 @@ Connection::BroadcastToInGameClientsExcept(const void *data, size_t length,
 {
 	for (auto &ls : servers)
 		if (&ls != &except && ls.IsInGame())
-			uo_server_send(ls.server, data, length);
+			ls.server->Send(data, length);
 }
 
 void
@@ -51,9 +51,9 @@ Connection::BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
 	for (auto &ls : servers) {
 		if (ls.IsInGame()) {
 			if (ls.client_version.protocol >= new_protocol)
-				uo_server_send(ls.server, new_data, new_length);
+				ls.server->Send(new_data, new_length);
 			else
-				uo_server_send(ls.server, old_data, old_length);
+				ls.server->Send(old_data, old_length);
 		}
 	}
 }

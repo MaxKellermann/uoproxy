@@ -12,11 +12,7 @@
 
 unsigned LinkedServer::id_counter;
 
-LinkedServer::~LinkedServer() noexcept
-{
-	if (server != nullptr)
-		uo_server_dispose(server);
-}
+LinkedServer::~LinkedServer() noexcept = default;
 
 void
 LinkedServer::LogVFmt(unsigned level, fmt::string_view format_str, fmt::format_args args) noexcept
@@ -87,7 +83,7 @@ void
 LinkedServer::OnServerDisconnect() noexcept
 {
 	assert(server != nullptr);
-	uo_server_dispose(std::exchange(server, nullptr));
+	server.reset();
 
 	if (state == State::RELAY_SERVER) {
 		LogF(2, "client disconnected, zombifying server connection for 5 seconds");

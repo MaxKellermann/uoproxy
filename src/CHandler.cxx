@@ -102,7 +102,7 @@ handle_walk(LinkedServer &ls,
 			.z = (int8_t)world->packet_start.z,
 		};
 
-		uo_server_send(ls.server, &p2, sizeof(p2));
+		ls.server->Send(&p2, sizeof(p2));
 
 		return PacketAction::DROP;
 	}
@@ -136,8 +136,7 @@ handle_use(LinkedServer &ls,
 	assert(length == sizeof(*p));
 
 	if (ls.connection->client.reconnecting) {
-		uo_server_speak_console(ls.server,
-					"please wait until uoproxy finishes reconnecting");
+		ls.server->SpeakConsole("please wait until uoproxy finishes reconnecting");
 		return PacketAction::DROP;
 	}
 
@@ -172,8 +171,7 @@ static PacketAction
 handle_action(LinkedServer &ls, const void *, size_t)
 {
 	if (ls.connection->client.reconnecting) {
-		uo_server_speak_console(ls.server,
-					"please wait until uoproxy finishes reconnecting");
+		ls.server->SpeakConsole("please wait until uoproxy finishes reconnecting");
 		return PacketAction::DROP;
 	}
 
@@ -195,7 +193,7 @@ handle_lift_request(LinkedServer &ls,
 			.reason = 0x00, /* CannotLift */
 		};
 
-		uo_server_send(ls.server, &p2, sizeof(p2));
+		ls.server->Send(&p2, sizeof(p2));
 
 		return PacketAction::DROP;
 	}
@@ -278,7 +276,7 @@ handle_target(LinkedServer &ls,
 static PacketAction
 handle_ping(LinkedServer &ls, const void *data, size_t length)
 {
-	uo_server_send(ls.server, data, length);
+	ls.server->Send(data, length);
 	return PacketAction::DROP;
 }
 
@@ -324,8 +322,8 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 	assert(other != c);
 	if (other != nullptr) {
 		if (other->client.server_list) {
-			uo_server_send(ls.server, other->client.server_list.get(),
-				       other->client.server_list.size());
+			ls.server->Send(other->client.server_list.get(),
+					other->client.server_list.size());
 			ls.state = LinkedServer::State::SERVER_LIST;
 			return PacketAction::DROP;
 		}
@@ -344,7 +342,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 		strcpy(p2.game_servers[0].name, "attach");
 		p2.game_servers[0].address = 0xdeadbeef;
 
-		uo_server_send(ls.server, &p2, sizeof(p2));
+		ls.server->Send(&p2, sizeof(p2));
 		ls.state = LinkedServer::State::SERVER_LIST;
 		return PacketAction::DROP;
 	}
@@ -380,7 +378,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 			p2->game_servers[i].address = address.GetNumericAddressBE();
 		}
 
-		uo_server_send(ls.server, p2_.get(), p2_.size());
+		ls.server->Send(p2_.get(), p2_.size());
 		return PacketAction::DROP;
 	} else if (!config.login_address.empty()) {
 		/* connect to the real login server */
@@ -393,7 +391,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 			   generic enough to be useless */
 			seed = 0xc0a80102;
 		else
-			seed = uo_server_seed(ls.server);
+			seed = ls.server->GetSeed();
 
 		try {
 			c->Connect(config.login_address.GetBest(), seed, false);
@@ -404,8 +402,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 			response.cmd = UO::Command::AccountLoginReject;
 			response.reason = 0x02; /* blocked */
 
-			uo_server_send(ls.server, &response,
-				       sizeof(response));
+			ls.server->Send(&response, sizeof(response));
 			return PacketAction::DROP;
 		}
 
@@ -504,7 +501,7 @@ handle_game_login(LinkedServer &ls,
 		if (ls.client_version.protocol == PROTOCOL_UNKNOWN &&
 		    zombie->client_version.protocol != PROTOCOL_UNKNOWN) {
 			ls.client_version.protocol = zombie->client_version.protocol;
-			uo_server_set_protocol(ls.server, ls.client_version.protocol);
+			ls.server->SetProtocol(ls.client_version.protocol);
 		}
 
 		/* delete the zombie, we don't need it anymore */
@@ -512,14 +509,13 @@ handle_game_login(LinkedServer &ls,
 		delete zombie;
 	}
 	/* after GameLogin, must enable compression. */
-	uo_server_set_compression(ls.server, true);
+	ls.server->SetCompression(true);
 	if (ls.connection->IsInGame()) {
 		/* already in game .. this was likely an attach connection */
 		attach_send_world(&ls);
 	} else if (ls.connection->client.char_list) {
-		uo_server_send(ls.server,
-			       ls.connection->client.char_list.get(),
-			       ls.connection->client.char_list.size());
+		ls.server->Send(ls.connection->client.char_list.get(),
+				ls.connection->client.char_list.size());
 		ls.state = LinkedServer::State::CHAR_LIST;
 	}
 	return PacketAction::DROP;
@@ -567,13 +563,13 @@ redirect_to_self(LinkedServer &ls)
 	if (!authid) authid = time(0);
 
 	relay.cmd = UO::Command::Relay;
-	relay.port = PackedBE16::FromBE(uo_server_getsockport(ls.server));
-	relay.ip = PackedBE32::FromBE(uo_server_getsockname(ls.server));
+	relay.port = PackedBE16::FromBE(ls.server->GetSockPort());
+	relay.ip = PackedBE32::FromBE(ls.server->GetSockName());
 	addr.s_addr = relay.ip.raw();
 	ls.LogF(8, "redirecting to: {}:{}",
 		inet_ntoa(addr), (unsigned)relay.port);;
 	relay.auth_id = ls.auth_id = authid++;
-	uo_server_send(ls.server, &relay, sizeof(relay));
+	ls.server->Send(&relay, sizeof(relay));
 	ls.state = LinkedServer::State::RELAY_SERVER;
 }
 
@@ -766,8 +762,7 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
 		int ret = ls.client_version.Set(p, length);
 		if (ret > 0) {
 			if (was_unkown)
-				uo_server_set_protocol(ls.server,
-						       ls.client_version.protocol);
+				ls.server->SetProtocol(ls.client_version.protocol);
 
 			ls.LogF(2, "client version {:?}, protocol {:?}",
 				ls.client_version.packet->version,
@@ -831,7 +826,7 @@ handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
 
 	if (ls.client_version.seed == nullptr) {
 		ls.client_version.Seed(*p);
-		uo_server_set_protocol(ls.server, ls.client_version.protocol);
+		ls.server->SetProtocol(ls.client_version.protocol);
 
 		ls.LogF(2, "detected client 6.0.5.0 or newer ({}.{}.{}.{})",
 			(unsigned)p->client_major,

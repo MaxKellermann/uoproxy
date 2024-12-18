@@ -2,59 +2,26 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Server.hxx"
-#include "SocketBuffer.hxx"
-#include "Compression.hxx"
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
-#include "Encryption.hxx"
-#include "event/DeferEvent.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 
 #include <utility>
 
-#include <assert.h>
-#include <stdlib.h>
-
 namespace UO {
 
-class Server final : SocketBufferHandler  {
-public:
-	SocketBuffer *const sock;
-	uint32_t seed = 0;
-	bool compression_enabled = false;
+Server::Server(EventLoop &event_loop,
+               UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
+	:sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
+	handler(_handler),
+	abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
+{
+}
 
-	UO::Encryption encryption;
-
-	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
-
-	ServerHandler &handler;
-
-	DeferEvent abort_event;
-
-	explicit Server(EventLoop &event_loop,
-			UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
-		:sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
-		 handler(_handler),
-		 abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
-	{
-	}
-
-	~Server() noexcept {
-		sock_buff_dispose(sock);
-	}
-
-	void Abort() noexcept;
-
-private:
-	void DeferredAbort() noexcept;
-
-	ssize_t ParsePackets(const uint8_t *data, size_t length);
-
-	/* virtual methods from SocketBufferHandler */
-	size_t OnSocketData(const void *data, size_t length) override;
-	void OnSocketDisconnect(int error) noexcept override;
-};
+Server::~Server() noexcept
+{
+	sock_buff_dispose(sock);
+}
 
 inline void
 Server::DeferredAbort() noexcept
@@ -168,61 +135,24 @@ UO::Server::OnSocketDisconnect(int error) noexcept
 	handler.OnServerDisconnect();
 }
 
-UO::Server *
-uo_server_create(EventLoop &event_loop, UniqueSocketDescriptor &&s,
-		 UO::ServerHandler &handler)
-{
-	return new UO::Server(event_loop, std::move(s), handler);
-}
-
-void uo_server_dispose(UO::Server *server) {
-	delete server;
-}
-
-uint32_t uo_server_seed(const UO::Server *server) {
-	return server->seed;
-}
-
-void uo_server_set_compression(UO::Server *server, bool comp) {
-	server->compression_enabled = comp;
-}
-
 void
-uo_server_set_protocol(UO::Server *server,
-		       enum protocol_version protocol_version)
+UO::Server::Send(const void *src, size_t length)
 {
-	assert(server->protocol_version == PROTOCOL_UNKNOWN);
-
-	server->protocol_version = protocol_version;
-}
-
-uint32_t uo_server_getsockname(const UO::Server *server)
-{
-	return sock_buff_sockname(server->sock);
-}
-
-uint16_t uo_server_getsockport(const UO::Server *server)
-{
-	return sock_buff_port(server->sock);
-}
-
-void uo_server_send(UO::Server *server,
-		    const void *src, size_t length) {
-	assert(server->sock != nullptr || server->abort_event.IsPending());
+	assert(sock != nullptr || abort_event.IsPending());
 	assert(length > 0);
-	assert(get_packet_length(server->protocol_version, src, length) == length);
+	assert(get_packet_length(protocol_version, src, length) == length);
 
-	if (server->abort_event.IsPending())
+	if (abort_event.IsPending())
 		return;
 
 	LogFmt(9, "sending packet to client, length={}\n", length);
 	log_hexdump(10, src, length);
 
-	if (server->compression_enabled) {
-		auto w = sock_buff_write(server->sock);
+	if (compression_enabled) {
+		auto w = sock_buff_write(sock);
 		if (w.empty()) {
 			Log(1, "output buffer full in uo_server_send()\n");
-			server->Abort();
+			Abort();
 			return;
 		}
 
@@ -230,15 +160,15 @@ void uo_server_send(UO::Server *server,
 					     {(const unsigned char *)src, length});
 		if (nbytes < 0) {
 			Log(1, "uo_compress() failed\n");
-			server->Abort();
+			Abort();
 			return;
 		}
 
-		sock_buff_append(server->sock, (size_t)nbytes);
+		sock_buff_append(sock, (size_t)nbytes);
 	} else {
-		if (!sock_buff_send(server->sock, src, length)) {
+		if (!sock_buff_send(sock, src, length)) {
 			Log(1, "output buffer full in uo_server_send()\n");
-			server->Abort();
+			Abort();
 		}
 	}
 }

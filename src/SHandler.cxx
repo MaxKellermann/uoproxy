@@ -32,7 +32,7 @@ welcome(Connection &c)
 {
 	for (auto &ls : c.servers) {
 		if (ls.IsInGame() && !ls.welcome) {
-			uo_server_speak_console(ls.server, "Welcome to uoproxy v" VERSION "!  "
+			ls.server->SpeakConsole("Welcome to uoproxy v" VERSION "!  "
 						"https://github.com/MaxKellermann/uoproxy");
 			ls.welcome = true;
 		}
@@ -460,7 +460,7 @@ handle_char_list(Connection &c, const void *data, size_t length)
 		for (auto &ls : c.servers) {
 			if (ls.state == LinkedServer::State::GAME_LOGIN ||
 			    ls.state == LinkedServer::State::PLAY_SERVER) {
-				uo_server_send(ls.server, data, length);
+				ls.server->Send(data, length);
 				ls.state = LinkedServer::State::CHAR_LIST;
 			}
 		}
@@ -604,7 +604,7 @@ handle_server_list(Connection &c, const void *data, size_t length)
 	for (auto &ls : c.servers) {
 		if (ls.state == LinkedServer::State::ACCOUNT_LOGIN) {
 			ls.state = LinkedServer::State::SERVER_LIST;
-			uo_server_send(ls.server, data, length);
+			ls.server->Send(data, length);
 		}
 	}
 

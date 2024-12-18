@@ -3,17 +3,20 @@
 
 #pragma once
 
+#include "SocketBuffer.hxx"
+#include "Compression.hxx"
+#include "Encryption.hxx"
 #include "PVersion.hxx"
+#include "event/DeferEvent.hxx"
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cassert>
+#include <cstdint>
+#include <cstddef>
 
 class UniqueSocketDescriptor;
 class EventLoop;
 
 namespace UO {
-
-class Server;
 
 class ServerHandler {
 public:
@@ -33,51 +36,72 @@ public:
 	virtual void OnServerDisconnect() noexcept = 0;
 };
 
-} // namespace UO
+class Server final : SocketBufferHandler  {
+	SocketBuffer *const sock;
+	uint32_t seed = 0;
+	bool compression_enabled = false;
 
-UO::Server *
-uo_server_create(EventLoop &event_loop, UniqueSocketDescriptor &&s,
-		 UO::ServerHandler &handler);
+	UO::Encryption encryption;
 
-void
-uo_server_dispose(UO::Server *server);
+	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
-uint32_t
-uo_server_seed(const UO::Server *server);
+	ServerHandler &handler;
 
-void
-uo_server_set_protocol(UO::Server *server,
-		       enum protocol_version protocol_version);
+	DeferEvent abort_event;
 
-void
-uo_server_set_compression(UO::Server *server, bool compression);
+public:
+	Server(EventLoop &event_loop,
+               UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept;
 
-void
-uo_server_send(UO::Server *server,
-	       const void *src, size_t length);
+	~Server() noexcept;
 
+	void Abort() noexcept;
 
-/** @return ip address, in network byte order, of our uo server socket
+	/** @return ip address, in network byte order, of our uo server socket
 	    (= connection to client) */
-uint32_t
-uo_server_getsockname(const UO::Server *server);
+	uint32_t GetSockName() const noexcept {
+		return sock_buff_sockname(sock);
+	}
 
-/** @return port, in network byte order, of our uo server socket
+	/** @return port, in network byte order, of our uo server socket
 	    (= connection to client) */
-uint16_t
-uo_server_getsockport(const UO::Server *server);
+	uint16_t GetSockPort() const noexcept {
+		return sock_buff_port(sock);
+	}
 
-/* utilities */
+	uint32_t GetSeed() const noexcept {
+		return seed;
+	}
 
-void
-uo_server_speak_ascii(UO::Server *server,
-		      uint32_t serial,
-		      int16_t graphic,
-		      uint8_t type,
-		      uint16_t hue, uint16_t font,
-		      const char *name,
-		      const char *text);
+	void SetProtocol(enum protocol_version _protocol_version) noexcept {
+		assert(protocol_version == PROTOCOL_UNKNOWN);
 
-void
-uo_server_speak_console(UO::Server *server,
+		protocol_version = _protocol_version;
+	}
+
+	void SetCompression(bool _compression_enabled) noexcept {
+		compression_enabled = _compression_enabled;
+	}
+
+	void Send(const void *src, size_t length);
+
+	void SpeakAscii(uint32_t serial,
+			int16_t graphic,
+			uint8_t type,
+			uint16_t hue, uint16_t font,
+			const char *name,
 			const char *text);
+
+	void SpeakConsole(const char *text);
+
+private:
+	void DeferredAbort() noexcept;
+
+	ssize_t ParsePackets(const uint8_t *data, size_t length);
+
+	/* virtual methods from SocketBufferHandler */
+	size_t OnSocketData(const void *data, size_t length) override;
+	void OnSocketDisconnect(int error) noexcept override;
+};
+
+} // namespace UO

@@ -77,7 +77,7 @@ walk_cancel(const World &world,
 		.z = (int8_t)world.packet_start.z,
 	};
 
-	uo_server_send(&server, &p, sizeof(p));
+	server.Send(&p, sizeof(p));
 }
 
 void
@@ -163,7 +163,7 @@ connection_walk_cancel(Connection &c,
 	if (i != nullptr && state.server != nullptr) {
 		auto cancel = p;
 		cancel.seq = i->packet.seq;
-		uo_server_send(state.server->server, &cancel, sizeof(cancel));
+		state.server->server->Send(&cancel, sizeof(cancel));
 	}
 
 	walk_clear(state);
@@ -228,7 +228,7 @@ connection_walk_ack(Connection &c,
 	if (state.server != nullptr) {
 		auto ack = p;
 		ack.seq = i->packet.seq;
-		uo_server_send(state.server->server, &ack, sizeof(ack));
+		state.server->server->Send(&ack, sizeof(ack));
 	}
 
 	/* send WalkForce to all other clients */
