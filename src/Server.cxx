@@ -24,7 +24,7 @@ public:
     uint32_t seed = 0;
     bool compression_enabled = false;
 
-    struct encryption *encryption = encryption_new();
+    UO::Encryption encryption;
 
     enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
@@ -41,8 +41,6 @@ public:
     }
 
     ~Server() noexcept {
-        encryption_free(encryption);
-
         sock_buff_dispose(sock);
     }
 
@@ -112,7 +110,7 @@ UO::Server::ParsePackets(const uint8_t *data, size_t length)
 size_t
 UO::Server::OnSocketData(const void *data0, size_t length)
 {
-    data0 = encryption_from_client(encryption, data0, length);
+    data0 = encryption.FromClient(data0, length);
     if (data0 == nullptr)
         /* need more data */
         return 0;

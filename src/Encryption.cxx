@@ -6,33 +6,11 @@
 #include "Log.hxx"
 #include "uo/Command.hxx"
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+
 #include <stdlib.h>
 
-enum encryption_state {
-    STATE_NEW,
-    STATE_SEEDED,
-    STATE_DISABLED,
-    STATE_LOGIN,
-    STATE_GAME,
-};
-
-struct login_encryption {
-    uint32_t key1, key2;
-    uint32_t table1, table2;
-};
-
-struct encryption {
-    enum encryption_state state;
-
-    uint32_t seed;
-
-    struct login_encryption login;
-
-    void *buffer;
-    size_t buffer_size;
-};
+namespace UO {
 
 struct login_key {
     const char *version;
@@ -100,26 +78,6 @@ static constexpr struct login_key login_keys[] = {
     { nullptr, 0, 0 }
 };
 
-
-struct encryption *
-encryption_new()
-{
-    struct encryption *e = (struct encryption *)malloc(sizeof(*e));
-    if (e == nullptr)
-        abort();
-
-    e->state = STATE_NEW;
-    e->buffer = nullptr;
-    e->buffer_size = 0;
-    return e;
-}
-
-void
-encryption_free(struct encryption *e)
-{
-    free(e);
-}
-
 static bool
 account_login_valid(const struct uo_packet_account_login *p)
 {
@@ -128,46 +86,19 @@ account_login_valid(const struct uo_packet_account_login *p)
         p->credentials.password[29] == 0x00;
 }
 
-static void
-login_decrypt(struct login_encryption *e, const void *src0,
-              void *dest0, size_t length)
+inline bool
+LoginEncryption::Init(uint32_t seed, const void *data) noexcept
 {
-    const uint8_t *src = (const uint8_t *)src0, *src_end = src + length;
-    uint8_t *dest = (uint8_t *)dest0;
-
-    while (src != src_end) {
-        *dest++ = (*src++ ^ e->table1);
-        uint32_t edx = e->table2;
-        uint32_t esi = e->table1 << 31;
-        uint32_t eax = e->table2 >> 1;
-        eax |= esi;
-        eax ^= e->key1 - 1;
-        edx <<= 31;
-        eax >>= 1;
-        uint32_t ecx = e->table1 >> 1;
-        eax |= esi;
-        ecx |= edx;
-        eax ^= e->key1;
-        ecx ^= e->key2;
-        e->table1 = ecx;
-        e->table2 = eax;
-    }
-}
-
-static bool
-encryption_login_init(struct login_encryption *e, uint32_t seed,
-                      const void *data)
-{
-    e->table1 = (((~seed) ^ 0x00001357) << 16) | ((seed ^ 0x0000aaaa) & 0x0000ffff);
-    e->table2 = ((seed ^ 0x43210000) >> 16) | (((~seed) ^ 0xabcd0000) & 0xffff0000);
+    table1 = (((~seed) ^ 0x00001357) << 16) | ((seed ^ 0x0000aaaa) & 0x0000ffff);
+    table2 = ((seed ^ 0x43210000) >> 16) | (((~seed) ^ 0xabcd0000) & 0xffff0000);
 
     for (const struct login_key *i = login_keys; i->version != nullptr; ++i) {
-        e->key1 = i->key1;
-        e->key2 = i->key2;
+        key1 = i->key1;
+        key2 = i->key2;
 
-        struct login_encryption tmp = *e;
+        auto tmp = *this;
         struct uo_packet_account_login decrypted;
-        login_decrypt(&tmp, data, &decrypted, sizeof(decrypted));
+        tmp.Decrypt(data, &decrypted, sizeof(decrypted));
         if (account_login_valid(&decrypted)) {
             LogFmt(2, "login encryption for client version {:?}\n", i->version);
             return true;
@@ -177,21 +108,45 @@ encryption_login_init(struct login_encryption *e, uint32_t seed,
     return false;
 }
 
-const void *
-encryption_from_client(struct encryption *e,
-                       const void *data0, size_t length)
+inline void
+LoginEncryption::Decrypt(const void *src0,
+                         void *dest0, size_t length) noexcept
 {
-    assert(e != nullptr);
+    const uint8_t *src = (const uint8_t *)src0, *src_end = src + length;
+    uint8_t *dest = (uint8_t *)dest0;
+
+    while (src != src_end) {
+        *dest++ = (*src++ ^ table1);
+        uint32_t edx = table2;
+        uint32_t esi = table1 << 31;
+        uint32_t eax = table2 >> 1;
+        eax |= esi;
+        eax ^= key1 - 1;
+        edx <<= 31;
+        eax >>= 1;
+        uint32_t ecx = table1 >> 1;
+        eax |= esi;
+        ecx |= edx;
+        eax ^= key1;
+        ecx ^= key2;
+        table1 = ecx;
+        table2 = eax;
+    }
+}
+
+const void *
+Encryption::FromClient(const void *data0, size_t length) noexcept
+{
     assert(data0 != nullptr);
     assert(length > 0);
 
-    if (e->state == STATE_DISABLED)
+    if (state == State::DISABLED)
         return data0;
 
     const uint8_t *const data = (const uint8_t *)data0, *p = data, *const end = p + length;
 
-    if (e->state == STATE_NEW) {
-        if (p + sizeof(e->seed) > end)
+    if (state == State::NEW) {
+        if (p + sizeof(seed) > end)
             /* need more data */
             return nullptr;
 
@@ -203,20 +158,20 @@ encryption_from_client(struct encryption *e,
                 /* need more data */
                 return nullptr;
 
-            e->seed = packet_seed->seed;
+            seed = packet_seed->seed;
             p += sizeof(*packet_seed);
         } else {
-            e->seed = *(const PackedBE32 *)p;
-            p += sizeof(e->seed);
+            seed = *(const PackedBE32 *)p;
+            p += sizeof(seed);
         }
 
-        e->state = STATE_SEEDED;
+        state = State::SEEDED;
 
         if (p == end)
             return data;
     }
 
-    if (e->state == STATE_SEEDED) {
+    if (state == State::SEEDED) {
         const struct uo_packet_account_login *account_login =
             (const struct uo_packet_account_login *)p;
         const struct uo_packet_game_login *game_login =
@@ -225,56 +180,58 @@ encryption_from_client(struct encryption *e,
         if (p + sizeof(*account_login) == end) {
             if (account_login_valid(account_login)) {
                 /* unencrypted account login */
-                e->state = STATE_DISABLED;
+                state = State::DISABLED;
                 return data;
             }
 
-            if (!encryption_login_init(&e->login, e->seed, p)) {
+            if (!login.Init(seed, p)) {
                 Log(2, "login encryption failure\n");
-                e->state = STATE_DISABLED;
+                state = State::DISABLED;
                 return data;
             }
 
-            e->state = STATE_LOGIN;
+            state = State::LOGIN;
         } else if (p + sizeof(*game_login) == end) {
             if (game_login->cmd == UO::Command::GameLogin &&
-                game_login->auth_id == e->seed) {
+                game_login->auth_id == seed) {
                 /* unencrypted game login */
-                e->state = STATE_DISABLED;
+                state = State::DISABLED;
                 return data;
             }
 
-            e->state = STATE_GAME;
+            state = State::GAME;
         } else {
             /* unrecognized; assume it's not encrypted */
             Log(2, "unrecognized encryption\n");
-            e->state = STATE_DISABLED;
+            state = State::DISABLED;
             return data;
         }
     }
 
-    assert(e->state == STATE_LOGIN || e->state == STATE_GAME);
+    assert(state == State::LOGIN || state == State::GAME);
 
-    if (length > e->buffer_size) {
-        free(e->buffer);
-        e->buffer_size = ((length - 1) | 0xfff) + 1;
-        e->buffer = malloc(e->buffer_size);
-        if (e->buffer == nullptr)
+    if (length > buffer_size) {
+        free(buffer);
+        buffer_size = ((length - 1) | 0xfff) + 1;
+        buffer = malloc(buffer_size);
+        if (buffer == nullptr)
             abort();
     }
 
-    uint8_t *dest = (uint8_t *)e->buffer;
+    uint8_t *dest = (uint8_t *)buffer;
     if (p > data) {
         size_t l = p - data;
         memcpy(dest, data, l);
         dest += l;
     }
 
-    if (e->state == STATE_LOGIN) {
-        login_decrypt(&e->login, p, dest, end - p);
+    if (state == State::LOGIN) {
+        login.Decrypt(p, dest, end - p);
     } else {
     }
 
     /* XXX decrypt */
-    return e->buffer;
+    return buffer;
 }
+
+} // namespace UO
