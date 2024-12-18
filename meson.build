@@ -9,17 +9,22 @@ project('uoproxy', 'cpp', version: '0.5',
 
 compiler = meson.get_compiler('cpp')
 
-common_cppflags = [
+common_global_cppflags = [
   '-D_GNU_SOURCE',
+]
+
+test_global_common_flags = [
+  '-fvisibility=hidden',
 ]
 
 test_common_flags = [
   '-Wvla',
 
-  '-fvisibility=hidden',
-
   '-ffast-math',
   '-ftree-vectorize',
+]
+
+test_global_cxxflags = test_global_common_flags + [
 ]
 
 test_cxxflags = test_common_flags + [
@@ -50,7 +55,7 @@ test_ldflags = [
 ]
 
 if get_option('buildtype') != 'debug'
-  test_cxxflags += [
+  test_global_cxxflags += [
     '-ffunction-sections',
     '-fdata-sections',
   ]
@@ -60,8 +65,10 @@ if get_option('buildtype') != 'debug'
   ]
 endif
 
-add_global_arguments(common_cppflags + compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
-add_global_link_arguments(compiler.get_supported_link_arguments(test_ldflags), language: 'cpp')
+add_global_arguments(common_global_cppflags, language: 'cpp')
+add_global_arguments(compiler.get_supported_arguments(test_global_cxxflags), language: 'cpp')
+add_project_arguments(compiler.get_supported_arguments(test_cxxflags), language: 'cpp')
+add_project_link_arguments(compiler.get_supported_link_arguments(test_ldflags), language: 'cpp')
 
 conf = configuration_data()
 
