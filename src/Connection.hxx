@@ -14,6 +14,7 @@
 #define MAX_WALK_QUEUE 4
 
 class SocketAddress;
+class UniqueSocketDescriptor;
 struct Instance;
 struct Connection;
 struct LinkedServer;
@@ -139,9 +140,10 @@ private:
     void OnClientDisconnect() noexcept override;
 };
 
-int connection_new(Instance *instance,
-                   int server_socket,
-                   Connection **connectionp);
+void
+connection_new(Instance *instance,
+               UniqueSocketDescriptor &&socket,
+               Connection **connectionp);
 
 void connection_speak_console(Connection *c, const char *msg);
 

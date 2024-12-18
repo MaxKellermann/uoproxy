@@ -4,6 +4,7 @@
 #pragma once
 
 struct addrinfo;
+class UniqueSocketDescriptor;
 
 int getaddrinfo_helper(const char *host_and_port, int default_port,
                        const struct addrinfo *hints,
@@ -12,4 +13,6 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
 /**
  * Throws on error.
  */
-int setup_server_socket(const struct addrinfo *bind_address);
+[[nodiscard]]
+UniqueSocketDescriptor
+setup_server_socket(const struct addrinfo *bind_address);

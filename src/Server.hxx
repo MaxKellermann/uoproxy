@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+class UniqueSocketDescriptor;
+
 namespace UO {
 
 class Server;
@@ -33,7 +35,7 @@ public:
 } // namespace UO
 
 UO::Server *
-uo_server_create(int sockfd,
+uo_server_create(UniqueSocketDescriptor &&s,
                  UO::ServerHandler &handler);
 void uo_server_dispose(UO::Server *server);
 

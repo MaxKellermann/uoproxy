@@ -6,45 +6,22 @@
 #include "Log.hxx"
 #include "NetUtil.hxx"
 #include "Config.hxx"
-
-#include <unistd.h>
-#include <errno.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#endif
+#include "net/SocketError.hxx"
 
 static void
-listener_event_callback(int fd, short, void *ctx)
+listener_event_callback(int, short, void *ctx)
 {
     auto instance = (Instance *)ctx;
-    struct sockaddr_storage sa;
-    socklen_t sa_len;
-    int remote_fd, ret;
     Connection *c;
 
-    sa_len = sizeof(sa);
-    remote_fd = accept(fd, (struct sockaddr*)&sa, &sa_len);
-    if (remote_fd < 0) {
-        if (errno != EAGAIN
-#ifndef _WIN32
-            && errno != EWOULDBLOCK
-#endif
-            )
+    auto remote_fd = instance->server_socket.AcceptNonBlock();
+    if (!remote_fd.IsDefined()) {
+        if (!IsSocketErrorAcceptWouldBlock(GetSocketError()))
             log_errno("accept() failed");
         return;
     }
 
-    ret = connection_new(instance, remote_fd, &c);
-    if (ret != 0) {
-        log_error("connection_new() failed", ret);
-        close(remote_fd);
-        return;
-    }
-
+    connection_new(instance, std::move(remote_fd), &c);
     instance->connections.push_front(*c);
 }
 
@@ -53,7 +30,7 @@ instance_setup_server_socket(Instance *instance)
 {
     instance->server_socket = setup_server_socket(instance->config.bind_address);
 
-    event_set(&instance->server_socket_event, instance->server_socket,
+    event_set(&instance->server_socket_event, instance->server_socket.Get(),
               EV_READ|EV_PERSIST,
               listener_event_callback, instance);
     event_add(&instance->server_socket_event, nullptr);

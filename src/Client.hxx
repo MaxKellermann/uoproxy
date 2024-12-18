@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+class UniqueSocketDescriptor;
 struct uo_packet_seed;
 
 namespace UO {
@@ -35,7 +36,7 @@ public:
 } // namespace UO
 
 UO::Client *
-uo_client_create(int fd, uint32_t seed,
+uo_client_create(UniqueSocketDescriptor &&s, uint32_t seed,
                  const struct uo_packet_seed *seed6,
                  UO::ClientHandler &handler);
 

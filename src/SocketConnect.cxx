@@ -4,32 +4,18 @@
 #include "SocketConnect.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#endif
-
-int
+UniqueSocketDescriptor
 socket_connect(int domain, int type, int protocol,
                SocketAddress address)
 {
-    int fd = socket(domain, type, protocol);
-    if (fd < 0)
+    UniqueSocketDescriptor s;
+    if (!s.Create(domain, type, protocol))
         throw MakeSocketError("Failed to create socket");
 
-    int ret = connect(fd, address.GetAddress(), address.GetSize());
-    if (ret < 0) {
-        const auto e = GetSocketError();
-        close(fd);
-        throw MakeSocketError(e, "Failed to connect");
-    }
+    if (!s.Connect(address))
+        throw MakeSocketError("Failed to connect");
 
-    return fd;
+    return s;
 }

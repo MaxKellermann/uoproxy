@@ -73,7 +73,7 @@ Connection::Connect(SocketAddress server_address,
 {
     assert(client.client == nullptr);
 
-    int fd;
+    UniqueSocketDescriptor fd;
 
     const struct addrinfo *socks4_address =
         instance.config.socks4_address;
@@ -81,16 +81,11 @@ Connection::Connect(SocketAddress server_address,
         fd = socket_connect(socks4_address->ai_family, SOCK_STREAM, 0,
                             {socks4_address->ai_addr, socks4_address->ai_addrlen});
 
-        try {
-            socks_connect(fd, server_address);
-        } catch (...) {
-            close(fd);
-            throw;
-        }
+        socks_connect(fd, server_address);
     } else {
         fd = socket_connect(server_address.GetFamily(), SOCK_STREAM, 0,
                             server_address);
     }
 
-    client.Connect(fd, seed, for_game_login, *this);
+    client.Connect(std::move(fd), seed, for_game_login, *this);
 }

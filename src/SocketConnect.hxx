@@ -4,10 +4,12 @@
 #pragma once
 
 class SocketAddress;
+class UniqueSocketDescriptor;
 
 /**
  * Throws on error.
  */
-int
+[[nodiscard]]
+UniqueSocketDescriptor
 socket_connect(int domain, int type, int protocol,
 	       SocketAddress address);

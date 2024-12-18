@@ -5,6 +5,9 @@
 #include "BufferedIO.hxx"
 #include "Flush.hxx"
 #include "Log.hxx"
+#include "net/IPv4Address.hxx"
+#include "net/StaticSocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 
 #include <event.h>
@@ -16,7 +19,7 @@
 #include <netdb.h>
 
 struct SocketBuffer final : PendingFlush {
-    const int fd;
+    const UniqueSocketDescriptor socket;
 
     struct event recv_event, send_event;
 
@@ -24,7 +27,7 @@ struct SocketBuffer final : PendingFlush {
 
     SocketBufferHandler &handler;
 
-    SocketBuffer(int _fd, size_t input_max,
+    SocketBuffer(UniqueSocketDescriptor &&s, size_t input_max,
                  size_t output_max,
                  SocketBufferHandler &_handler);
     ~SocketBuffer() noexcept;
@@ -69,7 +72,7 @@ SocketBuffer::SubmitData()
 bool
 SocketBuffer::FlushOutput()
 {
-    ssize_t nbytes = write_from_buffer(fd, output);
+    ssize_t nbytes = write_from_buffer(socket, output);
     if (nbytes == -2)
         return true;
 
@@ -102,9 +105,9 @@ sock_buff_recv_callback(int fd, short event, void *ctx)
 
     (void)event;
 
-    assert(fd == sb->fd);
+    assert(fd == sb->socket.Get());
 
-    ssize_t nbytes = read_to_buffer(fd, sb->input, 65536);
+    ssize_t nbytes = read_to_buffer(SocketDescriptor{fd}, sb->input);
     if (nbytes > 0) {
         if (!sb->SubmitData())
             return;
@@ -128,7 +131,7 @@ sock_buff_send_callback(int fd, short event, void *ctx)
     (void)fd;
     (void)event;
 
-    assert(fd == sb->fd);
+    assert(fd == sb->socket.Get());
 
     if (!sb->FlushOutput()) {
         sb->handler.OnSocketDisconnect(errno);
@@ -174,26 +177,20 @@ sock_buff_send(SocketBuffer *sb, const void *data, size_t length)
 
 uint32_t sock_buff_sockname(const SocketBuffer *sb)
 {
-    struct sockaddr_in addr;
-    socklen_t len = sizeof(addr);
-    int ret = getsockname(sb->fd, (struct sockaddr *)&addr, &len);
-    if (ret) {
-        log_errno("getsockname()");
+    const auto address = sb->socket.GetLocalAddress();
+    if (address.GetFamily() == AF_INET)
+        return IPv4Address::Cast(address).GetNumericAddressBE();
+    else
         return 0;
-    }
-    return addr.sin_addr.s_addr;
 }
 
 uint16_t sock_buff_port(const SocketBuffer *sb)
 {
-    struct sockaddr_in addr;
-    socklen_t len = sizeof(addr);
-    int ret = getsockname(sb->fd, (struct sockaddr *)&addr, &len);
-    if (ret) {
-        log_errno("getsockname()");
+    const auto address = sb->socket.GetLocalAddress();
+    if (address.GetFamily() == AF_INET)
+        return IPv4Address::Cast(address).GetPortBE();
+    else
         return 0;
-    }
-    return addr.sin_port;
 }
 
 /*
@@ -202,38 +199,36 @@ uint16_t sock_buff_port(const SocketBuffer *sb)
  */
 
 inline
-SocketBuffer::SocketBuffer(int _fd, size_t input_max,
+SocketBuffer::SocketBuffer(UniqueSocketDescriptor &&s, size_t input_max,
                            size_t output_max,
                            SocketBufferHandler &_handler)
-    :fd(_fd),
+    :socket(std::move(s)),
      input(input_max),
      output(output_max),
      handler(_handler)
 {
-    event_set(&recv_event, fd, EV_READ|EV_PERSIST,
+    event_set(&recv_event, socket.Get(), EV_READ|EV_PERSIST,
               sock_buff_recv_callback, this);
-    event_set(&send_event, fd, EV_WRITE|EV_PERSIST,
+    event_set(&send_event, socket.Get(), EV_WRITE|EV_PERSIST,
               sock_buff_send_callback, this);
 
     event_add(&recv_event, nullptr);
 }
 
 SocketBuffer *
-sock_buff_create(int fd, size_t input_max,
+sock_buff_create(UniqueSocketDescriptor &&s, size_t input_max,
                  size_t output_max,
                  SocketBufferHandler &handler)
 {
-    return new SocketBuffer(fd, input_max, output_max, handler);
+    return new SocketBuffer(std::move(s), input_max, output_max, handler);
 }
 
 SocketBuffer::~SocketBuffer() noexcept
 {
-    assert(fd >= 0);
+    assert(socket.IsDefined());
 
     event_del(&recv_event);
     event_del(&send_event);
-
-    close(fd);
 }
 
 void sock_buff_dispose(SocketBuffer *sb) {

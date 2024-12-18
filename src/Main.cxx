@@ -52,11 +52,8 @@ exit_event_callback(int, short, void *ctx)
 
     deinit_signals(instance);
 
-    if (instance->server_socket >= 0) {
+    if (instance->server_socket.IsDefined())
         event_del(&instance->server_socket_event);
-        close(instance->server_socket);
-        instance->server_socket = -1;
-    }
 
     instance->connections.clear_and_dispose([](Connection *c) {
         delete c;

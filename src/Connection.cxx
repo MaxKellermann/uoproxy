@@ -19,10 +19,12 @@ Connection::Connection(Instance &_instance,
     evtimer_set(&reconnect_event, ReconnectTimerCallback, this);
 }
 
-int connection_new(Instance *instance,
-                   int server_socket,
-                   Connection **connectionp) {
-    auto *ls = new LinkedServer(server_socket);
+void
+connection_new(Instance *instance,
+               UniqueSocketDescriptor &&socket,
+               Connection **connectionp)
+{
+    auto *ls = new LinkedServer(std::move(socket));
 
     auto *c = new Connection(*instance,
                              instance->config.background,
@@ -38,8 +40,6 @@ int connection_new(Instance *instance,
     c->Add(*ls);
 
     *connectionp = c;
-
-    return 0;
 }
 
 Connection::~Connection() noexcept

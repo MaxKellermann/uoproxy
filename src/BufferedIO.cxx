@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "BufferedIO.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 
 #include <assert.h>
@@ -18,15 +19,15 @@
 #endif
 
 ssize_t
-read_to_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer, size_t length)
+read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
 {
-    assert(fd >= 0);
+    assert(s.IsDefined());
 
     auto w = buffer.Write();
     if (w.empty())
         return -2;
 
-    ssize_t nbytes = recv(fd, w.data(), std::min(w.size(), length), MSG_DONTWAIT);
+    ssize_t nbytes = s.ReadNoWait(w);
     if (nbytes > 0)
         buffer.Append(nbytes);
 
@@ -34,13 +35,15 @@ read_to_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer, size_t length)
 }
 
 ssize_t
-write_from_buffer(int fd, DynamicFifoBuffer<std::byte> &buffer)
+write_from_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
 {
+    assert(s.IsDefined());
+
     auto r = buffer.Read();
     if (r.empty())
         return -2;
 
-    ssize_t nbytes = send(fd, r.data(), r.size(), MSG_DONTWAIT);
+    ssize_t nbytes = s.WriteNoWait(r);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 

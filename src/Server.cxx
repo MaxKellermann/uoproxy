@@ -7,8 +7,8 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
-#include "SocketUtil.hxx"
 #include "Encryption.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 #include <utility>
 
@@ -37,8 +37,8 @@ public:
     bool aborted = false;
     struct event abort_event;
 
-    explicit Server(int fd, ServerHandler &_handler) noexcept
-        :sock(sock_buff_create(fd, 8192, 65536, *this)),
+    explicit Server(UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
+        :sock(sock_buff_create(std::move(s), 8192, 65536, *this)),
          handler(_handler)
     {
         evtimer_set(&abort_event,
@@ -186,12 +186,12 @@ UO::Server::OnSocketDisconnect(int error) noexcept
 }
 
 UO::Server *
-uo_server_create(int sockfd,
+uo_server_create(UniqueSocketDescriptor &&s,
                  UO::ServerHandler &handler)
 {
-    socket_set_nodelay(sockfd, 1);
+    s.SetNoDelay();
 
-    return new UO::Server(sockfd, handler);
+    return new UO::Server(std::move(s), handler);
 }
 
 void uo_server_dispose(UO::Server *server) {

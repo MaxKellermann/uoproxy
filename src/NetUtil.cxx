@@ -2,19 +2,19 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "NetUtil.hxx"
+#include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
-#include <assert.h>
+#include <cassert>
+
 #include <errno.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
-#include <sys/socket.h>
 #include <netdb.h>
 #endif
 
@@ -55,27 +55,22 @@ int getaddrinfo_helper(const char *host_and_port, int default_port,
     return getaddrinfo(host, port, hints, aip);
 }
 
-int setup_server_socket(const struct addrinfo *bind_address) {
-    int sockfd;
-
+UniqueSocketDescriptor
+setup_server_socket(const struct addrinfo *bind_address)
+{
     assert(bind_address != nullptr);
 
-    sockfd = socket(bind_address->ai_family, SOCK_STREAM, 0);
-    if (sockfd < 0)
+    UniqueSocketDescriptor s;
+    if (!s.Create(bind_address->ai_family, SOCK_STREAM, 0))
         throw MakeSocketError("Failed to create socket");
 
-#ifndef _WIN32
-    int param = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param)) < 0)
-        throw MakeSocketError("setsockopt() failed");
-#endif
+    s.SetReuseAddress();
 
-    if (bind(sockfd, bind_address->ai_addr,
-             bind_address->ai_addrlen) < 0)
+    if (!s.Bind({bind_address->ai_addr, bind_address->ai_addrlen}))
         throw MakeSocketError("Failed to bind");
 
-    if (listen(sockfd, 4) < 0)
+    if (!s.Listen(4))
         throw MakeSocketError("listen() failed");
 
-    return sockfd;
+    return s;
 }

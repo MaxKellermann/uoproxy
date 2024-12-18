@@ -8,6 +8,8 @@
 
 #include <event.h>
 
+class UniqueSocketDescriptor;
+
 namespace UO {
 class Client;
 class ClientHandler;
@@ -54,7 +56,7 @@ struct StatefulClient {
         return client != nullptr;
     }
 
-    void Connect(int fd,
+    void Connect(UniqueSocketDescriptor &&s,
                  uint32_t seed, bool for_game_login,
                  UO::ClientHandler &handler);
 

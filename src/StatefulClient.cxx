@@ -5,6 +5,7 @@
 #include "Client.hxx"
 #include "CVersion.hxx"
 #include "Log.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 #include <assert.h>
 
@@ -32,7 +33,7 @@ StatefulClient::StatefulClient() noexcept
 }
 
 void
-StatefulClient::Connect(int fd,
+StatefulClient::Connect(UniqueSocketDescriptor &&s,
                         uint32_t seed, bool for_game_login,
                         UO::ClientHandler &handler)
 {
@@ -64,7 +65,7 @@ StatefulClient::Connect(int fd,
         seed_packet = &seed_buffer;
     }
 
-    client = uo_client_create(fd, seed,
+    client = uo_client_create(std::move(s), seed,
                               seed_packet,
                               handler);
 

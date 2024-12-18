@@ -110,8 +110,8 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
         IN_GAME,
     } state = State::INIT;
 
-    explicit LinkedServer(int fd)
-        :server(uo_server_create(fd, *this)),
+    explicit LinkedServer(UniqueSocketDescriptor &&s)
+            :server(uo_server_create(std::move(s), *this)),
          id(++id_counter)
     {
         evtimer_set(&zombie_timeout, ZombieTimeoutCallback, this);

@@ -3,12 +3,12 @@
 
 #include "ProxySocks.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketError.hxx"
+#include "util/SpanCast.hxx"
 
 #include <cstdint>
 #include <stdexcept>
-
-#include <sys/types.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -25,7 +25,7 @@ struct socks4_header {
 };
 
 void
-socks_connect(int fd, SocketAddress address)
+socks_connect(SocketDescriptor s, SocketAddress address)
 {
     if (address.GetFamily() != AF_INET)
         throw std::invalid_argument{"Not an IPv4 address"};
@@ -38,7 +38,7 @@ socks_connect(int fd, SocketAddress address)
         .ip = in->sin_addr.s_addr,
     };
 
-    ssize_t nbytes = send(fd, (const char *)&header, sizeof(header), 0);
+    ssize_t nbytes = s.Send(ReferenceAsBytes(header));
     if (nbytes < 0)
         throw MakeSocketError("Failed to send SOCKS4 request");
 
@@ -46,11 +46,11 @@ socks_connect(int fd, SocketAddress address)
         throw std::runtime_error{"Failed to send SOCKS4 request"};
 
     static const char user[] = "";
-    nbytes = send(fd, user, sizeof(user), 0);
+    nbytes = s.Send(ReferenceAsBytes(user));
     if (nbytes < 0)
         throw MakeSocketError("Failed to send SOCKS4 user");
 
-    nbytes = recv(fd, (char *)&header, sizeof(header), 0);
+    nbytes = s.Receive(ReferenceAsWritableBytes(header));
     if (nbytes < 0)
         throw MakeSocketError("Failed to receive SOCKS4 response");
 

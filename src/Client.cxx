@@ -7,8 +7,8 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
-#include "SocketUtil.hxx"
 #include "uo/Command.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 
 #include <utility>
@@ -47,8 +47,8 @@ public:
     bool aborted = false;
     struct event abort_event;
 
-    explicit Client(int fd, ClientHandler &_handler) noexcept
-        :sock(sock_buff_create(fd, 8192, 65536, *this)),
+    explicit Client(UniqueSocketDescriptor &&s, ClientHandler &_handler) noexcept
+        :sock(sock_buff_create(std::move(s), 8192, 65536, *this)),
          handler(_handler)
     {
         evtimer_set(&abort_event,
@@ -202,13 +202,13 @@ UO::Client::OnSocketDisconnect(int error) noexcept
 }
 
 UO::Client *
-uo_client_create(int fd, uint32_t seed,
+uo_client_create(UniqueSocketDescriptor &&s, uint32_t seed,
                  const struct uo_packet_seed *seed6,
                  UO::ClientHandler &handler)
 {
-    socket_set_nodelay(fd, 1);
+    s.SetNoDelay();
 
-    auto *client = new UO::Client(fd, handler);
+    auto *client = new UO::Client(std::move(s), handler);
 
     /* seed must be the first 4 bytes, and it must be flushed */
     if (seed6 != nullptr) {

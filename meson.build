@@ -84,6 +84,7 @@ inc = include_directories(
 )
 
 subdir('src/util')
+subdir('src/io')
 subdir('src/net')
 
 executable(
@@ -94,7 +95,7 @@ executable(
   'src/Log.cxx',
   'src/SocketConnect.cxx',
   'src/Flush.cxx', 'src/SocketBuffer.cxx',
-  'src/BufferedIO.cxx', 'src/SocketUtil.cxx',
+  'src/BufferedIO.cxx',
   'src/ProxySocks.cxx',
   'src/NetUtil.cxx',
   'src/Encryption.cxx',
@@ -115,6 +116,7 @@ executable(
   dependencies: [
     libevent,
     libsystemd,
+    io_dep,
     net_dep,
     util_dep,
   ],

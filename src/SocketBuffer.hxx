@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <span>
 
+class UniqueSocketDescriptor;
+
 class SocketBufferHandler {
 public:
     /**
@@ -28,7 +30,7 @@ public:
 struct SocketBuffer;
 
 SocketBuffer *
-sock_buff_create(int fd, size_t input_max,
+sock_buff_create(UniqueSocketDescriptor &&s, size_t input_max,
                  size_t output_max,
                  SocketBufferHandler &handler);
 

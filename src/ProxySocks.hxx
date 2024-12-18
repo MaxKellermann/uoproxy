@@ -3,10 +3,11 @@
 
 #pragma once
 
+class SocketDescriptor;
 class SocketAddress;
 
 /**
  * Throws on error.
  */
 void
-socks_connect(int fd, SocketAddress address);
+socks_connect(SocketDescriptor s, SocketAddress address);
