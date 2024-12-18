@@ -14,16 +14,17 @@
 Connection::Connection(Instance &_instance,
                        bool _background, bool _autoreconnect) noexcept
     :instance(_instance), background(_background),
-     autoreconnect(_autoreconnect)
+     autoreconnect(_autoreconnect),
+     client(instance.event_loop),
+     reconnect_timer(instance.event_loop, BIND_THIS_METHOD(ReconnectTimerCallback))
 {
-    evtimer_set(&reconnect_event, ReconnectTimerCallback, this);
 }
 
 Connection *
 connection_new(Instance *instance,
                UniqueSocketDescriptor &&socket)
 {
-    auto *ls = new LinkedServer(std::move(socket));
+    auto *ls = new LinkedServer(instance->event_loop, std::move(socket));
 
     auto *c = new Connection(*instance,
                              instance->config.background,
@@ -46,6 +47,4 @@ Connection::~Connection() noexcept
     servers.clear_and_dispose([](LinkedServer *ls){ delete ls; });
 
     Disconnect();
-
-    evtimer_del(&reconnect_event);
 }

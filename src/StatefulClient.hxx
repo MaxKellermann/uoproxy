@@ -5,9 +5,9 @@
 
 #include "CVersion.hxx"
 #include "World.hxx"
+#include "event/CoarseTimerEvent.hxx"
 
-#include <event.h>
-
+class EventLoop;
 class UniqueSocketDescriptor;
 
 namespace UO {
@@ -19,7 +19,7 @@ struct StatefulClient {
     bool reconnecting = false, version_requested = false;
 
     UO::Client *client = nullptr;
-    struct event ping_event;
+    CoarseTimerEvent ping_timer;
 
     ClientVersion version;
 
@@ -43,7 +43,7 @@ struct StatefulClient {
 
     World world;
 
-    StatefulClient() noexcept;
+    explicit StatefulClient(EventLoop &event_loop) noexcept;
 
     StatefulClient(const StatefulClient &) = delete;
     StatefulClient &operator=(const StatefulClient &) = delete;
@@ -56,14 +56,16 @@ struct StatefulClient {
         return client != nullptr;
     }
 
-    void Connect(UniqueSocketDescriptor &&s,
+    void Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
                  uint32_t seed, bool for_game_login,
                  UO::ClientHandler &handler);
 
     void Disconnect() noexcept;
 
     void SchedulePing() noexcept {
-        static constexpr struct timeval tv{30, 0};
-        event_add(&ping_event, &tv);
+        ping_timer.Schedule(std::chrono::seconds{30});
     }
+
+private:
+    void OnPingTimer() noexcept;
 };

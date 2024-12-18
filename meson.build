@@ -55,6 +55,8 @@ test_cxxflags = test_common_flags + [
   '-Wvolatile',
   '-Wvirtual-inheritance',
 
+  '-Wno-missing-field-initializers',
+
   # a vtable without a dtor is just fine
   '-Wno-non-virtual-dtor',
 
@@ -85,8 +87,6 @@ add_project_link_arguments(compiler.get_supported_link_arguments(test_ldflags), 
 
 conf = configuration_data()
 
-libevent = dependency('libevent')
-
 libsystemd = dependency('libsystemd', required: get_option('systemd'))
 conf.set('HAVE_LIBSYSTEMD', libsystemd.found())
 
@@ -106,13 +106,17 @@ inc = include_directories(
 subdir('src/lib/fmt')
 subdir('src/util')
 subdir('src/io')
+subdir('src/system')
 subdir('src/net')
+subdir('src/event')
+subdir('src/event/net')
 
 executable(
   'uoproxy',
   'src/Main.cxx',
   'src/Config.cxx',
   'src/Instance.cxx',
+  'src/Listener.cxx',
   'src/Log.cxx',
   'src/SocketConnect.cxx',
   'src/Flush.cxx', 'src/SocketBuffer.cxx',
@@ -135,9 +139,10 @@ executable(
   'src/Command.cxx',
   include_directories: inc,
   dependencies: [
-    libevent,
     fmt_dep,
     libsystemd,
+    event_dep,
+    event_net_dep,
     io_dep,
     net_dep,
     util_dep,

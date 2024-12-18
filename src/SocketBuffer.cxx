@@ -5,12 +5,11 @@
 #include "BufferedIO.hxx"
 #include "Flush.hxx"
 #include "Log.hxx"
+#include "event/SocketEvent.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/StaticSocketAddress.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
-
-#include <event.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -21,13 +20,13 @@
 struct SocketBuffer final : PendingFlush {
     const UniqueSocketDescriptor socket;
 
-    struct event recv_event, send_event;
+    SocketEvent event;
 
     DynamicFifoBuffer<std::byte> input, output;
 
     SocketBufferHandler &handler;
 
-    SocketBuffer(UniqueSocketDescriptor &&s, size_t input_max,
+    SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
                  size_t output_max,
                  SocketBufferHandler &_handler);
     ~SocketBuffer() noexcept;
@@ -48,6 +47,8 @@ struct SocketBuffer final : PendingFlush {
     bool FlushOutput();
 
 protected:
+    void OnSocketReady(unsigned events) noexcept;
+
     /* virtual methods from PendingFlush */
     void DoFlush() noexcept override;
 };
@@ -89,59 +90,43 @@ SocketBuffer::DoFlush() noexcept
         return;
 
     if (output.empty())
-        event_del(&send_event);
+        event.CancelWrite();
 }
 
-
-/*
- * libevent callback function
- *
- */
-
-static void
-sock_buff_recv_callback(int fd, short event, void *ctx)
+inline void
+SocketBuffer::OnSocketReady(unsigned events) noexcept
 {
-    auto sb = (SocketBuffer *)ctx;
-
-    (void)event;
-
-    assert(fd == sb->socket.Get());
-
-    ssize_t nbytes = read_to_buffer(SocketDescriptor{fd}, sb->input);
-    if (nbytes > 0) {
-        if (!sb->SubmitData())
+    if (events & event.WRITE) {
+        if (!FlushOutput()) {
+            handler.OnSocketDisconnect(errno);
             return;
-    } else if (nbytes == 0) {
-        sb->handler.OnSocketDisconnect(0);
-        return;
-    } else if (nbytes == -1) {
-        sb->handler.OnSocketDisconnect(errno);
-        return;
+        }
+
+        if (output.empty())
+            event.CancelWrite();
     }
 
-    if (sb->input.IsFull())
-        event_del(&sb->recv_event);
-}
+    if (events & event.READ) {
+        ssize_t nbytes = read_to_buffer(socket, input);
+        if (nbytes > 0) {
+            if (!SubmitData())
+                return;
+        } else if (nbytes == 0) {
+            handler.OnSocketDisconnect(0);
+            return;
+        } else if (nbytes == -1) {
+            handler.OnSocketDisconnect(errno);
+            return;
+        }
 
-static void
-sock_buff_send_callback(int fd, short event, void *ctx)
-{
-    auto sb = (SocketBuffer *)ctx;
-
-    (void)fd;
-    (void)event;
-
-    assert(fd == sb->socket.Get());
-
-    if (!sb->FlushOutput()) {
-        sb->handler.OnSocketDisconnect(errno);
-        return;
+        if (input.IsFull())
+            event.CancelRead();
     }
 
-    if (sb->output.empty())
-        event_del(&sb->send_event);
+    if (events & (event.HANGUP|event.ERROR)) {
+        handler.OnSocketDisconnect(0);
+    }
 }
-
 
 /*
  * methods
@@ -159,7 +144,7 @@ sock_buff_append(SocketBuffer *sb, size_t length)
 {
     sb->output.Append(length);
 
-    event_add(&sb->send_event, nullptr);
+    sb->event.ScheduleWrite();
     sb->ScheduleFlush();
 }
 
@@ -199,37 +184,28 @@ uint16_t sock_buff_port(const SocketBuffer *sb)
  */
 
 inline
-SocketBuffer::SocketBuffer(UniqueSocketDescriptor &&s, size_t input_max,
+SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
                            size_t output_max,
                            SocketBufferHandler &_handler)
     :socket(std::move(s)),
+     event(event_loop, BIND_THIS_METHOD(OnSocketReady), socket),
      input(input_max),
      output(output_max),
      handler(_handler)
 {
-    event_set(&recv_event, socket.Get(), EV_READ|EV_PERSIST,
-              sock_buff_recv_callback, this);
-    event_set(&send_event, socket.Get(), EV_WRITE|EV_PERSIST,
-              sock_buff_send_callback, this);
-
-    event_add(&recv_event, nullptr);
+    event.ScheduleRead();
 }
 
 SocketBuffer *
-sock_buff_create(UniqueSocketDescriptor &&s, size_t input_max,
+sock_buff_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
                  size_t output_max,
                  SocketBufferHandler &handler)
 {
-    return new SocketBuffer(std::move(s), input_max, output_max, handler);
+    return new SocketBuffer(event_loop, std::move(s), input_max, output_max, handler);
 }
 
-SocketBuffer::~SocketBuffer() noexcept
-{
-    assert(socket.IsDefined());
-
-    event_del(&recv_event);
-    event_del(&send_event);
-}
+inline
+SocketBuffer::~SocketBuffer() noexcept = default;
 
 void sock_buff_dispose(SocketBuffer *sb) {
     delete sb;

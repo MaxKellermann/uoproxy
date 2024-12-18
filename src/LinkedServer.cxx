@@ -14,8 +14,6 @@ unsigned LinkedServer::id_counter;
 
 LinkedServer::~LinkedServer() noexcept
 {
-    evtimer_del(&zombie_timeout);
-
     if (server != nullptr)
         uo_server_dispose(server);
 }
@@ -33,13 +31,11 @@ LinkedServer::LogVFmt(unsigned level, fmt::string_view format_str, fmt::format_a
 }
 
 void
-LinkedServer::ZombieTimeoutCallback(int, short, void *ctx) noexcept
+LinkedServer::ZombieTimeoutCallback() noexcept
 {
-    auto &ls = *(LinkedServer *)ctx;
-    assert(ls.state == LinkedServer::State::RELAY_SERVER);
+    assert(state == State::RELAY_SERVER);
 
-    auto &c = *ls.connection;
-    c.RemoveCheckEmpty(ls);
+    connection->RemoveCheckEmpty(*this);
 }
 
 bool
@@ -96,8 +92,7 @@ LinkedServer::OnServerDisconnect() noexcept
     if (state == State::RELAY_SERVER) {
         LogF(2, "client disconnected, zombifying server connection for 5 seconds");
 
-        static constexpr struct timeval tv{5, 0};
-        evtimer_add(&zombie_timeout, &tv);
+        zombie_timeout.Schedule(std::chrono::seconds{5});
         return;
     }
 

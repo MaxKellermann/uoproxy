@@ -9,31 +9,13 @@
 
 #include <assert.h>
 
-static void
-ping_event_callback(int, short, void *ctx) noexcept
+StatefulClient::StatefulClient(EventLoop &event_loop) noexcept
+    :ping_timer(event_loop, BIND_THIS_METHOD(OnPingTimer))
 {
-    auto client = (StatefulClient *)ctx;
-    struct uo_packet_ping ping;
-
-    assert(client->client != nullptr);
-
-    ping.cmd = UO::Command::Ping;
-    ping.id = ++client->ping_request;
-
-    Log(2, "sending ping\n");
-    uo_client_send(client->client, &ping, sizeof(ping));
-
-    /* schedule next ping */
-    client->SchedulePing();
-}
-
-StatefulClient::StatefulClient() noexcept
-{
-    evtimer_set(&ping_event, ping_event_callback, this);
 }
 
 void
-StatefulClient::Connect(UniqueSocketDescriptor &&s,
+StatefulClient::Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
                         uint32_t seed, bool for_game_login,
                         UO::ClientHandler &handler)
 {
@@ -65,7 +47,7 @@ StatefulClient::Connect(UniqueSocketDescriptor &&s,
         seed_packet = &seed_buffer;
     }
 
-    client = uo_client_create(std::move(s), seed,
+    client = uo_client_create(event_loop, std::move(s), seed,
                               seed_packet,
                               handler);
 
@@ -82,8 +64,24 @@ StatefulClient::Disconnect() noexcept
 
     version_requested = false;
 
-    event_del(&ping_event);
+    ping_timer.Cancel();
 
     uo_client_dispose(client);
     client = nullptr;
+}
+
+inline void
+StatefulClient::OnPingTimer() noexcept
+{
+    assert(client != nullptr);
+
+    struct uo_packet_ping ping;
+    ping.cmd = UO::Command::Ping;
+    ping.id = ++ping_request;
+
+    Log(2, "sending ping\n");
+    uo_client_send(client, &ping, sizeof(ping));
+
+    /* schedule next ping */
+    SchedulePing();
 }

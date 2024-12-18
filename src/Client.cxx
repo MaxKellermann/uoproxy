@@ -8,6 +8,7 @@
 #include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
+#include "event/DeferEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 
@@ -24,13 +25,6 @@
 #include <netdb.h>
 #endif
 
-#include <event.h>
-
-static void
-uo_client_abort_event_callback(int fd,
-                               short event,
-                               void *ctx) noexcept;
-
 namespace UO {
 
 class Client final : SocketBufferHandler {
@@ -45,25 +39,24 @@ public:
     ClientHandler &handler;
 
     bool aborted = false;
-    struct event abort_event;
+    DeferEvent abort_event;
 
-    explicit Client(UniqueSocketDescriptor &&s, ClientHandler &_handler) noexcept
-        :sock(sock_buff_create(std::move(s), 8192, 65536, *this)),
-         handler(_handler)
+    explicit Client(EventLoop &event_loop, UniqueSocketDescriptor &&s, ClientHandler &_handler) noexcept
+        :sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
+         handler(_handler),
+         abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
     {
-        evtimer_set(&abort_event,
-                    uo_client_abort_event_callback, this);
     }
 
     ~Client() noexcept {
         sock_buff_dispose(sock);
-
-        evtimer_del(&abort_event);
     }
 
     void Abort() noexcept;
 
 private:
+    void DeferredAbort() noexcept;
+
     ssize_t Decompress(std::span<const uint8_t> src);
     ssize_t ParsePackets(const uint8_t *data, size_t length);
 
@@ -72,17 +65,15 @@ private:
     void OnSocketDisconnect(int error) noexcept override;
 };
 
-} // namespace UO
-
-static void
-uo_client_abort_event_callback(int, short, void *ctx) noexcept
+inline void
+Client::DeferredAbort() noexcept
 {
-    auto client = (UO::Client *)ctx;
+    assert(aborted);
 
-    assert(client->aborted);
-
-    client->handler.OnClientDisconnect();
+    handler.OnClientDisconnect();
 }
+
+} // namespace UO
 
 void
 UO::Client::Abort() noexcept
@@ -90,13 +81,11 @@ UO::Client::Abort() noexcept
     if (aborted)
         return;
 
-    static constexpr struct timeval tv{0, 0};
-
     /* this is a trick to delay the destruction of this object until
        everything is done */
-    evtimer_add(&abort_event, &tv);
 
     aborted = true;
+    abort_event.Schedule();
 }
 
 inline ssize_t
@@ -202,13 +191,13 @@ UO::Client::OnSocketDisconnect(int error) noexcept
 }
 
 UO::Client *
-uo_client_create(UniqueSocketDescriptor &&s, uint32_t seed,
+uo_client_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, uint32_t seed,
                  const struct uo_packet_seed *seed6,
                  UO::ClientHandler &handler)
 {
     s.SetNoDelay();
 
-    auto *client = new UO::Client(std::move(s), handler);
+    auto *client = new UO::Client(event_loop, std::move(s), handler);
 
     /* seed must be the first 4 bytes, and it must be flushed */
     if (seed6 != nullptr) {

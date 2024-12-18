@@ -84,5 +84,5 @@ Connection::Connect(SocketAddress server_address,
         fd = socket_connect(server_address.GetFamily(), SOCK_STREAM, 0, server_address);
     }
 
-    client.Connect(std::move(fd), seed, for_game_login, *this);
+    client.Connect(GetEventLoop(), std::move(fd), seed, for_game_login, *this);
 }

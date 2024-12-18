@@ -8,6 +8,7 @@
 #include <span>
 
 class UniqueSocketDescriptor;
+class EventLoop;
 
 class SocketBufferHandler {
 public:
@@ -30,7 +31,7 @@ public:
 struct SocketBuffer;
 
 SocketBuffer *
-sock_buff_create(UniqueSocketDescriptor &&s, size_t input_max,
+sock_buff_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
                  size_t output_max,
                  SocketBufferHandler &handler);
 

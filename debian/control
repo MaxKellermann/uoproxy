@@ -5,8 +5,7 @@ Maintainer: Max Kellermann <max.kellermann@gmail.com>
 Build-Depends: debhelper (>= 12~),
  meson (>= 1.0),
  libfmt-dev (>= 9),
- libsystemd-dev,
- libevent-dev (>= 1.1)
+ libsystemd-dev
 Standards-Version: 4.0.0
 Vcs-Browser: https://github.com/MaxKellermann/uoproxy
 Vcs-Git: git://github.com/MaxKellermann/uoproxy

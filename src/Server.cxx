@@ -8,17 +8,13 @@
 #include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "Encryption.hxx"
+#include "event/DeferEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
 #include <utility>
 
 #include <assert.h>
 #include <stdlib.h>
-
-#include <event.h>
-
-static void
-uo_server_abort_event_callback(int fd, short event, void *ctx) noexcept;
 
 namespace UO {
 
@@ -35,27 +31,27 @@ public:
     ServerHandler &handler;
 
     bool aborted = false;
-    struct event abort_event;
+    DeferEvent abort_event;
 
-    explicit Server(UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
-        :sock(sock_buff_create(std::move(s), 8192, 65536, *this)),
-         handler(_handler)
+    explicit Server(EventLoop &event_loop,
+                    UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
+        :sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
+         handler(_handler),
+         abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
     {
-        evtimer_set(&abort_event,
-                    uo_server_abort_event_callback, this);
     }
 
     ~Server() noexcept {
         encryption_free(encryption);
 
         sock_buff_dispose(sock);
-
-        evtimer_del(&abort_event);
     }
 
     void Abort() noexcept;
 
 private:
+    void DeferredAbort() noexcept;
+
     ssize_t ParsePackets(const uint8_t *data, size_t length);
 
     /* virtual methods from SocketBufferHandler */
@@ -63,17 +59,15 @@ private:
     void OnSocketDisconnect(int error) noexcept override;
 };
 
-} // namespace UO
-
-static void
-uo_server_abort_event_callback(int, short, void *ctx) noexcept
+inline void
+Server::DeferredAbort() noexcept
 {
-    auto server = (UO::Server *)ctx;
+    assert(aborted);
 
-    assert(server->aborted);
-
-    server->handler.OnServerDisconnect();
+    handler.OnServerDisconnect();
 }
+
+} // namespace UO
 
 void
 UO::Server::Abort() noexcept
@@ -81,13 +75,11 @@ UO::Server::Abort() noexcept
     if (aborted)
         return;
 
-    static constexpr struct timeval tv{0, 0};
-
     /* this is a trick to delay the destruction of this object until
        everything is done */
-    evtimer_add(&abort_event, &tv);
 
     aborted = true;
+    abort_event.Schedule();
 }
 
 inline ssize_t
@@ -186,12 +178,12 @@ UO::Server::OnSocketDisconnect(int error) noexcept
 }
 
 UO::Server *
-uo_server_create(UniqueSocketDescriptor &&s,
+uo_server_create(EventLoop &event_loop, UniqueSocketDescriptor &&s,
                  UO::ServerHandler &handler)
 {
     s.SetNoDelay();
 
-    return new UO::Server(std::move(s), handler);
+    return new UO::Server(event_loop, std::move(s), handler);
 }
 
 void uo_server_dispose(UO::Server *server) {

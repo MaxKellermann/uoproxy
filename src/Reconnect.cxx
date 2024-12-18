@@ -25,7 +25,7 @@ Connection::Disconnect() noexcept
         return;
 
     client.reconnecting = false;
-    event_del(&reconnect_event);
+    reconnect_timer.Cancel();
 
     client.Disconnect();
     ClearWorld();
@@ -93,11 +93,9 @@ Connection::DoReconnect() noexcept
 }
 
 void
-Connection::ReconnectTimerCallback(int, short, void *ctx) noexcept
+Connection::ReconnectTimerCallback() noexcept
 {
-    auto c = (Connection *)ctx;
-
-    c->DoReconnect();
+    DoReconnect();
 }
 
 void
@@ -123,6 +121,5 @@ Connection::ScheduleReconnect() noexcept
 
     client.reconnecting = true;
 
-    static constexpr struct timeval tv{5, 0};
-    evtimer_add(&reconnect_event, &tv);
+    reconnect_timer.Schedule(std::chrono::seconds{5});
 }

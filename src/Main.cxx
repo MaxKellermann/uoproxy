@@ -29,39 +29,6 @@
 #include <winsock2.h>
 #endif
 
-#ifndef _WIN32
-
-static void
-deinit_signals(Instance *instance)
-{
-    (void)instance;
-    event_del(&instance->sigterm_event);
-    event_del(&instance->sigint_event);
-    event_del(&instance->sigquit_event);
-}
-
-static void
-exit_event_callback(int, short, void *ctx)
-{
-    Instance *instance = (Instance *)ctx;
-
-    if (instance->should_exit)
-        return;
-
-    instance->should_exit = true;
-
-    deinit_signals(instance);
-
-    if (instance->server_socket.IsDefined())
-        event_del(&instance->server_socket_event);
-
-    instance->connections.clear_and_dispose([](Connection *c) {
-        delete c;
-    });
-}
-
-#endif
-
 static void config_get(Config *config, int argc, char **argv) {
     const char *home;
     char path[4096];
@@ -82,24 +49,10 @@ static void config_get(Config *config, int argc, char **argv) {
 }
 
 static void
-setup_signal_handlers(Instance *instance)
+setup_signal_handlers()
 {
-#ifdef _WIN32
-    (void)instance;
-#else
+#ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
-
-    event_set(&instance->sigterm_event, SIGTERM, EV_SIGNAL|EV_PERSIST,
-              exit_event_callback, instance);
-    event_add(&instance->sigterm_event, nullptr);
-
-    event_set(&instance->sigint_event, SIGINT, EV_SIGNAL|EV_PERSIST,
-              exit_event_callback, instance);
-    event_add(&instance->sigint_event, nullptr);
-
-    event_set(&instance->sigquit_event, SIGQUIT, EV_SIGNAL|EV_PERSIST,
-              exit_event_callback, instance);
-    event_add(&instance->sigquit_event, nullptr);
 #endif
 }
 
@@ -130,9 +83,7 @@ try {
 
     /* set up */
 
-    struct event_base *event_base = event_init();
-
-    setup_signal_handlers(&instance);
+    setup_signal_handlers();
 
     instance_setup_server_socket(&instance);
 
@@ -143,11 +94,7 @@ try {
     sd_notify(0, "READY=1");
 #endif
 
-    event_dispatch();
-
-    /* cleanup */
-
-    event_base_free(event_base);
+    instance.event_loop.Run();
 
     return EXIT_SUCCESS;
 } catch (...) {

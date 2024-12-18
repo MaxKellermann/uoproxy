@@ -3,13 +3,12 @@
 
 #pragma once
 
+#include "event/CoarseTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
 #include "PacketStructs.hxx"
 #include "World.hxx"
 #include "Client.hxx"
 #include "StatefulClient.hxx"
-
-#include <event.h>
 
 #define MAX_WALK_QUEUE 4
 
@@ -59,7 +58,7 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
     /**
      * A timer which is used to schedule a reconnect.
      */
-    struct event reconnect_event;
+    CoarseTimerEvent reconnect_timer;
 
     /* state */
     UO::CredentialsFragment credentials{};
@@ -85,6 +84,10 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
     void Destroy() noexcept {
         unlink();
         delete this;
+    }
+
+    auto &GetEventLoop() const noexcept {
+        return reconnect_timer.GetEventLoop();
     }
 
     bool IsInGame() const noexcept {
@@ -133,7 +136,7 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 
 private:
     void DoReconnect() noexcept;
-    static void ReconnectTimerCallback(int, short, void *ctx) noexcept;
+    void ReconnectTimerCallback() noexcept;
 
     /* virtual methods from UO::ClientHandler */
     bool OnClientPacket(const void *data, size_t length) override;

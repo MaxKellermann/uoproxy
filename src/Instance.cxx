@@ -2,45 +2,30 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Instance.hxx"
-#include "Connection.hxx"
-#include "Log.hxx"
-#include "NetUtil.hxx"
+#include "Listener.hxx"
 #include "Config.hxx"
-#include "net/SocketError.hxx"
 
-static void
-listener_event_callback(int, short, void *ctx)
+Instance::Instance(Config &_config) noexcept
+    :config(_config)
 {
-    auto instance = (Instance *)ctx;
-
-    auto remote_fd = instance->server_socket.AcceptNonBlock();
-    if (!remote_fd.IsDefined()) {
-        if (!IsSocketErrorAcceptWouldBlock(GetSocketError()))
-            log_errno("accept() failed");
-        return;
-    }
-
-    auto *c = connection_new(instance, std::move(remote_fd));
-    instance->connections.push_front(*c);
+    shutdown_listener.Enable();
 }
+
+Instance::~Instance() noexcept = default;
 
 void
 instance_setup_server_socket(Instance *instance)
 {
-    instance->server_socket = setup_server_socket(instance->config.bind_address.GetBest());
-
-    event_set(&instance->server_socket_event, instance->server_socket.Get(),
-              EV_READ|EV_PERSIST,
-              listener_event_callback, instance);
-    event_add(&instance->server_socket_event, nullptr);
+    instance->listeners.emplace_front(*instance,
+                                      instance->config.bind_address.GetBest());
 }
 
 Connection *
 Instance::FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept
 {
-    for (auto &i : connections)
-        if (i.CanAttach() && credentials == i.credentials)
-            return &i;
+    for (auto &i : listeners)
+        if (auto *f = i.FindAttachConnection(credentials))
+            return f;
 
     return nullptr;
 }
@@ -48,11 +33,9 @@ Instance::FindAttachConnection(const UO::CredentialsFragment &credentials) noexc
 Connection *
 Instance::FindAttachConnection(Connection &c) noexcept
 {
-    for (auto &i : connections)
-        if (&i != &c && i.CanAttach() &&
-            c.credentials == i.credentials &&
-            c.server_index == i.server_index)
-            return &i;
+    for (auto &i : listeners)
+        if (auto *f = i.FindAttachConnection(c))
+            return f;
 
     return nullptr;
 }
@@ -60,11 +43,17 @@ Instance::FindAttachConnection(Connection &c) noexcept
 LinkedServer *
 Instance::FindZombie(const struct uo_packet_game_login &game_login) noexcept
 {
-    for (auto &i : connections) {
-        auto *zombie = i.FindZombie(game_login);
-        if (zombie != nullptr)
-            return zombie;
-    }
+    for (auto &i : listeners)
+        if (auto *f = i.FindZombie(game_login))
+            return f;
 
     return nullptr;
+}
+
+void
+Instance::OnShutdown() noexcept
+{
+	shutdown_listener.Disable();
+
+        listeners.clear();
 }

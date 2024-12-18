@@ -3,12 +3,15 @@
 
 #pragma once
 
+#include "event/Loop.hxx"
+#include "event/ShutdownListener.hxx"
+#include "event/net/ServerSocket.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "util/IntrusiveList.hxx"
 
-#include <event.h>
+#include <forward_list>
 
 struct Config;
+class Listener;
 struct Connection;
 struct LinkedServer;
 namespace UO { struct CredentialsFragment; }
@@ -19,21 +22,21 @@ struct Instance {
 
     /* state */
 
-    struct event sigterm_event, sigint_event, sigquit_event;
-    bool should_exit = false;
+    EventLoop event_loop;
+    ShutdownListener shutdown_listener{event_loop, BIND_THIS_METHOD(OnShutdown)};
 
-    UniqueSocketDescriptor server_socket;
-    struct event server_socket_event;
+    std::forward_list<Listener> listeners;
 
-    IntrusiveList<Connection> connections;
-
-    explicit Instance(Config &_config) noexcept
-        :config(_config) {}
+    explicit Instance(Config &_config) noexcept;
+    ~Instance() noexcept;
 
     Connection *FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept;
     Connection *FindAttachConnection(Connection &c) noexcept;
 
     LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
+
+private:
+	void OnShutdown() noexcept;
 };
 
 void

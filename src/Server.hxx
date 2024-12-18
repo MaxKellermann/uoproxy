@@ -9,6 +9,7 @@
 #include <stddef.h>
 
 class UniqueSocketDescriptor;
+class EventLoop;
 
 namespace UO {
 
@@ -35,7 +36,7 @@ public:
 } // namespace UO
 
 UO::Server *
-uo_server_create(UniqueSocketDescriptor &&s,
+uo_server_create(EventLoop &event_loop, UniqueSocketDescriptor &&s,
                  UO::ServerHandler &handler);
 void uo_server_dispose(UO::Server *server);
 

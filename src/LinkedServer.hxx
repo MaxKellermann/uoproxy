@@ -5,9 +5,8 @@
 
 #include "Server.hxx"
 #include "CVersion.hxx"
+#include "event/CoarseTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
-
-#include <event.h>
 
 #include <fmt/core.h>
 
@@ -32,7 +31,7 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
 
     ClientVersion client_version;
 
-    struct event zombie_timeout; /**< zombies time out and auto-reap themselves
+    CoarseTimerEvent zombie_timeout; /**< zombies time out and auto-reap themselves
                                     after 5 seconds using this timer */
 
     /**
@@ -111,11 +110,11 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
         IN_GAME,
     } state = State::INIT;
 
-    explicit LinkedServer(UniqueSocketDescriptor &&s)
-            :server(uo_server_create(std::move(s), *this)),
+    LinkedServer(EventLoop &event_loop, UniqueSocketDescriptor &&s)
+        :server(uo_server_create(event_loop, std::move(s), *this)),
+         zombie_timeout(event_loop, BIND_THIS_METHOD(ZombieTimeoutCallback)),
          id(++id_counter)
     {
-        evtimer_set(&zombie_timeout, ZombieTimeoutCallback, this);
     }
 
     ~LinkedServer() noexcept;
@@ -143,7 +142,7 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
     }
 
 private:
-    static void ZombieTimeoutCallback(int, short, void *ctx) noexcept;
+    void ZombieTimeoutCallback() noexcept;
 
     /* virtual methods from UO::ServerHandler */
     bool OnServerPacket(const void *data, size_t length) override;
