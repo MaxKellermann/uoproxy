@@ -47,6 +47,8 @@ StatefulClient::Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 		seed_packet = &seed_buffer;
 	}
 
+	s.SetNoDelay();
+
 	client = uo_client_create(event_loop, std::move(s), seed,
 				  seed_packet,
 				  handler);

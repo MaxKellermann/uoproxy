@@ -186,8 +186,6 @@ uo_client_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, uint32_t see
 		 const struct uo_packet_seed *seed6,
 		 UO::ClientHandler &handler)
 {
-	s.SetNoDelay();
-
 	auto *client = new UO::Client(event_loop, std::move(s), handler);
 
 	/* seed must be the first 4 bytes, and it must be flushed */
