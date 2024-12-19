@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <span>
+#include <string_view>
 #include <type_traits>
 
 class UniqueSocketDescriptor;
@@ -97,10 +98,10 @@ public:
 			int16_t graphic,
 			uint8_t type,
 			uint16_t hue, uint16_t font,
-			const char *name,
-			const char *text);
+			std::string_view name,
+			std::string_view text);
 
-	void SpeakConsole(const char *text);
+	void SpeakConsole(std::string_view text);
 
 private:
 	void DeferredAbort() noexcept;
