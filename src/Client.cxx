@@ -105,15 +105,15 @@ UO::Client::ParsePackets(const uint8_t *data, size_t length)
 }
 
 size_t
-UO::Client::OnSocketData(const void *data0, size_t length)
+UO::Client::OnSocketData(std::span<const std::byte> src)
 {
-	const uint8_t *data = (const uint8_t *)data0;
+	const uint8_t *data = (const uint8_t *)src.data();
 
 	if (compression_enabled) {
 		ssize_t nbytes;
 		size_t consumed;
 
-		nbytes = Decompress({data, length});
+		nbytes = Decompress({data, src.size()});
 		if (nbytes <= 0)
 			return 0;
 		consumed = (size_t)nbytes;
@@ -130,7 +130,7 @@ UO::Client::OnSocketData(const void *data0, size_t length)
 
 		return consumed;
 	} else {
-		ssize_t nbytes = ParsePackets(data, length);
+		ssize_t nbytes = ParsePackets(reinterpret_cast<const uint8_t *>(src.data()), src.size());
 		if (nbytes < 0)
 			return 0;
 

@@ -76,7 +76,7 @@ SocketBuffer::SubmitData()
 
 	const ScopeLockFlush lock_flush;
 
-	ssize_t nbytes = handler.OnSocketData(r.data(), r.size());
+	ssize_t nbytes = handler.OnSocketData(r);
 	if (nbytes == 0)
 		return false;
 

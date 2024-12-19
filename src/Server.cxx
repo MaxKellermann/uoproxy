@@ -72,22 +72,25 @@ UO::Server::ParsePackets(const uint8_t *data, size_t length)
 }
 
 size_t
-UO::Server::OnSocketData(const void *data0, size_t length)
+UO::Server::OnSocketData(std::span<const std::byte> src)
 {
-	data0 = encryption.FromClient(data0, length);
-	if (data0 == nullptr)
+	assert(!src.empty());
+
+	if (const void *decrypted = encryption.FromClient(src.data(), src.size());
+	    decrypted == nullptr)
 		/* need more data */
 		return 0;
+	else
+		src = {reinterpret_cast<const std::byte *>(decrypted), src.size()};
 
-	const uint8_t *data = (const uint8_t *)data0;
 	size_t consumed = 0;
 
-	if (seed == 0 && data[0] == 0xef) {
+	if (seed == 0 && src.front() == std::byte{0xef}) {
 		/* client 6.0.5.0 sends a "0xef" seed packet instead of the
 		   raw 32 bit seed */
-		auto p = (const struct uo_packet_seed *)data0;
+		const auto *p = reinterpret_cast<const struct uo_packet_seed *>(src.data());
 
-		if (length < sizeof(*p))
+		if (src.size() < sizeof(*p))
 			return 0;
 
 		seed = p->seed;
@@ -101,10 +104,10 @@ UO::Server::OnSocketData(const void *data0, size_t length)
 	if (seed == 0) {
 		/* the first packet from a client is the seed, 4 bytes without
 		   header */
-		if (length < 4)
+		if (src.size() < 4)
 			return 0;
 
-		seed = *(const uint32_t*)(data + consumed);
+		seed = *(const uint32_t*)src.data();
 		if (seed == 0) {
 			Log(2, "zero seed from client\n");
 			Abort();
@@ -112,9 +115,10 @@ UO::Server::OnSocketData(const void *data0, size_t length)
 		}
 
 		consumed += sizeof(uint32_t);
+		src = src.subspan(sizeof(uint32_t));
 	}
 
-	ssize_t nbytes = ParsePackets(data + consumed, length - consumed);
+	ssize_t nbytes = ParsePackets(reinterpret_cast<const uint8_t *>(src.data()), src.size());
 	if (nbytes < 0)
 		return 0;
 

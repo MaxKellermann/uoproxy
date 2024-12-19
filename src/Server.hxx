@@ -108,7 +108,7 @@ private:
 	ssize_t ParsePackets(const uint8_t *data, size_t length);
 
 	/* virtual methods from SocketBufferHandler */
-	size_t OnSocketData(const void *data, size_t length) override;
+	size_t OnSocketData(std::span<const std::byte> src) override;
 	void OnSocketDisconnect(int error) noexcept override;
 };
 
