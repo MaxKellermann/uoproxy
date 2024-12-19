@@ -29,75 +29,78 @@
 #include <winsock2.h>
 #endif
 
-static void config_get(Config *config, int argc, char **argv) {
-    const char *home;
-    char path[4096];
-    int ret;
+static void
+config_get(Config *config, int argc, char **argv)
+{
+	const char *home;
+	char path[4096];
+	int ret;
 
-    home = getenv("HOME");
-    if (home == nullptr) {
-        ret = 1;
-    } else {
-        snprintf(path, sizeof(path), "%s/.uoproxyrc", home);
-        ret = config_read_file(config, path);
-    }
+	home = getenv("HOME");
+	if (home == nullptr) {
+		ret = 1;
+	} else {
+		snprintf(path, sizeof(path), "%s/.uoproxyrc", home);
+		ret = config_read_file(config, path);
+	}
 
-    if (ret != 0)
-        config_read_file(config, "/etc/uoproxy.conf");
+	if (ret != 0)
+		config_read_file(config, "/etc/uoproxy.conf");
 
-    parse_cmdline(config, argc, argv);
+	parse_cmdline(config, argc, argv);
 }
 
 static void
 setup_signal_handlers()
 {
 #ifndef _WIN32
-    signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 #endif
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 try {
-    Config config;
-    Instance instance(config);
+	Config config;
+	Instance instance(config);
 
-    /* WinSock */
+	/* WinSock */
 
-#ifdef _WIN32
-    WSADATA wsaData;
+	#ifdef _WIN32
+	WSADATA wsaData;
 
-    if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0 ||
-        LOBYTE(wsaData.wVersion) != 2 ||
-        HIBYTE(wsaData.wVersion) != 2 ) {
-        fprintf(stderr, "WSAStartup() failed\n");
-        return 1;
-    }
+	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0 ||
+	    LOBYTE(wsaData.wVersion) != 2 ||
+	    HIBYTE(wsaData.wVersion) != 2 ) {
+		    fprintf(stderr, "WSAStartup() failed\n");
+		    return 1;
+	    }
 #endif
 
-    /* configuration */
+	/* configuration */
 
-    config_get(&config, argc, argv);
+	config_get(&config, argc, argv);
 
-    Log(1, "uoproxy v" VERSION
-        ", https://github.com/MaxKellermann/uoproxy\n");
+	Log(1, "uoproxy v" VERSION
+	       ", https://github.com/MaxKellermann/uoproxy\n");
 
-    /* set up */
+	/* set up */
 
-    setup_signal_handlers();
+	setup_signal_handlers();
 
-    instance_setup_server_socket(&instance);
+	instance_setup_server_socket(&instance);
 
-    /* main loop */
+	/* main loop */
 
-#ifdef HAVE_LIBSYSTEMD
-    /* tell systemd we're ready */
-    sd_notify(0, "READY=1");
+	#ifdef HAVE_LIBSYSTEMD
+	/* tell systemd we're ready */
+	sd_notify(0, "READY=1");
 #endif
 
-    instance.event_loop.Run();
+	instance.event_loop.Run();
 
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 } catch (...) {
-    PrintException(std::current_exception());
-    return EXIT_FAILURE;
+	PrintException(std::current_exception());
+	return EXIT_FAILURE;
 }

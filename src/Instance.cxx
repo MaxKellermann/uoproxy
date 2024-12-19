@@ -6,9 +6,9 @@
 #include "Config.hxx"
 
 Instance::Instance(Config &_config) noexcept
-    :config(_config)
+	:config(_config)
 {
-    shutdown_listener.Enable();
+	shutdown_listener.Enable();
 }
 
 Instance::~Instance() noexcept = default;
@@ -16,38 +16,38 @@ Instance::~Instance() noexcept = default;
 void
 instance_setup_server_socket(Instance *instance)
 {
-    instance->listeners.emplace_front(*instance,
-                                      instance->config.bind_address.GetBest());
+	instance->listeners.emplace_front(*instance,
+					  instance->config.bind_address.GetBest());
 }
 
 Connection *
 Instance::FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept
 {
-    for (auto &i : listeners)
-        if (auto *f = i.FindAttachConnection(credentials))
-            return f;
+	for (auto &i : listeners)
+		if (auto *f = i.FindAttachConnection(credentials))
+			return f;
 
-    return nullptr;
+	return nullptr;
 }
 
 Connection *
 Instance::FindAttachConnection(Connection &c) noexcept
 {
-    for (auto &i : listeners)
-        if (auto *f = i.FindAttachConnection(c))
-            return f;
+	for (auto &i : listeners)
+		if (auto *f = i.FindAttachConnection(c))
+			return f;
 
-    return nullptr;
+	return nullptr;
 }
 
 LinkedServer *
 Instance::FindZombie(const struct uo_packet_game_login &game_login) noexcept
 {
-    for (auto &i : listeners)
-        if (auto *f = i.FindZombie(game_login))
-            return f;
+	for (auto &i : listeners)
+		if (auto *f = i.FindZombie(game_login))
+			return f;
 
-    return nullptr;
+	return nullptr;
 }
 
 void
@@ -55,5 +55,5 @@ Instance::OnShutdown() noexcept
 {
 	shutdown_listener.Disable();
 
-        listeners.clear();
+	listeners.clear();
 }

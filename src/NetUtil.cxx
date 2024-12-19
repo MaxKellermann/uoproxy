@@ -11,19 +11,19 @@
 UniqueSocketDescriptor
 setup_server_socket(const SocketAddress bind_address)
 {
-    assert(bind_address != nullptr);
+	assert(bind_address != nullptr);
 
-    UniqueSocketDescriptor s;
-    if (!s.Create(bind_address.GetFamily(), SOCK_STREAM, 0))
-        throw MakeSocketError("Failed to create socket");
+	UniqueSocketDescriptor s;
+	if (!s.Create(bind_address.GetFamily(), SOCK_STREAM, 0))
+		throw MakeSocketError("Failed to create socket");
 
-    s.SetReuseAddress();
+	s.SetReuseAddress();
 
-    if (!s.Bind(bind_address))
-        throw MakeSocketError("Failed to bind");
+	if (!s.Bind(bind_address))
+		throw MakeSocketError("Failed to bind");
 
-    if (!s.Listen(4))
-        throw MakeSocketError("listen() failed");
+	if (!s.Listen(4))
+		throw MakeSocketError("listen() failed");
 
-    return s;
+	return s;
 }

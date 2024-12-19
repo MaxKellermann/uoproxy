@@ -16,56 +16,56 @@ class ClientHandler;
 }
 
 struct StatefulClient {
-    bool reconnecting = false, version_requested = false;
+	bool reconnecting = false, version_requested = false;
 
-    UO::Client *client = nullptr;
-    CoarseTimerEvent ping_timer;
+	UO::Client *client = nullptr;
+	CoarseTimerEvent ping_timer;
 
-    ClientVersion version;
+	ClientVersion version;
 
-    /**
-     * The most recent game server list packet received from the
-     * server.  This does not get cleared when reconnecting, but gets
-     * overwritten when a new one is received.
-     */
-    VarStructPtr<struct uo_packet_server_list> server_list;
+	/**
+	 * The most recent game server list packet received from the
+	 * server.  This does not get cleared when reconnecting, but gets
+	 * overwritten when a new one is received.
+	 */
+	VarStructPtr<struct uo_packet_server_list> server_list;
 
-    /**
-     * The most recent character list packet received from the server.
-     * This does not get cleared when reconnecting, but gets
-     * overwritten when a new one is received.
-     */
-    VarStructPtr<struct uo_packet_simple_character_list> char_list;
+	/**
+	 * The most recent character list packet received from the server.
+	 * This does not get cleared when reconnecting, but gets
+	 * overwritten when a new one is received.
+	 */
+	VarStructPtr<struct uo_packet_simple_character_list> char_list;
 
-    uint32_t supported_features_flags = 0;
+	uint32_t supported_features_flags = 0;
 
-    unsigned char ping_request = 0, ping_ack = 0;
+	unsigned char ping_request = 0, ping_ack = 0;
 
-    World world;
+	World world;
 
-    explicit StatefulClient(EventLoop &event_loop) noexcept;
+	explicit StatefulClient(EventLoop &event_loop) noexcept;
 
-    StatefulClient(const StatefulClient &) = delete;
-    StatefulClient &operator=(const StatefulClient &) = delete;
+	StatefulClient(const StatefulClient &) = delete;
+	StatefulClient &operator=(const StatefulClient &) = delete;
 
-    bool IsInGame() const noexcept {
-        return world.HasStart();
-    }
+	bool IsInGame() const noexcept {
+		return world.HasStart();
+	}
 
-    bool IsConnected() const noexcept {
-        return client != nullptr;
-    }
+	bool IsConnected() const noexcept {
+		return client != nullptr;
+	}
 
-    void Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
-                 uint32_t seed, bool for_game_login,
-                 UO::ClientHandler &handler);
+	void Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
+		     uint32_t seed, bool for_game_login,
+		     UO::ClientHandler &handler);
 
-    void Disconnect() noexcept;
+	void Disconnect() noexcept;
 
-    void SchedulePing() noexcept {
-        ping_timer.Schedule(std::chrono::seconds{30});
-    }
+	void SchedulePing() noexcept {
+		ping_timer.Schedule(std::chrono::seconds{30});
+	}
 
 private:
-    void OnPingTimer() noexcept;
+	void OnPingTimer() noexcept;
 };

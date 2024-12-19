@@ -9,60 +9,60 @@
 #include "util/PrintException.hxx"
 
 Listener::Listener(Instance &_instance, SocketAddress bind_address)
-    :ServerSocket(_instance.event_loop, setup_server_socket(bind_address)),
-     instance(_instance) {}
+	:ServerSocket(_instance.event_loop, setup_server_socket(bind_address)),
+	 instance(_instance) {}
 
 Listener::~Listener() noexcept
 {
-    connections.clear_and_dispose([](Connection *c) {
-        delete c;
-    });
+	connections.clear_and_dispose([](Connection *c) {
+		delete c;
+	});
 }
 
 void
 Listener::OnAccept(UniqueSocketDescriptor fd,
-                   [[maybe_unused]] SocketAddress address) noexcept
+		   [[maybe_unused]] SocketAddress address) noexcept
 {
-    auto *c = connection_new(&instance, std::move(fd));
-    connections.push_front(*c);
+	auto *c = connection_new(&instance, std::move(fd));
+	connections.push_front(*c);
 }
 
 void
 Listener::OnAcceptError(std::exception_ptr error) noexcept
 {
-    PrintException(std::move(error));
+	PrintException(std::move(error));
 }
 
 Connection *
 Listener::FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept
 {
-    for (auto &i : connections)
-        if (i.CanAttach() && credentials == i.credentials)
-            return &i;
+	for (auto &i : connections)
+		if (i.CanAttach() && credentials == i.credentials)
+			return &i;
 
-    return nullptr;
+	return nullptr;
 }
 
 Connection *
 Listener::FindAttachConnection(Connection &c) noexcept
 {
-    for (auto &i : connections)
-        if (&i != &c && i.CanAttach() &&
-            c.credentials == i.credentials &&
-            c.server_index == i.server_index)
-            return &i;
+	for (auto &i : connections)
+		if (&i != &c && i.CanAttach() &&
+		    c.credentials == i.credentials &&
+		    c.server_index == i.server_index)
+			return &i;
 
-    return nullptr;
+	return nullptr;
 }
 
 LinkedServer *
 Listener::FindZombie(const struct uo_packet_game_login &game_login) noexcept
 {
-    for (auto &i : connections) {
-        auto *zombie = i.FindZombie(game_login);
-        if (zombie != nullptr)
-            return zombie;
-    }
+	for (auto &i : connections) {
+		auto *zombie = i.FindZombie(game_login);
+		if (zombie != nullptr)
+			return zombie;
+	}
 
-    return nullptr;
+	return nullptr;
 }

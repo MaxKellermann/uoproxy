@@ -9,29 +9,29 @@
  * An operation that has to be flushed.
  */
 class PendingFlush : public IntrusiveListHook<> {
-    bool is_linked = false;
+	bool is_linked = false;
 
 public:
-    PendingFlush() = default;
+	PendingFlush() = default;
 
-    ~PendingFlush() noexcept {
-        CancelFlush();
-    }
+	~PendingFlush() noexcept {
+		CancelFlush();
+	}
 
-    PendingFlush(const PendingFlush &) = delete;
-    PendingFlush &operator=(const PendingFlush &) = delete;
+	PendingFlush(const PendingFlush &) = delete;
+	PendingFlush &operator=(const PendingFlush &) = delete;
 
-    virtual void DoFlush() noexcept = 0;
+	virtual void DoFlush() noexcept = 0;
 
 protected:
-    void ScheduleFlush() noexcept;
+	void ScheduleFlush() noexcept;
 
-    void CancelFlush() noexcept {
-        if (is_linked) {
-            is_linked = false;
-            unlink();
-        }
-    }
+	void CancelFlush() noexcept {
+		if (is_linked) {
+			is_linked = false;
+			unlink();
+		}
+	}
 };
 
 void
@@ -42,14 +42,14 @@ flush_end();
 
 class ScopeLockFlush {
 public:
-    ScopeLockFlush() noexcept {
-        flush_begin();
-    }
+	ScopeLockFlush() noexcept {
+		flush_begin();
+	}
 
-    ~ScopeLockFlush() noexcept {
-        flush_end();
-    }
+	~ScopeLockFlush() noexcept {
+		flush_end();
+	}
 
-    ScopeLockFlush(const ScopeLockFlush &) = delete;
-    ScopeLockFlush &operator=(const ScopeLockFlush &) = delete;
+	ScopeLockFlush(const ScopeLockFlush &) = delete;
+	ScopeLockFlush &operator=(const ScopeLockFlush &) = delete;
 };

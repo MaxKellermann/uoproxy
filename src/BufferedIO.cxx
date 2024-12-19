@@ -21,35 +21,35 @@
 ssize_t
 read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
 {
-    assert(s.IsDefined());
+	assert(s.IsDefined());
 
-    auto w = buffer.Write();
-    if (w.empty())
-        return -2;
+	auto w = buffer.Write();
+	if (w.empty())
+		return -2;
 
-    ssize_t nbytes = s.ReadNoWait(w);
-    if (nbytes > 0)
-        buffer.Append(nbytes);
+	ssize_t nbytes = s.ReadNoWait(w);
+	if (nbytes > 0)
+		buffer.Append(nbytes);
 
-    return nbytes;
+	return nbytes;
 }
 
 ssize_t
 write_from_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
 {
-    assert(s.IsDefined());
+	assert(s.IsDefined());
 
-    auto r = buffer.Read();
-    if (r.empty())
-        return -2;
+	auto r = buffer.Read();
+	if (r.empty())
+		return -2;
 
-    ssize_t nbytes = s.WriteNoWait(r);
-    if (nbytes < 0 && errno != EAGAIN)
-        return -1;
+	ssize_t nbytes = s.WriteNoWait(r);
+	if (nbytes < 0 && errno != EAGAIN)
+		return -1;
 
-    if (nbytes <= 0)
-        return r.size();
+	if (nbytes <= 0)
+		return r.size();
 
-    buffer.Consume(nbytes);
-    return (ssize_t)r.size() - nbytes;
+	buffer.Consume(nbytes);
+	return (ssize_t)r.size() - nbytes;
 }

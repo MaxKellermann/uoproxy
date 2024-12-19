@@ -12,28 +12,28 @@ class EventLoop;
 
 class SocketBufferHandler {
 public:
-    /**
-     * Data is available.
-     *
-     * @return the number of bytes consumed, or 0 if the sock_buff
-     * has been closed within the function
-     */
-    virtual size_t OnSocketData(const void *data, size_t length) = 0;
+	/**
+	 * Data is available.
+	 *
+	 * @return the number of bytes consumed, or 0 if the sock_buff
+	 * has been closed within the function
+	 */
+	virtual size_t OnSocketData(const void *data, size_t length) = 0;
 
-    /**
-     * The socket has been closed due to an error or because the peer
-     * closed his side.  sock_buff_dispose() does not trigger this
-     * callback, and the callee has to invoke this function.
-     */
-    virtual void OnSocketDisconnect(int error) noexcept = 0;
+	/**
+	 * The socket has been closed due to an error or because the peer
+	 * closed his side.  sock_buff_dispose() does not trigger this
+	 * callback, and the callee has to invoke this function.
+	 */
+	virtual void OnSocketDisconnect(int error) noexcept = 0;
 };
 
 struct SocketBuffer;
 
 SocketBuffer *
 sock_buff_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-                 size_t output_max,
-                 SocketBufferHandler &handler);
+		 size_t output_max,
+		 SocketBufferHandler &handler);
 
 void sock_buff_dispose(SocketBuffer *sb);
 

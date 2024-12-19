@@ -8,29 +8,29 @@
 void
 Connection::DeleteItems() noexcept
 {
-    client.world.items.clear_and_dispose([this](Item *i){
-        const struct uo_packet_delete p{
-            .cmd = UO::Command::Delete,
-            .serial = i->serial,
-        };
+	client.world.items.clear_and_dispose([this](Item *i){
+		const struct uo_packet_delete p{
+			.cmd = UO::Command::Delete,
+			.serial = i->serial,
+		};
 
-        BroadcastToInGameClients(&p, sizeof(p));
+		BroadcastToInGameClients(&p, sizeof(p));
 
-        delete i;
-    });
+		delete i;
+	});
 }
 
 void
 Connection::DeleteMobiles() noexcept
 {
-    client.world.mobiles.clear_and_dispose([this](Mobile *m){
-        const struct uo_packet_delete p{
-            .cmd = UO::Command::Delete,
-            .serial = m->serial,
-        };
+	client.world.mobiles.clear_and_dispose([this](Mobile *m){
+		const struct uo_packet_delete p{
+			.cmd = UO::Command::Delete,
+			.serial = m->serial,
+		};
 
-        BroadcastToInGameClients(&p, sizeof(p));
+		BroadcastToInGameClients(&p, sizeof(p));
 
-        delete m;
-    });
+		delete m;
+	});
 }

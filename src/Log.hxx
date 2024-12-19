@@ -23,8 +23,8 @@ extern unsigned verbose;
 inline void
 Log(unsigned level, const char *msg) noexcept
 {
-    if (verbose >= level)
-        fputs(msg, stderr);
+	if (verbose >= level)
+		fputs(msg, stderr);
 }
 
 #define LogFmt(level, ...) do { if (verbose >= (level)) fmt::print(stderr, __VA_ARGS__); } while (0)
@@ -35,16 +35,16 @@ log_error(const char *msg, std::exception_ptr error) noexcept;
 static inline void
 log_error(const char *msg, int error)
 {
-    if (error <= 0)
-        LogFmt(1, "{}: {}\n", msg, error);
-    else
-        LogFmt(1, "{}: {}\n", msg, strerror(error));
+	if (error <= 0)
+		LogFmt(1, "{}: {}\n", msg, error);
+	else
+		LogFmt(1, "{}: {}\n", msg, strerror(error));
 }
 
 static inline void
 log_errno(const char *msg)
 {
-    LogFmt(1, "{}: {}\n", msg, strerror(errno));
+	LogFmt(1, "{}: {}\n", msg, strerror(errno));
 }
 
 void

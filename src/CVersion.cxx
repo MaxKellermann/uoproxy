@@ -11,95 +11,95 @@
 
 ClientVersion::~ClientVersion() noexcept
 {
-    delete seed;
+	delete seed;
 }
 
 static int
 client_version_compare(const char *a, const char *b)
 {
-    char *a_endptr, *b_endptr;
-    unsigned long a_int, b_int;
+	char *a_endptr, *b_endptr;
+	unsigned long a_int, b_int;
 
-    assert(a != nullptr);
-    assert(b != nullptr);
+	assert(a != nullptr);
+	assert(b != nullptr);
 
-    while (1) {
-        a_int = strtoul(a, &a_endptr, 10);
-        b_int = strtoul(b, &b_endptr, 10);
+	while (1) {
+		a_int = strtoul(a, &a_endptr, 10);
+		b_int = strtoul(b, &b_endptr, 10);
 
-        if (a_int < b_int)
-            return -1;
-        if (a_int > b_int)
-            return 1;
+		if (a_int < b_int)
+			return -1;
+		if (a_int > b_int)
+			return 1;
 
-        if (*a_endptr < *b_endptr)
-            return -1;
-        if (*a_endptr > *b_endptr)
-            return 1;
+		if (*a_endptr < *b_endptr)
+			return -1;
+		if (*a_endptr > *b_endptr)
+			return 1;
 
-        if (*a_endptr == 0)
-            return 0;
+		if (*a_endptr == 0)
+			return 0;
 
-        a = a_endptr + 1;
-        b = b_endptr + 1;
-    }
+		a = a_endptr + 1;
+		b = b_endptr + 1;
+	}
 }
 
 static enum protocol_version
 determine_protocol_version(const char *version)
 {
-    if (client_version_compare(version, "7") >= 0)
-        return PROTOCOL_7;
-    else if (client_version_compare(version, "6.0.14") >= 0)
-        return PROTOCOL_6_0_14;
-    else if (client_version_compare(version, "6.0.5") >= 0)
-        return PROTOCOL_6_0_5;
-    else if (client_version_compare(version, "6.0.1.7") >= 0)
-        return PROTOCOL_6;
-    else if (client_version_compare(version, "1") >= 0)
-        return PROTOCOL_5;
-    else
-        return PROTOCOL_UNKNOWN;
+	if (client_version_compare(version, "7") >= 0)
+		return PROTOCOL_7;
+	else if (client_version_compare(version, "6.0.14") >= 0)
+		return PROTOCOL_6_0_14;
+	else if (client_version_compare(version, "6.0.5") >= 0)
+		return PROTOCOL_6_0_5;
+	else if (client_version_compare(version, "6.0.1.7") >= 0)
+		return PROTOCOL_6;
+	else if (client_version_compare(version, "1") >= 0)
+		return PROTOCOL_5;
+	else
+		return PROTOCOL_UNKNOWN;
 }
 
 int
 ClientVersion::Set(const struct uo_packet_client_version *_packet,
-                   size_t length) noexcept
+		   size_t length) noexcept
 {
-    if (!packet_verify_client_version(_packet, length))
-        return 0;
+	if (!packet_verify_client_version(_packet, length))
+		return 0;
 
-    packet = {_packet, length};
+	packet = {_packet, length};
 
-    if (protocol == PROTOCOL_UNKNOWN)
-        protocol = determine_protocol_version(_packet->version);
-    return 1;
+	if (protocol == PROTOCOL_UNKNOWN)
+		protocol = determine_protocol_version(_packet->version);
+	return 1;
 }
 
 void
 ClientVersion::Set(std::string_view version) noexcept
 {
-    packet = VarStructPtr<struct uo_packet_client_version>(sizeof(*packet) + version.size());
-    packet->cmd = UO::Command::ClientVersion;
-    packet->length = packet.size();
-    *std::copy(version.begin(), version.end(), packet->version) = '\0';
+	packet = VarStructPtr<struct uo_packet_client_version>(sizeof(*packet) + version.size());
+	packet->cmd = UO::Command::ClientVersion;
+	packet->length = packet.size();
+	*std::copy(version.begin(), version.end(), packet->version) = '\0';
 
-    // TODO eliminate temporary std::string
-    protocol = determine_protocol_version(std::string{version}.c_str());
+	// TODO eliminate temporary std::string
+	protocol = determine_protocol_version(std::string{version}.c_str());
 }
 
 void
 ClientVersion::Seed(const struct uo_packet_seed &_seed) noexcept
 {
-    assert(seed == nullptr);
-    assert(_seed.cmd == UO::Command::Seed);
+	assert(seed == nullptr);
+	assert(_seed.cmd == UO::Command::Seed);
 
-    seed = new struct uo_packet_seed(_seed);
+	seed = new struct uo_packet_seed(_seed);
 
-    /* this packet is only know to 6.0.5.0 clients, so we don't check
-       the packet contents here */
-    if (_seed.client_major >= 7)
-        protocol = PROTOCOL_7;
-    else
-        protocol = PROTOCOL_6_0_5;
+	/* this packet is only know to 6.0.5.0 clients, so we don't check
+	   the packet contents here */
+	if (_seed.client_major >= 7)
+		protocol = PROTOCOL_7;
+	else
+		protocol = PROTOCOL_6_0_5;
 }

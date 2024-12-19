@@ -12,20 +12,20 @@ struct LinkedServer;
 namespace UO { struct CredentialsFragment; }
 
 class Listener final : ServerSocket {
-    Instance &instance;
-    IntrusiveList<Connection> connections;
+	Instance &instance;
+	IntrusiveList<Connection> connections;
 
 public:
-    Listener(Instance &_instance, SocketAddress bind_address);
-    ~Listener() noexcept;
+	Listener(Instance &_instance, SocketAddress bind_address);
+	~Listener() noexcept;
 
-    Connection *FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept;
-    Connection *FindAttachConnection(Connection &c) noexcept;
+	Connection *FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept;
+	Connection *FindAttachConnection(Connection &c) noexcept;
 
-    LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
+	LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
 
 private:
-    // virtual methods from ServerSocket
-    void OnAccept(UniqueSocketDescriptor fd, SocketAddress address) noexcept override;
-    void OnAcceptError(std::exception_ptr error) noexcept override;
+	// virtual methods from ServerSocket
+	void OnAccept(UniqueSocketDescriptor fd, SocketAddress address) noexcept override;
+	void OnAcceptError(std::exception_ptr error) noexcept override;
 };

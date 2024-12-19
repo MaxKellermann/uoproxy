@@ -18,11 +18,11 @@ struct uo_packet_container_update_6;
 
 void
 container_update_5_to_6(struct uo_packet_container_update_6 *dest,
-                        const struct uo_packet_container_update *src);
+			const struct uo_packet_container_update *src);
 
 void
 container_update_6_to_5(struct uo_packet_container_update *dest,
-                        const struct uo_packet_container_update_6 *src);
+			const struct uo_packet_container_update_6 *src);
 
 struct uo_packet_container_content;
 struct uo_packet_container_content_6;
@@ -38,30 +38,30 @@ struct uo_packet_drop_6;
 
 void
 drop_5_to_6(struct uo_packet_drop_6 *dest,
-            const struct uo_packet_drop *src);
+	    const struct uo_packet_drop *src);
 
 void
 drop_6_to_5(struct uo_packet_drop *dest,
-            const struct uo_packet_drop_6 *src);
+	    const struct uo_packet_drop_6 *src);
 
 struct uo_packet_supported_features;
 struct uo_packet_supported_features_6014;
 
 void
 supported_features_6_to_6014(struct uo_packet_supported_features_6014 *dest,
-                             const struct uo_packet_supported_features *src);
+			     const struct uo_packet_supported_features *src);
 
 void
 supported_features_6014_to_6(struct uo_packet_supported_features *dest,
-                             const struct uo_packet_supported_features_6014 *src);
+			     const struct uo_packet_supported_features_6014 *src);
 
 struct uo_packet_world_item;
 struct uo_packet_world_item_7;
 
 void
 world_item_to_7(struct uo_packet_world_item_7 *dest,
-                const struct uo_packet_world_item *src);
+		const struct uo_packet_world_item *src);
 
 void
 world_item_from_7(struct uo_packet_world_item *dest,
-                  const struct uo_packet_world_item_7 *src);
+		  const struct uo_packet_world_item_7 *src);

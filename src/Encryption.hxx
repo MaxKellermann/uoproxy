@@ -9,37 +9,37 @@
 namespace UO {
 
 class LoginEncryption {
-    uint32_t key1, key2;
-    uint32_t table1, table2;
+	uint32_t key1, key2;
+	uint32_t table1, table2;
 
 public:
-    bool Init(uint32_t seed, const void *data) noexcept;
+	bool Init(uint32_t seed, const void *data) noexcept;
 
-    void Decrypt(const void *src, void *dest, size_t length) noexcept;
+	void Decrypt(const void *src, void *dest, size_t length) noexcept;
 };
 
 class Encryption {
-    enum class State : uint8_t {
-        NEW,
-        SEEDED,
-        DISABLED,
-        LOGIN,
-        GAME,
-    } state = State::NEW;
+	enum class State : uint8_t {
+		NEW,
+		SEEDED,
+		DISABLED,
+		LOGIN,
+		GAME,
+	} state = State::NEW;
 
-    uint32_t seed;
+	uint32_t seed;
 
-    LoginEncryption login;
+	LoginEncryption login;
 
-    void *buffer = nullptr;
-    size_t buffer_size = 0;
+	void *buffer = nullptr;
+	size_t buffer_size = 0;
 
 public:
-    /**
-     * @return encrypted data (may be the original #data pointer if the
-     * connection is not encrypted), or nullptr if more data is necessary
-     */
-    const void *FromClient(const void *data, size_t length) noexcept;
+	/**
+	 * @return encrypted data (may be the original #data pointer if the
+	 * connection is not encrypted), or nullptr if more data is necessary
+	 */
+	const void *FromClient(const void *data, size_t length) noexcept;
 };
 
 } // namespace UO
