@@ -21,39 +21,37 @@ connection_speak_console(Connection *c, const char *msg)
 }
 
 void
-Connection::BroadcastToInGameClients(const void *data, size_t length) noexcept
+Connection::BroadcastToInGameClients(std::span<const std::byte> src) noexcept
 {
 	for (auto &ls : servers)
 		if (ls.IsInGame())
-			ls.server->Send(data, length);
+			ls.server->Send(src);
 }
 
 void
-Connection::BroadcastToInGameClientsExcept(const void *data, size_t length,
+Connection::BroadcastToInGameClientsExcept(std::span<const std::byte> src,
 					   LinkedServer &except) noexcept
 {
 	for (auto &ls : servers)
 		if (&ls != &except && ls.IsInGame())
-			ls.server->Send(data, length);
+			ls.server->Send(src);
 }
 
 void
 Connection::BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
-					   const void *old_data, size_t old_length,
-					   const void *new_data, size_t new_length) noexcept
+					   std::span<const std::byte> old_packet,
+					   std::span<const std::byte> new_packet) noexcept
 {
 	assert(new_protocol > PROTOCOL_UNKNOWN);
-	assert(old_data != nullptr);
-	assert(old_length > 0);
-	assert(new_data != nullptr);
-	assert(new_length > 0);
+	assert(!old_packet.empty());
+	assert(!new_packet.empty());
 
 	for (auto &ls : servers) {
 		if (ls.IsInGame()) {
 			if (ls.client_version.protocol >= new_protocol)
-				ls.server->Send(new_data, new_length);
+				ls.server->Send(new_packet);
 			else
-				ls.server->Send(old_data, old_length);
+				ls.server->Send(old_packet);
 		}
 	}
 }

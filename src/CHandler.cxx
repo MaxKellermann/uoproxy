@@ -14,6 +14,7 @@
 #include "Bridge.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/SpanCast.hxx"
 #include "util/VarStructPtr.hxx"
 
 #include <assert.h>
@@ -72,7 +73,7 @@ handle_create_character(LinkedServer &ls,
 	if (ls.connection->instance.config.antispy) {
 		struct uo_packet_create_character q = *p;
 		q.client_ip = 0xc0a80102;
-		ls.connection->client.client->Send(&q, sizeof(q));
+		ls.connection->client.client->SendT(q);
 		return PacketAction::DROP;
 	} else
 		return PacketAction::ACCEPT;
@@ -102,7 +103,7 @@ handle_walk(LinkedServer &ls,
 			.z = (int8_t)world->packet_start.z,
 		};
 
-		ls.server->Send(&p2, sizeof(p2));
+		ls.server->SendT(p2);
 
 		return PacketAction::DROP;
 	}
@@ -193,7 +194,7 @@ handle_lift_request(LinkedServer &ls,
 			.reason = 0x00, /* CannotLift */
 		};
 
-		ls.server->Send(&p2, sizeof(p2));
+		ls.server->SendT(p2);
 
 		return PacketAction::DROP;
 	}
@@ -221,7 +222,7 @@ handle_drop(LinkedServer &ls,
 
 		struct uo_packet_drop_6 p6;
 		drop_5_to_6(&p6, p);
-		client->client->Send(&p6, sizeof(p6));
+		client->client->SendT(p6);
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_drop_6 *>(src.data());
 
@@ -232,7 +233,7 @@ handle_drop(LinkedServer &ls,
 
 		struct uo_packet_drop p5;
 		drop_6_to_5(&p5, p);
-		client->client->Send(&p5, sizeof(p5));
+		client->client->SendT(p5);
 	}
 
 	return PacketAction::DROP;
@@ -265,8 +266,7 @@ handle_target(LinkedServer &ls,
 		world->packet_target.cmd = UO::Command::Target;
 		world->packet_target.flags = 3;
 
-		ls.connection->BroadcastToInGameClientsExcept(&world->packet_target,
-							      sizeof(world->packet_target),
+		ls.connection->BroadcastToInGameClientsExcept(ReferenceAsBytes(world->packet_target),
 							      ls);
 	}
 
@@ -276,7 +276,7 @@ handle_target(LinkedServer &ls,
 static PacketAction
 handle_ping(LinkedServer &ls, std::span<const std::byte> src)
 {
-	ls.server->Send(src.data(), src.size());
+	ls.server->Send(src);
 	return PacketAction::DROP;
 }
 
@@ -322,8 +322,7 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 	assert(other != c);
 	if (other != nullptr) {
 		if (other->client.server_list) {
-			ls.server->Send(other->client.server_list.get(),
-					other->client.server_list.size());
+			ls.server->Send(other->client.server_list);
 			ls.state = LinkedServer::State::SERVER_LIST;
 			return PacketAction::DROP;
 		}
@@ -342,7 +341,7 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 		strcpy(p2.game_servers[0].name, "attach");
 		p2.game_servers[0].address = 0xdeadbeef;
 
-		ls.server->Send(&p2, sizeof(p2));
+		ls.server->SendT(p2);
 		ls.state = LinkedServer::State::SERVER_LIST;
 		return PacketAction::DROP;
 	}
@@ -378,7 +377,7 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 			p2->game_servers[i].address = address.GetNumericAddressBE();
 		}
 
-		ls.server->Send(p2_.get(), p2_.size());
+		ls.server->Send(p2_);
 		return PacketAction::DROP;
 	} else if (!config.login_address.empty()) {
 		/* connect to the real login server */
@@ -402,7 +401,7 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 			response.cmd = UO::Command::AccountLoginReject;
 			response.reason = 0x02; /* blocked */
 
-			ls.server->Send(&response, sizeof(response));
+			ls.server->SendT(response);
 			return PacketAction::DROP;
 		}
 
@@ -514,8 +513,7 @@ handle_game_login(LinkedServer &ls,
 		/* already in game .. this was likely an attach connection */
 		attach_send_world(&ls);
 	} else if (ls.connection->client.char_list) {
-		ls.server->Send(ls.connection->client.char_list.get(),
-				ls.connection->client.char_list.size());
+		ls.server->Send(ls.connection->client.char_list);
 		ls.state = LinkedServer::State::CHAR_LIST;
 	}
 	return PacketAction::DROP;
@@ -569,7 +567,7 @@ redirect_to_self(LinkedServer &ls)
 	ls.LogF(8, "redirecting to: {}:{}",
 		inet_ntoa(addr), (unsigned)relay.port);;
 	relay.auth_id = ls.auth_id = authid++;
-	ls.server->Send(&relay, sizeof(relay));
+	ls.server->SendT(relay);
 	ls.state = LinkedServer::State::RELAY_SERVER;
 }
 
@@ -659,7 +657,7 @@ handle_play_server(LinkedServer &ls,
 		login.auth_id = seed;
 		login.credentials = c.credentials;
 
-		c.client.client->Send(&login, sizeof(login));
+		c.client.client->SendT(login);
 
 		retaction = PacketAction::DROP;
 	} else
@@ -743,7 +741,7 @@ handle_gump_response(LinkedServer &ls, std::span<const std::byte> src)
 		.button_id = 0,
 	};
 
-	ls.connection->BroadcastToInGameClientsExcept(&close, sizeof(close), ls);
+	ls.connection->BroadcastToInGameClientsExcept(ReferenceAsBytes(close), ls);
 
 	return PacketAction::ACCEPT;
 }
@@ -769,8 +767,7 @@ handle_client_version(LinkedServer &ls, std::span<const std::byte> src)
 
 	if (c->client.version.IsDefined()) {
 		if (c->client.version_requested) {
-			c->client.client->Send(c->client.version.packet.get(),
-					       c->client.version.packet.size());
+			c->client.client->Send(c->client.version.packet);
 			c->client.version_requested = false;
 		}
 

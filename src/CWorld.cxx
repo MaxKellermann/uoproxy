@@ -4,6 +4,7 @@
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
 #include "Server.hxx"
+#include "util/SpanCast.hxx"
 
 void
 Connection::DeleteItems() noexcept
@@ -14,7 +15,7 @@ Connection::DeleteItems() noexcept
 			.serial = i->serial,
 		};
 
-		BroadcastToInGameClients(&p, sizeof(p));
+		BroadcastToInGameClients(ReferenceAsBytes(p));
 
 		delete i;
 	});
@@ -29,7 +30,7 @@ Connection::DeleteMobiles() noexcept
 			.serial = m->serial,
 		};
 
-		BroadcastToInGameClients(&p, sizeof(p));
+		BroadcastToInGameClients(ReferenceAsBytes(p));
 
 		delete m;
 	});

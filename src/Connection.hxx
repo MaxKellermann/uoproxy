@@ -117,12 +117,12 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 	 */
 	void RemoveCheckEmpty(LinkedServer &ls) noexcept;
 
-	void BroadcastToInGameClients(const void *data, size_t length) noexcept;
-	void BroadcastToInGameClientsExcept(const void *data, size_t length,
+	void BroadcastToInGameClients(std::span<const std::byte> src) noexcept;
+	void BroadcastToInGameClientsExcept(std::span<const std::byte> src,
 					    LinkedServer &except) noexcept;
 	void BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
-					    const void *old_data, size_t old_length,
-					    const void *new_data, size_t new_length) noexcept;
+					    std::span<const std::byte> old_packet,
+					    std::span<const std::byte> new_packet) noexcept;
 
 	LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
 

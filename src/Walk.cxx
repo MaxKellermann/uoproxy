@@ -8,6 +8,7 @@
 #include "Client.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
+#include "util/SpanCast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -77,7 +78,7 @@ walk_cancel(const World &world,
 		.z = (int8_t)world.packet_start.z,
 	};
 
-	server.Send(&p, sizeof(p));
+	server.SendT(p);
 }
 
 void
@@ -120,7 +121,7 @@ connection_walk_request(LinkedServer &ls,
 
 	auto walk = p;
 	walk.seq = i->seq = (uint8_t)state.seq_next++;
-	connection.client.client->Send(&walk, sizeof(walk));
+	connection.client.client->SendT(walk);
 
 	if (state.seq_next == 0)
 		state.seq_next = 1;
@@ -137,7 +138,7 @@ connection_resync(Connection &c)
 		.notoriety = 0,
 	};
 
-	c.client.client->Send(&packet, sizeof(packet));
+	c.client.client->SendT(packet);
 }
 
 void
@@ -163,7 +164,7 @@ connection_walk_cancel(Connection &c,
 	if (i != nullptr && state.server != nullptr) {
 		auto cancel = p;
 		cancel.seq = i->packet.seq;
-		state.server->server->Send(&cancel, sizeof(cancel));
+		state.server->server->SendT(cancel);
 	}
 
 	walk_clear(state);
@@ -228,7 +229,7 @@ connection_walk_ack(Connection &c,
 	if (state.server != nullptr) {
 		auto ack = p;
 		ack.seq = i->packet.seq;
-		state.server->server->Send(&ack, sizeof(ack));
+		state.server->server->SendT(ack);
 	}
 
 	/* send WalkForce to all other clients */
@@ -245,10 +246,10 @@ connection_walk_ack(Connection &c,
 		&c.client.world.packet_mobile_update;
 
 	if (state.server != nullptr)
-		c.BroadcastToInGameClientsExcept(mu, sizeof(*mu),
+		c.BroadcastToInGameClientsExcept(ReferenceAsBytes(mu),
 						 *state.server);
 	else
-		c.BroadcastToInGameClients(mu, sizeof(*mu));
+		c.BroadcastToInGameClients(ReferenceAsBytes(mu));
 
 	remove_item(state, i);
 }

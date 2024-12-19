@@ -45,7 +45,7 @@ UO::Server::SpeakAscii(uint32_t serial,
 	write_fixed_string(p->name, sizeof(p->name), name);
 	memcpy(p->text, text, text_length + 1);
 
-	Send(ptr.get(), ptr.size());
+	Send(ptr);
 }
 
 void

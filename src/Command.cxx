@@ -76,7 +76,7 @@ connection_handle_command(LinkedServer &ls, const char *command)
 				.dest_serial = 0,
 			};
 
-			c.client.client->Send(&p, sizeof(p));
+			c.client.client->SendT(p);
 		} else {
 			struct uo_packet_drop_6 p = {
 				.cmd = UO::Command::Drop,
@@ -88,7 +88,7 @@ connection_handle_command(LinkedServer &ls, const char *command)
 				.dest_serial = 0,
 			};
 
-			c.client.client->Send(&p, sizeof(p));
+			c.client.client->SendT(p);
 		}
 #ifndef DISABLE_LOGGING
 	} else if (strncmp(command, "verbose", 7) == 0) {

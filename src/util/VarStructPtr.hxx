@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
+#include <span>
 
 /**
  * Manage an allocated variable-length struct.
@@ -77,5 +78,9 @@ public:
 
 	T &operator*() const noexcept {
 		return *get();
+	}
+
+	constexpr operator std::span<const std::byte>() const noexcept {
+		return {value.get(), the_size};
 	}
 };

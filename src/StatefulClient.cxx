@@ -81,7 +81,7 @@ StatefulClient::OnPingTimer() noexcept
 	ping.id = ++ping_request;
 
 	Log(2, "sending ping\n");
-	client->Send(&ping, sizeof(ping));
+	client->SendT(ping);
 
 	/* schedule next ping */
 	SchedulePing();

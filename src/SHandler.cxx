@@ -14,6 +14,7 @@
 #include "version.h"
 #include "Bridge.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/SpanCast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -78,7 +79,7 @@ send_antispy(UO::Client &client)
 		.unknown1 = {},
 	};
 
-	client.Send(&p, sizeof(p));
+	client.SendT(p);
 }
 
 static PacketAction
@@ -190,8 +191,8 @@ handle_container_open(Connection &c, std::span<const std::byte> src)
 		c.client.world.Apply(*p);
 
 		c.BroadcastToInGameClientsDivert(PROTOCOL_7,
-						 &p->base, sizeof(p->base),
-						 src.data(), src.size());
+						 ReferenceAsBytes(p->base),
+						 src);
 		return PacketAction::DROP;
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_open *>(src.data());
@@ -206,8 +207,8 @@ handle_container_open(Connection &c, std::span<const std::byte> src)
 		};
 
 		c.BroadcastToInGameClientsDivert(PROTOCOL_7,
-						 p, sizeof(*p),
-						 &p7, sizeof(p7));
+						 src,
+						 ReferenceAsBytes(p7));
 
 		return PacketAction::DROP;
 	}
@@ -227,8 +228,8 @@ handle_container_update(Connection &c, std::span<const std::byte> src)
 		c.client.world.Apply(p6);
 
 		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
-						 src.data(), src.size(),
-						 &p6, sizeof(p6));
+						 src,
+						 ReferenceAsBytes(p6));
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_update_6 *>(src.data());
 		struct uo_packet_container_update p5;
@@ -240,8 +241,8 @@ handle_container_update(Connection &c, std::span<const std::byte> src)
 		c.client.world.Apply(*p);
 
 		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
-						 &p5, sizeof(p5),
-						 src.data(), src.size());
+						 ReferenceAsBytes(p5),
+						 src);
 	}
 
 	return PacketAction::DROP;
@@ -271,8 +272,8 @@ handle_container_content(Connection &c, std::span<const std::byte> src)
 		c.client.world.Apply(*p6);
 
 		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
-						 src.data(), src.size(),
-						 p6.get(), p6.size());
+						 src,
+						 p6);
 	} else if (packet_verify_container_content_6(reinterpret_cast<const struct uo_packet_container_content_6 *>(src.data()), src.size())) {
 		/* protocol v6 */
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_content_6 *>(src.data());
@@ -281,8 +282,8 @@ handle_container_content(Connection &c, std::span<const std::byte> src)
 
 		const auto p5 = container_content_6_to_5(p);
 		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
-						 p5.get(), p5.size(),
-						 src.data(), src.size());
+						 p5,
+						 src);
 	} else
 		return PacketAction::DISCONNECT;
 
@@ -445,14 +446,14 @@ handle_char_list(Connection &c, std::span<const std::byte> src)
 
 		Log(2, "sending PlayCharacter\n");
 
-		c.client.client->Send(&p2, sizeof(p2));
+		c.client.client->SendT(p2);
 
 		return PacketAction::DROP;
 	} else {
 		for (auto &ls : c.servers) {
 			if (ls.state == LinkedServer::State::GAME_LOGIN ||
 			    ls.state == LinkedServer::State::PLAY_SERVER) {
-				ls.server->Send(src.data(), src.size());
+				ls.server->Send(src);
 				ls.state = LinkedServer::State::CHAR_LIST;
 			}
 		}
@@ -538,7 +539,7 @@ handle_relay(Connection &c, std::span<const std::byte> src)
 	login.auth_id = relay.auth_id;
 	login.credentials = c.credentials;
 
-	c.client.client->Send(&login, sizeof(login));
+	c.client.client->SendT(login);
 
 	return PacketAction::DELETED;
 }
@@ -571,7 +572,7 @@ handle_server_list(Connection &c, std::span<const std::byte> src)
 			.index = 0, /* XXX */
 		};
 
-		c.client.client->Send(&p2, sizeof(p2));
+		c.client.client->SendT(p2);
 
 		return PacketAction::DROP;
 	}
@@ -592,7 +593,7 @@ handle_server_list(Connection &c, std::span<const std::byte> src)
 	for (auto &ls : c.servers) {
 		if (ls.state == LinkedServer::State::ACCOUNT_LOGIN) {
 			ls.state = LinkedServer::State::SERVER_LIST;
-			ls.server->Send(src.data(), src.size());
+			ls.server->Send(src);
 		}
 	}
 
@@ -619,8 +620,8 @@ handle_supported_features(Connection &c, std::span<const std::byte> src)
 		struct uo_packet_supported_features p6;
 		supported_features_6014_to_6(&p6, p);
 		c.BroadcastToInGameClientsDivert(PROTOCOL_6_0_14,
-						 &p6, sizeof(p6),
-						 src.data(), src.size());
+						 ReferenceAsBytes(p6),
+						 src);
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_supported_features *>(src.data());
 		assert(src.size() == sizeof(*p));
@@ -630,8 +631,8 @@ handle_supported_features(Connection &c, std::span<const std::byte> src)
 		struct uo_packet_supported_features_6014 p7;
 		supported_features_6_to_6014(&p7, p);
 		c.BroadcastToInGameClientsDivert(PROTOCOL_6_0_14,
-						 src.data(), src.size(),
-						 &p7, sizeof(p7));
+						 src,
+						 ReferenceAsBytes(p7));
 	}
 
 	return PacketAction::DROP;
@@ -658,8 +659,7 @@ handle_client_version(Connection &c, [[maybe_unused]] std::span<const std::byte>
 
 		/* respond to this packet directly if we know the version
 		   number */
-		c.client.client->Send(c.client.version.packet.get(),
-				      c.client.version.packet.size());
+		c.client.client->Send(c.client.version.packet);
 		return PacketAction::DROP;
 	} else {
 		/* we don't know the version - forward the request to all
@@ -707,8 +707,8 @@ handle_world_item_7(Connection &c, std::span<const std::byte> src)
 	c.client.world.Apply(*p);
 
 	c.BroadcastToInGameClientsDivert(PROTOCOL_7,
-					 &old, old.length,
-					 src.data(), src.size());
+					 VarLengthAsBytes(old),
+					 src);
 	return PacketAction::DROP;
 }
 
@@ -729,7 +729,7 @@ handle_protocol_extension(Connection &c, std::span<const std::byte> src)
 			.extension = 0xff,
 		};
 
-		c.client.client->Send(&response, sizeof(response));
+		c.client.client->SendT(response);
 		return PacketAction::DROP;
 	}
 

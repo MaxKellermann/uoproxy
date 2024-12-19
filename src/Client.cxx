@@ -23,10 +23,10 @@ Client::Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 	if (seed6 != nullptr) {
 		struct uo_packet_seed p = *seed6;
 		p.seed = seed;
-		Send(&p, sizeof(p));
+		SendT(p);
 	} else {
 		PackedBE32 seed_be(seed);
-		Send(&seed_be, sizeof(seed_be));
+		SendT(seed_be);
 	}
 }
 
@@ -153,21 +153,21 @@ UO::Client::OnSocketDisconnect(int error) noexcept
 }
 
 void
-UO::Client::Send(const void *src, size_t length)
+UO::Client::Send(std::span<const std::byte> src)
 {
 	assert(sock != nullptr || abort_event.IsPending());
-	assert(length > 0);
+	assert(!src.empty());
 
 	if (abort_event.IsPending())
 		return;
 
-	LogFmt(9, "sending packet to server, length={}\n", length);
-	log_hexdump(10, src, length);
+	LogFmt(9, "sending packet to server, length={}\n", src.size());
+	log_hexdump(10, src.data(), src.size());
 
-	if (*(const UO::Command *)src == UO::Command::GameLogin)
+	if (static_cast<UO::Command>(src.front()) == UO::Command::GameLogin)
 		compression_enabled = true;
 
-	if (!sock_buff_send(sock, src, length)) {
+	if (!sock_buff_send(sock, src.data(), src.size())) {
 		Log(1, "output buffer full in uo_client_send()\n");
 		Abort();
 	}

@@ -5,7 +5,10 @@
 
 #include "util/PackedBigEndian.hxx"
 
+#include <cstddef>
 #include <cstdint>
+#include <span>
+#include <type_traits>
 
 #include <string.h>
 
@@ -780,3 +783,19 @@ struct uo_packet_create_character_7 {
 };
 
 static_assert(alignof(struct uo_packet_create_character_7) == 1);
+
+template<typename T>
+concept AnyPacket = std::has_unique_object_representations_v<T> && requires (const T &t) {
+	{ t.cmd } -> std::same_as<const UO::Command &>;
+};
+
+template<typename T>
+concept VarLengthPacket = AnyPacket<T> && requires (const T &t) {
+	{ t.length } -> std::same_as<const PackedBE16 &>;
+};
+
+constexpr std::span<const std::byte>
+VarLengthAsBytes(const VarLengthPacket auto &packet) noexcept
+{
+	return { reinterpret_cast<const std::byte *>(&packet), packet.length };
+}

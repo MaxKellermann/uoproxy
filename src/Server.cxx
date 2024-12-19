@@ -136,17 +136,17 @@ UO::Server::OnSocketDisconnect(int error) noexcept
 }
 
 void
-UO::Server::Send(const void *src, size_t length)
+UO::Server::Send(std::span<const std::byte> src)
 {
 	assert(sock != nullptr || abort_event.IsPending());
-	assert(length > 0);
-	assert(get_packet_length(protocol_version, src, length) == length);
+	assert(!src.empty());
+	assert(get_packet_length(protocol_version, src.data(), src.size()) == src.size());
 
 	if (abort_event.IsPending())
 		return;
 
-	LogFmt(9, "sending packet to client, length={}\n", length);
-	log_hexdump(10, src, length);
+	LogFmt(9, "sending packet to client, length={}\n", src.size());
+	log_hexdump(10, src.data(), src.size());
 
 	if (compression_enabled) {
 		auto w = sock_buff_write(sock);
@@ -157,7 +157,7 @@ UO::Server::Send(const void *src, size_t length)
 		}
 
 		ssize_t nbytes = uo_compress((unsigned char *)w.data(), w.size(),
-					     {(const unsigned char *)src, length});
+					     {(const unsigned char *)src.data(), src.size()});
 		if (nbytes < 0) {
 			Log(1, "uo_compress() failed\n");
 			Abort();
@@ -166,7 +166,7 @@ UO::Server::Send(const void *src, size_t length)
 
 		sock_buff_append(sock, (size_t)nbytes);
 	} else {
-		if (!sock_buff_send(sock, src, length)) {
+		if (!sock_buff_send(sock, src.data(), src.size())) {
 			Log(1, "output buffer full in uo_server_send()\n");
 			Abort();
 		}

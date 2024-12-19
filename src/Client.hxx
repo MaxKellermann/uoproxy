@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <span>
+#include <type_traits>
 
 class UniqueSocketDescriptor;
 class EventLoop;
@@ -65,7 +66,13 @@ public:
 		protocol_version = _protocol_version;
 	}
 
-	void Send(const void *src, size_t length);
+	void Send(std::span<const std::byte> src);
+
+	template<typename T>
+	requires std::has_unique_object_representations_v<T>
+	void SendT(const T &src) {
+		Send(std::as_bytes(std::span{&src, 1}));
+	}
 
 private:
 	void DeferredAbort() noexcept;

@@ -25,7 +25,7 @@ Connection::OnClientPacket(std::span<const std::byte> src)
 	switch (action) {
 	case PacketAction::ACCEPT:
 		if (!client.reconnecting)
-			BroadcastToInGameClients(src.data(), src.size());
+			BroadcastToInGameClients(src);
 
 		break;
 
