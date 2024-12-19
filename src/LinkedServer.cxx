@@ -49,7 +49,7 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
 		if (c->client.client != nullptr &&
 		    (!c->client.reconnecting ||
 		     *(const UO::Command *)data == UO::Command::ClientVersion))
-			uo_client_send(c->client.client, data, length);
+			c->client.client->Send(data, length);
 		break;
 
 	case PacketAction::DROP:

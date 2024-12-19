@@ -44,7 +44,7 @@ welcome(Connection &c)
  * information, to overwrite its old database entry.
  */
 static void
-send_antispy(UO::Client *client)
+send_antispy(UO::Client &client)
 {
 	static constexpr struct uo_packet_hardware p{
 		.cmd = UO::Command::Hardware,
@@ -78,7 +78,7 @@ send_antispy(UO::Client *client)
 		.unknown1 = {},
 	};
 
-	uo_client_send(client, &p, sizeof(p));
+	client.Send(&p, sizeof(p));
 }
 
 static PacketAction
@@ -353,7 +353,7 @@ handle_login_complete(Connection &c, const void *data, size_t length)
 	(void)length;
 
 	if (c.instance.config.antispy)
-		send_antispy(c.client.client);
+		send_antispy(*c.client.client);
 
 	return PacketAction::ACCEPT;
 }
@@ -453,7 +453,7 @@ handle_char_list(Connection &c, const void *data, size_t length)
 
 		Log(2, "sending PlayCharacter\n");
 
-		uo_client_send(c.client.client, &p2, sizeof(p2));
+		c.client.client->Send(&p2, sizeof(p2));
 
 		return PacketAction::DROP;
 	} else {
@@ -546,7 +546,7 @@ handle_relay(Connection &c, const void *data, [[maybe_unused]] size_t length)
 	login.auth_id = relay.auth_id;
 	login.credentials = c.credentials;
 
-	uo_client_send(c.client.client, &login, sizeof(login));
+	c.client.client->Send(&login, sizeof(login));
 
 	return PacketAction::DELETED;
 }
@@ -575,7 +575,7 @@ handle_server_list(Connection &c, const void *data, size_t length)
 	c.client.server_list = {p, length};
 
 	if (c.instance.config.antispy)
-		send_antispy(c.client.client);
+		send_antispy(*c.client.client);
 
 	if (c.client.reconnecting) {
 		struct uo_packet_play_server p2 = {
@@ -583,7 +583,7 @@ handle_server_list(Connection &c, const void *data, size_t length)
 			.index = 0, /* XXX */
 		};
 
-		uo_client_send(c.client.client, &p2, sizeof(p2));
+		c.client.client->Send(&p2, sizeof(p2));
 
 		return PacketAction::DROP;
 	}
@@ -670,8 +670,8 @@ handle_client_version(Connection &c, const void *, size_t)
 
 		/* respond to this packet directly if we know the version
 		   number */
-		uo_client_send(c.client.client, c.client.version.packet.get(),
-			       c.client.version.packet.size());
+		c.client.client->Send(c.client.version.packet.get(),
+				      c.client.version.packet.size());
 		return PacketAction::DROP;
 	} else {
 		/* we don't know the version - forward the request to all
@@ -741,7 +741,7 @@ handle_protocol_extension(Connection &c, const void *data, size_t length)
 			.extension = 0xff,
 		};
 
-		uo_client_send(c.client.client, &response, sizeof(response));
+		c.client.client->Send(&response, sizeof(response));
 		return PacketAction::DROP;
 	}
 

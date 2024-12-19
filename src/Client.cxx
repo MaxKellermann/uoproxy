@@ -2,67 +2,38 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Client.hxx"
-#include "SocketBuffer.hxx"
-#include "Compression.hxx"
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
-#include "event/DeferEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
-#include "util/DynamicFifoBuffer.hxx"
 
 #include <utility>
 
-#include <assert.h>
-#include <stdlib.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#include <netdb.h>
-#endif
-
 namespace UO {
 
-class Client final : SocketBufferHandler {
-public:
-	SocketBuffer *const sock;
-	bool compression_enabled = false;
-	UO::Decompression decompression;
-	DynamicFifoBuffer<uint8_t> decompressed_buffer{65536};
-
-	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
-
-	ClientHandler &handler;
-
-	DeferEvent abort_event;
-
-	explicit Client(EventLoop &event_loop, UniqueSocketDescriptor &&s, ClientHandler &_handler) noexcept
-		:sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
-		 handler(_handler),
-		 abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
-	{
+Client::Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
+	       uint32_t seed, const struct uo_packet_seed *seed6,
+	       ClientHandler &_handler) noexcept
+	:sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
+	 handler(_handler),
+	 abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
+{
+	/* seed must be the first 4 bytes, and it must be flushed */
+	if (seed6 != nullptr) {
+		struct uo_packet_seed p = *seed6;
+		p.seed = seed;
+		Send(&p, sizeof(p));
+	} else {
+		PackedBE32 seed_be(seed);
+		Send(&seed_be, sizeof(seed_be));
 	}
+}
 
-	~Client() noexcept {
-		sock_buff_dispose(sock);
-	}
-
-	void Abort() noexcept;
-
-private:
-	void DeferredAbort() noexcept;
-
-	ssize_t Decompress(std::span<const uint8_t> src);
-	ssize_t ParsePackets(const uint8_t *data, size_t length);
-
-	/* virtual methods from SocketBufferHandler */
-	size_t OnSocketData(const void *data, size_t length) override;
-	void OnSocketDisconnect(int error) noexcept override;
-};
+Client::~Client() noexcept
+{
+	sock_buff_dispose(sock);
+}
 
 inline void
 Client::DeferredAbort() noexcept
@@ -181,59 +152,23 @@ UO::Client::OnSocketDisconnect(int error) noexcept
 	handler.OnClientDisconnect();
 }
 
-UO::Client *
-uo_client_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, uint32_t seed,
-		 const struct uo_packet_seed *seed6,
-		 UO::ClientHandler &handler)
-{
-	auto *client = new UO::Client(event_loop, std::move(s), handler);
-
-	/* seed must be the first 4 bytes, and it must be flushed */
-	if (seed6 != nullptr) {
-		struct uo_packet_seed p = *seed6;
-		p.seed = seed;
-		uo_client_send(client, &p, sizeof(p));
-	} else {
-		PackedBE32 seed_be(seed);
-		uo_client_send(client, &seed_be, sizeof(seed_be));
-	}
-
-	return client;
-}
-
 void
-uo_client_dispose(UO::Client *client)
+UO::Client::Send(const void *src, size_t length)
 {
-	delete client;
-}
-
-void
-uo_client_set_protocol(UO::Client *client,
-		       enum protocol_version protocol_version)
-{
-	assert(client->protocol_version == PROTOCOL_UNKNOWN);
-
-	client->protocol_version = protocol_version;
-}
-
-void
-uo_client_send(UO::Client *client,
-	       const void *src, size_t length)
-{
-	assert(client->sock != nullptr || client->abort_event.IsPending());
+	assert(sock != nullptr || abort_event.IsPending());
 	assert(length > 0);
 
-	if (client->abort_event.IsPending())
+	if (abort_event.IsPending())
 		return;
 
 	LogFmt(9, "sending packet to server, length={}\n", length);
 	log_hexdump(10, src, length);
 
 	if (*(const UO::Command *)src == UO::Command::GameLogin)
-		client->compression_enabled = true;
+		compression_enabled = true;
 
-	if (!sock_buff_send(client->sock, src, length)) {
+	if (!sock_buff_send(sock, src, length)) {
 		Log(1, "output buffer full in uo_client_send()\n");
-		client->Abort();
+		Abort();
 	}
 }

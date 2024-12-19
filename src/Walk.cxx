@@ -120,7 +120,7 @@ connection_walk_request(LinkedServer &ls,
 
 	auto walk = p;
 	walk.seq = i->seq = (uint8_t)state.seq_next++;
-	uo_client_send(connection.client.client, &walk, sizeof(walk));
+	connection.client.client->Send(&walk, sizeof(walk));
 
 	if (state.seq_next == 0)
 		state.seq_next = 1;
@@ -137,7 +137,7 @@ connection_resync(Connection &c)
 		.notoriety = 0,
 	};
 
-	uo_client_send(c.client.client, &packet, sizeof(packet));
+	c.client.client->Send(&packet, sizeof(packet));
 }
 
 void

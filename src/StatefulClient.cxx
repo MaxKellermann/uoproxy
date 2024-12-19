@@ -49,11 +49,11 @@ StatefulClient::Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 
 	s.SetNoDelay();
 
-	client = uo_client_create(event_loop, std::move(s), seed,
-				  seed_packet,
-				  handler);
+	client.reset(new UO::Client(event_loop, std::move(s), seed,
+				    seed_packet,
+				    handler));
 
-	uo_client_set_protocol(client, version.protocol);
+	client->SetProtocol(version.protocol);
 
 	SchedulePing();
 
@@ -68,8 +68,7 @@ StatefulClient::Disconnect() noexcept
 
 	ping_timer.Cancel();
 
-	uo_client_dispose(client);
-	client = nullptr;
+	client.reset();
 }
 
 inline void
@@ -82,7 +81,7 @@ StatefulClient::OnPingTimer() noexcept
 	ping.id = ++ping_request;
 
 	Log(2, "sending ping\n");
-	uo_client_send(client, &ping, sizeof(ping));
+	client->Send(&ping, sizeof(ping));
 
 	/* schedule next ping */
 	SchedulePing();

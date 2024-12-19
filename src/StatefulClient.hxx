@@ -7,6 +7,8 @@
 #include "World.hxx"
 #include "event/CoarseTimerEvent.hxx"
 
+#include <memory>
+
 class EventLoop;
 class UniqueSocketDescriptor;
 
@@ -18,7 +20,7 @@ class ClientHandler;
 struct StatefulClient {
 	bool reconnecting = false, version_requested = false;
 
-	UO::Client *client = nullptr;
+	std::unique_ptr<UO::Client> client;
 	CoarseTimerEvent ping_timer;
 
 	ClientVersion version;

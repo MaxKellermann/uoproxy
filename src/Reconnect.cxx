@@ -68,7 +68,7 @@ Connection::DoReconnect() noexcept
 
 		Log(2, "connected, doing GameLogin\n");
 
-		uo_client_send(client.client, &p, sizeof(p));
+		client.client->Send(&p, sizeof(p));
 	} else {
 		/* connect to login server */
 
@@ -88,7 +88,7 @@ Connection::DoReconnect() noexcept
 
 		Log(2, "connected, doing AccountLogin\n");
 
-		uo_client_send(client.client, &p, sizeof(p));
+		client.client->Send(&p, sizeof(p));
 	}
 }
 
