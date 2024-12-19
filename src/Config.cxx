@@ -24,6 +24,13 @@
 #include <netdb.h>
 #endif
 
+Config::Config() noexcept
+{
+	listener.listen = 4;
+}
+
+Config::~Config() noexcept = default;
+
 static void
 usage()
 {
@@ -193,14 +200,14 @@ parse_cmdline(Config *config, int argc, char **argv)
 			exit(1);
 		}
 
-		config->bind_address = parse_address(bind_address);
+		config->listener.bind_address = parse_address(bind_address).GetBest();
 	}
 
-	if (bind_port == 0 && config->bind_address.empty())
+	if (bind_port == 0 && config->listener.bind_address.IsNull())
 		bind_port = 2593;
 
 	if (bind_port != 0) {
-		config->bind_address = port_to_addrinfo(bind_port);
+		config->listener.bind_address = port_to_addrinfo(bind_port).GetBest();
 	}
 }
 
@@ -318,9 +325,9 @@ config_read_file(Config *config, const char *path)
 				exit(2);
 			}
 
-			config->bind_address = port_to_addrinfo((unsigned)port);
+			config->listener.bind_address = port_to_addrinfo((unsigned)port).GetBest();
 		} else if (strcmp(key, "bind") == 0) {
-			config->bind_address = parse_address(value);
+			config->listener.bind_address = parse_address(value).GetBest();
 		} else if (strcmp(key, "socks4") == 0) {
 			struct addrinfo hints;
 			memset(&hints, 0, sizeof(hints));
@@ -377,5 +384,3 @@ config_read_file(Config *config, const char *path)
 
 	return 0;
 }
-
-Config::~Config() noexcept = default;

@@ -4,12 +4,11 @@
 #include "Listener.hxx"
 #include "Instance.hxx"
 #include "Connection.hxx"
-#include "NetUtil.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/PrintException.hxx"
 
-Listener::Listener(Instance &_instance, SocketAddress bind_address)
-	:ServerSocket(_instance.event_loop, setup_server_socket(bind_address)),
+Listener::Listener(Instance &_instance, UniqueSocketDescriptor &&socket)
+	:ServerSocket(_instance.event_loop, std::move(socket)),
 	 instance(_instance) {}
 
 Listener::~Listener() noexcept

@@ -122,7 +122,6 @@ executable(
   'src/Flush.cxx', 'src/SocketBuffer.cxx',
   'src/BufferedIO.cxx',
   'src/ProxySocks.cxx',
-  'src/NetUtil.cxx',
   'src/Encryption.cxx',
   'src/Server.cxx', 'src/Client.cxx',
   'src/PacketLengths.cxx', 'src/Compression.cxx',

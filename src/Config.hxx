@@ -4,6 +4,7 @@
 #pragma once
 
 #include "net/AddressInfo.hxx"
+#include "net/SocketConfig.hxx"
 
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@ struct game_server_config {
 };
 
 struct Config {
-	AddressInfoList bind_address;
+	SocketConfig listener;
 
 	/**
 	 * The address of the SOCKS4 proxy server.
@@ -37,6 +38,7 @@ struct Config {
 
 	std::string client_version;
 
+	Config() noexcept;
 	~Config() noexcept;
 };
 

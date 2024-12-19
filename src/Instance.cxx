@@ -5,6 +5,8 @@
 #include "Listener.hxx"
 #include "Config.hxx"
 
+#include <sys/socket.h> // for SOCK_STREAM
+
 Instance::Instance(Config &_config) noexcept
 	:config(_config)
 {
@@ -17,7 +19,7 @@ void
 instance_setup_server_socket(Instance *instance)
 {
 	instance->listeners.emplace_front(*instance,
-					  instance->config.bind_address.GetBest());
+					  instance->config.listener.Create(SOCK_STREAM));
 }
 
 Connection *

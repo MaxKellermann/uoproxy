@@ -16,7 +16,7 @@ class Listener final : ServerSocket {
 	IntrusiveList<Connection> connections;
 
 public:
-	Listener(Instance &_instance, SocketAddress bind_address);
+	Listener(Instance &_instance, UniqueSocketDescriptor &&socket);
 	~Listener() noexcept;
 
 	Connection *FindAttachConnection(const UO::CredentialsFragment &credentials) noexcept;
