@@ -163,7 +163,7 @@ UO::Client::Send(std::span<const std::byte> src)
 	if (static_cast<UO::Command>(src.front()) == UO::Command::GameLogin)
 		compression_enabled = true;
 
-	if (!sock.Send(src.data(), src.size())) {
+	if (!sock.Send(src)) {
 		Log(1, "output buffer full in uo_client_send()\n");
 		Abort();
 	}

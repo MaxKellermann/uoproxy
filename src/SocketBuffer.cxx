@@ -7,9 +7,10 @@
 #include "net/IPv4Address.hxx"
 #include "net/StaticSocketAddress.hxx"
 
+#include <algorithm>
+
 #include <assert.h>
 #include <unistd.h>
-#include <string.h>
 #include <errno.h>
 
 SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
@@ -36,14 +37,14 @@ SocketBuffer::Append(std::size_t length) noexcept
 }
 
 bool
-SocketBuffer::Send(const void *data, size_t length) noexcept
+SocketBuffer::Send(std::span<const std::byte> src) noexcept
 {
 	auto w = Write();
-	if (length > w.size())
+	if (src.size() > w.size())
 		return false;
 
-	memcpy(w.data(), data, length);
-	Append(length);
+	std::copy(src.begin(), src.end(), w.begin());
+	Append(src.size());
 	return true;
 }
 

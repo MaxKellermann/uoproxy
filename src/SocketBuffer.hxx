@@ -58,7 +58,7 @@ public:
 	 * @return true on success, false if there is no more room in the
 	 * output buffer
 	 */
-	bool Send(const void *data, size_t length) noexcept;
+	bool Send(std::span<const std::byte> src) noexcept;
 
 	/**
 	 * @return the 32-bit internet address of the socket buffer's fd, in

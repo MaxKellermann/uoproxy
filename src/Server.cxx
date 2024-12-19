@@ -166,7 +166,7 @@ UO::Server::Send(std::span<const std::byte> src)
 
 		sock.Append(static_cast<std::size_t>(nbytes));
 	} else {
-		if (!sock.Send(src.data(), src.size())) {
+		if (!sock.Send(src)) {
 			Log(1, "output buffer full in uo_server_send()\n");
 			Abort();
 		}
