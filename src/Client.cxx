@@ -15,7 +15,7 @@ namespace UO {
 Client::Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 	       uint32_t seed, const struct uo_packet_seed *seed6,
 	       ClientHandler &_handler) noexcept
-	:sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
+	:sock(event_loop, std::move(s), 8192, 65536, *this),
 	 handler(_handler),
 	 abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
 {
@@ -30,10 +30,7 @@ Client::Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 	}
 }
 
-Client::~Client() noexcept
-{
-	sock_buff_dispose(sock);
-}
+Client::~Client() noexcept = default;
 
 inline void
 Client::DeferredAbort() noexcept
@@ -155,7 +152,6 @@ UO::Client::OnSocketDisconnect(int error) noexcept
 void
 UO::Client::Send(std::span<const std::byte> src)
 {
-	assert(sock != nullptr || abort_event.IsPending());
 	assert(!src.empty());
 
 	if (abort_event.IsPending())
@@ -167,7 +163,7 @@ UO::Client::Send(std::span<const std::byte> src)
 	if (static_cast<UO::Command>(src.front()) == UO::Command::GameLogin)
 		compression_enabled = true;
 
-	if (!sock_buff_send(sock, src.data(), src.size())) {
+	if (!sock.Send(src.data(), src.size())) {
 		Log(1, "output buffer full in uo_client_send()\n");
 		Abort();
 	}

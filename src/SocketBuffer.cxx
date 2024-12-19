@@ -3,55 +3,69 @@
 
 #include "SocketBuffer.hxx"
 #include "BufferedIO.hxx"
-#include "Flush.hxx"
 #include "Log.hxx"
-#include "event/SocketEvent.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
-#include "util/DynamicFifoBuffer.hxx"
 
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <netdb.h>
 
-struct SocketBuffer final : PendingFlush {
-	const UniqueSocketDescriptor socket;
+SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
+			   size_t output_max,
+			   SocketBufferHandler &_handler)
+	:socket(std::move(s)),
+	 event(event_loop, BIND_THIS_METHOD(OnSocketReady), socket),
+	 input(input_max),
+	 output(output_max),
+	 handler(_handler)
+{
+	event.ScheduleRead();
+}
 
-	SocketEvent event;
+SocketBuffer::~SocketBuffer() noexcept = default;
 
-	DynamicFifoBuffer<std::byte> input, output;
+void
+SocketBuffer::Append(std::size_t length) noexcept
+{
+	output.Append(length);
 
-	SocketBufferHandler &handler;
+	event.ScheduleWrite();
+	ScheduleFlush();
+}
 
-	SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-		     size_t output_max,
-		     SocketBufferHandler &_handler);
-	~SocketBuffer() noexcept;
+bool
+SocketBuffer::Send(const void *data, size_t length) noexcept
+{
+	auto w = Write();
+	if (length > w.size())
+		return false;
 
-	using PendingFlush::ScheduleFlush;
+	memcpy(w.data(), data, length);
+	Append(length);
+	return true;
+}
 
-	/**
-	 * @return false on error or if nothing was consumed
-	 */
-	bool SubmitData();
+uint32_t
+SocketBuffer::GetName() const noexcept
+{
+	const auto address = socket.GetLocalAddress();
+	if (address.GetFamily() == AF_INET)
+		return IPv4Address::Cast(address).GetNumericAddressBE();
+	else
+		return 0;
+}
 
-	/**
-	 * Try to flush the output buffer.  Note that this function will
-	 * not trigger the free() callback.
-	 *
-	 * @return true on success, false on i/o error (see errno)
-	 */
-	bool FlushOutput();
-
-protected:
-	void OnSocketReady(unsigned events) noexcept;
-
-	/* virtual methods from PendingFlush */
-	void DoFlush() noexcept override;
-};
+uint16_t
+SocketBuffer::GetPort() const noexcept
+{
+	const auto address = socket.GetLocalAddress();
+	if (address.GetFamily() == AF_INET)
+		return IPv4Address::Cast(address).GetPortBE();
+	else
+		return 0;
+}
 
 inline bool
 SocketBuffer::SubmitData()
@@ -126,89 +140,4 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 	if (events & (event.HANGUP|event.ERROR)) {
 		handler.OnSocketDisconnect(0);
 	}
-}
-
-/*
- * methods
- *
- */
-
-std::span<std::byte>
-sock_buff_write(SocketBuffer *sb) noexcept
-{
-	return sb->output.Write();
-}
-
-void
-sock_buff_append(SocketBuffer *sb, size_t length)
-{
-	sb->output.Append(length);
-
-	sb->event.ScheduleWrite();
-	sb->ScheduleFlush();
-}
-
-bool
-sock_buff_send(SocketBuffer *sb, const void *data, size_t length)
-{
-	auto w = sock_buff_write(sb);
-	if (length > w.size())
-		return false;
-
-	memcpy(w.data(), data, length);
-	sock_buff_append(sb, length);
-	return true;
-}
-
-uint32_t
-sock_buff_sockname(const SocketBuffer *sb)
-{
-	const auto address = sb->socket.GetLocalAddress();
-	if (address.GetFamily() == AF_INET)
-		return IPv4Address::Cast(address).GetNumericAddressBE();
-	else
-		return 0;
-}
-
-uint16_t
-sock_buff_port(const SocketBuffer *sb)
-{
-	const auto address = sb->socket.GetLocalAddress();
-	if (address.GetFamily() == AF_INET)
-		return IPv4Address::Cast(address).GetPortBE();
-	else
-		return 0;
-}
-
-/*
- * constructor and destructor
- *
- */
-
-inline
-SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-			   size_t output_max,
-			   SocketBufferHandler &_handler)
-	:socket(std::move(s)),
-	 event(event_loop, BIND_THIS_METHOD(OnSocketReady), socket),
-	 input(input_max),
-	 output(output_max),
-	 handler(_handler)
-{
-	event.ScheduleRead();
-}
-
-SocketBuffer *
-sock_buff_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-		 size_t output_max,
-		 SocketBufferHandler &handler)
-{
-	return new SocketBuffer(event_loop, std::move(s), input_max, output_max, handler);
-}
-
-inline
-SocketBuffer::~SocketBuffer() noexcept = default;
-
-void sock_buff_dispose(SocketBuffer *sb) {
-	delete sb;
 }

@@ -39,7 +39,7 @@ public:
 };
 
 class Server final : SocketBufferHandler  {
-	SocketBuffer *const sock;
+	SocketBuffer sock;
 	uint32_t seed = 0;
 	bool compression_enabled = false;
 
@@ -62,13 +62,13 @@ public:
 	/** @return ip address, in network byte order, of our uo server socket
 	    (= connection to client) */
 	uint32_t GetSockName() const noexcept {
-		return sock_buff_sockname(sock);
+		return sock.GetName();
 	}
 
 	/** @return port, in network byte order, of our uo server socket
 	    (= connection to client) */
 	uint16_t GetSockPort() const noexcept {
-		return sock_buff_port(sock);
+		return sock.GetPort();
 	}
 
 	uint32_t GetSeed() const noexcept {

@@ -40,7 +40,7 @@ public:
 };
 
 class Client final : SocketBufferHandler {
-	SocketBuffer *const sock;
+	SocketBuffer sock;
 	bool compression_enabled = false;
 	UO::Decompression decompression;
 	DynamicFifoBuffer<uint8_t> decompressed_buffer{65536};

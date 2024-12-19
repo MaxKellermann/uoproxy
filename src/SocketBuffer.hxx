@@ -3,6 +3,11 @@
 
 #pragma once
 
+#include "Flush.hxx"
+#include "event/SocketEvent.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
+#include "util/DynamicFifoBuffer.hxx"
+
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -28,36 +33,63 @@ public:
 	virtual void OnSocketDisconnect(int error) noexcept = 0;
 };
 
-struct SocketBuffer;
+class SocketBuffer final : PendingFlush {
+	const UniqueSocketDescriptor socket;
 
-SocketBuffer *
-sock_buff_create(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-		 size_t output_max,
-		 SocketBufferHandler &handler);
+	SocketEvent event;
 
-void sock_buff_dispose(SocketBuffer *sb);
+	DynamicFifoBuffer<std::byte> input, output;
 
-std::span<std::byte>
-sock_buff_write(SocketBuffer *sb) noexcept;
+	SocketBufferHandler &handler;
 
-void
-sock_buff_append(SocketBuffer *sb, size_t length);
+public:
+	SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
+		     size_t output_max,
+		     SocketBufferHandler &_handler);
+	~SocketBuffer() noexcept;
 
-/**
- * @return true on success, false if there is no more room in the
- * output buffer
- */
-bool
-sock_buff_send(SocketBuffer *sb, const void *data, size_t length);
+	std::span<std::byte> Write() noexcept {
+		return output.Write();
+	}
 
-/**
- * @return the 32-bit internet address of the socket buffer's fd, in
- * network byte order
- */
-uint32_t sock_buff_sockname(const SocketBuffer *sb);
+	void Append(std::size_t length) noexcept;
 
-/**
- * @return the 16-bit port ofthe socket buffer's fd, in network byte
- * order
- */
-uint16_t sock_buff_port(const SocketBuffer *sb);
+	/**
+	 * @return true on success, false if there is no more room in the
+	 * output buffer
+	 */
+	bool Send(const void *data, size_t length) noexcept;
+
+	/**
+	 * @return the 32-bit internet address of the socket buffer's fd, in
+	 * network byte order
+	 */
+	uint32_t GetName() const noexcept;
+
+	/**
+	 * @return the 16-bit port ofthe socket buffer's fd, in network byte
+	 * order
+	 */
+	uint16_t GetPort() const noexcept;
+
+	using PendingFlush::ScheduleFlush;
+
+	/**
+	 * @return false on error or if nothing was consumed
+	 */
+	bool SubmitData();
+
+	/**
+	 * Try to flush the output buffer.  Note that this function will
+	 * not trigger the free() callback.
+	 *
+	 * @return true on success, false on i/o error (see errno)
+	 */
+	bool FlushOutput();
+
+protected:
+	void OnSocketReady(unsigned events) noexcept;
+
+	/* virtual methods from PendingFlush */
+	void DoFlush() noexcept override;
+};

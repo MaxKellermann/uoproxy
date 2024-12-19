@@ -12,16 +12,13 @@ namespace UO {
 
 Server::Server(EventLoop &event_loop,
                UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
-	:sock(sock_buff_create(event_loop, std::move(s), 8192, 65536, *this)),
+	:sock(event_loop, std::move(s), 8192, 65536, *this),
 	handler(_handler),
 	abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
 {
 }
 
-Server::~Server() noexcept
-{
-	sock_buff_dispose(sock);
-}
+Server::~Server() noexcept = default;
 
 inline void
 Server::DeferredAbort() noexcept
@@ -138,7 +135,6 @@ UO::Server::OnSocketDisconnect(int error) noexcept
 void
 UO::Server::Send(std::span<const std::byte> src)
 {
-	assert(sock != nullptr || abort_event.IsPending());
 	assert(!src.empty());
 	assert(get_packet_length(protocol_version, src.data(), src.size()) == src.size());
 
@@ -149,7 +145,7 @@ UO::Server::Send(std::span<const std::byte> src)
 	log_hexdump(10, src.data(), src.size());
 
 	if (compression_enabled) {
-		auto w = sock_buff_write(sock);
+		auto w = sock.Write();
 		if (w.empty()) {
 			Log(1, "output buffer full in uo_server_send()\n");
 			Abort();
@@ -164,9 +160,9 @@ UO::Server::Send(std::span<const std::byte> src)
 			return;
 		}
 
-		sock_buff_append(sock, (size_t)nbytes);
+		sock.Append(static_cast<std::size_t>(nbytes));
 	} else {
-		if (!sock_buff_send(sock, src.data(), src.size())) {
+		if (!sock.Send(src.data(), src.size())) {
 			Log(1, "output buffer full in uo_server_send()\n");
 			Abort();
 		}
