@@ -27,6 +27,7 @@
 Config::Config() noexcept
 {
 	listener.listen = 4;
+	listener.tcp_no_delay = true;
 }
 
 Config::~Config() noexcept = default;

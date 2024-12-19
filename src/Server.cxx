@@ -172,8 +172,6 @@ UO::Server *
 uo_server_create(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 		 UO::ServerHandler &handler)
 {
-	s.SetNoDelay();
-
 	return new UO::Server(event_loop, std::move(s), handler);
 }
 
