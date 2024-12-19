@@ -18,6 +18,7 @@ SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, si
 			   SocketBufferHandler &_handler)
 	:socket(std::move(s)),
 	 event(event_loop, BIND_THIS_METHOD(OnSocketReady), socket),
+	 defer_send(event_loop, BIND_THIS_METHOD(OnDeferredSend)),
 	 input(input_max),
 	 output(output_max),
 	 handler(_handler)
@@ -32,8 +33,7 @@ SocketBuffer::Append(std::size_t length) noexcept
 {
 	output.Append(length);
 
-	event.ScheduleWrite();
-	ScheduleFlush();
+	defer_send.Schedule();
 }
 
 bool
@@ -75,8 +75,6 @@ SocketBuffer::SubmitData()
 	if (r.empty())
 		return true;
 
-	const ScopeLockFlush lock_flush;
-
 	ssize_t nbytes = handler.OnSocketData(r);
 	if (nbytes == 0)
 		return false;
@@ -98,14 +96,17 @@ SocketBuffer::FlushOutput()
 	return true;
 }
 
-void
-SocketBuffer::DoFlush() noexcept
+inline void
+SocketBuffer::OnDeferredSend() noexcept
 {
-	if (!FlushOutput())
+	if (!FlushOutput()) {
 		return;
+	}
 
 	if (output.empty())
 		event.CancelWrite();
+	else
+		event.ScheduleWrite();
 }
 
 inline void

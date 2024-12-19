@@ -119,7 +119,7 @@ executable(
   'src/Listener.cxx',
   'src/Log.cxx',
   'src/SocketConnect.cxx',
-  'src/Flush.cxx', 'src/SocketBuffer.cxx',
+  'src/SocketBuffer.cxx',
   'src/BufferedIO.cxx',
   'src/ProxySocks.cxx',
   'src/Encryption.cxx',

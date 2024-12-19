@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Flush.hxx"
+#include "event/DeferEvent.hxx"
 #include "event/SocketEvent.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
@@ -33,10 +33,12 @@ public:
 	virtual void OnSocketDisconnect(int error) noexcept = 0;
 };
 
-class SocketBuffer final : PendingFlush {
+class SocketBuffer final {
 	const UniqueSocketDescriptor socket;
 
 	SocketEvent event;
+
+	DeferEvent defer_send;
 
 	DynamicFifoBuffer<std::byte> input, output;
 
@@ -72,8 +74,6 @@ public:
 	 */
 	uint16_t GetPort() const noexcept;
 
-	using PendingFlush::ScheduleFlush;
-
 	/**
 	 * @return false on error or if nothing was consumed
 	 */
@@ -89,7 +89,5 @@ public:
 
 protected:
 	void OnSocketReady(unsigned events) noexcept;
-
-	/* virtual methods from PendingFlush */
-	void DoFlush() noexcept override;
+	void OnDeferredSend() noexcept;
 };
