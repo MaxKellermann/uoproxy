@@ -5,6 +5,7 @@
 #include "BufferedIO.hxx"
 #include "Log.hxx"
 #include "net/IPv4Address.hxx"
+#include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
 
 #include <algorithm>
@@ -100,6 +101,9 @@ inline void
 SocketBuffer::OnDeferredSend() noexcept
 {
 	if (!FlushOutput()) {
+		const int error = GetSocketError();
+		if (!IsSocketErrorSendWouldBlock(error))
+			handler.OnSocketDisconnect(error);
 		return;
 	}
 
