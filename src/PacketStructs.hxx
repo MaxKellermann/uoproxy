@@ -14,7 +14,7 @@
 
 namespace UO {
 
-enum Command : uint8_t;
+enum class Command : uint8_t;
 
 struct CredentialsFragment {
 	char username[30];

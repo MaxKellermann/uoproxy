@@ -48,8 +48,8 @@ static constexpr auto
 MakePaketLengths6() noexcept
 {
 	auto pl = packet_lengths;
-	pl[UO::Command::Drop] = sizeof(struct uo_packet_drop_6);
-	pl[UO::Command::ContainerUpdate] = sizeof(struct uo_packet_container_update_6);
+	pl[static_cast<std::size_t>(UO::Command::Drop)] = sizeof(struct uo_packet_drop_6);
+	pl[static_cast<std::size_t>(UO::Command::ContainerUpdate)] = sizeof(struct uo_packet_container_update_6);
 	return pl;
 }
 
@@ -59,7 +59,7 @@ static constexpr auto
 MakePaketLengths6014() noexcept
 {
 	auto pl = packet_lengths_6;
-	pl[UO::Command::SupportedFeatures] = sizeof(struct uo_packet_supported_features_6014);
+	pl[static_cast<std::size_t>(UO::Command::SupportedFeatures)] = sizeof(struct uo_packet_supported_features_6014);
 	return pl;
 }
 
@@ -69,8 +69,8 @@ static constexpr auto
 MakePaketLengths7() noexcept
 {
 	auto pl = packet_lengths_6014;
-	pl[UO::Command::ContainerOpen] = sizeof(struct uo_packet_container_open_7);
-	pl[UO::Command::CreateCharacter7] = sizeof(struct uo_packet_create_character_7);
+	pl[static_cast<std::size_t>(UO::Command::ContainerOpen)] = sizeof(struct uo_packet_container_open_7);
+	pl[static_cast<std::size_t>(UO::Command::CreateCharacter7)] = sizeof(struct uo_packet_create_character_7);
 	return pl;
 }
 

@@ -7,7 +7,7 @@
 
 namespace UO {
 
-enum Command : uint8_t {
+enum class Command : uint8_t {
 	CreateCharacter = 0x00,
 	Disconnect = 0x01,
 	Walk = 0x02,

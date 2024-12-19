@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <span>
 
-namespace UO { enum Command : uint8_t; }
+namespace UO { enum class Command : uint8_t; }
 
 struct Connection;
 struct LinkedServer;
