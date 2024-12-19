@@ -5,7 +5,6 @@
 
 #include "event/DeferEvent.hxx"
 #include "event/SocketEvent.hxx"
-#include "net/UniqueSocketDescriptor.hxx"
 #include "util/DynamicFifoBuffer.hxx"
 
 #include <cstddef>
@@ -34,8 +33,6 @@ public:
 };
 
 class SocketBuffer final {
-	const UniqueSocketDescriptor socket;
-
 	SocketEvent event;
 
 	DeferEvent defer_send;

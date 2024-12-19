@@ -7,6 +7,7 @@
 #include "net/IPv4Address.hxx"
 #include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
+#include "net/UniqueSocketDescriptor.hxx"
 
 #include <algorithm>
 
@@ -17,8 +18,7 @@
 SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
 			   size_t output_max,
 			   SocketBufferHandler &_handler)
-	:socket(std::move(s)),
-	 event(event_loop, BIND_THIS_METHOD(OnSocketReady), socket),
+	:event(event_loop, BIND_THIS_METHOD(OnSocketReady), s.Release()),
 	 defer_send(event_loop, BIND_THIS_METHOD(OnDeferredSend)),
 	 input(input_max),
 	 output(output_max),
@@ -27,7 +27,10 @@ SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, si
 	event.ScheduleRead();
 }
 
-SocketBuffer::~SocketBuffer() noexcept = default;
+SocketBuffer::~SocketBuffer() noexcept
+{
+	event.Close();
+}
 
 void
 SocketBuffer::Append(std::size_t length) noexcept
@@ -52,7 +55,7 @@ SocketBuffer::Send(std::span<const std::byte> src) noexcept
 uint32_t
 SocketBuffer::GetName() const noexcept
 {
-	const auto address = socket.GetLocalAddress();
+	const auto address = event.GetSocket().GetLocalAddress();
 	if (address.GetFamily() == AF_INET)
 		return IPv4Address::Cast(address).GetNumericAddressBE();
 	else
@@ -62,7 +65,7 @@ SocketBuffer::GetName() const noexcept
 uint16_t
 SocketBuffer::GetPort() const noexcept
 {
-	const auto address = socket.GetLocalAddress();
+	const auto address = event.GetSocket().GetLocalAddress();
 	if (address.GetFamily() == AF_INET)
 		return IPv4Address::Cast(address).GetPortBE();
 	else
@@ -87,7 +90,7 @@ SocketBuffer::SubmitData()
 bool
 SocketBuffer::FlushOutput()
 {
-	ssize_t nbytes = write_from_buffer(socket, output);
+	ssize_t nbytes = write_from_buffer(event.GetSocket(), output);
 	if (nbytes == -2)
 		return true;
 
@@ -127,7 +130,7 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 	}
 
 	if (events & event.READ) {
-		ssize_t nbytes = read_to_buffer(socket, input);
+		ssize_t nbytes = read_to_buffer(event.GetSocket(), input);
 		if (nbytes > 0) {
 			if (!SubmitData())
 				return;
