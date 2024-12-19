@@ -139,7 +139,7 @@ private:
 	void ReconnectTimerCallback() noexcept;
 
 	/* virtual methods from UO::ClientHandler */
-	bool OnClientPacket(const void *data, size_t length) override;
+	bool OnClientPacket(std::span<const std::byte> src) override;
 	void OnClientDisconnect() noexcept override;
 };
 

@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 
 namespace UO { enum Command : uint8_t; }
 
@@ -29,13 +30,13 @@ enum class PacketAction {
 struct client_packet_binding {
 	UO::Command cmd;
 	PacketAction (*handler)(Connection &c,
-				const void *data, size_t length);
+				std::span<const std::byte> src);
 };
 
 struct server_packet_binding {
 	UO::Command cmd;
 	PacketAction (*handler)(LinkedServer &ls,
-				const void *data, size_t length);
+				std::span<const std::byte> src);
 };
 
 extern const struct client_packet_binding server_packet_bindings[];
@@ -44,9 +45,9 @@ extern const struct server_packet_binding client_packet_bindings[];
 PacketAction
 handle_packet_from_server(const struct client_packet_binding *bindings,
 			  Connection &c,
-			  const void *data, size_t length);
+			  std::span<const std::byte> src);
 
 PacketAction
 handle_packet_from_client(const struct server_packet_binding *bindings,
 			  LinkedServer &ls,
-			  const void *data, size_t length);
+			  std::span<const std::byte> src);

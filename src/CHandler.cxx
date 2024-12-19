@@ -64,10 +64,10 @@ handle_talk(LinkedServer &ls, const char *text)
 
 static PacketAction
 handle_create_character(LinkedServer &ls,
-			const void *data, [[maybe_unused]] size_t length)
+			std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_create_character *)data;
-	assert(length == sizeof(*p));
+	const auto *const p = reinterpret_cast<const struct uo_packet_create_character *>(src.data());
+	assert(src.size() == sizeof(*p));
 
 	if (ls.connection->instance.config.antispy) {
 		struct uo_packet_create_character q = *p;
@@ -80,11 +80,11 @@ handle_create_character(LinkedServer &ls,
 
 static PacketAction
 handle_walk(LinkedServer &ls,
-	    const void *data, [[maybe_unused]] size_t length)
+	    std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_walk *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_walk *>(src.data());
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	if (!ls.connection->IsInGame())
 		return PacketAction::DISCONNECT;
@@ -113,14 +113,14 @@ handle_walk(LinkedServer &ls,
 }
 
 static PacketAction
-handle_talk_ascii(LinkedServer &ls, const void *data, size_t length)
+handle_talk_ascii(LinkedServer &ls, std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_talk_ascii *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_talk_ascii *>(src.data());
 
-	if (length < sizeof(*p))
+	if (src.size() < sizeof(*p))
 		return PacketAction::DISCONNECT;
 
-	const size_t text_length = length - sizeof(*p);
+	const size_t text_length = src.size() - sizeof(*p);
 	if (p->text[text_length] != 0)
 		return PacketAction::DISCONNECT;
 
@@ -129,11 +129,11 @@ handle_talk_ascii(LinkedServer &ls, const void *data, size_t length)
 
 static PacketAction
 handle_use(LinkedServer &ls,
-	   const void *data, [[maybe_unused]] size_t length)
+	   std::span<const std::byte> src)
 {
-	[[maybe_unused]] auto p = (const struct uo_packet_use *)data;
+	[[maybe_unused]] const auto *const p = reinterpret_cast<const struct uo_packet_use *>(src.data());
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	if (ls.connection->client.reconnecting) {
 		ls.server->SpeakConsole("please wait until uoproxy finishes reconnecting");
@@ -168,7 +168,7 @@ handle_use(LinkedServer &ls,
 }
 
 static PacketAction
-handle_action(LinkedServer &ls, const void *, size_t)
+handle_action(LinkedServer &ls, [[maybe_unused]] std::span<const std::byte> src)
 {
 	if (ls.connection->client.reconnecting) {
 		ls.server->SpeakConsole("please wait until uoproxy finishes reconnecting");
@@ -180,11 +180,11 @@ handle_action(LinkedServer &ls, const void *, size_t)
 
 static PacketAction
 handle_lift_request(LinkedServer &ls,
-		    const void *data, [[maybe_unused]] size_t length)
+		    std::span<const std::byte> src)
 {
-	[[maybe_unused]] auto p = (const struct uo_packet_lift_request *)data;
+	[[maybe_unused]] const auto *const p = reinterpret_cast<const struct uo_packet_lift_request *>(src.data());
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	if (ls.connection->client.reconnecting) {
 		/* while reconnecting, reject all lift requests */
@@ -203,7 +203,7 @@ handle_lift_request(LinkedServer &ls,
 
 static PacketAction
 handle_drop(LinkedServer &ls,
-	    const void *data, [[maybe_unused]] size_t length)
+	    std::span<const std::byte> src)
 {
 	auto *client = &ls.connection->client;
 
@@ -212,9 +212,9 @@ handle_drop(LinkedServer &ls,
 		return PacketAction::DROP;
 
 	if (ls.client_version.protocol < PROTOCOL_6) {
-		auto p = (const struct uo_packet_drop *)data;
+		const auto *const p = reinterpret_cast<const struct uo_packet_drop *>(src.data());
 
-		assert(length == sizeof(*p));
+		assert(src.size() == sizeof(*p));
 
 		if (ls.connection->client.version.protocol < PROTOCOL_6)
 			return PacketAction::ACCEPT;
@@ -223,9 +223,9 @@ handle_drop(LinkedServer &ls,
 		drop_5_to_6(&p6, p);
 		client->client->Send(&p6, sizeof(p6));
 	} else {
-		auto p = (const struct uo_packet_drop_6 *)data;
+		const auto *const p = reinterpret_cast<const struct uo_packet_drop_6 *>(src.data());
 
-		assert(length == sizeof(*p));
+		assert(src.size() == sizeof(*p));
 
 		if (ls.connection->client.version.protocol >= PROTOCOL_6)
 			return PacketAction::ACCEPT;
@@ -239,7 +239,7 @@ handle_drop(LinkedServer &ls,
 }
 
 static PacketAction
-handle_resynchronize(LinkedServer &ls, const void *, size_t)
+handle_resynchronize(LinkedServer &ls, [[maybe_unused]] std::span<const std::byte> src)
 {
 	ls.LogF(3, "Resync!");
 
@@ -250,12 +250,12 @@ handle_resynchronize(LinkedServer &ls, const void *, size_t)
 
 static PacketAction
 handle_target(LinkedServer &ls,
-	      const void *data, [[maybe_unused]] size_t length)
+	      std::span<const std::byte> src)
 {
-	[[maybe_unused]] auto p = (const struct uo_packet_target *)data;
+	[[maybe_unused]] const auto *const p = reinterpret_cast<const struct uo_packet_target *>(src.data());
 	World *world = &ls.connection->client.world;
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	if (world->packet_target.cmd == UO::Command::Target &&
 	    world->packet_target.target_id != 0) {
@@ -274,20 +274,20 @@ handle_target(LinkedServer &ls,
 }
 
 static PacketAction
-handle_ping(LinkedServer &ls, const void *data, size_t length)
+handle_ping(LinkedServer &ls, std::span<const std::byte> src)
 {
-	ls.server->Send(data, length);
+	ls.server->Send(src.data(), src.size());
 	return PacketAction::DROP;
 }
 
 static PacketAction
-handle_account_login(LinkedServer &ls, const void *data, size_t length)
+handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_account_login *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_account_login *>(src.data());
 	Connection *c = ls.connection;
 	const Config &config = c->instance.config;
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	switch (ls.state) {
 	case LinkedServer::State::INIT:
@@ -353,7 +353,7 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 		std::size_t i, num_game_servers = config.game_servers.size();
 
 		struct uo_packet_server_list *p2;
-		length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
+		size_t length = sizeof(*p2) + (num_game_servers - 1) * sizeof(p2->game_servers[0]);
 
 		const VarStructPtr<struct uo_packet_server_list> p2_(length);
 		p2 = p2_.get();
@@ -416,11 +416,11 @@ handle_account_login(LinkedServer &ls, const void *data, size_t length)
 
 static PacketAction
 handle_game_login(LinkedServer &ls,
-		  const void *data, [[maybe_unused]] size_t length)
+		  std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_game_login *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_game_login *>(src.data());
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	if (!ls.connection->instance.config.razor_workaround)
 		/* unless we're in Razor workaround mode, valid UO clients
@@ -523,11 +523,11 @@ handle_game_login(LinkedServer &ls,
 
 static PacketAction
 handle_play_character(LinkedServer &ls,
-		      const void *data, [[maybe_unused]] size_t length)
+		      std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_play_character *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_play_character *>(src.data());
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	switch (ls.state) {
 	case LinkedServer::State::INIT:
@@ -575,15 +575,15 @@ redirect_to_self(LinkedServer &ls)
 
 static PacketAction
 handle_play_server(LinkedServer &ls,
-		   const void *data, [[maybe_unused]] size_t length)
+		   std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_play_server *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_play_server *>(src.data());
 	auto &c = *ls.connection;
 	auto &instance = c.instance;
 	const auto &config = instance.config;
 	PacketAction retaction = PacketAction::DROP;
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	switch (ls.state) {
 	case LinkedServer::State::INIT:
@@ -678,11 +678,8 @@ handle_play_server(LinkedServer &ls,
 }
 
 static PacketAction
-handle_spy(LinkedServer &ls, const void *data, size_t length)
+handle_spy(LinkedServer &ls, [[maybe_unused]] std::span<const std::byte> src)
 {
-	(void)data;
-	(void)length;
-
 	if (ls.connection->instance.config.antispy)
 		return PacketAction::DROP;
 
@@ -690,11 +687,11 @@ handle_spy(LinkedServer &ls, const void *data, size_t length)
 }
 
 static PacketAction
-handle_talk_unicode(LinkedServer &ls, const void *data, size_t length)
+handle_talk_unicode(LinkedServer &ls, std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_talk_unicode *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_talk_unicode *>(src.data());
 
-	if (length < sizeof(*p))
+	if (src.size() < sizeof(*p))
 		return PacketAction::DISCONNECT;
 
 	if (p->type == 0xc0) {
@@ -702,11 +699,11 @@ handle_talk_unicode(LinkedServer &ls, const void *data, size_t length)
 		unsigned num_keywords = (value & 0xfff0) >> 4;
 		unsigned skip_bits = (num_keywords + 1) * 12;
 		unsigned skip_bytes = 12 + (skip_bits + 7) / 8;
-		const char *start = (const char *)data;
+		const char *start = (const char *)src.data();
 		const char *t = start + skip_bytes;
-		size_t text_length = length - skip_bytes - 1;
+		size_t text_length = src.size() - skip_bytes - 1;
 
-		if (skip_bytes >= length)
+		if (skip_bytes >= src.size())
 			return PacketAction::DISCONNECT;
 
 		if (t[0] == 0 || t[text_length] != 0)
@@ -715,7 +712,7 @@ handle_talk_unicode(LinkedServer &ls, const void *data, size_t length)
 		/* the text may be UTF-8, but we ignore that for now */
 		return handle_talk(ls, t);
 	} else {
-		size_t text_length = (length - sizeof(*p)) / 2;
+		size_t text_length = (src.size() - sizeof(*p)) / 2;
 
 		if (text_length < TALK_MAX) { /* Regular */
 			char msg[TALK_MAX], *t;
@@ -730,11 +727,11 @@ handle_talk_unicode(LinkedServer &ls, const void *data, size_t length)
 }
 
 static PacketAction
-handle_gump_response(LinkedServer &ls, const void *data, size_t length)
+handle_gump_response(LinkedServer &ls, std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_gump_response *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_gump_response *>(src.data());
 
-	if (length < sizeof(*p))
+	if (src.size() < sizeof(*p))
 		return PacketAction::DISCONNECT;
 
 	/* close the gump on all other clients */
@@ -752,14 +749,14 @@ handle_gump_response(LinkedServer &ls, const void *data, size_t length)
 }
 
 static PacketAction
-handle_client_version(LinkedServer &ls, const void *data, size_t length)
+handle_client_version(LinkedServer &ls, std::span<const std::byte> src)
 {
 	Connection *c = ls.connection;
-	auto p = (const struct uo_packet_client_version *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_client_version *>(src.data());
 
 	if (!ls.client_version.IsDefined()) {
 		bool was_unkown = ls.client_version.protocol == PROTOCOL_UNKNOWN;
-		int ret = ls.client_version.Set(p, length);
+		int ret = ls.client_version.Set(p, src.size());
 		if (ret > 0) {
 			if (was_unkown)
 				ls.server->SetProtocol(ls.client_version.protocol);
@@ -781,7 +778,7 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
 	} else {
 		const bool was_unkown = c->client.version.protocol == PROTOCOL_UNKNOWN;
 
-		int ret = c->client.version.Set(p, length);
+		int ret = c->client.version.Set(p, src.size());
 		if (ret > 0) {
 			if (was_unkown && c->client.client != nullptr)
 				c->client.client->SetProtocol(c->client.version.protocol);
@@ -795,11 +792,11 @@ handle_client_version(LinkedServer &ls, const void *data, size_t length)
 }
 
 static PacketAction
-handle_extended(LinkedServer &ls, const void *data, size_t length)
+handle_extended(LinkedServer &ls, std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_extended *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_extended *>(src.data());
 
-	if (length < sizeof(*p))
+	if (src.size() < sizeof(*p))
 		return PacketAction::DISCONNECT;
 
 	ls.LogF(8, "from client: extended {:#04x}", (unsigned)p->extended_cmd);
@@ -808,7 +805,7 @@ handle_extended(LinkedServer &ls, const void *data, size_t length)
 }
 
 static PacketAction
-handle_hardware(LinkedServer &ls, const void *, size_t)
+handle_hardware(LinkedServer &ls, [[maybe_unused]] std::span<const std::byte> src)
 {
 	if (ls.connection->instance.config.antispy)
 		return PacketAction::DROP;
@@ -817,11 +814,11 @@ handle_hardware(LinkedServer &ls, const void *, size_t)
 }
 
 static PacketAction
-handle_seed(LinkedServer &ls, const void *data, [[maybe_unused]] size_t length)
+handle_seed(LinkedServer &ls, std::span<const std::byte> src)
 {
-	auto p = (const struct uo_packet_seed *)data;
+	const auto *const p = reinterpret_cast<const struct uo_packet_seed *>(src.data());
 
-	assert(length == sizeof(*p));
+	assert(src.size() == sizeof(*p));
 
 	if (ls.client_version.seed == nullptr) {
 		ls.client_version.Seed(*p);

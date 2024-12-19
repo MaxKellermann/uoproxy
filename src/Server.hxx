@@ -12,6 +12,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstddef>
+#include <span>
 
 class UniqueSocketDescriptor;
 class EventLoop;
@@ -26,7 +27,7 @@ public:
 	 * @return false if this object has been closed within the
 	 * function
 	 */
-	virtual bool OnServerPacket(const void *data, size_t length) = 0;
+	virtual bool OnServerPacket(std::span<const std::byte> src) = 0;
 
 	/**
 	 * The connection has been closed due to an error or because the

@@ -146,6 +146,6 @@ private:
 	void ZombieTimeoutCallback() noexcept;
 
 	/* virtual methods from UO::ServerHandler */
-	bool OnServerPacket(const void *data, size_t length) override;
+	bool OnServerPacket(std::span<const std::byte> src) override;
 	void OnServerDisconnect() noexcept override;
 };

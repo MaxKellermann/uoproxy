@@ -16,16 +16,16 @@
 #include <unistd.h>
 
 bool
-Connection::OnClientPacket(const void *data, size_t length)
+Connection::OnClientPacket(std::span<const std::byte> src)
 {
 	assert(client.client != nullptr);
 
 	const auto action = handle_packet_from_server(server_packet_bindings,
-						      *this, data, length);
+						      *this, src);
 	switch (action) {
 	case PacketAction::ACCEPT:
 		if (!client.reconnecting)
-			BroadcastToInGameClients(data, length);
+			BroadcastToInGameClients(src.data(), src.size());
 
 		break;
 
@@ -34,8 +34,8 @@ Connection::OnClientPacket(const void *data, size_t length)
 
 	case PacketAction::DISCONNECT:
 		LogFmt(2, "aborting connection to server after packet {:#02x}\n",
-		       *(const unsigned char*)data);
-		log_hexdump(6, data, length);
+			  src.front());
+		log_hexdump(6, src.data(), src.size());
 
 		if (autoreconnect && IsInGame()) {
 			Log(2, "auto-reconnecting\n");

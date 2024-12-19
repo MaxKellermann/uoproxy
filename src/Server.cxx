@@ -63,7 +63,7 @@ UO::Server::ParsePackets(const uint8_t *data, size_t length)
 
 		log_hexdump(10, data, packet_length);
 
-		if (!handler.OnServerPacket(data, packet_length))
+		if (!handler.OnServerPacket(std::as_bytes(std::span{data, packet_length})))
 			return -1;
 
 		consumed += packet_length;

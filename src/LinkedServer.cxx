@@ -35,7 +35,7 @@ LinkedServer::ZombieTimeoutCallback() noexcept
 }
 
 bool
-LinkedServer::OnServerPacket(const void *data, size_t length)
+LinkedServer::OnServerPacket(std::span<const std::byte> src)
 {
 	Connection *c = connection;
 
@@ -43,22 +43,21 @@ LinkedServer::OnServerPacket(const void *data, size_t length)
 	assert(server != nullptr);
 
 	const auto action = handle_packet_from_client(client_packet_bindings,
-						      *this, data, length);
+						      *this, src);
 	switch (action) {
 	case PacketAction::ACCEPT:
 		if (c->client.client != nullptr &&
 		    (!c->client.reconnecting ||
-		     *(const UO::Command *)data == UO::Command::ClientVersion))
-			c->client.client->Send(data, length);
+		     static_cast<UO::Command>(src.front()) == UO::Command::ClientVersion))
+			c->client.client->Send(src.data(), src.size());
 		break;
 
 	case PacketAction::DROP:
 		break;
 
 	case PacketAction::DISCONNECT:
-		LogF(2, "aborting connection to client after packet {:#x}",
-		     *(const unsigned char*)data);
-		log_hexdump(6, data, length);
+		LogF(2, "aborting connection to client after packet {:#x}", src.front());
+		log_hexdump(6, src.data(), src.size());
 
 		c->Remove(*this);
 
