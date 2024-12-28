@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "net/AllocatedSocketAddress.hxx"
 #include "net/AddressInfo.hxx"
 #include "net/SocketConfig.hxx"
 
@@ -11,11 +12,11 @@
 
 struct GameServerConfig {
 	const std::string name;
-	AddressInfoList address;
+	AllocatedSocketAddress address;
 
 	[[nodiscard]]
-	explicit GameServerConfig(const char *_name) noexcept
-		:name(_name) {}
+	GameServerConfig(const char *_name, SocketAddress _address) noexcept
+		:name(_name), address(_address) {}
 };
 
 struct Config {

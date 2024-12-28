@@ -53,7 +53,7 @@ Connection::DoReconnect() noexcept
 			= config.game_servers[server_index].address;
 
 		try {
-			Connect(server_address.GetBest(), seed, true);
+			Connect(server_address, seed, true);
 		} catch (...) {
 			log_error("reconnect failed", std::current_exception());
 			ScheduleReconnect();

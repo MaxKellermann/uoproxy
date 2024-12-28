@@ -367,9 +367,10 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 			snprintf(p2->game_servers[i].name, sizeof(p2->game_servers[i].name),
 				 "%s", config.game_servers[i].name.c_str());
 
-			assert(!config.game_servers[i].address.empty());
+			assert(!config.game_servers[i].address.IsNull());
+			assert(config.game_servers[i].address.IsDefined());
 
-			const SocketAddress _address{config.game_servers[i].address.GetBest()};
+			const SocketAddress _address{config.game_servers[i].address};
 			if (_address.GetFamily() != AF_INET)
 				continue;
 
@@ -646,7 +647,7 @@ handle_play_server(LinkedServer &ls,
 			seed = 0xc0a80102; /* 192.168.1.2 */
 
 		try {
-			c.Connect(server_config.address.GetBest(), seed, true);
+			c.Connect(server_config.address, seed, true);
 		} catch (...) {
 			log_error("connect to game server failed", std::current_exception());
 			return PacketAction::DISCONNECT;

@@ -270,15 +270,14 @@ parse_game_server(const char *path, unsigned no, char *string)
 
 	*eq = 0;
 
-	GameServerConfig config{string};
-
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 
-	config.address = Resolve(eq + 1, 2593, &hints);
-
-	return config;
+	return {
+		string,
+		Resolve(eq + 1, 2593, &hints).GetBest(),
+	};
 }
 
 int
