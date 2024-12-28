@@ -256,7 +256,7 @@ parse_bool(const char *path, unsigned no, const char *val)
 	}
 }
 
-static struct game_server_config
+static GameServerConfig
 parse_game_server(const char *path, unsigned no, char *string)
 {
 	char *eq = strchr(string, '=');
@@ -270,7 +270,7 @@ parse_game_server(const char *path, unsigned no, char *string)
 
 	*eq = 0;
 
-	struct game_server_config config{string};
+	GameServerConfig config{string};
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET;

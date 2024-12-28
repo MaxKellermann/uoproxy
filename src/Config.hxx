@@ -9,12 +9,12 @@
 #include <string>
 #include <vector>
 
-struct game_server_config {
+struct GameServerConfig {
 	const std::string name;
 	AddressInfoList address;
 
 	[[nodiscard]]
-	explicit game_server_config(const char *_name) noexcept
+	explicit GameServerConfig(const char *_name) noexcept
 		:name(_name) {}
 };
 
@@ -28,7 +28,7 @@ struct Config {
 
 	AddressInfoList login_address;
 
-	std::vector<struct game_server_config> game_servers;
+	std::vector<GameServerConfig> game_servers;
 	bool background = false, autoreconnect = true, antispy = false, razor_workaround = false;
 
 	/**
