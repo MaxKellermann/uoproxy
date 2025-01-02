@@ -14,6 +14,38 @@ StatefulClient::StatefulClient(EventLoop &event_loop) noexcept
 {
 }
 
+inline const struct uo_packet_seed *
+StatefulClient::GetSeedPacket(uint32_t seed, bool for_game_login,
+			      struct uo_packet_seed &buffer) const noexcept
+{
+	const struct uo_packet_seed *seed_packet = for_game_login
+		? nullptr
+		: version.seed;
+
+	if (!for_game_login && seed_packet == nullptr &&
+	    version.IsDefined() &&
+	    version.protocol >= PROTOCOL_6_0_14) {
+		buffer.cmd = UO::Command::Seed;
+		buffer.seed = seed;
+
+		if (version.protocol >= PROTOCOL_7) {
+			buffer.client_major = 7;
+			buffer.client_minor = 0;
+			buffer.client_revision = 10;
+			buffer.client_patch = 3;
+		} else {
+			buffer.client_major = 6;
+			buffer.client_minor = 0;
+			buffer.client_revision = 14;
+			buffer.client_patch = 2;
+		}
+
+		seed_packet = &buffer;
+	}
+
+	return seed_packet;
+}
+
 void
 StatefulClient::Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 			uint32_t seed, bool for_game_login,
@@ -21,31 +53,9 @@ StatefulClient::Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 {
 	assert(client == nullptr);
 
-	const struct uo_packet_seed *seed_packet = for_game_login
-		? nullptr
-		: version.seed;
 	struct uo_packet_seed seed_buffer;
-
-	if (!for_game_login && seed_packet == nullptr &&
-	    version.IsDefined() &&
-	    version.protocol >= PROTOCOL_6_0_14) {
-		seed_buffer.cmd = UO::Command::Seed;
-		seed_buffer.seed = seed;
-
-		if (version.protocol >= PROTOCOL_7) {
-			seed_buffer.client_major = 7;
-			seed_buffer.client_minor = 0;
-			seed_buffer.client_revision = 10;
-			seed_buffer.client_patch = 3;
-		} else {
-			seed_buffer.client_major = 6;
-			seed_buffer.client_minor = 0;
-			seed_buffer.client_revision = 14;
-			seed_buffer.client_patch = 2;
-		}
-
-		seed_packet = &seed_buffer;
-	}
+	const struct uo_packet_seed *seed_packet = GetSeedPacket(seed, for_game_login,
+								 seed_buffer);
 
 	s.SetNoDelay();
 

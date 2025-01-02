@@ -69,5 +69,9 @@ struct StatefulClient {
 	}
 
 private:
+	[[nodiscard]]
+	const struct uo_packet_seed *GetSeedPacket(uint32_t seed, bool for_game_login,
+						   struct uo_packet_seed &buffer) const noexcept;
+
 	void OnPingTimer() noexcept;
 };
