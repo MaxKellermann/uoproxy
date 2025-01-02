@@ -398,21 +398,57 @@ static constexpr unsigned bit_table[257][2] =
 struct Compression {
 	int bit = 0;
 	unsigned out_data = 0;
+
+	constexpr void FeedChar(std::size_t ch) noexcept;
+
+	constexpr bool OutputBits(unsigned char *dest,
+				  std::size_t dest_max_len,
+				  std::size_t *dest_indexp) noexcept;
+
+	constexpr bool FlushOutput(unsigned char *dest,
+				   std::size_t dest_max_len,
+				   std::size_t *dest_indexp) noexcept;
 };
 
-static bool
-output_bits(Compression *co,
-	    unsigned char *dest,
-	    size_t dest_max_len,
-	    size_t *dest_indexp)
+constexpr void
+Compression::FeedChar(std::size_t ch) noexcept
 {
-	while (co->bit >= 8) {
+	const unsigned num_bits = bit_table[ch][0];
+
+	bit += num_bits;
+	assert(bit < 31);
+
+	out_data = (out_data << num_bits) | bit_table[ch][1];
+}
+
+constexpr bool
+Compression::OutputBits(unsigned char *dest,
+			std::size_t dest_max_len,
+			std::size_t *dest_indexp) noexcept
+{
+	while (bit >= 8) {
 		if (*dest_indexp >= dest_max_len)
 			return false;
-		co->bit -= 8;
-		dest[(*dest_indexp)++] = (co->out_data >> co->bit) & 0xff;
+		bit -= 8;
+		dest[(*dest_indexp)++] = (out_data >> bit) & 0xff;
 	}
 
+	return true;
+}
+
+constexpr bool
+Compression::FlushOutput(unsigned char *dest,
+			 std::size_t dest_max_len,
+			 std::size_t *dest_indexp) noexcept
+{
+	if (bit <= 0)
+		return true;
+
+	if (*dest_indexp >= dest_max_len)
+		return false;
+
+	out_data <<= (8 - bit);
+	dest[(*dest_indexp)++] = out_data & 0xff;
 	return true;
 }
 
@@ -422,33 +458,22 @@ Compress(unsigned char *dest, size_t dest_max_len,
 {
 	Compression co;
 	size_t dest_index = 0;
-	int num_bits;
 
 	for (const auto src_char : src) {
-		num_bits = bit_table[src_char][0];
-		co.bit += num_bits;
-		assert(co.bit < 31);
-		co.out_data = (co.out_data << num_bits) | bit_table[src_char][1];
+		co.FeedChar(src_char);
 
-		if (!output_bits(&co, dest, dest_max_len, &dest_index))
+		if (!co.OutputBits(dest, dest_max_len, &dest_index))
 			return -1;
 	}
 
-	num_bits = bit_table[256][0];
-	co.bit += num_bits;
-	assert(co.bit < 31);
-	co.out_data = (co.out_data << num_bits) | bit_table[256][1];
+	/* special flush character */
+	co.FeedChar(256);
 
-	if (!output_bits(&co, dest, dest_max_len, &dest_index))
+	if (!co.OutputBits(dest, dest_max_len, &dest_index))
 		return -1;
 
-	if (co.bit > 0) {
-		if (dest_index >= dest_max_len)
-			return -1;
-
-		co.out_data <<= (8 - co.bit);
-		dest[dest_index++] = co.out_data & 0xff;
-	}
+	if (!co.FlushOutput(dest, dest_max_len, &dest_index))
+		return -1;
 
 	return (ssize_t)dest_index;
 }
