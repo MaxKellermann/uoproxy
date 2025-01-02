@@ -161,8 +161,7 @@ try {
 			return;
 		}
 
-		sock.Append(UO::Compress({(unsigned char *)w.data(), w.size()},
-					 {(const unsigned char *)src.data(), src.size()}));
+		sock.Append(UO::Compress(w, src));
 	} else {
 		if (!sock.Send(src)) {
 			Log(1, "output buffer full in uo_server_send()\n");

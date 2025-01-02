@@ -50,7 +50,7 @@ UO::Client::Abort() noexcept
 }
 
 inline ssize_t
-UO::Client::Decompress(std::span<const uint8_t> src)
+UO::Client::Decompress(std::span<const std::byte> src)
 {
 	auto w = decompressed_buffer.Write();
 	if (w.empty()) {
@@ -100,13 +100,11 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 size_t
 UO::Client::OnSocketData(std::span<const std::byte> src)
 {
-	const uint8_t *data = (const uint8_t *)src.data();
-
 	if (compression_enabled) {
 		ssize_t nbytes;
 		size_t consumed;
 
-		nbytes = Decompress({data, src.size()});
+		nbytes = Decompress(src);
 		if (nbytes <= 0)
 			return 0;
 		consumed = (size_t)nbytes;

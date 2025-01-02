@@ -43,7 +43,7 @@ class Client final : SocketBufferHandler {
 	SocketBuffer sock;
 	bool compression_enabled = false;
 	UO::Decompression decompression;
-	DynamicFifoBuffer<uint8_t> decompressed_buffer{65536};
+	DynamicFifoBuffer<std::byte> decompressed_buffer{65536};
 
 	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
@@ -77,7 +77,7 @@ public:
 private:
 	void DeferredAbort() noexcept;
 
-	ssize_t Decompress(std::span<const uint8_t> src);
+	ssize_t Decompress(std::span<const std::byte> src);
 	ssize_t ParsePackets(std::span<const std::byte> src);
 
 	/* virtual methods from SocketBufferHandler */

@@ -276,8 +276,8 @@ static constexpr int_least16_t huffman_tree[] = {
 };
 
 std::size_t
-UO::Decompression::Decompress(std::span<unsigned char> dest,
-			      std::span<const unsigned char> src)
+UO::Decompression::Decompress(std::span<std::byte> dest,
+			      std::span<const std::byte> src)
 {
 	size_t dest_index = 0;
 
@@ -290,10 +290,10 @@ UO::Decompression::Decompress(std::span<unsigned char> dest,
 			src = src.subspan(1);
 
 			bit = 0;
-			mask = 0x80;
+			mask = std::byte{0x80};
 		}
 
-		if (value & mask)
+		if ((value & mask) != std::byte{})
 			treepos = huffman_tree[treepos * 2];
 		else
 			treepos = huffman_tree[treepos * 2 + 1];
@@ -313,7 +313,7 @@ UO::Decompression::Decompress(std::span<unsigned char> dest,
 				/* Buffer full */
 				throw SocketBufferFullError{"Decompression buffer is full"};
 
-			dest[dest_index++] = (unsigned char)-treepos; /* data is negative value */
+			dest[dest_index++] = static_cast<std::byte>(-treepos); /* data is negative value */
 			treepos = 0; /* start on tree top again */
 		}
 	}
@@ -401,10 +401,10 @@ struct Compression {
 
 	constexpr void FeedChar(std::size_t ch) noexcept;
 
-	constexpr void OutputBits(std::span<unsigned char> dest,
+	constexpr void OutputBits(std::span<std::byte> dest,
 				  std::size_t *dest_indexp);
 
-	constexpr void FlushOutput(std::span<unsigned char> dest,
+	constexpr void FlushOutput(std::span<std::byte> dest,
 				   std::size_t *dest_indexp);
 };
 
@@ -420,7 +420,7 @@ Compression::FeedChar(std::size_t ch) noexcept
 }
 
 constexpr void
-Compression::OutputBits(std::span<unsigned char> dest,
+Compression::OutputBits(std::span<std::byte> dest,
 			std::size_t *dest_indexp)
 {
 	while (bit >= 8) {
@@ -428,12 +428,12 @@ Compression::OutputBits(std::span<unsigned char> dest,
 			throw SocketBufferFullError{"Compression buffer is full"};
 
 		bit -= 8;
-		dest[(*dest_indexp)++] = (out_data >> bit) & 0xff;
+		dest[(*dest_indexp)++] = static_cast<std::byte>(out_data >> bit);
 	}
 }
 
 constexpr void
-Compression::FlushOutput(std::span<unsigned char> dest,
+Compression::FlushOutput(std::span<std::byte> dest,
 			 std::size_t *dest_indexp)
 {
 	if (bit <= 0)
@@ -443,18 +443,17 @@ Compression::FlushOutput(std::span<unsigned char> dest,
 		throw SocketBufferFullError{"Compression buffer is full"};
 
 	out_data <<= (8 - bit);
-	dest[(*dest_indexp)++] = out_data & 0xff;
+	dest[(*dest_indexp)++] = static_cast<std::byte>(out_data);
 }
 
 std::size_t
-Compress(std::span<unsigned char> dest,
-	 std::span<const unsigned char> src)
+Compress(std::span<std::byte> dest, std::span<const std::byte> src)
 {
 	Compression co;
 	size_t dest_index = 0;
 
 	for (const auto src_char : src) {
-		co.FeedChar(src_char);
+		co.FeedChar(static_cast<std::size_t>(src_char));
 		co.OutputBits(dest, &dest_index);
 	}
 
