@@ -400,7 +400,7 @@ struct Compression {
 	unsigned out_data = 0;
 };
 
-static int
+static bool
 output_bits(Compression *co,
 	    unsigned char *dest,
 	    size_t dest_max_len,
@@ -408,12 +408,12 @@ output_bits(Compression *co,
 {
 	while (co->bit >= 8) {
 		if (*dest_indexp >= dest_max_len)
-			return -1;
+			return false;
 		co->bit -= 8;
 		dest[(*dest_indexp)++] = (co->out_data >> co->bit) & 0xff;
 	}
 
-	return 0;
+	return true;
 }
 
 ssize_t
@@ -430,7 +430,7 @@ Compress(unsigned char *dest, size_t dest_max_len,
 		assert(co.bit < 31);
 		co.out_data = (co.out_data << num_bits) | bit_table[src_char][1];
 
-		if (output_bits(&co, dest, dest_max_len, &dest_index) < 0)
+		if (!output_bits(&co, dest, dest_max_len, &dest_index))
 			return -1;
 	}
 
@@ -439,7 +439,7 @@ Compress(unsigned char *dest, size_t dest_max_len,
 	assert(co.bit < 31);
 	co.out_data = (co.out_data << num_bits) | bit_table[256][1];
 
-	if (output_bits(&co, dest, dest_max_len, &dest_index) < 0)
+	if (!output_bits(&co, dest, dest_max_len, &dest_index))
 		return -1;
 
 	if (co.bit > 0) {
