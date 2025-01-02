@@ -324,13 +324,18 @@ UO::Decompression::Decompress(std::span<std::byte> dest,
 	}
 }
 
+struct EncodedHuffmanByte {
+	unsigned n_bits;
+	unsigned value;
+};
+
 /**
  * Compression Table
  *
  * This code was taken from Iris and is originally based on part of
  * UOX.
  */
-static constexpr std::array<std::array<unsigned, 2>, 0x101> bit_table{{
+static constexpr std::array<EncodedHuffmanByte, 0x101> bit_table{{
 	{ 0x02, 0x00 }, { 0x05, 0x1F }, { 0x06, 0x22 }, { 0x07, 0x34 },
 	{ 0x07, 0x75 }, { 0x06, 0x28 }, { 0x06, 0x3B }, { 0x07, 0x32 },
 	{ 0x08, 0xE0 }, { 0x08, 0x62 }, { 0x07, 0x56 }, { 0x08, 0x79 },
@@ -415,12 +420,12 @@ struct Compression {
 constexpr void
 Compression::FeedChar(std::size_t ch) noexcept
 {
-	const unsigned num_bits = bit_table[ch][0];
+	const unsigned num_bits = bit_table[ch].n_bits;
 
 	bit += num_bits;
 	assert(bit < 31);
 
-	out_data = (out_data << num_bits) | bit_table[ch][1];
+	out_data = (out_data << num_bits) | bit_table[ch].value;
 }
 
 constexpr void
