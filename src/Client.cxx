@@ -139,13 +139,16 @@ UO::Client::OnSocketData(std::span<const std::byte> src)
 }
 
 void
-UO::Client::OnSocketDisconnect(int error) noexcept
+UO::Client::OnSocketDisconnect() noexcept
 {
-	if (error == 0)
-		Log(2, "server closed the connection\n");
-	else
-		log_error("error during communication with server", error);
+	Log(2, "server closed the connection\n");
+	handler.OnClientDisconnect();
+}
 
+void
+UO::Client::OnSocketError(int error) noexcept
+{
+	log_error("error during communication with server", error);
 	handler.OnClientDisconnect();
 }
 

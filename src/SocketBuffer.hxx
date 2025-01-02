@@ -25,11 +25,15 @@ public:
 	virtual size_t OnSocketData(std::span<const std::byte> src) = 0;
 
 	/**
-	 * The socket has been closed due to an error or because the peer
-	 * closed his side.  sock_buff_dispose() does not trigger this
-	 * callback, and the callee has to invoke this function.
+	 * The socket has been closed because the peer closed his
+	 * side.
 	 */
-	virtual void OnSocketDisconnect(int error) noexcept = 0;
+	virtual void OnSocketDisconnect() noexcept = 0;
+
+	/**
+	 * The socket has been closed due to an error.
+	 */
+	virtual void OnSocketError(int error) noexcept = 0;
 };
 
 class SocketBuffer final {

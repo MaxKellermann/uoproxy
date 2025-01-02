@@ -106,7 +106,7 @@ SocketBuffer::OnDeferredSend() noexcept
 	if (!FlushOutput()) {
 		const int error = GetSocketError();
 		if (!IsSocketErrorSendWouldBlock(error))
-			handler.OnSocketDisconnect(error);
+			handler.OnSocketError(error);
 		return;
 	}
 
@@ -121,7 +121,7 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 {
 	if (events & event.WRITE) {
 		if (!FlushOutput()) {
-			handler.OnSocketDisconnect(errno);
+			handler.OnSocketError(errno);
 			return;
 		}
 
@@ -135,10 +135,10 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 			if (!SubmitData())
 				return;
 		} else if (nbytes == 0) {
-			handler.OnSocketDisconnect(0);
+			handler.OnSocketDisconnect();
 			return;
 		} else if (nbytes == -1) {
-			handler.OnSocketDisconnect(errno);
+			handler.OnSocketError(errno);
 			return;
 		}
 
@@ -147,6 +147,6 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 	}
 
 	if (events & (event.HANGUP|event.ERROR)) {
-		handler.OnSocketDisconnect(0);
+		handler.OnSocketDisconnect();
 	}
 }
