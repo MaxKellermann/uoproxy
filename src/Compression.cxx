@@ -4,6 +4,7 @@
 #include "Compression.hxx"
 #include "net/SocketProtocolError.hxx"
 
+#include <array>
 #include <cassert>
 
 namespace UO {
@@ -16,7 +17,7 @@ namespace UO {
  *
  * if drawn this tree is sorted from up to down (layer by layer) and left to right.
  */
-static constexpr int_least16_t huffman_tree[] = {
+static constexpr std::array<int_least16_t, 2 * 0x100> huffman_tree{
 	/*   0 */ 1, 2,
 	/*   1 */ 3, 4,
 	/*   2 */ 5, 0,
@@ -325,8 +326,7 @@ UO::Decompression::Decompress(std::span<std::byte> dest,
  * This code was taken from Iris and is originally based on part of
  * UOX.
  */
-static constexpr unsigned bit_table[257][2] =
-{
+static constexpr std::array<std::array<unsigned, 2>, 0x101> bit_table{{
 	{ 0x02, 0x00 }, { 0x05, 0x1F }, { 0x06, 0x22 }, { 0x07, 0x34 },
 	{ 0x07, 0x75 }, { 0x06, 0x28 }, { 0x06, 0x3B }, { 0x07, 0x32 },
 	{ 0x08, 0xE0 }, { 0x08, 0x62 }, { 0x07, 0x56 }, { 0x08, 0x79 },
@@ -393,7 +393,7 @@ static constexpr unsigned bit_table[257][2] =
 	{ 0x09, 0x167 }, { 0x0A, 0x210 }, { 0x0A, 0x23A }, { 0x0A, 0x1B8 },
 	{ 0x0B, 0x3AF }, { 0x0A, 0x18E }, { 0x0A, 0x2EC }, { 0x07, 0x62 },
 	{ 0x04, 0x0D }
-};
+}};
 
 struct Compression {
 	uint_least32_t out_data = 0;
