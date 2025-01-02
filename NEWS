@@ -16,7 +16,7 @@ uoproxy (0.5) unstable; urgency=low
   * log to stderr instead of stdout
   * systemd support
 
- --
+ -- Max Kellermann <max.kellermann@gmail.com>  Thu, 02 Jan 2025 23:59:37 +0100
 
 uoproxy (0.4) unstable; urgency=low
 
