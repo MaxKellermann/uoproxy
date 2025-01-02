@@ -3,10 +3,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <span>
-
-#include <sys/types.h> /* for ssize_t */
 
 namespace UO {
 
@@ -17,11 +16,19 @@ class Decompression {
 	uint_least8_t value = 0;
 
 public:
-	ssize_t Decompress(unsigned char *dest, size_t dest_max_len,
-			   std::span<const unsigned char> src) noexcept;
+	/**
+	 * Throws #SocketBufferFullError if the destination buffer is
+	 * too small.
+	 */
+	std::size_t Decompress(unsigned char *dest, size_t dest_max_len,
+			       std::span<const unsigned char> src);
 };
 
-ssize_t
+/**
+ * Throws #SocketBufferFullError if the destination buffer is
+ * too small.
+ */
+std::size_t
 Compress(unsigned char *dest, size_t dest_max_len,
 	 std::span<const unsigned char> src);
 

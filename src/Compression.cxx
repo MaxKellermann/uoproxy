@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Compression.hxx"
+#include "net/SocketProtocolError.hxx"
 
 #include <cassert>
 
@@ -274,16 +275,16 @@ static constexpr int_least16_t huffman_tree[] = {
 	/* 255 */ -245, -247,
 };
 
-ssize_t
+std::size_t
 UO::Decompression::Decompress(unsigned char *dest, size_t dest_max_len,
-			      std::span<const unsigned char> src) noexcept
+			      std::span<const unsigned char> src)
 {
 	size_t dest_index = 0;
 
 	while (1) {
 		if (bit >= 8) {
 			if (src.empty())
-				return (ssize_t)dest_index;
+				return dest_index;
 
 			value = src.front();
 			src = src.subspan(1);
@@ -310,7 +311,7 @@ UO::Decompression::Decompress(unsigned char *dest, size_t dest_max_len,
 			}
 			if (dest_index >= dest_max_len)
 				/* Buffer full */
-				return -1;
+				throw SocketBufferFullError{"Decompression buffer is full"};
 
 			*dest++ = (unsigned char)-treepos; /* data is negative value */
 			dest_index++;
@@ -401,13 +402,13 @@ struct Compression {
 
 	constexpr void FeedChar(std::size_t ch) noexcept;
 
-	constexpr bool OutputBits(unsigned char *dest,
+	constexpr void OutputBits(unsigned char *dest,
 				  std::size_t dest_max_len,
-				  std::size_t *dest_indexp) noexcept;
+				  std::size_t *dest_indexp);
 
-	constexpr bool FlushOutput(unsigned char *dest,
+	constexpr void FlushOutput(unsigned char *dest,
 				   std::size_t dest_max_len,
-				   std::size_t *dest_indexp) noexcept;
+				   std::size_t *dest_indexp);
 };
 
 constexpr void
@@ -421,38 +422,36 @@ Compression::FeedChar(std::size_t ch) noexcept
 	out_data = (out_data << num_bits) | bit_table[ch][1];
 }
 
-constexpr bool
+constexpr void
 Compression::OutputBits(unsigned char *dest,
 			std::size_t dest_max_len,
-			std::size_t *dest_indexp) noexcept
+			std::size_t *dest_indexp)
 {
 	while (bit >= 8) {
 		if (*dest_indexp >= dest_max_len)
-			return false;
+			throw SocketBufferFullError{"Compression buffer is full"};
+
 		bit -= 8;
 		dest[(*dest_indexp)++] = (out_data >> bit) & 0xff;
 	}
-
-	return true;
 }
 
-constexpr bool
+constexpr void
 Compression::FlushOutput(unsigned char *dest,
 			 std::size_t dest_max_len,
-			 std::size_t *dest_indexp) noexcept
+			 std::size_t *dest_indexp)
 {
 	if (bit <= 0)
-		return true;
+		return;
 
 	if (*dest_indexp >= dest_max_len)
-		return false;
+		throw SocketBufferFullError{"Compression buffer is full"};
 
 	out_data <<= (8 - bit);
 	dest[(*dest_indexp)++] = out_data & 0xff;
-	return true;
 }
 
-ssize_t
+std::size_t
 Compress(unsigned char *dest, size_t dest_max_len,
 	 std::span<const unsigned char> src)
 {
@@ -461,19 +460,14 @@ Compress(unsigned char *dest, size_t dest_max_len,
 
 	for (const auto src_char : src) {
 		co.FeedChar(src_char);
-
-		if (!co.OutputBits(dest, dest_max_len, &dest_index))
-			return -1;
+		co.OutputBits(dest, dest_max_len, &dest_index);
 	}
 
 	/* special flush character */
 	co.FeedChar(256);
 
-	if (!co.OutputBits(dest, dest_max_len, &dest_index))
-		return -1;
-
-	if (!co.FlushOutput(dest, dest_max_len, &dest_index))
-		return -1;
+	co.OutputBits(dest, dest_max_len, &dest_index);
+	co.FlushOutput(dest, dest_max_len, &dest_index);
 
 	return (ssize_t)dest_index;
 }

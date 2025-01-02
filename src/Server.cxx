@@ -5,6 +5,7 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
+#include "lib/fmt/ExceptionFormatter.hxx"
 
 #include <utility>
 
@@ -142,7 +143,7 @@ UO::Server::OnSocketError(std::exception_ptr error) noexcept
 
 void
 UO::Server::Send(std::span<const std::byte> src)
-{
+try {
 	assert(!src.empty());
 	assert(get_packet_length(protocol_version, src.data(), src.size()) == src.size());
 
@@ -160,19 +161,15 @@ UO::Server::Send(std::span<const std::byte> src)
 			return;
 		}
 
-		ssize_t nbytes = UO::Compress((unsigned char *)w.data(), w.size(),
-					      {(const unsigned char *)src.data(), src.size()});
-		if (nbytes < 0) {
-			Log(1, "uo_compress() failed\n");
-			Abort();
-			return;
-		}
-
-		sock.Append(static_cast<std::size_t>(nbytes));
+		sock.Append(UO::Compress((unsigned char *)w.data(), w.size(),
+					 {(const unsigned char *)src.data(), src.size()}));
 	} else {
 		if (!sock.Send(src)) {
 			Log(1, "output buffer full in uo_server_send()\n");
 			Abort();
 		}
 	}
+} catch (...) {
+	LogFmt(1, "error in uo_server_send(): {}\n", std::current_exception());
+	Abort();
 }

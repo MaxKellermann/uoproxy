@@ -59,15 +59,7 @@ UO::Client::Decompress(std::span<const uint8_t> src)
 		return -1;
 	}
 
-	ssize_t nbytes = decompression.Decompress(w.data(), w.size(), src);
-	if (nbytes < 0) {
-		Log(1, "decompression failed\n");
-		Abort();
-		return -1;
-	}
-
-	decompressed_buffer.Append((size_t)nbytes);
-
+	decompressed_buffer.Append(decompression.Decompress(w.data(), w.size(), src));
 	return src.size();
 }
 
