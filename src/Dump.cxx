@@ -4,10 +4,8 @@
 #include "Log.hxx"
 #include "util/CharUtil.hxx"
 
+#include <cassert>
 #include <cstdint>
-
-#include <assert.h>
-#include <stdio.h>
 
 static constexpr char
 ToPrintableChar(std::byte b) noexcept
@@ -31,9 +29,7 @@ hexdump_line(char *dest, size_t address,
 	assert(!src.empty());
 	assert(src.size() <= 0x10);
 
-	snprintf(dest, 10, "  %05x", (unsigned)address);
-	dest += 7;
-	*dest++ = ' ';
+	dest = fmt::format_to(dest, "  {:05x} ", address);
 
 	for (i = 0; i < 0x10; ++i) {
 		*dest++ = ' ';
@@ -41,13 +37,11 @@ hexdump_line(char *dest, size_t address,
 			*dest++ = ' ';
 
 		if (i < src.size())
-			snprintf(dest, 3, "%02x", static_cast<uint_least8_t>(src[i]));
+			dest = fmt::format_to(dest, "{:02x}", src[i]);
 		else {
-			dest[0] = ' ';
-			dest[1] = ' ';
+			*dest++ = ' ';
+			*dest++ = ' ';
 		}
-
-		dest += 2;
 	}
 
 	*dest++ = ' ';
