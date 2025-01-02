@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <span>
 
 class UniqueSocketDescriptor;
@@ -33,7 +34,7 @@ public:
 	/**
 	 * The socket has been closed due to an error.
 	 */
-	virtual void OnSocketError(int error) noexcept = 0;
+	virtual void OnSocketError(std::exception_ptr error) noexcept = 0;
 };
 
 class SocketBuffer final {

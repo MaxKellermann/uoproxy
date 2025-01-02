@@ -95,35 +95,29 @@ SocketBuffer::FlushOutput()
 		return true;
 
 	if (nbytes < 0)
-		return false;
+		throw MakeSocketError("Failed to send");
 
 	return true;
 }
 
 inline void
 SocketBuffer::OnDeferredSend() noexcept
-{
-	if (!FlushOutput()) {
-		const int error = GetSocketError();
-		if (!IsSocketErrorSendWouldBlock(error))
-			handler.OnSocketError(error);
-		return;
-	}
+try {
+	FlushOutput();
 
 	if (output.empty())
 		event.CancelWrite();
 	else
 		event.ScheduleWrite();
+} catch (...) {
+	handler.OnSocketError(std::current_exception());
 }
 
 inline void
 SocketBuffer::OnSocketReady(unsigned events) noexcept
-{
+try {
 	if (events & event.WRITE) {
-		if (!FlushOutput()) {
-			handler.OnSocketError(errno);
-			return;
-		}
+		FlushOutput();
 
 		if (output.empty())
 			event.CancelWrite();
@@ -138,8 +132,7 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 			handler.OnSocketDisconnect();
 			return;
 		} else if (nbytes == -1) {
-			handler.OnSocketError(errno);
-			return;
+			throw MakeSocketError("Failed to receive");
 		}
 
 		if (input.IsFull())
@@ -149,4 +142,6 @@ SocketBuffer::OnSocketReady(unsigned events) noexcept
 	if (events & (event.HANGUP|event.ERROR)) {
 		handler.OnSocketDisconnect();
 	}
+} catch (...) {
+	handler.OnSocketError(std::current_exception());
 }

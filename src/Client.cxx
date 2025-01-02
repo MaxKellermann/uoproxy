@@ -146,9 +146,9 @@ UO::Client::OnSocketDisconnect() noexcept
 }
 
 void
-UO::Client::OnSocketError(int error) noexcept
+UO::Client::OnSocketError(std::exception_ptr error) noexcept
 {
-	log_error("error during communication with server", error);
+	log_error("error during communication with server", std::move(error));
 	handler.OnClientDisconnect();
 }
 

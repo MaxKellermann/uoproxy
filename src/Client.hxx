@@ -83,7 +83,7 @@ private:
 	/* virtual methods from SocketBufferHandler */
 	size_t OnSocketData(std::span<const std::byte> src) override;
 	void OnSocketDisconnect() noexcept override;
-	void OnSocketError(int error) noexcept override;
+	void OnSocketError(std::exception_ptr error) noexcept override;
 };
 
 } // namespace UO
