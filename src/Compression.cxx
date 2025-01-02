@@ -355,9 +355,9 @@ HuffmanTreeToBitTableFollow(std::array<EncodedHuffmanByte, 0x101> &dest,
 
 static constexpr void
 HuffmanTreeToBitTableAt(std::array<EncodedHuffmanByte, 0x101> &dest,
-			  const std::array<HuffmanTreeNode, 0x100> &src,
-			  std::size_t tree_position,
-			  unsigned n_bits, unsigned value) noexcept
+			const std::array<HuffmanTreeNode, 0x100> &src,
+			std::size_t tree_position,
+			unsigned n_bits, unsigned value) noexcept
 {
 	assert(static_cast<std::size_t>(tree_position) < src.size());
 
