@@ -4,6 +4,8 @@
 #include "Log.hxx"
 #include "util/CharUtil.hxx"
 
+#include <cstdint>
+
 #include <assert.h>
 #include <stdio.h>
 
