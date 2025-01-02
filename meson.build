@@ -153,3 +153,5 @@ executable(
 if libsystemd.found()
   subdir('systemd')
 endif
+
+subdir('test')

@@ -1,1 +1,3 @@
 option('systemd', type: 'feature', description: 'systemd support')
+
+option('test', type: 'feature', description: 'Build unit tests')

@@ -35,6 +35,7 @@ jobs:
             meson \
             ccache \
             libfmt-dev \
+            libgtest-dev \
             libsystemd-dev
 
       - id: cache-ccache
@@ -44,7 +45,16 @@ jobs:
         run: |
           meson setup \
             -Dsystemd=enabled \
+            -Dtest=enabled \
             output
 
       - name: Build
         run: ninja -C output -v
+
+      - name: Unit Tests
+        run: meson test -C output
+
+      - name: Dump Unit Test Log
+        if: ${{ failure() }}
+        continue-on-error: true
+        run: cat output/meson-logs/testlog.txt
