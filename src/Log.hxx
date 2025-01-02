@@ -7,8 +7,6 @@
 
 #include <exception>
 
-#include <string.h>
-#include <errno.h>
 #include <stddef.h>
 
 #ifdef DISABLE_LOGGING
@@ -30,15 +28,6 @@ Log(unsigned level, const char *msg) noexcept
 
 void
 log_error(const char *msg, std::exception_ptr error) noexcept;
-
-static inline void
-log_error(const char *msg, int error)
-{
-	if (error <= 0)
-		LogFmt(1, "{}: {}\n", msg, error);
-	else
-		LogFmt(1, "{}: {}\n", msg, strerror(error));
-}
 
 void
 log_hexdump(unsigned level, const void *data, size_t length) noexcept;
