@@ -136,6 +136,7 @@ executable(
   'src/Dump.cxx',
   'src/SUtil.cxx',
   'src/Command.cxx',
+  'src/UdpKnock.cxx',
   include_directories: inc,
   dependencies: [
     fmt_dep,

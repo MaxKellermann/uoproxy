@@ -2,6 +2,7 @@ uoproxy (0.5) unstable; urgency=low
 
   * build with Meson/ninja
   * rewrite in C++
+  * add UDP knock support (for uologin / UO Sagas)
   * fix auto-closing gumps in multi client mode
   * fix walk display on secondary client (workaround for v7 client bug)
   * hide client IP in CreateCharacter packet (antispy)

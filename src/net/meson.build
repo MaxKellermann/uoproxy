@@ -13,6 +13,7 @@ net = static_library(
   'HostParser.cxx',
   'AddressInfo.cxx',
   'Resolver.cxx',
+  'ConnectSocket.cxx',
   include_directories: inc,
   dependencies: [
     fmt_dep,

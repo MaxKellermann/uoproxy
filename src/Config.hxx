@@ -32,6 +32,8 @@ struct Config {
 	std::vector<GameServerConfig> game_servers;
 	bool background = false, autoreconnect = true, antispy = false, razor_workaround = false;
 
+	bool udp_knock = false;
+
 	/**
 	 * Always full light level?
 	 */

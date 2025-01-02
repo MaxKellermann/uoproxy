@@ -367,6 +367,8 @@ config_read_file(Config *config, const char *path)
 			config->autoreconnect = parse_bool(path, no, value);
 		} else if (StringIsEqual(key, "antispy")) {
 			config->antispy = parse_bool(path, no, value);
+		} else if (StringIsEqual(key, "udp_knock")) {
+			config->udp_knock = parse_bool(path, no, value);
 		} else if (StringIsEqual(key, "razor_workaround")) {
 			config->razor_workaround = parse_bool(path, no, value);
 		} else if (StringIsEqual(key, "light")) {

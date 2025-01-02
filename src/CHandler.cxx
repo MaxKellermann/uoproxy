@@ -12,6 +12,7 @@
 #include "Config.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
+#include "UdpKnock.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/SpanCast.hxx"
@@ -406,6 +407,9 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 			seed = ls.server->GetSeed();
 
 		try {
+			if (config.udp_knock && config.socks4_address.empty())
+				SendUdpKnock(config.login_address.GetBest(), *p);
+
 			c->Connect(config.login_address.GetBest(), seed, false);
 		} catch (...) {
 			log_error("connection to login server failed", std::current_exception());
