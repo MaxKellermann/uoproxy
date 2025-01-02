@@ -14,7 +14,6 @@
 #ifdef DISABLE_LOGGING
 #define Log(level, msg)
 #define log_error(msg, error)
-#define log_errno(msg)
 #define log_hexdump(level, data, length)
 #else
 
@@ -39,12 +38,6 @@ log_error(const char *msg, int error)
 		LogFmt(1, "{}: {}\n", msg, error);
 	else
 		LogFmt(1, "{}: {}\n", msg, strerror(error));
-}
-
-static inline void
-log_errno(const char *msg)
-{
-	LogFmt(1, "{}: {}\n", msg, strerror(errno));
 }
 
 void
