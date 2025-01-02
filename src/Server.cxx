@@ -38,34 +38,35 @@ UO::Server::Abort() noexcept
 }
 
 inline ssize_t
-UO::Server::ParsePackets(const uint8_t *data, size_t length)
+UO::Server::ParsePackets(std::span<const std::byte> src)
 {
 	size_t consumed = 0;
 
-	while (length > 0) {
+	while (!src.empty()) {
 		size_t packet_length = get_packet_length(protocol_version,
-							 data, length);
+							 src.data(), src.size());
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from client\n");
-			log_hexdump(5, data, length);
+			log_hexdump(5, src.data(), src.size());
 			Abort();
 			return 0;
 		}
 
 		LogFmt(9, "from client: {:#02x} length={}\n",
-		       data[0], packet_length);
+		       src.front(), packet_length);
 
-		if (packet_length == 0 || packet_length > length)
+		if (packet_length == 0 || packet_length > src.size())
 			break;
 
-		log_hexdump(10, data, packet_length);
+		const auto packet = src.first(packet_length);
 
-		if (!handler.OnServerPacket(std::as_bytes(std::span{data, packet_length})))
+		log_hexdump(10, packet.data(), packet.size());
+
+		if (!handler.OnServerPacket(packet))
 			return -1;
 
 		consumed += packet_length;
-		data += packet_length;
-		length -= packet_length;
+		src = src.subspan(packet_length);
 	}
 
 	return (ssize_t)consumed;
@@ -118,7 +119,7 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 		src = src.subspan(sizeof(uint32_t));
 	}
 
-	ssize_t nbytes = ParsePackets(reinterpret_cast<const uint8_t *>(src.data()), src.size());
+	ssize_t nbytes = ParsePackets(src);
 	if (nbytes < 0)
 		return 0;
 

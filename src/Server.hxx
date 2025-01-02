@@ -106,7 +106,7 @@ public:
 private:
 	void DeferredAbort() noexcept;
 
-	ssize_t ParsePackets(const uint8_t *data, size_t length);
+	ssize_t ParsePackets(std::span<const std::byte> src);
 
 	/* virtual methods from SocketBufferHandler */
 	size_t OnSocketData(std::span<const std::byte> src) override;
