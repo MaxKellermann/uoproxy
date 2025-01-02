@@ -21,15 +21,12 @@ ToPrintableChar(std::byte b) noexcept
 }
 
 static void
-hexdump_line(char *dest, size_t address,
-	     std::span<const std::byte> src)
+hexdump_line(char *dest, std::span<const std::byte> src)
 {
 	size_t i;
 
 	assert(!src.empty());
 	assert(src.size() <= 0x10);
-
-	dest = fmt::format_to(dest, "  {:05x} ", address);
 
 	for (i = 0; i < 0x10; ++i) {
 		*dest++ = ' ';
@@ -70,7 +67,7 @@ log_hexdump(unsigned level, std::span<const std::byte> src) noexcept
 		src = src.subspan(l.size());
 
 		char line[80];
-		hexdump_line(line, row, l);
-		LogFmt(level, "{}\n", line);
+		hexdump_line(line, l);
+		LogFmt(level, "  {:05x} {}\n", row, line);
 	}
 }
