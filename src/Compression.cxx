@@ -3,7 +3,9 @@
 
 #include "Compression.hxx"
 
-#include <assert.h>
+#include <cassert>
+
+namespace UO {
 
 /**
  * Decompression Table
@@ -393,13 +395,13 @@ static constexpr unsigned bit_table[257][2] =
 	{ 0x04, 0x0D }
 };
 
-struct uo_compression {
+struct Compression {
 	int bit = 0;
 	unsigned out_data = 0;
 };
 
 static int
-output_bits(struct uo_compression *co,
+output_bits(Compression *co,
 	    unsigned char *dest,
 	    size_t dest_max_len,
 	    size_t *dest_indexp)
@@ -415,10 +417,10 @@ output_bits(struct uo_compression *co,
 }
 
 ssize_t
-uo_compress(unsigned char *dest, size_t dest_max_len,
-	    std::span<const unsigned char> src)
+Compress(unsigned char *dest, size_t dest_max_len,
+	 std::span<const unsigned char> src)
 {
-	struct uo_compression co;
+	Compression co;
 	size_t dest_index = 0;
 	int num_bits;
 
@@ -450,3 +452,5 @@ uo_compress(unsigned char *dest, size_t dest_max_len,
 
 	return (ssize_t)dest_index;
 }
+
+} // namespace UO

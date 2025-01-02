@@ -18,8 +18,8 @@ public:
 			   std::span<const unsigned char> src) noexcept;
 };
 
-} // namespace UO
-
 ssize_t
-uo_compress(unsigned char *dest, size_t dest_max_len,
-	    std::span<const unsigned char> src);
+Compress(unsigned char *dest, size_t dest_max_len,
+	 std::span<const unsigned char> src);
+
+} // namespace UO
