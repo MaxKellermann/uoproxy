@@ -1,0 +1,50 @@
+---
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - 'debian/**'
+      - 'doc/**'
+      - 'subprojects/**'
+    branches:
+      - master
+  pull_request:
+    paths-ignore:
+      - 'debian/**'
+      - 'doc/**'
+      - 'subprojects/**'
+    branches:
+      - master
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - id: checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            meson \
+            ccache \
+            libfmt-dev \
+            libsystemd-dev
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+
+      - name: Configure
+        run: |
+          meson setup \
+            -Dsystemd=enabled \
+            output
+
+      - name: Build
+        run: ninja -C output -v
