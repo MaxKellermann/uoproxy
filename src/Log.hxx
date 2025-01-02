@@ -5,14 +5,14 @@
 
 #include <fmt/core.h>
 
+#include <cstddef> // for std::byte
 #include <exception>
-
-#include <stddef.h>
+#include <span>
 
 #ifdef DISABLE_LOGGING
 #define Log(level, msg)
 #define log_error(msg, error)
-#define log_hexdump(level, data, length)
+#define log_hexdump(level, src)
 #else
 
 extern unsigned verbose;
@@ -30,6 +30,6 @@ void
 log_error(const char *msg, std::exception_ptr error) noexcept;
 
 void
-log_hexdump(unsigned level, const void *data, size_t length) noexcept;
+log_hexdump(unsigned level, std::span<const std::byte> src) noexcept;
 
 #endif

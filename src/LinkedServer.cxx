@@ -57,7 +57,7 @@ LinkedServer::OnServerPacket(std::span<const std::byte> src)
 
 	case PacketAction::DISCONNECT:
 		LogF(2, "aborting connection to client after packet {:#x}", src.front());
-		log_hexdump(6, src.data(), src.size());
+		log_hexdump(6, src);
 
 		c->Remove(*this);
 

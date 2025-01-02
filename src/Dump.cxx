@@ -8,12 +8,12 @@
 
 static void
 hexdump_line(char *dest, size_t address,
-	     const unsigned char *data, size_t length)
+	     std::span<const std::byte> src)
 {
 	size_t i;
 
-	assert(length > 0);
-	assert(length <= 0x10);
+	assert(!src.empty());
+	assert(src.size() <= 0x10);
 
 	snprintf(dest, 10, "  %05x", (unsigned)address);
 	dest += 7;
@@ -24,8 +24,8 @@ hexdump_line(char *dest, size_t address,
 		if (i == 8)
 			*dest++ = ' ';
 
-		if (i < length)
-			snprintf(dest, 3, "%02x", data[i]);
+		if (i < src.size())
+			snprintf(dest, 3, "%02x", static_cast<uint_least8_t>(src[i]));
 		else {
 			dest[0] = ' ';
 			dest[1] = ' ';
@@ -37,14 +37,14 @@ hexdump_line(char *dest, size_t address,
 	*dest++ = ' ';
 	*dest++ = ' ';
 
-	for (i = 0; i < length; ++i) {
+	for (i = 0; i < src.size(); ++i) {
 		if (i == 8)
 			*dest++ = ' ';
 
-		if (data[i] <= ' ')
+		if (src[i] <= static_cast<std::byte>(' '))
 			*dest++ = ' ';
-		else if (data[i] < 0x80)
-			*dest++ = (char)data[i];
+		else if (src[i] < static_cast<std::byte>(0x80))
+			*dest++ = (char)src[i];
 		else
 			*dest++ = '.';
 	}
@@ -52,25 +52,20 @@ hexdump_line(char *dest, size_t address,
 	*dest = '\0';
 }
 
-static size_t
-min_size_t(size_t a, size_t b)
-{
-	return a < b ? a : b;
-}
-
 void
-log_hexdump(unsigned level, const void *data, size_t length) noexcept
+log_hexdump(unsigned level, std::span<const std::byte> src) noexcept
 {
-	const unsigned char *p = (const unsigned char *)data;
-	size_t row;
-	char line[80];
-
 	if (level > verbose)
 		return;
 
-	for (row = 0; row < length; row += 0x10) {
-		hexdump_line(line, row, p + row,
-			     min_size_t(0x10, length - row));
+	for (size_t row = 0; !src.empty(); row += 0x10) {
+		auto l = src;
+		if (l.size() > 0x10)
+			l = l.first(0x10);
+		src = src.subspan(l.size());
+
+		char line[80];
+		hexdump_line(line, row, l);
 		LogFmt(level, "{}\n", line);
 	}
 }

@@ -47,7 +47,7 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 							 src.data(), src.size());
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from client\n");
-			log_hexdump(5, src.data(), src.size());
+			log_hexdump(5, src);
 			Abort();
 			return 0;
 		}
@@ -60,7 +60,7 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 
 		const auto packet = src.first(packet_length);
 
-		log_hexdump(10, packet.data(), packet.size());
+		log_hexdump(10, packet);
 
 		if (!handler.OnServerPacket(packet))
 			return -1;
@@ -150,7 +150,7 @@ UO::Server::Send(std::span<const std::byte> src)
 		return;
 
 	LogFmt(9, "sending packet to client, length={}\n", src.size());
-	log_hexdump(10, src.data(), src.size());
+	log_hexdump(10, src);
 
 	if (compression_enabled) {
 		auto w = sock.Write();

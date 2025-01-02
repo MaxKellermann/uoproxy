@@ -80,7 +80,7 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 		packet_length = get_packet_length(protocol_version, src.data(), src.size());
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from server\n");
-			log_hexdump(5, src.data(), src.size());
+			log_hexdump(5, src);
 			Abort();
 			return 0;
 		}
@@ -93,7 +93,7 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 
 		const auto packet = src.first(packet_length);
 
-		log_hexdump(10, packet.data(), packet.size());
+		log_hexdump(10, packet);
 
 		if (!handler.OnClientPacket(packet))
 			return -1;
@@ -162,7 +162,7 @@ UO::Client::Send(std::span<const std::byte> src)
 		return;
 
 	LogFmt(9, "sending packet to server, length={}\n", src.size());
-	log_hexdump(10, src.data(), src.size());
+	log_hexdump(10, src);
 
 	if (static_cast<UO::Command>(src.front()) == UO::Command::GameLogin)
 		compression_enabled = true;

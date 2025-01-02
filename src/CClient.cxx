@@ -35,7 +35,7 @@ Connection::OnClientPacket(std::span<const std::byte> src)
 	case PacketAction::DISCONNECT:
 		LogFmt(2, "aborting connection to server after packet {:#02x}\n",
 			  src.front());
-		log_hexdump(6, src.data(), src.size());
+		log_hexdump(6, src);
 
 		if (autoreconnect && IsInGame()) {
 			Log(2, "auto-reconnecting\n");
