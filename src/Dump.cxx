@@ -2,9 +2,23 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Log.hxx"
+#include "util/CharUtil.hxx"
 
 #include <assert.h>
 #include <stdio.h>
+
+static constexpr char
+ToPrintableChar(std::byte b) noexcept
+{
+	char ch = static_cast<char>(b);
+
+	if (IsWhitespaceOrNull(ch))
+		ch = ' ';
+	else if (!IsASCII(ch))
+		ch = '.';
+
+	return ch;
+}
 
 static void
 hexdump_line(char *dest, size_t address,
@@ -41,12 +55,7 @@ hexdump_line(char *dest, size_t address,
 		if (i == 8)
 			*dest++ = ' ';
 
-		if (src[i] <= static_cast<std::byte>(' '))
-			*dest++ = ' ';
-		else if (src[i] < static_cast<std::byte>(0x80))
-			*dest++ = (char)src[i];
-		else
-			*dest++ = '.';
+		*dest++ = ToPrintableChar(src[i]);
 	}
 
 	*dest = '\0';
