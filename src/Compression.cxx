@@ -15,7 +15,7 @@ namespace UO {
  *
  * if drawn this tree is sorted from up to down (layer by layer) and left to right.
  */
-static constexpr int huffman_tree[] = {
+static constexpr int_least16_t huffman_tree[] = {
 	/*   0 */ 1, 2,
 	/*   1 */ 3, 4,
 	/*   2 */ 5, 0,
@@ -396,8 +396,8 @@ static constexpr unsigned bit_table[257][2] =
 };
 
 struct Compression {
-	int bit = 0;
-	unsigned out_data = 0;
+	uint_least32_t out_data = 0;
+	uint_least8_t bit = 0;
 
 	constexpr void FeedChar(std::size_t ch) noexcept;
 
