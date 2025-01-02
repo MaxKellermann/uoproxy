@@ -5,11 +5,11 @@
 #include "version.h"
 #include "Log.hxx"
 #include "net/Resolver.hxx"
+#include "util/StringAPI.hxx"
 
 #include <fmt/core.h>
 
 #include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #ifdef __GLIBC__
 #include <getopt.h>
@@ -316,7 +316,7 @@ config_read_file(Config *config, const char *path)
 		}
 
 		/* check command */
-		if (strcmp(key, "port") == 0) {
+		if (StringIsEqual(key, "port")) {
 			unsigned long port = strtoul(value, nullptr, 0);
 
 			if (port == 0 || port > 0xffff) {
@@ -326,23 +326,23 @@ config_read_file(Config *config, const char *path)
 			}
 
 			config->listener.bind_address = port_to_addrinfo((unsigned)port).GetBest();
-		} else if (strcmp(key, "bind") == 0) {
+		} else if (StringIsEqual(key, "bind")) {
 			config->listener.bind_address = parse_address(value).GetBest();
-		} else if (strcmp(key, "socks4") == 0) {
+		} else if (StringIsEqual(key, "socks4")) {
 			struct addrinfo hints;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = PF_INET;
 			hints.ai_socktype = SOCK_STREAM;
 
 			config->socks4_address = Resolve(value, 9050, &hints);
-		} else if (strcmp(key, "server") == 0) {
+		} else if (StringIsEqual(key, "server")) {
 			struct addrinfo hints;
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = PF_INET;
 			hints.ai_socktype = SOCK_STREAM;
 
 			config->login_address = Resolve(value, 2593, &hints);
-		} else if (strcmp(key, "server_list") == 0) {
+		} else if (StringIsEqual(key, "server_list")) {
 			config->game_servers.clear();
 
 			if (*value == 0)
@@ -361,17 +361,17 @@ config_read_file(Config *config, const char *path)
 					config->game_servers.push_back(parse_game_server(path, no, o));
 				}
 			}
-		} else if (strcmp(key, "background") == 0) {
+		} else if (StringIsEqual(key, "background")) {
 			config->background = parse_bool(path, no, value);
-		} else if (strcmp(key, "autoreconnect") == 0) {
+		} else if (StringIsEqual(key, "autoreconnect")) {
 			config->autoreconnect = parse_bool(path, no, value);
-		} else if (strcmp(key, "antispy") == 0) {
+		} else if (StringIsEqual(key, "antispy")) {
 			config->antispy = parse_bool(path, no, value);
-		} else if (strcmp(key, "razor_workaround") == 0) {
+		} else if (StringIsEqual(key, "razor_workaround")) {
 			config->razor_workaround = parse_bool(path, no, value);
-		} else if (strcmp(key, "light") == 0) {
+		} else if (StringIsEqual(key, "light")) {
 			config->light = parse_bool(path, no, value);
-		} else if (strcmp(key, "client_version") == 0) {
+		} else if (StringIsEqual(key, "client_version")) {
 			config->client_version = value;
 		} else {
 			fmt::print(stderr, "{} line {}: invalid keyword {:?}\n",
