@@ -325,21 +325,21 @@ UO::Decompression::Decompress(std::span<std::byte> dest,
 }
 
 struct EncodedHuffmanByte {
-	unsigned n_bits;
-	unsigned value;
+	uint_least8_t n_bits;
+	uint_least16_t value;
 };
 
 static constexpr void
 HuffmanTreeToBitTableAt(std::array<EncodedHuffmanByte, 0x101> &dest,
 			const std::array<HuffmanTreeNode, 0x100> &src,
 			std::size_t tree_position,
-			unsigned n_bits, unsigned value) noexcept;
+			uint_least8_t n_bits, uint_least16_t value) noexcept;
 
 static constexpr void
 HuffmanTreeToBitTableFollow(std::array<EncodedHuffmanByte, 0x101> &dest,
 			    const std::array<HuffmanTreeNode, 0x100> &src,
 			    int_least16_t tree_position,
-			    unsigned n_bits, unsigned value) noexcept
+			    uint_least8_t n_bits, uint_least16_t value) noexcept
 {
 	assert(n_bits > 0);
 
@@ -357,7 +357,7 @@ static constexpr void
 HuffmanTreeToBitTableAt(std::array<EncodedHuffmanByte, 0x101> &dest,
 			const std::array<HuffmanTreeNode, 0x100> &src,
 			std::size_t tree_position,
-			unsigned n_bits, unsigned value) noexcept
+			uint_least8_t n_bits, uint_least16_t value) noexcept
 {
 	assert(static_cast<std::size_t>(tree_position) < src.size());
 
