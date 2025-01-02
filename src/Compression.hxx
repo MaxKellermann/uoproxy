@@ -20,7 +20,7 @@ public:
 	 * Throws #SocketBufferFullError if the destination buffer is
 	 * too small.
 	 */
-	std::size_t Decompress(unsigned char *dest, size_t dest_max_len,
+	std::size_t Decompress(std::span<unsigned char> dest,
 			       std::span<const unsigned char> src);
 };
 
@@ -29,7 +29,7 @@ public:
  * too small.
  */
 std::size_t
-Compress(unsigned char *dest, size_t dest_max_len,
+Compress(std::span<unsigned char> dest,
 	 std::span<const unsigned char> src);
 
 } // namespace UO

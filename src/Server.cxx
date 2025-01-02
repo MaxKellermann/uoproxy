@@ -161,7 +161,7 @@ try {
 			return;
 		}
 
-		sock.Append(UO::Compress((unsigned char *)w.data(), w.size(),
+		sock.Append(UO::Compress({(unsigned char *)w.data(), w.size()},
 					 {(const unsigned char *)src.data(), src.size()}));
 	} else {
 		if (!sock.Send(src)) {

@@ -59,7 +59,7 @@ UO::Client::Decompress(std::span<const uint8_t> src)
 		return -1;
 	}
 
-	decompressed_buffer.Append(decompression.Decompress(w.data(), w.size(), src));
+	decompressed_buffer.Append(decompression.Decompress(w, src));
 	return src.size();
 }
 
