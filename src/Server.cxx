@@ -5,6 +5,7 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
+#include "net/IPv4Address.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 
 #include <utility>
@@ -36,6 +37,12 @@ UO::Server::Abort() noexcept
 	   everything is done */
 
 	abort_event.Schedule();
+}
+
+IPv4Address
+UO::Server::GetLocalIPv4Address() const noexcept
+{
+	return sock.GetLocalIPv4Address();
 }
 
 inline ssize_t

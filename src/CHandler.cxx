@@ -571,6 +571,8 @@ handle_play_character(LinkedServer &ls,
 static void
 redirect_to_self(LinkedServer &ls)
 {
+	const auto local_ipv4 = ls.server->GetLocalIPv4Address();
+
 	struct uo_packet_relay relay;
 	static uint32_t authid = 0;
 	struct in_addr addr;
@@ -578,8 +580,8 @@ redirect_to_self(LinkedServer &ls)
 	if (!authid) authid = time(0);
 
 	relay.cmd = UO::Command::Relay;
-	relay.port = PackedBE16::FromBE(ls.server->GetSockPort());
-	relay.ip = PackedBE32::FromBE(ls.server->GetSockName());
+	relay.port = PackedBE16::FromBE(local_ipv4.GetNumericAddressBE());
+	relay.ip = PackedBE32::FromBE(local_ipv4.GetPortBE());
 	addr.s_addr = relay.ip.raw();
 	ls.LogF(8, "redirecting to: {}:{}",
 		inet_ntoa(addr), (unsigned)relay.port);;

@@ -8,7 +8,6 @@
 #include "util/DynamicFifoBuffer.hxx"
 
 #include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <span>
 
@@ -65,16 +64,10 @@ public:
 	bool Send(std::span<const std::byte> src) noexcept;
 
 	/**
-	 * @return the 32-bit internet address of the socket buffer's fd, in
-	 * network byte order
+	 * Determines the local IPv4 address this socket is bound to.
 	 */
-	uint32_t GetName() const noexcept;
-
-	/**
-	 * @return the 16-bit port ofthe socket buffer's fd, in network byte
-	 * order
-	 */
-	uint16_t GetPort() const noexcept;
+	[[gnu::pure]]
+	IPv4Address GetLocalIPv4Address() const noexcept;
 
 	/**
 	 * @return false on error or if nothing was consumed

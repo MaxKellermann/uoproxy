@@ -60,17 +60,8 @@ public:
 
 	void Abort() noexcept;
 
-	/** @return ip address, in network byte order, of our uo server socket
-	    (= connection to client) */
-	uint32_t GetSockName() const noexcept {
-		return sock.GetName();
-	}
-
-	/** @return port, in network byte order, of our uo server socket
-	    (= connection to client) */
-	uint16_t GetSockPort() const noexcept {
-		return sock.GetPort();
-	}
+	[[gnu::pure]]
+	IPv4Address GetLocalIPv4Address() const noexcept;
 
 	uint32_t GetSeed() const noexcept {
 		return seed;

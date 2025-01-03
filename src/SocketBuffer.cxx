@@ -52,24 +52,14 @@ SocketBuffer::Send(std::span<const std::byte> src) noexcept
 	return true;
 }
 
-uint32_t
-SocketBuffer::GetName() const noexcept
+IPv4Address
+SocketBuffer::GetLocalIPv4Address() const noexcept
 {
 	const auto address = event.GetSocket().GetLocalAddress();
 	if (address.GetFamily() == AF_INET)
-		return IPv4Address::Cast(address).GetNumericAddressBE();
+		return IPv4Address::Cast(address);
 	else
-		return 0;
-}
-
-uint16_t
-SocketBuffer::GetPort() const noexcept
-{
-	const auto address = event.GetSocket().GetLocalAddress();
-	if (address.GetFamily() == AF_INET)
-		return IPv4Address::Cast(address).GetPortBE();
-	else
-		return 0;
+		return {};
 }
 
 inline bool
