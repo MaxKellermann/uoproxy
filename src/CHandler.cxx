@@ -13,6 +13,7 @@
 #include "Log.hxx"
 #include "Bridge.hxx"
 #include "UdpKnock.hxx"
+#include "lib/fmt//SocketAddressFormatter.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/SpanCast.hxx"
@@ -23,13 +24,6 @@
 #include <string.h>
 
 #include <time.h>
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <arpa/inet.h>
-#endif
 
 #define TALK_MAX 128
 
@@ -572,19 +566,16 @@ static void
 redirect_to_self(LinkedServer &ls)
 {
 	const auto local_ipv4 = ls.server->GetLocalIPv4Address();
+	ls.LogF(8, "redirecting to {}", local_ipv4);
 
 	struct uo_packet_relay relay;
 	static uint32_t authid = 0;
-	struct in_addr addr;
 
 	if (!authid) authid = time(0);
 
 	relay.cmd = UO::Command::Relay;
 	relay.port = PackedBE16::FromBE(local_ipv4.GetNumericAddressBE());
 	relay.ip = PackedBE32::FromBE(local_ipv4.GetPortBE());
-	addr.s_addr = relay.ip.raw();
-	ls.LogF(8, "redirecting to: {}:{}",
-		inet_ntoa(addr), (unsigned)relay.port);;
 	relay.auth_id = ls.auth_id = authid++;
 	ls.server->SendT(relay);
 	ls.state = LinkedServer::State::RELAY_SERVER;
