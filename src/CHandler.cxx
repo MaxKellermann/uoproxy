@@ -566,6 +566,11 @@ static void
 redirect_to_self(LinkedServer &ls)
 {
 	const auto local_ipv4 = ls.server->GetLocalIPv4Address();
+	if (!local_ipv4.IsDefined())
+		/* this connection was not IPv4 (maybe IPv6?) and we
+                   can't send a redirect */
+		return;
+
 	ls.LogF(8, "redirecting to {}", local_ipv4);
 
 	struct uo_packet_relay relay;
