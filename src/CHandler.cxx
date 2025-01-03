@@ -636,7 +636,7 @@ handle_play_server(LinkedServer &ls,
 			ls.LogF(2, "attaching connection");
 			attach_send_world(&ls);
 			return PacketAction::DROP;
-			}
+		}
 
 		retaction = PacketAction::DROP;
 	} else if (config.login_address.empty() &&
