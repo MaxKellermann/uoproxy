@@ -336,13 +336,12 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 
 		/* attaching to an existing connection, fake the server
 		   list */
-		struct uo_packet_server_list p2;
-		memset(&p2, 0, sizeof(p2));
-
-		p2.cmd = UO::Command::ServerList;
-		p2.length = sizeof(p2);
-		p2.unknown_0x5d = 0x5d;
-		p2.num_game_servers = 1;
+		struct uo_packet_server_list p2{
+			.cmd = UO::Command::ServerList,
+			.length = sizeof(p2),
+			.unknown_0x5d = 0x5d,
+			.num_game_servers = 1,
+		};
 
 		p2.game_servers[0].index = 0;
 		strcpy(p2.game_servers[0].name, "attach");
@@ -408,9 +407,10 @@ handle_account_login(LinkedServer &ls, std::span<const std::byte> src)
 		} catch (...) {
 			log_error("connection to login server failed", std::current_exception());
 
-			struct uo_packet_account_login_reject response;
-			response.cmd = UO::Command::AccountLoginReject;
-			response.reason = 0x02; /* blocked */
+			static constexpr struct uo_packet_account_login_reject response{
+				.cmd = UO::Command::AccountLoginReject,
+				.reason = 0x02, /* blocked */
+			};
 
 			ls.server->SendT(response);
 			return PacketAction::DROP;
@@ -573,15 +573,19 @@ redirect_to_self(LinkedServer &ls)
 
 	ls.LogF(8, "redirecting to {}", local_ipv4);
 
-	struct uo_packet_relay relay;
 	static uint32_t authid = 0;
 
 	if (!authid) authid = time(0);
 
-	relay.cmd = UO::Command::Relay;
-	relay.port = PackedBE16::FromBE(local_ipv4.GetNumericAddressBE());
-	relay.ip = PackedBE32::FromBE(local_ipv4.GetPortBE());
-	relay.auth_id = ls.auth_id = authid++;
+	const struct uo_packet_relay relay{
+		.cmd = UO::Command::Relay,
+		.ip = PackedBE32::FromBE(local_ipv4.GetPortBE()),
+		.port = PackedBE16::FromBE(local_ipv4.GetNumericAddressBE()),
+		.auth_id = authid++,
+	};
+		
+	ls.auth_id = relay.auth_id;
+
 	ls.server->SendT(relay);
 	ls.state = LinkedServer::State::RELAY_SERVER;
 }
@@ -641,7 +645,6 @@ handle_play_server(LinkedServer &ls,
 		retaction = PacketAction::DROP;
 	} else if (config.login_address.empty() &&
 		   !config.game_servers.empty()) {
-		struct uo_packet_game_login login;
 		uint32_t seed;
 
 		assert(c.client.client == nullptr);
@@ -668,9 +671,11 @@ handle_play_server(LinkedServer &ls,
 		}
 
 		/* send game login to new server */
-		login.cmd = UO::Command::GameLogin;
-		login.auth_id = seed;
-		login.credentials = c.credentials;
+		const struct uo_packet_game_login login{
+			.cmd = UO::Command::GameLogin,
+			.auth_id = seed,
+			.credentials = c.credentials,
+		};
 
 		c.client.client->SendT(login);
 
