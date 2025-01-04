@@ -14,6 +14,7 @@ net = static_library(
   'AddressInfo.cxx',
   'Resolver.cxx',
   'ConnectSocket.cxx',
+  'Buffered.cxx',
   include_directories: inc,
   dependencies: [
     fmt_dep,

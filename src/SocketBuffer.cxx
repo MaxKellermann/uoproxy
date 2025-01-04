@@ -2,8 +2,8 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "SocketBuffer.hxx"
-#include "BufferedIO.hxx"
 #include "Log.hxx"
+#include "net/Buffered.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketError.hxx"
 #include "net/StaticSocketAddress.hxx"
@@ -78,7 +78,7 @@ SocketBuffer::SubmitData()
 bool
 SocketBuffer::FlushOutput()
 {
-	ssize_t nbytes = write_from_buffer(event.GetSocket(), output);
+	ssize_t nbytes = SendFromBuffer(event.GetSocket(), output);
 	if (nbytes == -2)
 		return true;
 
@@ -114,7 +114,7 @@ try {
 
 	if (events & event.READ) {
 		input.AllocateIfNull();
-		ssize_t nbytes = read_to_buffer(event.GetSocket(), input);
+		ssize_t nbytes = ReceiveToBuffer(event.GetSocket(), input);
 		if (nbytes > 0) {
 			if (!SubmitData())
 				return;

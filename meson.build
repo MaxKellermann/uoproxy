@@ -121,7 +121,6 @@ executable(
   'src/Log.cxx',
   'src/SocketConnect.cxx',
   'src/SocketBuffer.cxx',
-  'src/BufferedIO.cxx',
   'src/ProxySocks.cxx',
   'src/Encryption.cxx',
   'src/Server.cxx', 'src/Client.cxx',
