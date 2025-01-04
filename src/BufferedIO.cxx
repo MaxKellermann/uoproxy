@@ -14,10 +14,6 @@
 #include <sys/socket.h>
 #endif
 
-#ifndef MSG_DONTWAIT
-#define MSG_DONTWAIT 0
-#endif
-
 ssize_t
 read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
 {
