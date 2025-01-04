@@ -102,7 +102,7 @@ GetPacketLengths(enum protocol_version protocol) noexcept
 
 std::size_t
 get_packet_length(enum protocol_version protocol,
-		  const void *q, std::size_t max_length)
+		  const void *q, std::size_t max_length) noexcept
 {
 	if (max_length == 0)
 		return 0;
