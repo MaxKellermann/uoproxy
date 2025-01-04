@@ -40,6 +40,18 @@ struct WalkState {
 	std::array<Item, 4> queue;
 	unsigned queue_size = 0;
 	uint8_t seq_next = 0;
+
+	void clear() noexcept {
+		queue_size = 0;
+		server = nullptr;
+	}
+
+	void pop_front() noexcept;
+
+	[[gnu::pure]]
+	Item *FindSequence(uint8_t seq) noexcept;
+
+	void Remove(Item &item) noexcept;
 };
 
 struct Connection final : IntrusiveListHook<>, UO::ClientHandler {

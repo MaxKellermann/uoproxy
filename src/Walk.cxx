@@ -14,53 +14,44 @@
 
 #include <assert.h>
 
-static void
-walk_shift(WalkState &state)
+void
+WalkState::pop_front() noexcept
 {
-	assert(state.queue_size > 0);
+	assert(queue_size > 0);
 
-	std::move(state.queue.data() + 1, state.queue.data() + state.queue_size,
-		  state.queue.data());
+	std::move(queue.data() + 1, queue.data() + queue_size,
+		  queue.data());
 
-	--state.queue_size;
+	--queue_size;
 
-	if (state.queue_size == 0)
-		state.server = nullptr;
+	if (queue_size == 0)
+		server = nullptr;
 }
 
-static WalkState::Item *
-find_by_seq(WalkState &state,
-	    uint8_t seq)
+WalkState::Item *
+WalkState::FindSequence(uint8_t seq) noexcept
 {
 	unsigned i;
 
-	for (i = 0; i < state.queue_size; i++)
-		if (state.queue[i].seq == seq)
-			return &state.queue[i];
+	for (i = 0; i < queue_size; i++)
+		if (queue[i].seq == seq)
+			return &queue[i];
 
 	return nullptr;
 }
 
-static void
-remove_item(WalkState &state,
-	    WalkState::Item *item)
+void
+WalkState::Remove(Item &item) noexcept
 {
-	assert(item >= state.queue.data());
-	assert(item < state.queue.data() + state.queue_size);
+	assert(&item >= queue.data());
+	assert(&item < queue.data() + queue_size);
 
-	std::move(item + 1, state.queue.data() + state.queue_size, item);
+	std::move(&item + 1, queue.data() + queue_size, &item);
 
-	--state.queue_size;
+	--queue_size;
 
-	if (state.queue_size == 0)
-		state.server = nullptr;
-}
-
-static void
-walk_clear(WalkState &state)
-{
-	state.server = nullptr;
-	state.queue_size = 0;
+	if (queue_size == 0)
+		server = nullptr;
 }
 
 static void
@@ -108,7 +99,7 @@ connection_walk_request(LinkedServer &ls,
 		ls.LogF(2, "walk queue full");
 		walk_cancel(connection.client.world, *ls.server,
 			    state.queue[0].packet);
-		walk_shift(state);
+		state.pop_front();
 	}
 
 	state.server = &ls;
@@ -129,7 +120,7 @@ connection_walk_request(LinkedServer &ls,
 static void
 connection_resync(Connection &c)
 {
-	walk_clear(c.walk);
+	c.walk.clear();
 
 	const struct uo_packet_walk_ack packet = {
 		.cmd = UO::Command::Resynchronize,
@@ -148,7 +139,7 @@ connection_walk_cancel(Connection &c,
 
 	state.seq_next = 0;
 
-	auto *i = find_by_seq(state, p.seq);
+	auto *i = state.FindSequence(p.seq);
 
 	if (i != nullptr)
 		LogFmt(7, "walk_cancel seq_to_client={} seq_from_server={}\n",
@@ -166,7 +157,7 @@ connection_walk_cancel(Connection &c,
 		state.server->server->SendT(cancel);
 	}
 
-	walk_clear(state);
+	state.clear();
 }
 
 void
@@ -175,7 +166,7 @@ connection_walk_ack(Connection &c,
 {
 	auto &state = c.walk;
 
-	auto *i = find_by_seq(state, p.seq);
+	auto *i = state.FindSequence(p.seq);
 	if (i == nullptr) {
 		Log(1, "WalkAck out of sync\n");
 		connection_resync(c);
@@ -250,5 +241,5 @@ connection_walk_ack(Connection &c,
 	else
 		c.BroadcastToInGameClients(ReferenceAsBytes(mu));
 
-	remove_item(state, i);
+	state.Remove(*i);
 }
