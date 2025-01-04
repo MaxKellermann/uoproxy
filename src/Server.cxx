@@ -2,9 +2,9 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Server.hxx"
-#include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
+#include "uo/Length.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketProtocolError.hxx"

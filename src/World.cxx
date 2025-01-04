@@ -4,7 +4,7 @@
 #include "World.hxx"
 #include "Log.hxx"
 #include "Bridge.hxx"
-#include "PacketLengths.hxx"
+#include "uo/Length.hxx"
 
 #include <assert.h>
 #include <string.h>

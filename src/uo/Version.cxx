@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // author: Max Kellermann <max.kellermann@gmail.com>
 
-#include "PVersion.hxx"
+#include "Version.hxx"
 
 #include <cassert>
 #include <iterator> // for std::size()

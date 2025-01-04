@@ -6,7 +6,7 @@
 #include "SocketBuffer.hxx"
 #include "Compression.hxx"
 #include "Encryption.hxx"
-#include "PVersion.hxx"
+#include "uo/Version.hxx"
 #include "event/DeferEvent.hxx"
 
 #include <cassert>

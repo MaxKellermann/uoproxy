@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // author: Max Kellermann <max.kellermann@gmail.com>
 
-#include "PacketLengths.hxx"
+#include "Length.hxx"
 #include "PacketStructs.hxx"
 #include "uo/Command.hxx"
 #include "util/ByteOrder.hxx"

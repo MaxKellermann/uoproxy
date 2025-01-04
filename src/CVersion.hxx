@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "PVersion.hxx"
+#include "uo/Version.hxx"
 #include "util/VarStructPtr.hxx"
 
 #include <cstddef>

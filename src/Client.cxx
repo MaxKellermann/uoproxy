@@ -2,10 +2,10 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Client.hxx"
-#include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
+#include "uo/Length.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
