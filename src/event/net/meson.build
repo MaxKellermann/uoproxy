@@ -1,6 +1,8 @@
 event_net_sources = [
   'ConnectSocket.cxx',
   'ServerSocket.cxx',
+  'SocketWrapper.cxx',
+  'BufferedSocket.cxx',
 ]
 
 event_net = static_library(

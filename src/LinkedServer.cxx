@@ -78,7 +78,7 @@ LinkedServer::OnServerPacket(std::span<const std::byte> src)
 	return true;
 }
 
-void
+bool
 LinkedServer::OnServerDisconnect() noexcept
 {
 	assert(server != nullptr);
@@ -88,7 +88,7 @@ LinkedServer::OnServerDisconnect() noexcept
 		LogF(2, "client disconnected, zombifying server connection for 5 seconds");
 
 		zombie_timeout.Schedule(std::chrono::seconds{5});
-		return;
+		return false;
 	}
 
 	Connection *c = connection;
@@ -96,4 +96,5 @@ LinkedServer::OnServerDisconnect() noexcept
 	c->RemoveCheckEmpty(*this);
 
 	delete this;
+	return false;
 }

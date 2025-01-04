@@ -36,7 +36,7 @@ public:
 	 * peer closed his side.  uo_server_dispose() does not trigger
 	 * this callback, and the method has to invoke this function.
 	 */
-	virtual void OnServerDisconnect() noexcept = 0;
+	virtual bool OnServerDisconnect() noexcept = 0;
 };
 
 class Server final : SocketBufferHandler  {
@@ -105,7 +105,7 @@ private:
 
 	/* virtual methods from SocketBufferHandler */
 	size_t OnSocketData(std::span<const std::byte> src) override;
-	void OnSocketDisconnect() noexcept override;
+	bool OnSocketDisconnect() noexcept override;
 	void OnSocketError(std::exception_ptr error) noexcept override;
 };
 

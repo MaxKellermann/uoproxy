@@ -133,11 +133,11 @@ UO::Client::OnSocketData(std::span<const std::byte> src)
 	}
 }
 
-void
+bool
 UO::Client::OnSocketDisconnect() noexcept
 {
 	Log(2, "server closed the connection\n");
-	handler.OnClientDisconnect();
+	return handler.OnClientDisconnect();
 }
 
 void

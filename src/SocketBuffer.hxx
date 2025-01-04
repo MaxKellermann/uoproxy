@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include "event/DeferEvent.hxx"
-#include "event/SocketEvent.hxx"
+#include "event/net/BufferedSocket.hxx"
 #include "DefaultFifoBuffer.hxx"
 
 #include <cstddef>
@@ -26,8 +25,10 @@ public:
 	/**
 	 * The socket has been closed because the peer closed his
 	 * side.
+	 *
+	 * @return true if the #SocketBuffer has been destroyed
 	 */
-	virtual void OnSocketDisconnect() noexcept = 0;
+	virtual bool OnSocketDisconnect() noexcept = 0;
 
 	/**
 	 * The socket has been closed due to an error.
@@ -35,12 +36,12 @@ public:
 	virtual void OnSocketError(std::exception_ptr error) noexcept = 0;
 };
 
-class SocketBuffer final {
-	SocketEvent event;
+class SocketBuffer final
+	: BufferedSocketHandler
+{
+	BufferedSocket socket;
 
-	DeferEvent defer_send;
-
-	DefaultFifoBuffer input, output;
+	DefaultFifoBuffer output;
 
 	SocketBufferHandler &handler;
 
@@ -68,20 +69,10 @@ public:
 	[[gnu::pure]]
 	IPv4Address GetLocalIPv4Address() const noexcept;
 
-	/**
-	 * @return false on error or if nothing was consumed
-	 */
-	bool SubmitData();
-
-	/**
-	 * Try to flush the output buffer.  Note that this function will
-	 * not trigger the free() callback.
-	 *
-	 * @return true on success, false on i/o error (see errno)
-	 */
-	bool FlushOutput();
-
-protected:
-	void OnSocketReady(unsigned events) noexcept;
-	void OnDeferredSend() noexcept;
+private:
+	// virtual methods from BufferedSocketHandler
+	BufferedResult OnBufferedData() noexcept override;
+	bool OnBufferedClosed() noexcept override;
+	bool OnBufferedWrite() override;
+	void OnBufferedError(std::exception_ptr e) noexcept override;
 };

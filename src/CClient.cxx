@@ -52,7 +52,7 @@ Connection::OnClientPacket(std::span<const std::byte> src)
 	return true;
 }
 
-void
+bool
 Connection::OnClientDisconnect() noexcept
 {
 	assert(client.client != nullptr);
@@ -61,9 +61,11 @@ Connection::OnClientDisconnect() noexcept
 		Log(2, "server disconnected, auto-reconnecting\n");
 		connection_speak_console(this, "uoproxy was disconnected, auto-reconnecting...");
 		ScheduleReconnect();
+		return false;
 	} else {
 		Log(1, "server disconnected\n");
 		Destroy();
+		return false;
 	}
 }
 

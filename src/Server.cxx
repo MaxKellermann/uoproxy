@@ -135,11 +135,11 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 	return consumed + (size_t)nbytes;
 }
 
-void
+bool
 UO::Server::OnSocketDisconnect() noexcept
 {
 	Log(2, "client closed the connection\n");
-	handler.OnServerDisconnect();
+	return handler.OnServerDisconnect();
 }
 
 void

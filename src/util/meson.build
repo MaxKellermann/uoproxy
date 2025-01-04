@@ -1,6 +1,7 @@
 util = static_library(
   'util',
   'Exception.cxx',
+  'LeakDetector.cxx',
   'PrintException.cxx',
   'StringStrip.cxx',
   include_directories: inc,

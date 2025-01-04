@@ -140,7 +140,7 @@ private:
 
 	/* virtual methods from UO::ClientHandler */
 	bool OnClientPacket(std::span<const std::byte> src) override;
-	void OnClientDisconnect() noexcept override;
+	bool OnClientDisconnect() noexcept override;
 };
 
 [[nodiscard]]

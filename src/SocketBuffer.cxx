@@ -17,16 +17,17 @@
 
 SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 			   SocketBufferHandler &_handler)
-	:event(event_loop, BIND_THIS_METHOD(OnSocketReady), s.Release()),
-	 defer_send(event_loop, BIND_THIS_METHOD(OnDeferredSend)),
+	:socket(event_loop),
 	 handler(_handler)
 {
-	event.ScheduleRead();
+	socket.Init(s.Release(), FD_TCP, std::chrono::seconds{30}, *this);
+	socket.ScheduleRead();
 }
 
 SocketBuffer::~SocketBuffer() noexcept
 {
-	event.Close();
+	socket.Close();
+	socket.Destroy();
 }
 
 void
@@ -34,7 +35,7 @@ SocketBuffer::Append(std::size_t length) noexcept
 {
 	output.Append(length);
 
-	defer_send.Schedule();
+	socket.DeferWrite();
 }
 
 bool
@@ -52,86 +53,66 @@ SocketBuffer::Send(std::span<const std::byte> src) noexcept
 IPv4Address
 SocketBuffer::GetLocalIPv4Address() const noexcept
 {
-	const auto address = event.GetSocket().GetLocalAddress();
+	const auto address = socket.GetSocket().GetLocalAddress();
 	if (address.GetFamily() == AF_INET)
 		return IPv4Address::Cast(address);
 	else
 		return {};
 }
 
-inline bool
-SocketBuffer::SubmitData()
+BufferedResult
+SocketBuffer::OnBufferedData() noexcept
 {
-	auto r = input.Read();
-	if (r.empty())
-		return true;
+	const auto r = socket.ReadBuffer();
+	assert(!r.empty());
 
-	ssize_t nbytes = handler.OnSocketData(r);
+	const std::size_t nbytes = handler.OnSocketData(r);
 	if (nbytes == 0)
-		return false;
+		return BufferedResult::DESTROYED;
 
-	input.Consume(nbytes);
-	input.FreeIfEmpty();
-	return true;
+	socket.DisposeConsumed(nbytes);
+	return BufferedResult::OK;
 }
 
 bool
-SocketBuffer::FlushOutput()
+SocketBuffer::OnBufferedClosed() noexcept
 {
-	ssize_t nbytes = SendFromBuffer(event.GetSocket(), output);
-	if (nbytes == -2)
-		return true;
+	return handler.OnSocketDisconnect();
+}
 
-	if (nbytes < 0)
+bool
+SocketBuffer::OnBufferedWrite()
+{
+	const auto r = output.Read();
+	assert(!r.empty());
+
+	const auto nbytes = socket.Write(r);
+	assert(nbytes != 0);
+
+	switch (nbytes) {
+	case WRITE_ERRNO:
 		throw MakeSocketError("Failed to send");
 
-	output.FreeIfEmpty();
+	case WRITE_BLOCKING:
+	case WRITE_BROKEN:
+		return true;
+
+	case WRITE_DESTROYED:
+		return false;
+	}
+
+	output.Consume(static_cast<std::size_t>(nbytes));
+
+	if (output.empty()) {
+		output.Free();
+		socket.UnscheduleWrite();
+	}
+
 	return true;
 }
 
-inline void
-SocketBuffer::OnDeferredSend() noexcept
-try {
-	FlushOutput();
-
-	if (output.empty())
-		event.CancelWrite();
-	else
-		event.ScheduleWrite();
-} catch (...) {
-	handler.OnSocketError(std::current_exception());
-}
-
-inline void
-SocketBuffer::OnSocketReady(unsigned events) noexcept
-try {
-	if (events & event.WRITE) {
-		FlushOutput();
-
-		if (output.empty())
-			event.CancelWrite();
-	}
-
-	if (events & event.READ) {
-		input.AllocateIfNull();
-		ssize_t nbytes = ReceiveToBuffer(event.GetSocket(), input);
-		if (nbytes > 0) {
-			if (!SubmitData())
-				return;
-		} else if (nbytes == 0) {
-			handler.OnSocketDisconnect();
-			return;
-		} else if (nbytes == -1) {
-			throw MakeSocketError("Failed to receive");
-		}
-
-		if (input.IsDefinedAndFull())
-			event.CancelRead();
-	}
-
-	if (events & (event.HANGUP|event.ERROR)) {
-		handler.OnSocketDisconnect();
-	}
-} catch (...) {
-	handler.OnSocketError(std::current_exception());
+void
+SocketBuffer::OnBufferedError(std::exception_ptr e) noexcept
+{
+	handler.OnSocketError(std::move(e));
 }

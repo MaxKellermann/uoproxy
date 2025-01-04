@@ -147,5 +147,5 @@ private:
 
 	/* virtual methods from UO::ServerHandler */
 	bool OnServerPacket(std::span<const std::byte> src) override;
-	void OnServerDisconnect() noexcept override;
+	bool OnServerDisconnect() noexcept override;
 };
