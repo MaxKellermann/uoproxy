@@ -38,11 +38,11 @@ Connection::BroadcastToInGameClientsExcept(std::span<const std::byte> src,
 }
 
 void
-Connection::BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
+Connection::BroadcastToInGameClientsDivert(ProtocolVersion new_protocol,
 					   std::span<const std::byte> old_packet,
 					   std::span<const std::byte> new_packet) noexcept
 {
-	assert(new_protocol > PROTOCOL_UNKNOWN);
+	assert(new_protocol > ProtocolVersion::UNKNOWN);
 	assert(!old_packet.empty());
 	assert(!new_packet.empty());
 

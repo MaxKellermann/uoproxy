@@ -120,7 +120,7 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 	void BroadcastToInGameClients(std::span<const std::byte> src) noexcept;
 	void BroadcastToInGameClientsExcept(std::span<const std::byte> src,
 					    LinkedServer &except) noexcept;
-	void BroadcastToInGameClientsDivert(enum protocol_version new_protocol,
+	void BroadcastToInGameClientsDivert(ProtocolVersion new_protocol,
 					    std::span<const std::byte> old_packet,
 					    std::span<const std::byte> new_packet) noexcept;
 

@@ -12,7 +12,7 @@
 struct ClientVersion {
 	VarStructPtr<struct uo_packet_client_version> packet;
 	struct uo_packet_seed *seed = nullptr;
-	enum protocol_version protocol = PROTOCOL_UNKNOWN;
+	ProtocolVersion protocol = ProtocolVersion::UNKNOWN;
 
 	ClientVersion() = default;
 	~ClientVersion() noexcept;

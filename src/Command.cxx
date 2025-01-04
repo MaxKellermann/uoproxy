@@ -66,7 +66,7 @@ connection_handle_command(LinkedServer &ls, const char *command)
 	} else if (strcmp(command, "drop") == 0) {
 		if (c.client.client == nullptr || c.client.reconnecting) {
 			ls.server->SpeakConsole("uoproxy: not connected");
-		} else if (c.client.version.protocol < PROTOCOL_6) {
+		} else if (c.client.version.protocol < ProtocolVersion::V6) {
 			struct uo_packet_drop p = {
 				.cmd = UO::Command::Drop,
 				.serial = 0,

@@ -45,21 +45,21 @@ client_version_compare(const char *a, const char *b)
 	}
 }
 
-static enum protocol_version
+static ProtocolVersion
 determine_protocol_version(const char *version)
 {
 	if (client_version_compare(version, "7") >= 0)
-		return PROTOCOL_7;
+		return ProtocolVersion::V7;
 	else if (client_version_compare(version, "6.0.14") >= 0)
-		return PROTOCOL_6_0_14;
+		return ProtocolVersion::V6_0_14;
 	else if (client_version_compare(version, "6.0.5") >= 0)
-		return PROTOCOL_6_0_5;
+		return ProtocolVersion::V6_0_5;
 	else if (client_version_compare(version, "6.0.1.7") >= 0)
-		return PROTOCOL_6;
+		return ProtocolVersion::V6;
 	else if (client_version_compare(version, "1") >= 0)
-		return PROTOCOL_5;
+		return ProtocolVersion::V5;
 	else
-		return PROTOCOL_UNKNOWN;
+		return ProtocolVersion::UNKNOWN;
 }
 
 int
@@ -71,7 +71,7 @@ ClientVersion::Set(const struct uo_packet_client_version *_packet,
 
 	packet = {_packet, length};
 
-	if (protocol == PROTOCOL_UNKNOWN)
+	if (protocol == ProtocolVersion::UNKNOWN)
 		protocol = determine_protocol_version(_packet->version);
 	return 1;
 }
@@ -99,7 +99,7 @@ ClientVersion::Seed(const struct uo_packet_seed &_seed) noexcept
 	/* this packet is only know to 6.0.5.0 clients, so we don't check
 	   the packet contents here */
 	if (_seed.client_major >= 7)
-		protocol = PROTOCOL_7;
+		protocol = ProtocolVersion::V7;
 	else
-		protocol = PROTOCOL_6_0_5;
+		protocol = ProtocolVersion::V6_0_5;
 }

@@ -185,12 +185,12 @@ handle_walk_ack(Connection &c, std::span<const std::byte> src)
 static PacketAction
 handle_container_open(Connection &c, std::span<const std::byte> src)
 {
-	if (c.client.version.protocol >= PROTOCOL_7) {
+	if (c.client.version.protocol >= ProtocolVersion::V7) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_open_7 *>(src.data());
 
 		c.client.world.Apply(*p);
 
-		c.BroadcastToInGameClientsDivert(PROTOCOL_7,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V7,
 						 ReferenceAsBytes(p->base),
 						 src);
 		return PacketAction::DROP;
@@ -206,7 +206,7 @@ handle_container_open(Connection &c, std::span<const std::byte> src)
 			.x7d = 0x7d,
 		};
 
-		c.BroadcastToInGameClientsDivert(PROTOCOL_7,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V7,
 						 src,
 						 ReferenceAsBytes(p7));
 
@@ -217,7 +217,7 @@ handle_container_open(Connection &c, std::span<const std::byte> src)
 static PacketAction
 handle_container_update(Connection &c, std::span<const std::byte> src)
 {
-	if (c.client.version.protocol < PROTOCOL_6) {
+	if (c.client.version.protocol < ProtocolVersion::V6) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_update *>(src.data());
 		struct uo_packet_container_update_6 p6;
 
@@ -227,7 +227,7 @@ handle_container_update(Connection &c, std::span<const std::byte> src)
 
 		c.client.world.Apply(p6);
 
-		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
 						 src,
 						 ReferenceAsBytes(p6));
 	} else {
@@ -240,7 +240,7 @@ handle_container_update(Connection &c, std::span<const std::byte> src)
 
 		c.client.world.Apply(*p);
 
-		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
 						 ReferenceAsBytes(p5),
 						 src);
 	}
@@ -271,7 +271,7 @@ handle_container_content(Connection &c, std::span<const std::byte> src)
 
 		c.client.world.Apply(*p6);
 
-		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
 						 src,
 						 p6);
 	} else if (packet_verify_container_content_6(reinterpret_cast<const struct uo_packet_container_content_6 *>(src.data()), src.size())) {
@@ -281,7 +281,7 @@ handle_container_content(Connection &c, std::span<const std::byte> src)
 		c.client.world.Apply(*p);
 
 		const auto p5 = container_content_6_to_5(p);
-		c.BroadcastToInGameClientsDivert(PROTOCOL_6,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
 						 p5,
 						 src);
 	} else
@@ -611,7 +611,7 @@ handle_speak_unicode(Connection &c, [[maybe_unused]] std::span<const std::byte> 
 static PacketAction
 handle_supported_features(Connection &c, std::span<const std::byte> src)
 {
-	if (c.client.version.protocol >= PROTOCOL_6_0_14) {
+	if (c.client.version.protocol >= ProtocolVersion::V6_0_14) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_supported_features_6014 *>(src.data());
 		assert(src.size() == sizeof(*p));
 
@@ -619,7 +619,7 @@ handle_supported_features(Connection &c, std::span<const std::byte> src)
 
 		struct uo_packet_supported_features p6;
 		supported_features_6014_to_6(&p6, p);
-		c.BroadcastToInGameClientsDivert(PROTOCOL_6_0_14,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6_0_14,
 						 ReferenceAsBytes(p6),
 						 src);
 	} else {
@@ -630,7 +630,7 @@ handle_supported_features(Connection &c, std::span<const std::byte> src)
 
 		struct uo_packet_supported_features_6014 p7;
 		supported_features_6_to_6014(&p7, p);
-		c.BroadcastToInGameClientsDivert(PROTOCOL_6_0_14,
+		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6_0_14,
 						 src,
 						 ReferenceAsBytes(p7));
 	}
@@ -706,7 +706,7 @@ handle_world_item_7(Connection &c, std::span<const std::byte> src)
 
 	c.client.world.Apply(*p);
 
-	c.BroadcastToInGameClientsDivert(PROTOCOL_7,
+	c.BroadcastToInGameClientsDivert(ProtocolVersion::V7,
 					 VarLengthAsBytes(old),
 					 src);
 	return PacketAction::DROP;

@@ -50,7 +50,7 @@ class Server final : SocketBufferHandler  {
 
 	uint32_t seed = 0;
 
-	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
+	ProtocolVersion protocol_version = ProtocolVersion::UNKNOWN;
 
 	bool compression_enabled = false;
 
@@ -73,8 +73,8 @@ public:
 		return seed;
 	}
 
-	void SetProtocol(enum protocol_version _protocol_version) noexcept {
-		assert(protocol_version == PROTOCOL_UNKNOWN);
+	void SetProtocol(ProtocolVersion _protocol_version) noexcept {
+		assert(protocol_version == ProtocolVersion::UNKNOWN);
 
 		protocol_version = _protocol_version;
 	}

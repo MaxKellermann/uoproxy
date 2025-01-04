@@ -207,12 +207,12 @@ handle_drop(LinkedServer &ls,
 	    client->client == nullptr)
 		return PacketAction::DROP;
 
-	if (ls.client_version.protocol < PROTOCOL_6) {
+	if (ls.client_version.protocol < ProtocolVersion::V6) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_drop *>(src.data());
 
 		assert(src.size() == sizeof(*p));
 
-		if (ls.connection->client.version.protocol < PROTOCOL_6)
+		if (ls.connection->client.version.protocol < ProtocolVersion::V6)
 			return PacketAction::ACCEPT;
 
 		struct uo_packet_drop_6 p6;
@@ -223,7 +223,7 @@ handle_drop(LinkedServer &ls,
 
 		assert(src.size() == sizeof(*p));
 
-		if (ls.connection->client.version.protocol >= PROTOCOL_6)
+		if (ls.connection->client.version.protocol >= ProtocolVersion::V6)
 			return PacketAction::ACCEPT;
 
 		struct uo_packet_drop p5;
@@ -492,7 +492,7 @@ handle_game_login(LinkedServer &ls,
 
 		/* copy the previously detected protocol version */
 		if (!existing_connection.IsInGame() &&
-		    obsolete_connection.client.version.protocol != PROTOCOL_UNKNOWN)
+		    obsolete_connection.client.version.protocol != ProtocolVersion::UNKNOWN)
 			existing_connection.client.version.protocol = obsolete_connection.client.version.protocol;
 
 		/* remove the object from the old connection */
@@ -508,8 +508,8 @@ handle_game_login(LinkedServer &ls,
 		   because AccountLogin is usually preceded by a Seed packet
 		   which declares the protocol version, but the GameLogin
 		   packet is not */
-		if (ls.client_version.protocol == PROTOCOL_UNKNOWN &&
-		    zombie->client_version.protocol != PROTOCOL_UNKNOWN) {
+		if (ls.client_version.protocol == ProtocolVersion::UNKNOWN &&
+		    zombie->client_version.protocol != ProtocolVersion::UNKNOWN) {
 			ls.client_version.protocol = zombie->client_version.protocol;
 			ls.server->SetProtocol(ls.client_version.protocol);
 		}
@@ -773,7 +773,7 @@ handle_client_version(LinkedServer &ls, std::span<const std::byte> src)
 	const auto *const p = reinterpret_cast<const struct uo_packet_client_version *>(src.data());
 
 	if (!ls.client_version.IsDefined()) {
-		bool was_unkown = ls.client_version.protocol == PROTOCOL_UNKNOWN;
+		bool was_unkown = ls.client_version.protocol == ProtocolVersion::UNKNOWN;
 		int ret = ls.client_version.Set(p, src.size());
 		if (ret > 0) {
 			if (was_unkown)
@@ -793,7 +793,7 @@ handle_client_version(LinkedServer &ls, std::span<const std::byte> src)
 
 		return PacketAction::DROP;
 	} else {
-		const bool was_unkown = c->client.version.protocol == PROTOCOL_UNKNOWN;
+		const bool was_unkown = c->client.version.protocol == ProtocolVersion::UNKNOWN;
 
 		int ret = c->client.version.Set(p, src.size());
 		if (ret > 0) {

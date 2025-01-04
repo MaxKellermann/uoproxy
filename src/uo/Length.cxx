@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Length.hxx"
+#include "Version.hxx"
 #include "PacketStructs.hxx"
 #include "uo/Command.hxx"
 #include "util/ByteOrder.hxx"
@@ -76,24 +77,24 @@ MakePaketLengths7() noexcept
 static constexpr auto packet_lengths_7 = MakePaketLengths7();
 
 static constexpr const auto &
-GetPacketLengths(enum protocol_version protocol) noexcept
+GetPacketLengths(ProtocolVersion protocol) noexcept
 {
 	switch (protocol) {
-	case PROTOCOL_UNKNOWN:
+	case ProtocolVersion::UNKNOWN:
 		break;
 
-	case PROTOCOL_5:
-	case PROTOCOL_6:
+	case ProtocolVersion::V5:
+	case ProtocolVersion::V6:
 		return packet_lengths_6;
 
-	case PROTOCOL_6_0_5:
-	case PROTOCOL_6_0_14:
+	case ProtocolVersion::V6_0_5:
+	case ProtocolVersion::V6_0_14:
 		return packet_lengths_6014;
 
-	case PROTOCOL_7:
+	case ProtocolVersion::V7:
 		return packet_lengths_7;
 
-	case PROTOCOL_COUNT:
+	case ProtocolVersion::COUNT:
 		break;
 	}
 
@@ -102,7 +103,7 @@ GetPacketLengths(enum protocol_version protocol) noexcept
 
 std::size_t
 GetPacketLength(std::span<const std::byte> src,
-		enum protocol_version protocol) noexcept
+		ProtocolVersion protocol) noexcept
 {
 	if (src.empty())
 		return 0;

@@ -21,7 +21,7 @@ attach_item(LinkedServer *ls,
 
 	switch (item->socket.cmd) {
 	case UO::Command::WorldItem:
-		if (ls->client_version.protocol >= PROTOCOL_7) {
+		if (ls->client_version.protocol >= ProtocolVersion::V7) {
 			ls->server->SendT(item->socket.ground);
 		} else {
 			struct uo_packet_world_item p;
@@ -40,7 +40,7 @@ attach_item(LinkedServer *ls,
 
 		/* then this item as container content */
 
-		if (ls->client_version.protocol < PROTOCOL_6) {
+		if (ls->client_version.protocol < ProtocolVersion::V6) {
 			/* convert to v5 packet */
 			struct uo_packet_container_update p5;
 
@@ -61,7 +61,7 @@ attach_item(LinkedServer *ls,
 	}
 
 	if (item->packet_container_open.cmd == UO::Command::ContainerOpen) {
-		if (ls->client_version.protocol >= PROTOCOL_7) {
+		if (ls->client_version.protocol >= ProtocolVersion::V7) {
 			struct uo_packet_container_open_7 p7 = {
 				.base = item->packet_container_open,
 				.zero = 0x00,
@@ -105,7 +105,7 @@ attach_send_world(LinkedServer *ls)
 		ls->server->SendT(world->packet_season);
 
 	/* 0xb9 SupportedFeatures */
-	if (ls->client_version.protocol >= PROTOCOL_6_0_14) {
+	if (ls->client_version.protocol >= ProtocolVersion::V6_0_14) {
 		struct uo_packet_supported_features_6014 supported_features;
 		supported_features.cmd = UO::Command::SupportedFeatures;
 		supported_features.flags = ls->connection->client.supported_features_flags;

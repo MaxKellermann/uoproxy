@@ -15,12 +15,13 @@ static constexpr const char *protocol_names[] = {
 	"7",
 };
 
-static_assert(std::size(protocol_names) == PROTOCOL_COUNT);
+static_assert(std::size(protocol_names) == static_cast<std::size_t>(ProtocolVersion::COUNT));
 
 const char *
-protocol_name(enum protocol_version protocol) noexcept
+protocol_name(ProtocolVersion protocol) noexcept
 {
-	assert((unsigned)protocol < PROTOCOL_COUNT);
+	const auto i = static_cast<std::size_t>(protocol);
+	assert(i < static_cast<std::size_t>(ProtocolVersion::COUNT));
 
-	return protocol_names[protocol];
+	return protocol_names[i];
 }

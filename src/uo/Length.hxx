@@ -3,10 +3,11 @@
 
 #pragma once
 
-#include "Version.hxx"
-
 #include <cstddef>
+#include <cstdint>
 #include <span>
+
+enum class ProtocolVersion : uint_least8_t;
 
 static constexpr std::size_t PACKET_LENGTH_INVALID = ~std::size_t{0};
 
@@ -19,4 +20,4 @@ static constexpr std::size_t PACKET_LENGTH_INVALID = ~std::size_t{0};
 [[gnu::pure]]
 std::size_t
 GetPacketLength(std::span<const std::byte> src,
-		enum protocol_version protocol) noexcept;
+		ProtocolVersion protocol) noexcept;

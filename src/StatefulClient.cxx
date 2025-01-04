@@ -24,11 +24,11 @@ StatefulClient::GetSeedPacket(uint32_t seed, bool for_game_login,
 
 	if (!for_game_login && seed_packet == nullptr &&
 	    version.IsDefined() &&
-	    version.protocol >= PROTOCOL_6_0_14) {
+	    version.protocol >= ProtocolVersion::V6_0_14) {
 		buffer.cmd = UO::Command::Seed;
 		buffer.seed = seed;
 
-		if (version.protocol >= PROTOCOL_7) {
+		if (version.protocol >= ProtocolVersion::V7) {
 			buffer.client_major = 7;
 			buffer.client_minor = 0;
 			buffer.client_revision = 10;
