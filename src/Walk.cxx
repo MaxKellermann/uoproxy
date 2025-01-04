@@ -10,24 +10,25 @@
 #include "uo/Command.hxx"
 #include "util/SpanCast.hxx"
 
+#include <algorithm>
+
 #include <assert.h>
-#include <string.h>
 
 static void
 walk_shift(WalkState &state)
 {
 	assert(state.queue_size > 0);
 
+	std::move(state.queue.data() + 1, state.queue.data() + state.queue_size,
+		  state.queue.data());
+
 	--state.queue_size;
 
 	if (state.queue_size == 0)
 		state.server = nullptr;
-	else
-		memmove(state.queue, state.queue + 1,
-			state.queue_size * sizeof(*state.queue));
 }
 
-static const WalkState::Item *
+static WalkState::Item *
 find_by_seq(WalkState &state,
 	    uint8_t seq)
 {
@@ -42,18 +43,16 @@ find_by_seq(WalkState &state,
 
 static void
 remove_item(WalkState &state,
-	    const WalkState::Item *item)
+	    WalkState::Item *item)
 {
-	unsigned i = item - state.queue;
+	assert(item >= state.queue.data());
+	assert(item < state.queue.data() + state.queue_size);
 
-	assert(i < state.queue_size);
+	std::move(item + 1, state.queue.data() + state.queue_size, item);
 
 	--state.queue_size;
 
-	if (i < state.queue_size)
-		memmove(state.queue + i, state.queue + 1,
-			(state.queue_size - i) * sizeof(*state.queue));
-	else if (state.queue_size == 0)
+	if (state.queue_size == 0)
 		state.server = nullptr;
 }
 
@@ -104,7 +103,7 @@ connection_walk_request(LinkedServer &ls,
 		return;
 	}
 
-	if (state.queue_size >= MAX_WALK_QUEUE) {
+	if (state.queue_size >= state.queue.size()) {
 		/* XXX */
 		ls.LogF(2, "walk queue full");
 		walk_cancel(connection.client.world, *ls.server,

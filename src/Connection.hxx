@@ -10,7 +10,7 @@
 #include "Client.hxx"
 #include "StatefulClient.hxx"
 
-#define MAX_WALK_QUEUE 4
+#include <array>
 
 class SocketAddress;
 class UniqueSocketDescriptor;
@@ -37,7 +37,7 @@ struct WalkState {
 	};
 
 	LinkedServer *server = nullptr;
-	Item queue[MAX_WALK_QUEUE];
+	std::array<Item, 4> queue;
 	unsigned queue_size = 0;
 	uint8_t seq_next = 0;
 };
