@@ -150,7 +150,7 @@ UO::Client::Send(std::span<const std::byte> src)
 try {
 	assert(!src.empty());
 
-	if (abort_event.IsPending())
+	if (IsAborted())
 		return;
 
 	LogFmt(9, "sending packet to server, length={}\n", src.size());

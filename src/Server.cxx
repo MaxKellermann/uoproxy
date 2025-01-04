@@ -155,7 +155,7 @@ try {
 	assert(!src.empty());
 	assert(get_packet_length(protocol_version, src.data(), src.size()) == src.size());
 
-	if (abort_event.IsPending())
+	if (IsAborted())
 		return;
 
 	LogFmt(9, "sending packet to client, length={}\n", src.size());

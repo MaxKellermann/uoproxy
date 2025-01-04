@@ -60,6 +60,10 @@ public:
 
 	void Abort() noexcept;
 
+	bool IsAborted() const noexcept {
+		return abort_event.IsPending();
+	}
+
 	[[gnu::pure]]
 	IPv4Address GetLocalIPv4Address() const noexcept;
 

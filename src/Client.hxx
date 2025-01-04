@@ -60,6 +60,10 @@ public:
 
 	void Abort() noexcept;
 
+	bool IsAborted() const noexcept {
+		return abort_event.IsPending();
+	}
+
 	void SetProtocol(enum protocol_version _protocol_version) noexcept {
 		assert(protocol_version == PROTOCOL_UNKNOWN);
 
