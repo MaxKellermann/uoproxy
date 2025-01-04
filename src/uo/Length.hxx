@@ -7,7 +7,7 @@
 
 #include <cstddef>
 
-inline constexpr std::size_t PACKET_LENGTH_INVALID(-1);
+static constexpr std::size_t PACKET_LENGTH_INVALID(-1);
 
 /**
  * Determines the length of the packet.  Returns '0' when the length
