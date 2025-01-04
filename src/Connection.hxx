@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "uo/WalkState.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
 #include "PacketStructs.hxx"
@@ -22,37 +23,6 @@ namespace UO {
 class Client;
 class Server;
 }
-
-struct WalkState {
-	struct Item {
-		/**
-		 * The walk packet sent by the client.
-		 */
-		struct uo_packet_walk packet;
-
-		/**
-		 * The walk sequence number which was sent to the server.
-		 */
-		uint8_t seq;
-	};
-
-	LinkedServer *server = nullptr;
-	std::array<Item, 4> queue;
-	unsigned queue_size = 0;
-	uint8_t seq_next = 0;
-
-	void clear() noexcept {
-		queue_size = 0;
-		server = nullptr;
-	}
-
-	void pop_front() noexcept;
-
-	[[gnu::pure]]
-	Item *FindSequence(uint8_t seq) noexcept;
-
-	void Remove(Item &item) noexcept;
-};
 
 struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 	Instance &instance;

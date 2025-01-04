@@ -127,6 +127,7 @@ executable(
   'src/uo/Length.cxx',
   'src/Compression.cxx',
   'src/uo/Version.cxx',
+  'src/uo/WalkState.cxx',
   'src/CVersion.cxx', 'src/Bridge.cxx',
   'src/Connection.cxx', 'src/CClient.cxx', 'src/CServer.cxx', 'src/CNet.cxx',
   'src/LinkedServer.cxx',
