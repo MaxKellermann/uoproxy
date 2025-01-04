@@ -6,6 +6,7 @@
 #include "Version.hxx"
 
 #include <cstddef>
+#include <span>
 
 static constexpr std::size_t PACKET_LENGTH_INVALID = ~std::size_t{0};
 
@@ -17,5 +18,5 @@ static constexpr std::size_t PACKET_LENGTH_INVALID = ~std::size_t{0};
  */
 [[gnu::pure]]
 std::size_t
-get_packet_length(enum protocol_version protocol,
-		  const void *q, std::size_t max_length) noexcept;
+GetPacketLength(std::span<const std::byte> src,
+		enum protocol_version protocol) noexcept;

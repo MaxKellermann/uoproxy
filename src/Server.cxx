@@ -52,8 +52,7 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 	size_t consumed = 0;
 
 	while (!src.empty()) {
-		size_t packet_length = get_packet_length(protocol_version,
-							 src.data(), src.size());
+		size_t packet_length = GetPacketLength(src, protocol_version);
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from client\n");
 			log_hexdump(5, src);
@@ -153,7 +152,7 @@ void
 UO::Server::Send(std::span<const std::byte> src)
 try {
 	assert(!src.empty());
-	assert(get_packet_length(protocol_version, src.data(), src.size()) == src.size());
+	assert(GetPacketLength(src, protocol_version) == src.size());
 
 	if (IsAborted())
 		return;

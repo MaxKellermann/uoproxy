@@ -101,14 +101,13 @@ GetPacketLengths(enum protocol_version protocol) noexcept
 }
 
 std::size_t
-get_packet_length(enum protocol_version protocol,
-		  const void *q, std::size_t max_length) noexcept
+GetPacketLength(std::span<const std::byte> src,
+		enum protocol_version protocol) noexcept
 {
-	if (max_length == 0)
+	if (src.empty())
 		return 0;
 
-	const uint8_t *p = (const uint8_t *)q;
-	const uint8_t cmd = *p;
+	const auto cmd = static_cast<uint8_t>(src.front());
 
 	std::size_t length = GetPacketLengths(protocol)[cmd];
 	if (length == 0xffff)
@@ -117,10 +116,10 @@ get_packet_length(enum protocol_version protocol,
 	if (length > 0)
 		return length;
 
-	if (max_length < 3)
+	if (src.size() < 3)
 		return 0;
 
-	length = *(const PackedBE16*)(p + 1);
+	length = *reinterpret_cast<const PackedBE16 *>(src.data() + 1);
 	if (length < 3 || length >= 0x8000)
 		return PACKET_LENGTH_INVALID;
 
