@@ -15,5 +15,6 @@ enum class ProtocolVersion : uint_least8_t {
 	COUNT
 };
 
+[[gnu::const]]
 const char *
 protocol_name(ProtocolVersion protocol) noexcept;
