@@ -41,15 +41,16 @@ public:
 
 class Client final : SocketBufferHandler {
 	SocketBuffer sock;
-	bool compression_enabled = false;
 	UO::Decompression decompression;
 	DefaultFifoBuffer decompressed_buffer;
-
-	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
 	ClientHandler &handler;
 
 	DeferEvent abort_event;
+
+	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
+
+	bool compression_enabled = false;
 
 public:
 	explicit Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,

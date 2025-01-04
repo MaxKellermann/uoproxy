@@ -41,16 +41,18 @@ public:
 
 class Server final : SocketBufferHandler  {
 	SocketBuffer sock;
-	uint32_t seed = 0;
-	bool compression_enabled = false;
 
 	UO::Encryption encryption;
-
-	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 
 	ServerHandler &handler;
 
 	DeferEvent abort_event;
+
+	uint32_t seed = 0;
+
+	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
+
+	bool compression_enabled = false;
 
 public:
 	Server(EventLoop &event_loop,
