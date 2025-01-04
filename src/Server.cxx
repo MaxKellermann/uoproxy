@@ -5,8 +5,9 @@
 #include "PacketLengths.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
-#include "net/IPv4Address.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
+#include "net/IPv4Address.hxx"
+#include "net/SocketProtocolError.hxx"
 
 #include <utility>
 
@@ -162,20 +163,15 @@ try {
 
 	if (compression_enabled) {
 		auto w = sock.Write();
-		if (w.empty()) {
-			Log(1, "output buffer full in uo_server_send()\n");
-			Abort();
-			return;
-		}
+		if (w.empty())
+			throw SocketBufferFullError{"Output buffer ful"};
 
 		sock.Append(UO::Compress(w, src));
 	} else {
-		if (!sock.Send(src)) {
-			Log(1, "output buffer full in uo_server_send()\n");
-			Abort();
-		}
+		if (!sock.Send(src))
+			throw SocketBufferFullError{"Output buffer ful"};
 	}
 } catch (...) {
-	LogFmt(1, "error in uo_server_send(): {}\n", std::current_exception());
+	LogFmt(1, "error in UO::Server::Send(): {}\n", std::current_exception());
 	Abort();
 }

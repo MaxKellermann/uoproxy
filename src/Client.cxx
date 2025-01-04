@@ -6,6 +6,8 @@
 #include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
+#include "lib/fmt/ExceptionFormatter.hxx"
+#include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"
 
 #include <utility>
@@ -145,7 +147,7 @@ UO::Client::OnSocketError(std::exception_ptr error) noexcept
 
 void
 UO::Client::Send(std::span<const std::byte> src)
-{
+try {
 	assert(!src.empty());
 
 	if (abort_event.IsPending())
@@ -157,8 +159,9 @@ UO::Client::Send(std::span<const std::byte> src)
 	if (static_cast<UO::Command>(src.front()) == UO::Command::GameLogin)
 		compression_enabled = true;
 
-	if (!sock.Send(src)) {
-		Log(1, "output buffer full in uo_client_send()\n");
-		Abort();
-	}
+	if (!sock.Send(src))
+		throw SocketBufferFullError{"Output buffer ful"};
+} catch (...) {
+	LogFmt(1, "error in UO::Client::Send(): {}\n", std::current_exception());
+	Abort();
 }
