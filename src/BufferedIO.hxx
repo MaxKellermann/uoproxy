@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 class SocketDescriptor;
-template<typename T> class DynamicFifoBuffer;
+template<typename T> class ForeignFifoBuffer;
 
 /**
  * Appends data from a file to the buffer.
@@ -18,7 +18,7 @@ template<typename T> class DynamicFifoBuffer;
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
 ssize_t
-read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer);
+read_to_buffer(SocketDescriptor s, ForeignFifoBuffer<std::byte> &buffer);
 
 /**
  * Writes data from the buffer to the file.
@@ -28,4 +28,4 @@ read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer);
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
 ssize_t
-write_from_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer);
+write_from_buffer(SocketDescriptor s, ForeignFifoBuffer<std::byte> &buffer);

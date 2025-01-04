@@ -107,6 +107,7 @@ subdir('src/lib/fmt')
 subdir('src/util')
 subdir('src/io')
 subdir('src/system')
+subdir('src/memory')
 subdir('src/net')
 subdir('src/event')
 subdir('src/event/net')
@@ -143,6 +144,7 @@ executable(
     libsystemd,
     event_dep,
     event_net_dep,
+    memory_dep,
     io_dep,
     net_dep,
     util_dep,

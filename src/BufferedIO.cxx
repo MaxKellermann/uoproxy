@@ -3,7 +3,7 @@
 
 #include "BufferedIO.hxx"
 #include "net/SocketDescriptor.hxx"
-#include "util/DynamicFifoBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <assert.h>
 #include <errno.h>
@@ -15,7 +15,7 @@
 #endif
 
 ssize_t
-read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
+read_to_buffer(SocketDescriptor s, ForeignFifoBuffer<std::byte> &buffer)
 {
 	assert(s.IsDefined());
 
@@ -31,7 +31,7 @@ read_to_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
 }
 
 ssize_t
-write_from_buffer(SocketDescriptor s, DynamicFifoBuffer<std::byte> &buffer)
+write_from_buffer(SocketDescriptor s, ForeignFifoBuffer<std::byte> &buffer)
 {
 	assert(s.IsDefined());
 

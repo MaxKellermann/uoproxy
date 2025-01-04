@@ -5,11 +5,10 @@
 
 #include "event/DeferEvent.hxx"
 #include "event/SocketEvent.hxx"
-#include "util/DynamicFifoBuffer.hxx"
+#include "DefaultFifoBuffer.hxx"
 
 #include <cstddef>
 #include <exception>
-#include <span>
 
 class UniqueSocketDescriptor;
 class EventLoop;
@@ -41,17 +40,17 @@ class SocketBuffer final {
 
 	DeferEvent defer_send;
 
-	DynamicFifoBuffer<std::byte> input, output;
+	DefaultFifoBuffer input, output;
 
 	SocketBufferHandler &handler;
 
 public:
-	SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-		     size_t output_max,
+	SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 		     SocketBufferHandler &_handler);
 	~SocketBuffer() noexcept;
 
 	std::span<std::byte> Write() noexcept {
+		output.AllocateIfNull();
 		return output.Write();
 	}
 

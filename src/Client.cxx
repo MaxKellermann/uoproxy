@@ -17,7 +17,7 @@ namespace UO {
 Client::Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 	       uint32_t seed, const struct uo_packet_seed *seed6,
 	       ClientHandler &_handler) noexcept
-	:sock(event_loop, std::move(s), 8192, 65536, *this),
+	:sock(event_loop, std::move(s), *this),
 	 handler(_handler),
 	 abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
 {
@@ -54,6 +54,7 @@ UO::Client::Abort() noexcept
 inline ssize_t
 UO::Client::Decompress(std::span<const std::byte> src)
 {
+	decompressed_buffer.AllocateIfNull();
 	auto w = decompressed_buffer.Write();
 	if (w.empty()) {
 		Log(1, "decompression buffer full\n");
@@ -120,6 +121,7 @@ UO::Client::OnSocketData(std::span<const std::byte> src)
 			return 0;
 
 		decompressed_buffer.Consume((size_t)nbytes);
+		decompressed_buffer.FreeIfEmpty();
 
 		return consumed;
 	} else {

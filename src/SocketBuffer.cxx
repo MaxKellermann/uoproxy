@@ -15,13 +15,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s, size_t input_max,
-			   size_t output_max,
+SocketBuffer::SocketBuffer(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 			   SocketBufferHandler &_handler)
 	:event(event_loop, BIND_THIS_METHOD(OnSocketReady), s.Release()),
 	 defer_send(event_loop, BIND_THIS_METHOD(OnDeferredSend)),
-	 input(input_max),
-	 output(output_max),
 	 handler(_handler)
 {
 	event.ScheduleRead();
@@ -74,6 +71,7 @@ SocketBuffer::SubmitData()
 		return false;
 
 	input.Consume(nbytes);
+	input.FreeIfEmpty();
 	return true;
 }
 
@@ -87,6 +85,7 @@ SocketBuffer::FlushOutput()
 	if (nbytes < 0)
 		throw MakeSocketError("Failed to send");
 
+	output.FreeIfEmpty();
 	return true;
 }
 
@@ -114,6 +113,7 @@ try {
 	}
 
 	if (events & event.READ) {
+		input.AllocateIfNull();
 		ssize_t nbytes = read_to_buffer(event.GetSocket(), input);
 		if (nbytes > 0) {
 			if (!SubmitData())
@@ -125,7 +125,7 @@ try {
 			throw MakeSocketError("Failed to receive");
 		}
 
-		if (input.IsFull())
+		if (input.IsDefinedAndFull())
 			event.CancelRead();
 	}
 

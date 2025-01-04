@@ -62,6 +62,7 @@ int
 main(int argc, char **argv)
 try {
 	Config config;
+	const ScopeInitDefaultFifoBuffer init_default_fifo_buffer;
 	Instance instance(config);
 
 	/* WinSock */

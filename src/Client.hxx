@@ -7,7 +7,7 @@
 #include "Compression.hxx"
 #include "PVersion.hxx"
 #include "event/DeferEvent.hxx"
-#include "util/DynamicFifoBuffer.hxx"
+#include "DefaultFifoBuffer.hxx"
 
 #include <cassert>
 #include <cstdint>
@@ -43,7 +43,7 @@ class Client final : SocketBufferHandler {
 	SocketBuffer sock;
 	bool compression_enabled = false;
 	UO::Decompression decompression;
-	DynamicFifoBuffer<std::byte> decompressed_buffer{65536};
+	DefaultFifoBuffer decompressed_buffer;
 
 	enum protocol_version protocol_version = PROTOCOL_UNKNOWN;
 

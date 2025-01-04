@@ -15,7 +15,7 @@ namespace UO {
 
 Server::Server(EventLoop &event_loop,
                UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept
-	:sock(event_loop, std::move(s), 8192, 65536, *this),
+	:sock(event_loop, std::move(s), *this),
 	handler(_handler),
 	abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
 {

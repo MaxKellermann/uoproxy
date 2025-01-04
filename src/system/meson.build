@@ -1,5 +1,6 @@
 system = static_library(
   'system',
+  'PageAllocator.cxx',
   'EpollFD.cxx',
   include_directories: inc,
 )
