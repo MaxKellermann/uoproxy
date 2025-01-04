@@ -219,10 +219,19 @@ enum class Command : uint8_t {
 	Hardware = 0xd9,
 	AOSObjProp = 0xdc,
 	DisplayGumpPacked = 0xdd,
+	BugReport = 0xe0, // KR
+	ClientType = 0xe1, // KR / SA
+	NewCharacterAnimation = 0xe2, // KR
+	EncryptionResponse = 0xe3, // KR
+	EquipMacro = 0xec, // KR
+	UnequipMacro = 0xed, // KR
 	Seed = 0xef,
 	ProtocolExtension = 0xf0,
 	WorldItem7 = 0xf3,
+	NewMapMessage = 0xf5,
 	CreateCharacter7 = 0xf8,
+	OpenUOStore = 0xfa,
+	UpdateViewPublicHouseContents = 0xfb,
 };
 
 } // namespace UO

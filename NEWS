@@ -1,5 +1,6 @@
 uoproxy (0.6) unstable; urgency=low
 
+  * support various KR/SA packets
   * reduce memory usage
 
  --   
