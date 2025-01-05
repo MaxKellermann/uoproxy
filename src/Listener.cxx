@@ -5,6 +5,7 @@
 #include "Instance.hxx"
 #include "Connection.hxx"
 #include "net/SocketAddress.hxx"
+#include "util/DeleteDisposer.hxx"
 #include "util/PrintException.hxx"
 
 Listener::Listener(Instance &_instance, UniqueSocketDescriptor &&socket)
@@ -13,9 +14,7 @@ Listener::Listener(Instance &_instance, UniqueSocketDescriptor &&socket)
 
 Listener::~Listener() noexcept
 {
-	connections.clear_and_dispose([](Connection *c) {
-		delete c;
-	});
+	connections.clear_and_dispose(DeleteDisposer{});
 }
 
 void

@@ -6,6 +6,7 @@
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "Log.hxx"
+#include "util/DeleteDisposer.hxx"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -44,7 +45,7 @@ connection_new(Instance *instance,
 
 Connection::~Connection() noexcept
 {
-	servers.clear_and_dispose([](LinkedServer *ls){ delete ls; });
+	servers.clear_and_dispose(DeleteDisposer{});
 
 	Disconnect();
 }
