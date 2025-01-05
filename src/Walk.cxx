@@ -28,39 +28,37 @@ walk_cancel(const World &world,
 }
 
 void
-connection_walk_request(LinkedServer &ls,
-			const struct uo_packet_walk &p)
+LinkedServer::OnWalkRequest(const struct uo_packet_walk &p)
 {
-	auto &connection = *ls.connection;
-	auto &state = connection.walk;
+	auto &walk = connection->walk;
 
-	if (state.queue_size > 0 && &ls != state.server) {
-		ls.LogF(2, "rejecting walk");
-		walk_cancel(connection.client.world, *ls.server, p);
+	if (walk.queue_size > 0 && this != walk.server) {
+		LogF(2, "rejecting walk");
+		walk_cancel(connection->client.world, *server, p);
 		return;
 	}
 
-	if (state.queue_size >= state.queue.size()) {
+	if (walk.queue_size >= walk.queue.size()) {
 		/* XXX */
-		ls.LogF(2, "walk queue full");
-		walk_cancel(connection.client.world, *ls.server,
-			    state.queue[0].packet);
-		state.pop_front();
+		LogF(2, "walk queue full");
+		walk_cancel(connection->client.world, *server,
+			    walk.queue[0].packet);
+		walk.pop_front();
 	}
 
-	state.server = &ls;
-	auto *i = &state.queue[state.queue_size++];
+	walk.server = this;
+	auto *i = &walk.queue[walk.queue_size++];
 	i->packet = p;
 
-	ls.LogF(7, "walk seq_from_client={} seq_to_server={}",
-		p.seq, state.seq_next);
+	LogF(7, "walk seq_from_client={} seq_to_server={}",
+	     p.seq, walk.seq_next);
 
-	auto walk = p;
-	walk.seq = i->seq = (uint8_t)state.seq_next++;
-	connection.client.client->SendT(walk);
+	auto w = p;
+	w.seq = i->seq = (uint8_t)walk.seq_next++;
+	connection->client.client->SendT(w);
 
-	if (state.seq_next == 0)
-		state.seq_next = 1;
+	if (walk.seq_next == 0)
+		walk.seq_next = 1;
 }
 
 inline void

@@ -183,14 +183,3 @@ private:
 Connection *
 connection_new(Instance *instance,
 	       UniqueSocketDescriptor &&socket);
-
-/* walk */
-
-void
-connection_walk_request(LinkedServer &ls,
-			const struct uo_packet_walk &p);
-
-/* command */
-
-void
-connection_handle_command(LinkedServer &ls, const char *command);

@@ -27,23 +27,23 @@ change_character(Connection &c, LinkedServer &ls, unsigned idx)
 }
 
 void
-connection_handle_command(LinkedServer &ls, const char *command)
+LinkedServer::OnCommand(const char *command)
 {
-	Connection &c = *ls.connection;
+	Connection &c = *connection;
 
-	if (!c.IsInGame() || ls.server == nullptr)
+	if (!c.IsInGame() || server == nullptr)
 		return;
 
 	if (*command == 0) {
-		ls.server->SpeakConsole("uoproxy commands: % %reconnect %char %drop %verbose");
+		server->SpeakConsole("uoproxy commands: % %reconnect %char %drop %verbose");
 	} else if (strcmp(command, "reconnect") == 0) {
-		ls.server->SpeakConsole("uoproxy: reconnecting");
+		server->SpeakConsole("uoproxy: reconnecting");
 		c.Reconnect();
 	} else if (strcmp(command, "char") == 0) {
 		char msg[1024] = "uoproxy:";
 
 		if (!c.client.char_list) {
-			ls.server->SpeakConsole("uoproxy: no characters in list");
+			server->SpeakConsole("uoproxy: no characters in list");
 			return;
 		}
 
@@ -56,16 +56,16 @@ connection_handle_command(LinkedServer &ls, const char *command)
 			}
 		}
 
-		ls.server->SpeakConsole(msg);
+		server->SpeakConsole(msg);
 	} else if (strncmp(command, "char ", 5) == 0) {
 		if (command[5] >= '0' && command[5] <= '9' && command[6] == 0) {
-			change_character(c, ls, command[5] - '0');
+			change_character(c, *this, command[5] - '0');
 		} else {
-			ls.server->SpeakConsole("uoproxy: invalid %char syntax");
+			server->SpeakConsole("uoproxy: invalid %char syntax");
 		}
 	} else if (strcmp(command, "drop") == 0) {
 		if (c.client.client == nullptr || c.client.reconnecting) {
-			ls.server->SpeakConsole("uoproxy: not connected");
+			server->SpeakConsole("uoproxy: not connected");
 		} else if (c.client.version.protocol < ProtocolVersion::V6) {
 			struct uo_packet_drop p = {
 				.cmd = UO::Command::Drop,
@@ -98,14 +98,14 @@ connection_handle_command(LinkedServer &ls, const char *command)
 
 			if (*endptr == 0) {
 				verbose = (int)new_verbose;
-				ls.LogF(1, "verbose modified, new value={}", verbose);
+				LogF(1, "verbose modified, new value={}", verbose);
 				return;
 			}
 		}
 
-		ls.server->SpeakConsole("uoproxy: invalid %verbose syntax");
+		server->SpeakConsole("uoproxy: invalid %verbose syntax");
 #endif
 	} else {
-		ls.server->SpeakConsole("unknown uoproxy command, type '%' for help");
+		server->SpeakConsole("unknown uoproxy command, type '%' for help");
 	}
 }

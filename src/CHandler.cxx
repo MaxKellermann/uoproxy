@@ -47,12 +47,12 @@ simple_unicode_to_ascii(char *dest, const PackedBE16 *src,
 	return dest;
 }
 
-static PacketAction
-handle_talk(LinkedServer &ls, const char *text)
+inline PacketAction
+LinkedServer::HandleTalk(const char *text)
 {
 	/* the percent sign introduces an uoproxy command */
 	if (text[0] == '%') {
-		connection_handle_command(ls, text + 1);
+		OnCommand(text + 1);
 		return PacketAction::DROP;
 	}
 
@@ -102,7 +102,7 @@ LinkedServer::HandleWalk(std::span<const std::byte> src)
 		return PacketAction::DROP;
 	}
 
-	connection_walk_request(*this, *p);
+	OnWalkRequest(*p);
 	return PacketAction::DROP;
 }
 
@@ -117,7 +117,7 @@ LinkedServer::HandleTalkAscii(std::span<const std::byte> src)
 	if (p->text[text_length] != 0)
 		return PacketAction::DISCONNECT;
 
-	return handle_talk(*this, p->text);
+	return HandleTalk(p->text);
 }
 
 PacketAction
@@ -716,7 +716,7 @@ LinkedServer::HandleTalkUnicode(std::span<const std::byte> src)
 			return PacketAction::DISCONNECT;
 
 		/* the text may be UTF-8, but we ignore that for now */
-		return handle_talk(*this, t);
+		return HandleTalk(t);
 	} else {
 		size_t text_length = (src.size() - sizeof(*p)) / 2;
 
@@ -725,7 +725,7 @@ LinkedServer::HandleTalkUnicode(std::span<const std::byte> src)
 
 			t = simple_unicode_to_ascii(msg, p->text, text_length);
 			if (t != nullptr)
-				return handle_talk(*this, t);
+				return HandleTalk(t);
 		}
 	}
 
