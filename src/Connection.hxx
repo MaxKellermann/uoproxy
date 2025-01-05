@@ -187,10 +187,6 @@ connection_new(Instance *instance,
 /* walk */
 
 void
-connection_walk_server_removed(WalkState &state,
-			       LinkedServer &ls) noexcept;
-
-void
 connection_walk_request(LinkedServer &ls,
 			const struct uo_packet_walk &p);
 

@@ -28,16 +28,6 @@ walk_cancel(const World &world,
 }
 
 void
-connection_walk_server_removed(WalkState &state,
-			       LinkedServer &ls) noexcept
-{
-	if (state.server != &ls)
-		return;
-
-	state.server = nullptr;
-}
-
-void
 connection_walk_request(LinkedServer &ls,
 			const struct uo_packet_walk &p)
 {

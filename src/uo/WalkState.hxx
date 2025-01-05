@@ -39,4 +39,9 @@ struct WalkState {
 	Item *FindSequence(uint8_t seq) noexcept;
 
 	void Remove(Item &item) noexcept;
+
+	void OnServerRemoved(LinkedServer &ls) noexcept {
+		if (server == &ls)
+			server = nullptr;
+	}
 };
