@@ -28,7 +28,7 @@
 
 #define TALK_MAX 128
 
-static char *
+static std::string_view
 simple_unicode_to_ascii(char *dest, const PackedBE16 *src,
 			size_t length)
 {
@@ -37,22 +37,20 @@ simple_unicode_to_ascii(char *dest, const PackedBE16 *src,
 	for (position = 0; position < length && src[position] != 0; position++) {
 		uint16_t ch = src[position];
 		if (ch & 0xff00)
-			return nullptr;
+			return {};
 
 		dest[position] = (char)ch;
 	}
 
-	dest[position] = 0;
-
-	return dest;
+	return {dest, position};
 }
 
 inline PacketAction
-LinkedServer::HandleTalk(const char *text)
+LinkedServer::HandleTalk(std::string_view text)
 {
 	/* the percent sign introduces an uoproxy command */
-	if (text[0] == '%') {
-		OnCommand(text + 1);
+	if (text.starts_with('%')) {
+		OnCommand(text.substr(1));
 		return PacketAction::DROP;
 	}
 
@@ -117,7 +115,7 @@ LinkedServer::HandleTalkAscii(std::span<const std::byte> src)
 	if (p->text[text_length] != 0)
 		return PacketAction::DISCONNECT;
 
-	return HandleTalk(p->text);
+	return HandleTalk({p->text, text_length});
 }
 
 PacketAction
@@ -716,15 +714,15 @@ LinkedServer::HandleTalkUnicode(std::span<const std::byte> src)
 			return PacketAction::DISCONNECT;
 
 		/* the text may be UTF-8, but we ignore that for now */
-		return HandleTalk(t);
+		return HandleTalk({t, text_length});
 	} else {
 		size_t text_length = (src.size() - sizeof(*p)) / 2;
 
 		if (text_length < TALK_MAX) { /* Regular */
-			char msg[TALK_MAX], *t;
+			char msg[TALK_MAX];
 
-			t = simple_unicode_to_ascii(msg, p->text, text_length);
-			if (t != nullptr)
+			const auto t = simple_unicode_to_ascii(msg, p->text, text_length);
+			if (t.data() != nullptr)
 				return HandleTalk(t);
 		}
 	}

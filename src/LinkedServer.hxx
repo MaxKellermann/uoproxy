@@ -152,7 +152,7 @@ private:
 	void OnWalkRequest(const struct uo_packet_walk &p);
 
 	void OnCommand(std::string_view command);
-	PacketAction HandleTalk(const char *text);
+	PacketAction HandleTalk(std::string_view text);
 
 	PacketAction HandleCreateCharacter(std::span<const std::byte> src);
 	PacketAction HandleWalk(std::span<const std::byte> src);
