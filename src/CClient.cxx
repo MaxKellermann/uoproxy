@@ -6,51 +6,12 @@
 #include "SocketConnect.hxx"
 #include "ProxySocks.hxx"
 #include "Server.hxx"
-#include "Handler.hxx"
 #include "Log.hxx"
 #include "Instance.hxx"
 #include "Config.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <assert.h>
-#include <unistd.h>
-
-bool
-Connection::OnClientPacket(std::span<const std::byte> src)
-{
-	assert(client.client != nullptr);
-
-	const auto action = handle_packet_from_server(server_packet_bindings,
-						      *this, src);
-	switch (action) {
-	case PacketAction::ACCEPT:
-		if (!client.reconnecting)
-			BroadcastToInGameClients(src);
-
-		break;
-
-	case PacketAction::DROP:
-		break;
-
-	case PacketAction::DISCONNECT:
-		LogFmt(2, "aborting connection to server after packet {:#02x}\n",
-			  src.front());
-		log_hexdump(6, src);
-
-		if (autoreconnect && IsInGame()) {
-			Log(2, "auto-reconnecting\n");
-			ScheduleReconnect();
-		} else {
-			Destroy();
-		}
-		return false;
-
-	case PacketAction::DELETED:
-		return false;
-	}
-
-	return true;
-}
 
 bool
 Connection::OnClientDisconnect() noexcept

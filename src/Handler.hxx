@@ -39,8 +39,6 @@ struct server_packet_binding {
 				std::span<const std::byte> src);
 };
 
-extern const struct client_packet_binding server_packet_bindings[];
-
 PacketAction
 handle_packet_from_server(const struct client_packet_binding *bindings,
 			  Connection &c,

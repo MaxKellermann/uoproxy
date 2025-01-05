@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // author: Max Kellermann <max.kellermann@gmail.com>
 
+#include "Connection.hxx"
 #include "Handler.hxx"
 #include "Instance.hxx"
 #include "PacketStructs.hxx"
 #include "VerifyPacket.hxx"
-#include "Connection.hxx"
 #include "LinkedServer.hxx"
 #include "Server.hxx"
 #include "Client.hxx"
@@ -736,7 +736,7 @@ handle_protocol_extension(Connection &c, std::span<const std::byte> src)
 	return PacketAction::ACCEPT;
 }
 
-const struct client_packet_binding server_packet_bindings[] = {
+static constexpr struct client_packet_binding server_packet_bindings[] = {
 	{ UO::Command::MobileStatus, handle_mobile_status }, /* 0x11 */
 	{ UO::Command::WorldItem, handle_world_item }, /* 0x1a */
 	{ UO::Command::Start, handle_start }, /* 0x1b */
@@ -774,3 +774,40 @@ const struct client_packet_binding server_packet_bindings[] = {
 	{ UO::Command::ProtocolExtension, handle_protocol_extension }, /* 0xf0 */
 	{}
 };
+
+bool
+Connection::OnClientPacket(std::span<const std::byte> src)
+{
+	assert(client.client != nullptr);
+
+	const auto action = handle_packet_from_server(server_packet_bindings,
+						      *this, src);
+	switch (action) {
+	case PacketAction::ACCEPT:
+		if (!client.reconnecting)
+			BroadcastToInGameClients(src);
+
+		break;
+
+	case PacketAction::DROP:
+		break;
+
+	case PacketAction::DISCONNECT:
+		LogFmt(2, "aborting connection to server after packet {:#02x}\n",
+			  src.front());
+		log_hexdump(6, src);
+
+		if (autoreconnect && IsInGame()) {
+			Log(2, "auto-reconnecting\n");
+			ScheduleReconnect();
+		} else {
+			Destroy();
+		}
+		return false;
+
+	case PacketAction::DELETED:
+		return false;
+	}
+
+	return true;
+}
