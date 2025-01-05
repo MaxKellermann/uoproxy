@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // author: Max Kellermann <max.kellermann@gmail.com>
 
+#include "LinkedServer.hxx"
 #include "Instance.hxx"
 #include "PacketStructs.hxx"
 #include "Handler.hxx"
 #include "CVersion.hxx"
 #include "Connection.hxx"
-#include "LinkedServer.hxx"
 #include "Client.hxx"
 #include "Server.hxx"
 #include "Config.hxx"
@@ -859,7 +859,7 @@ handle_seed(LinkedServer &ls, std::span<const std::byte> src)
 	return PacketAction::DROP;
 }
 
-const struct server_packet_binding client_packet_bindings[] = {
+static constexpr struct server_packet_binding client_packet_bindings[] = {
 	{ UO::Command::CreateCharacter, handle_create_character },
 	{ UO::Command::Walk, handle_walk },
 	{ UO::Command::TalkAscii, handle_talk_ascii },
@@ -884,3 +884,47 @@ const struct server_packet_binding client_packet_bindings[] = {
 	{ UO::Command::Seed, handle_seed }, /* 0xef */
 	{}
 };
+
+bool
+LinkedServer::OnServerPacket(std::span<const std::byte> src)
+{
+	Connection *c = connection;
+
+	assert(c != nullptr);
+	assert(server != nullptr);
+
+	const auto action = handle_packet_from_client(client_packet_bindings,
+						      *this, src);
+	switch (action) {
+	case PacketAction::ACCEPT:
+		if (c->client.client != nullptr &&
+		    (!c->client.reconnecting ||
+		     static_cast<UO::Command>(src.front()) == UO::Command::ClientVersion))
+			c->client.client->Send(src);
+		break;
+
+	case PacketAction::DROP:
+		break;
+
+	case PacketAction::DISCONNECT:
+		LogF(2, "aborting connection to client after packet {:#x}", src.front());
+		log_hexdump(6, src);
+
+		c->Remove(*this);
+
+		if (c->servers.empty()) {
+			if (c->background)
+				LogF(1, "backgrounding");
+			else
+				c->Destroy();
+		}
+
+		delete this;
+		return false;
+
+	case PacketAction::DELETED:
+		return false;
+	}
+
+	return true;
+}

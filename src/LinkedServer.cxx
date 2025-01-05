@@ -3,7 +3,6 @@
 
 #include "LinkedServer.hxx"
 #include "Connection.hxx"
-#include "Handler.hxx"
 #include "Log.hxx"
 
 #include <fmt/format.h>
@@ -32,50 +31,6 @@ LinkedServer::ZombieTimeoutCallback() noexcept
 	assert(state == State::RELAY_SERVER);
 
 	connection->RemoveCheckEmpty(*this);
-}
-
-bool
-LinkedServer::OnServerPacket(std::span<const std::byte> src)
-{
-	Connection *c = connection;
-
-	assert(c != nullptr);
-	assert(server != nullptr);
-
-	const auto action = handle_packet_from_client(client_packet_bindings,
-						      *this, src);
-	switch (action) {
-	case PacketAction::ACCEPT:
-		if (c->client.client != nullptr &&
-		    (!c->client.reconnecting ||
-		     static_cast<UO::Command>(src.front()) == UO::Command::ClientVersion))
-			c->client.client->Send(src);
-		break;
-
-	case PacketAction::DROP:
-		break;
-
-	case PacketAction::DISCONNECT:
-		LogF(2, "aborting connection to client after packet {:#x}", src.front());
-		log_hexdump(6, src);
-
-		c->Remove(*this);
-
-		if (c->servers.empty()) {
-			if (c->background)
-				LogF(1, "backgrounding");
-			else
-				c->Destroy();
-		}
-
-		delete this;
-		return false;
-
-	case PacketAction::DELETED:
-		return false;
-	}
-
-	return true;
 }
 
 bool

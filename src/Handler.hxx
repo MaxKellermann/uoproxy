@@ -40,7 +40,6 @@ struct server_packet_binding {
 };
 
 extern const struct client_packet_binding server_packet_bindings[];
-extern const struct server_packet_binding client_packet_bindings[];
 
 PacketAction
 handle_packet_from_server(const struct client_packet_binding *bindings,
