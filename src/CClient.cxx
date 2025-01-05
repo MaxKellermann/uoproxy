@@ -20,7 +20,7 @@ Connection::OnClientDisconnect() noexcept
 
 	if (autoreconnect && IsInGame()) {
 		Log(2, "server disconnected, auto-reconnecting\n");
-		connection_speak_console(this, "uoproxy was disconnected, auto-reconnecting...");
+		SpeakConsole("uoproxy was disconnected, auto-reconnecting...");
 		ScheduleReconnect();
 		return false;
 	} else {

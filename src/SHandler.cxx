@@ -28,10 +28,10 @@
 #include <netdb.h>
 #endif
 
-static void
-welcome(Connection &c)
+void
+Connection::Welcome()
 {
-	for (auto &ls : c.servers) {
+	for (auto &ls : servers) {
 		if (ls.IsInGame() && !ls.welcome) {
 			ls.server->SpeakConsole("Welcome to uoproxy v" VERSION "!  "
 						"https://github.com/MaxKellermann/uoproxy");
@@ -124,7 +124,7 @@ Connection::HandleStart(std::span<const std::byte> src)
 PacketAction
 Connection::HandleSpeakAscii([[maybe_unused]] std::span<const std::byte> src)
 {
-	welcome(*this);
+	Welcome();
 
 	return PacketAction::ACCEPT;
 }
@@ -158,7 +158,7 @@ Connection::HandleWalkCancel(std::span<const std::byte> src)
 	if (!IsInGame())
 		return PacketAction::DISCONNECT;
 
-	connection_walk_cancel(*this, *p);
+	OnWalkCancel(*p);
 	return PacketAction::DROP;
 }
 
@@ -168,7 +168,7 @@ Connection::HandleWalkAck(std::span<const std::byte> src)
 	const auto *const p = reinterpret_cast<const struct uo_packet_walk_ack *>(src.data());
 	assert(src.size() == sizeof(*p));
 
-	connection_walk_ack(*this, *p);
+	OnWalkAck(*p);
 
 	/* XXX: x/y/z etc. */
 
@@ -314,9 +314,9 @@ Connection::HandlePopupMessage(std::span<const std::byte> src)
 
 	if (client.reconnecting) {
 		if (p->msg == 0x05) {
-			connection_speak_console(this, "previous character is still online, trying again");
+			SpeakConsole("previous character is still online, trying again");
 		} else {
-			connection_speak_console(this, "character change failed, trying again");
+			SpeakConsole("character change failed, trying again");
 		}
 
 		ScheduleReconnect();
@@ -578,7 +578,7 @@ Connection::HandleServerList(std::span<const std::byte> src)
 PacketAction
 Connection::HandleSpeakUnicode([[maybe_unused]] std::span<const std::byte> src)
 {
-	welcome(*this);
+	Welcome();
 
 	return PacketAction::ACCEPT;
 }

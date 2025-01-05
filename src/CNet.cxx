@@ -7,11 +7,10 @@
 
 #include <assert.h>
 
-/** broadcast a message to all clients */
 void
-connection_speak_console(Connection *c, const char *msg)
+Connection::SpeakConsole(const char *msg)
 {
-	for (auto &ls : c->servers) {
+	for (auto &ls : servers) {
 		if (ls.IsInGame()) {
 			assert(ls.server != nullptr);
 

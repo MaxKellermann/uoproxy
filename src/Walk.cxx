@@ -73,10 +73,10 @@ connection_walk_request(LinkedServer &ls,
 		state.seq_next = 1;
 }
 
-static void
-connection_resync(Connection &c)
+inline void
+Connection::Resynchronize()
 {
-	c.walk.clear();
+	walk.clear();
 
 	const struct uo_packet_walk_ack packet = {
 		.cmd = UO::Command::Resynchronize,
@@ -84,18 +84,15 @@ connection_resync(Connection &c)
 		.notoriety = 0,
 	};
 
-	c.client.client->SendT(packet);
+	client.client->SendT(packet);
 }
 
 void
-connection_walk_cancel(Connection &c,
-		       const struct uo_packet_walk_cancel &p)
+Connection::OnWalkCancel(const struct uo_packet_walk_cancel &p)
 {
-	auto &state = c.walk;
+	walk.seq_next = 0;
 
-	state.seq_next = 0;
-
-	auto *i = state.FindSequence(p.seq);
+	auto *i = walk.FindSequence(p.seq);
 
 	if (i != nullptr)
 		LogFmt(7, "walk_cancel seq_to_client={} seq_from_server={}\n",
@@ -103,39 +100,36 @@ connection_walk_cancel(Connection &c,
 	else
 		LogFmt(7, "walk_cancel seq_from_server={}\n", p.seq);
 
-	c.client.world.WalkCancel(p.x, p.y, p.direction);
+	client.world.WalkCancel(p.x, p.y, p.direction);
 
 	/* only send to requesting client */
 
-	if (i != nullptr && state.server != nullptr) {
+	if (i != nullptr && walk.server != nullptr) {
 		auto cancel = p;
 		cancel.seq = i->packet.seq;
-		state.server->server->SendT(cancel);
+		walk.server->server->SendT(cancel);
 	}
 
-	state.clear();
+	walk.clear();
 }
 
 void
-connection_walk_ack(Connection &c,
-		    const struct uo_packet_walk_ack &p)
+Connection::OnWalkAck(const struct uo_packet_walk_ack &p)
 {
-	auto &state = c.walk;
-
-	auto *i = state.FindSequence(p.seq);
+	auto *i = walk.FindSequence(p.seq);
 	if (i == nullptr) {
 		Log(1, "WalkAck out of sync\n");
-		connection_resync(c);
+		Resynchronize();
 		return;
 	}
 
 	LogFmt(7, "walk_ack seq_to_client={} seq_from_server={}\n",
 	       i->packet.seq, p.seq);
 
-	unsigned x = c.client.world.packet_start.x;
-	unsigned y = c.client.world.packet_start.y;
+	unsigned x = client.world.packet_start.x;
+	unsigned y = client.world.packet_start.y;
 
-	if ((c.client.world.packet_start.direction & 0x07) == (i->packet.direction & 0x07)) {
+	if ((client.world.packet_start.direction & 0x07) == (i->packet.direction & 0x07)) {
 		switch (i->packet.direction & 0x07) {
 		case 0: /* north */
 			--y;
@@ -168,14 +162,13 @@ connection_walk_ack(Connection &c,
 		}
 	}
 
-	c.client.world.Walked(x, y,
-			      i->packet.direction, p.notoriety);
+	client.world.Walked(x, y, i->packet.direction, p.notoriety);
 
 	/* forward ack to requesting client */
-	if (state.server != nullptr) {
+	if (walk.server != nullptr) {
 		auto ack = p;
 		ack.seq = i->packet.seq;
-		state.server->server->SendT(ack);
+		walk.server->server->SendT(ack);
 	}
 
 	/* send WalkForce to all other clients */
@@ -189,13 +182,13 @@ connection_walk_ack(Connection &c,
 #endif
 
 	const struct uo_packet_mobile_update *mu =
-		&c.client.world.packet_mobile_update;
+		&client.world.packet_mobile_update;
 
-	if (state.server != nullptr)
-		c.BroadcastToInGameClientsExcept(ReferenceAsBytes(mu),
-						 *state.server);
+	if (walk.server != nullptr)
+		BroadcastToInGameClientsExcept(ReferenceAsBytes(mu),
+					       *walk.server);
 	else
-		c.BroadcastToInGameClients(ReferenceAsBytes(mu));
+		BroadcastToInGameClients(ReferenceAsBytes(mu));
 
-	state.Remove(*i);
+	walk.Remove(*i);
 }

@@ -109,6 +109,9 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 					    std::span<const std::byte> old_packet,
 					    std::span<const std::byte> new_packet) noexcept;
 
+	/** broadcast a message to all clients */
+	void SpeakConsole(const char *msg);
+
 	LinkedServer *FindZombie(const struct uo_packet_game_login &game_login) noexcept;
 
 	void ClearWorld() noexcept {
@@ -122,6 +125,12 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 private:
 	void DoReconnect() noexcept;
 	void ReconnectTimerCallback() noexcept;
+
+	void Welcome();
+
+	void Resynchronize();
+	void OnWalkCancel(const struct uo_packet_walk_cancel &p);
+	void OnWalkAck(const struct uo_packet_walk_ack &p);
 
 	PacketAction HandleMobileStatus(std::span<const std::byte> src);
 	PacketAction HandleWorldItem(std::span<const std::byte> src);
@@ -175,9 +184,6 @@ Connection *
 connection_new(Instance *instance,
 	       UniqueSocketDescriptor &&socket);
 
-void
-connection_speak_console(Connection *c, const char *msg);
-
 /* walk */
 
 void
@@ -187,14 +193,6 @@ connection_walk_server_removed(WalkState &state,
 void
 connection_walk_request(LinkedServer &ls,
 			const struct uo_packet_walk &p);
-
-void
-connection_walk_cancel(Connection &c,
-		       const struct uo_packet_walk_cancel &p);
-
-void
-connection_walk_ack(Connection &c,
-		    const struct uo_packet_walk_ack &p);
 
 /* attach */
 
