@@ -6,10 +6,12 @@
 #include "Server.hxx"
 #include "Client.hxx"
 #include "Log.hxx"
+#include "util/NumberParser.hxx"
+#include "util/StringCompare.hxx"
 
-#include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
+
+using std::string_view_literals::operator""sv;
 
 static void
 change_character(Connection &c, LinkedServer &ls, unsigned idx)
@@ -27,19 +29,19 @@ change_character(Connection &c, LinkedServer &ls, unsigned idx)
 }
 
 void
-LinkedServer::OnCommand(const char *command)
+LinkedServer::OnCommand(std::string_view command)
 {
 	Connection &c = *connection;
 
 	if (!c.IsInGame() || server == nullptr)
 		return;
 
-	if (*command == 0) {
+	if (command.empty()) {
 		server->SpeakConsole("uoproxy commands: % %reconnect %char %drop %verbose");
-	} else if (strcmp(command, "reconnect") == 0) {
+	} else if (command == "reconnect"sv) {
 		server->SpeakConsole("uoproxy: reconnecting");
 		c.Reconnect();
-	} else if (strcmp(command, "char") == 0) {
+	} else if (command == "char"sv) {
 		char msg[1024] = "uoproxy:";
 
 		if (!c.client.char_list) {
@@ -57,13 +59,13 @@ LinkedServer::OnCommand(const char *command)
 		}
 
 		server->SpeakConsole(msg);
-	} else if (strncmp(command, "char ", 5) == 0) {
-		if (command[5] >= '0' && command[5] <= '9' && command[6] == 0) {
-			change_character(c, *this, command[5] - '0');
+	} else if (SkipPrefix(command, "char "sv)) {
+		if (command.size() == 1 && command.front() >= '0' && command.front() <= '9') {
+			change_character(c, *this, command.front() - '0');
 		} else {
 			server->SpeakConsole("uoproxy: invalid %char syntax");
 		}
-	} else if (strcmp(command, "drop") == 0) {
+	} else if (command == "drop"sv) {
 		if (c.client.client == nullptr || c.client.reconnecting) {
 			server->SpeakConsole("uoproxy: not connected");
 		} else if (c.client.version.protocol < ProtocolVersion::V6) {
@@ -91,13 +93,11 @@ LinkedServer::OnCommand(const char *command)
 			c.client.client->SendT(p);
 		}
 #ifndef DISABLE_LOGGING
-	} else if (strncmp(command, "verbose", 7) == 0) {
-		if (command[7] == ' ') {
-			char *endptr;
-			long new_verbose = strtol(command + 8, &endptr, 10);
-
-			if (*endptr == 0) {
-				verbose = (int)new_verbose;
+	} else if (SkipPrefix(command, "verbose"sv)) {
+		if (command.size() >= 2 && command.front() == ' ') {
+			const auto new_verbose = ParseInteger<unsigned>(command.substr(1));
+			if (new_verbose) {
+				verbose = *new_verbose;
 				LogF(1, "verbose modified, new value={}", verbose);
 				return;
 			}
