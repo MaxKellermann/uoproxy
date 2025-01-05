@@ -9,9 +9,6 @@
 
 namespace UO { enum class Command : uint8_t; }
 
-struct Connection;
-struct LinkedServer;
-
 /** what to do with the packet? */
 enum class PacketAction {
 	/** forward the packet to the other communication partner */
@@ -27,24 +24,16 @@ enum class PacketAction {
 	DELETED,
 };
 
-struct client_packet_binding {
-	UO::Command cmd;
-	PacketAction (*handler)(Connection &c,
-				std::span<const std::byte> src);
-};
-
-struct server_packet_binding {
-	UO::Command cmd;
-	PacketAction (*handler)(LinkedServer &ls,
-				std::span<const std::byte> src);
-};
-
+template<typename T, typename B>
 PacketAction
-handle_packet_from_server(const struct client_packet_binding *bindings,
-			  Connection &c,
-			  std::span<const std::byte> src);
+DispatchPacket(T &t, const B *bindings, std::span<const std::byte> packet)
+{
+	const auto cmd = static_cast<UO::Command>(packet.front());
 
-PacketAction
-handle_packet_from_client(const struct server_packet_binding *bindings,
-			  LinkedServer &ls,
-			  std::span<const std::byte> src);
+	for (; bindings->handler != nullptr; bindings++) {
+		if (bindings->cmd == cmd)
+			return bindings->handler(t, packet);
+	}
+
+	return PacketAction::ACCEPT;
+}

@@ -859,6 +859,12 @@ handle_seed(LinkedServer &ls, std::span<const std::byte> src)
 	return PacketAction::DROP;
 }
 
+struct server_packet_binding {
+	UO::Command cmd;
+	PacketAction (*handler)(LinkedServer &ls,
+				std::span<const std::byte> src);
+};
+
 static constexpr struct server_packet_binding client_packet_bindings[] = {
 	{ UO::Command::CreateCharacter, handle_create_character },
 	{ UO::Command::Walk, handle_walk },
@@ -893,8 +899,7 @@ LinkedServer::OnServerPacket(std::span<const std::byte> src)
 	assert(c != nullptr);
 	assert(server != nullptr);
 
-	const auto action = handle_packet_from_client(client_packet_bindings,
-						      *this, src);
+	const auto action = DispatchPacket(*this, client_packet_bindings, src);
 	switch (action) {
 	case PacketAction::ACCEPT:
 		if (c->client.client != nullptr &&

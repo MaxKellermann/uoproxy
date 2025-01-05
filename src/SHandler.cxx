@@ -736,6 +736,12 @@ handle_protocol_extension(Connection &c, std::span<const std::byte> src)
 	return PacketAction::ACCEPT;
 }
 
+struct client_packet_binding {
+	UO::Command cmd;
+	PacketAction (*handler)(Connection &c,
+				std::span<const std::byte> src);
+};
+
 static constexpr struct client_packet_binding server_packet_bindings[] = {
 	{ UO::Command::MobileStatus, handle_mobile_status }, /* 0x11 */
 	{ UO::Command::WorldItem, handle_world_item }, /* 0x1a */
@@ -780,8 +786,7 @@ Connection::OnClientPacket(std::span<const std::byte> src)
 {
 	assert(client.client != nullptr);
 
-	const auto action = handle_packet_from_server(server_packet_bindings,
-						      *this, src);
+	const auto action = DispatchPacket(*this, server_packet_bindings, src);
 	switch (action) {
 	case PacketAction::ACCEPT:
 		if (!client.reconnecting)

@@ -133,7 +133,7 @@ executable(
   'src/LinkedServer.cxx',
   'src/StatefulClient.cxx',
   'src/World.cxx', 'src/CWorld.cxx', 'src/Walk.cxx',
-  'src/Handler.cxx', 'src/SHandler.cxx', 'src/CHandler.cxx',
+  'src/SHandler.cxx', 'src/CHandler.cxx',
   'src/Attach.cxx', 'src/Reconnect.cxx',
   'src/Dump.cxx',
   'src/SUtil.cxx',
