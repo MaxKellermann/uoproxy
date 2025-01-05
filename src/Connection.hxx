@@ -190,11 +190,6 @@ void
 connection_walk_request(LinkedServer &ls,
 			const struct uo_packet_walk &p);
 
-/* attach */
-
-void
-attach_send_world(LinkedServer *ls);
-
 /* command */
 
 void

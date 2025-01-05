@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "LinkedServer.hxx"
+#include "Attach.hxx"
 #include "Instance.hxx"
 #include "PacketStructs.hxx"
 #include "Handler.hxx"
@@ -508,7 +509,10 @@ LinkedServer::HandleGameLogin(std::span<const std::byte> src)
 	server->SetCompression(true);
 	if (connection->IsInGame()) {
 		/* already in game .. this was likely an attach connection */
-		attach_send_world(this);
+		SendWorld(*server, client_version.protocol,
+			  connection->client.supported_features_flags,
+			  connection->client.world);
+		state = LinkedServer::State::IN_GAME;
 	} else if (connection->client.char_list) {
 		server->Send(connection->client.char_list);
 		state = LinkedServer::State::CHAR_LIST;
@@ -620,7 +624,10 @@ LinkedServer::HandlePlayServer(std::span<const std::byte> src)
 		}  else {
 			/* attach it to the new connection and begin playing right away */
 			LogF(2, "attaching connection");
-			attach_send_world(this);
+			SendWorld(*server, client_version.protocol,
+				  connection->client.supported_features_flags,
+				  connection->client.world);
+			state = LinkedServer::State::IN_GAME;
 			return PacketAction::DROP;
 		}
 
