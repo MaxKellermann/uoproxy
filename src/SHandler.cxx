@@ -82,123 +82,116 @@ send_antispy(UO::Client &client)
 	client.SendT(p);
 }
 
-static PacketAction
-handle_mobile_status(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleMobileStatus(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_mobile_status *>(src.data());
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_world_item(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleWorldItem(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_world_item *>(src.data());
-
 	assert(src.size() <= sizeof(*p));
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_start(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleStart(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_start *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.packet_start = *p;
+	client.world.packet_start = *p;
 
 	/* if we're auto-reconnecting, this is the point where it
 	   succeeded */
-	c.client.reconnecting = false;
+	client.reconnecting = false;
 
-	c.walk.seq_next = 0;
+	walk.seq_next = 0;
 
-	for (auto &ls : c.servers)
+	for (auto &ls : servers)
 		ls.state = LinkedServer::State::IN_GAME;
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_speak_ascii(Connection &c, [[maybe_unused]] std::span<const std::byte> src)
+PacketAction
+Connection::HandleSpeakAscii([[maybe_unused]] std::span<const std::byte> src)
 {
-	welcome(c);
+	welcome(*this);
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_delete(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleDelete(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_delete *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.RemoveSerial(p->serial);
+	client.world.RemoveSerial(p->serial);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_mobile_update(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleMobileUpdate(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_mobile_update *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_walk_cancel(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleWalkCancel(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_walk_cancel *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	if (!c.IsInGame())
+	if (!IsInGame())
 		return PacketAction::DISCONNECT;
 
-	connection_walk_cancel(c, *p);
-
+	connection_walk_cancel(*this, *p);
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_walk_ack(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleWalkAck(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_walk_ack *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	connection_walk_ack(c, *p);
+	connection_walk_ack(*this, *p);
 
 	/* XXX: x/y/z etc. */
 
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_container_open(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleContainerOpen(std::span<const std::byte> src)
 {
-	if (c.client.version.protocol >= ProtocolVersion::V7) {
+	if (client.version.protocol >= ProtocolVersion::V7) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_open_7 *>(src.data());
 
-		c.client.world.Apply(*p);
+		client.world.Apply(*p);
 
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V7,
-						 ReferenceAsBytes(p->base),
-						 src);
+		BroadcastToInGameClientsDivert(ProtocolVersion::V7,
+					       ReferenceAsBytes(p->base),
+					       src);
 		return PacketAction::DROP;
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_open *>(src.data());
 		assert(src.size() == sizeof(*p));
 
-		c.client.world.Apply(*p);
+		client.world.Apply(*p);
 
 		const struct uo_packet_container_open_7 p7 = {
 			.base = *p,
@@ -206,18 +199,18 @@ handle_container_open(Connection &c, std::span<const std::byte> src)
 			.x7d = 0x7d,
 		};
 
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V7,
-						 src,
-						 ReferenceAsBytes(p7));
+		BroadcastToInGameClientsDivert(ProtocolVersion::V7,
+					       src,
+					       ReferenceAsBytes(p7));
 
 		return PacketAction::DROP;
 	}
 }
 
-static PacketAction
-handle_container_update(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleContainerUpdate(std::span<const std::byte> src)
 {
-	if (c.client.version.protocol < ProtocolVersion::V6) {
+	if (client.version.protocol < ProtocolVersion::V6) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_update *>(src.data());
 		struct uo_packet_container_update_6 p6;
 
@@ -225,11 +218,11 @@ handle_container_update(Connection &c, std::span<const std::byte> src)
 
 		container_update_5_to_6(&p6, p);
 
-		c.client.world.Apply(p6);
+		client.world.Apply(p6);
 
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
-						 src,
-						 ReferenceAsBytes(p6));
+		BroadcastToInGameClientsDivert(ProtocolVersion::V6,
+					       src,
+					       ReferenceAsBytes(p6));
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_update_6 *>(src.data());
 		struct uo_packet_container_update p5;
@@ -238,30 +231,28 @@ handle_container_update(Connection &c, std::span<const std::byte> src)
 
 		container_update_6_to_5(&p5, p);
 
-		c.client.world.Apply(*p);
+		client.world.Apply(*p);
 
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
-						 ReferenceAsBytes(p5),
-						 src);
+		BroadcastToInGameClientsDivert(ProtocolVersion::V6,
+					       ReferenceAsBytes(p5),
+					       src);
 	}
 
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_equip(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleEquip(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_equip *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.Apply(*p);
-
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_container_content(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleContainerContent(std::span<const std::byte> src)
 {
 	if (packet_verify_container_content(reinterpret_cast<const struct uo_packet_container_content *>(src.data()), src.size())) {
 		/* protocol v5 */
@@ -269,170 +260,155 @@ handle_container_content(Connection &c, std::span<const std::byte> src)
 
 		const auto p6 = container_content_5_to_6(p);
 
-		c.client.world.Apply(*p6);
+		client.world.Apply(*p6);
 
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
-						 src,
-						 p6);
+		BroadcastToInGameClientsDivert(ProtocolVersion::V6, src, p6);
 	} else if (packet_verify_container_content_6(reinterpret_cast<const struct uo_packet_container_content_6 *>(src.data()), src.size())) {
 		/* protocol v6 */
 		const auto *const p = reinterpret_cast<const struct uo_packet_container_content_6 *>(src.data());
 
-		c.client.world.Apply(*p);
+		client.world.Apply(*p);
 
 		const auto p5 = container_content_6_to_5(p);
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6,
-						 p5,
-						 src);
+		BroadcastToInGameClientsDivert(ProtocolVersion::V6, p5, src);
 	} else
 		return PacketAction::DISCONNECT;
 
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_personal_light_level(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandlePersonalLightLevel(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_personal_light_level *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	if (c.instance.config.light)
+	if (instance.config.light)
 		return PacketAction::DROP;
 
-	if (c.client.world.packet_start.serial == p->serial)
-		c.client.world.packet_personal_light_level = *p;
+	if (client.world.packet_start.serial == p->serial)
+		client.world.packet_personal_light_level = *p;
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_global_light_level(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleGlobalLightLevel(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_global_light_level *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	if (c.instance.config.light)
+	if (instance.config.light)
 		return PacketAction::DROP;
 
-	c.client.world.packet_global_light_level = *p;
-
+	client.world.packet_global_light_level = *p;
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_popup_message(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandlePopupMessage(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_popup_message *>(src.data());
 
 	assert(src.size() == sizeof(*p));
 
-	if (c.client.reconnecting) {
+	if (client.reconnecting) {
 		if (p->msg == 0x05) {
-			connection_speak_console(&c, "previous character is still online, trying again");
+			connection_speak_console(this, "previous character is still online, trying again");
 		} else {
-			connection_speak_console(&c, "character change failed, trying again");
+			connection_speak_console(this, "character change failed, trying again");
 		}
 
-		c.ScheduleReconnect();
+		ScheduleReconnect();
 		return PacketAction::DELETED;
 	}
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_login_complete(Connection &c, [[maybe_unused]] std::span<const std::byte> src)
+PacketAction
+Connection::HandleLoginComplete([[maybe_unused]] std::span<const std::byte> src)
 {
-	if (c.instance.config.antispy)
-		send_antispy(*c.client.client);
+	if (instance.config.antispy)
+		send_antispy(*client.client);
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_target(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleTarget(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_target *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.packet_target = *p;
-
+	client.world.packet_target = *p;
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_war_mode(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleWarMode(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_war_mode *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.packet_war_mode = *p;
-
+	client.world.packet_war_mode = *p;
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_ping(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandlePing(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_ping *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.ping_ack = p->id;
-
+	client.ping_ack = p->id;
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_zone_change(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleZoneChange(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_zone_change *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_mobile_moving(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleMobileMoving(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_mobile_moving *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_mobile_incoming(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleMobileIncoming(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_mobile_incoming *>(src.data());
 
 	if (src.size() < sizeof(*p) - sizeof(p->items))
 		return PacketAction::DISCONNECT;
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_char_list(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleCharList(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_simple_character_list *>(src.data());
 
 	/* save character list */
 	if (p->character_count > 0 &&
 	    src.size() >= sizeof(*p) + (p->character_count - 1) * sizeof(p->character_info[0]))
-		c.client.char_list = {p, src.size()};
+		client.char_list = {p, src.size()};
 
 	/* respond directly during reconnect */
-	if (c.client.reconnecting) {
+	if (client.reconnecting) {
 		struct uo_packet_play_character p2 = {
 			.cmd = UO::Command::PlayCharacter,
 			.unknown0 = {},
@@ -440,49 +416,49 @@ handle_char_list(Connection &c, std::span<const std::byte> src)
 			.unknown1 = {},
 			.flags = {},
 			.unknown2 = {},
-			.slot = c.character_index,
+			.slot = character_index,
 			.client_ip = 0xc0a80102, /* 192.168.1.2 */
 		};
 
 		Log(2, "sending PlayCharacter\n");
 
-		c.client.client->SendT(p2);
+		client.client->SendT(p2);
 
 		return PacketAction::DROP;
 	} else {
-		for (auto &ls : c.servers) {
+		for (auto &ls : servers) {
 			if (ls.state == LinkedServer::State::GAME_LOGIN ||
 			    ls.state == LinkedServer::State::PLAY_SERVER) {
 				ls.server->Send(src);
 				ls.state = LinkedServer::State::CHAR_LIST;
 			}
 		}
+
 		return PacketAction::DROP;
 	}
 }
 
-static PacketAction
-handle_account_login_reject(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleAccountLoginReject(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_account_login_reject *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	if (c.client.reconnecting) {
+	if (client.reconnecting) {
 		LogFmt(1, "reconnect failed: AccountLoginReject reason={:#x}\n", p->reason);
 
-		c.ScheduleReconnect();
+		ScheduleReconnect();
 		return PacketAction::DELETED;
 	}
 
-	if (c.IsInGame())
+	if (IsInGame())
 		return PacketAction::DISCONNECT;
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_relay(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleRelay(std::span<const std::byte> src)
 {
 	/* this packet tells the UO client where to connect; uoproxy hides
 	   this packet from the client, and only internally connects to
@@ -493,7 +469,7 @@ handle_relay(Connection &c, std::span<const std::byte> src)
 
 	assert(src.size() == sizeof(*p));
 
-	if (c.IsInGame() && !c.client.reconnecting)
+	if (IsInGame() && !client.reconnecting)
 		return PacketAction::DISCONNECT;
 
 	Log(2, "changing to game connection\n");
@@ -502,7 +478,7 @@ handle_relay(Connection &c, std::span<const std::byte> src)
 	relay = *p;
 
 	/* close old connection */
-	c.Disconnect();
+	Disconnect();
 
 	/* restore the "reconnecting" flag: it was cleared by
 	   connection_client_disconnect(), but since continue reconnecting
@@ -510,7 +486,7 @@ handle_relay(Connection &c, std::span<const std::byte> src)
 	   start of this function ensures that c.in_game is only set
 	   during reconnecting. */
 
-	c.client.reconnecting = c.IsInGame();
+	client.reconnecting = IsInGame();
 
 	/* extract new server's address */
 
@@ -521,12 +497,12 @@ handle_relay(Connection &c, std::span<const std::byte> src)
 
 	/* connect to new server */
 
-	if (c.client.version.seed != nullptr)
-		c.client.version.seed->seed = relay.auth_id;
+	if (client.version.seed != nullptr)
+		client.version.seed->seed = relay.auth_id;
 
 	try {
-		c.Connect({(const struct sockaddr *)&sin, sizeof(sin)},
-			  relay.auth_id, true);
+		Connect({(const struct sockaddr *)&sin, sizeof(sin)},
+			relay.auth_id, true);
 	} catch (...) {
 		log_error("connect to game server failed", std::current_exception());
 		return PacketAction::DISCONNECT;
@@ -537,15 +513,14 @@ handle_relay(Connection &c, std::span<const std::byte> src)
 
 	login.cmd = UO::Command::GameLogin;
 	login.auth_id = relay.auth_id;
-	login.credentials = c.credentials;
+	login.credentials = credentials;
 
-	c.client.client->SendT(login);
-
+	client.client->SendT(login);
 	return PacketAction::DELETED;
 }
 
-static PacketAction
-handle_server_list(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleServerList(std::span<const std::byte> src)
 {
 	/* this packet tells the UO client where to connect; what
 	   we do here is replace the server IP with our own one */
@@ -561,18 +536,18 @@ handle_server_list(Connection &c, std::span<const std::byte> src)
 	if (src.size() != sizeof(*p) + (count - 1) * sizeof(*server_info))
 		return PacketAction::DISCONNECT;
 
-	c.client.server_list = {p, src.size()};
+	client.server_list = {p, src.size()};
 
-	if (c.instance.config.antispy)
-		send_antispy(*c.client.client);
+	if (instance.config.antispy)
+		send_antispy(*client.client);
 
-	if (c.client.reconnecting) {
+	if (client.reconnecting) {
 		struct uo_packet_play_server p2 = {
 			.cmd = UO::Command::PlayServer,
 			.index = 0, /* XXX */
 		};
 
-		c.client.client->SendT(p2);
+		client.client->SendT(p2);
 
 		return PacketAction::DROP;
 	}
@@ -590,7 +565,7 @@ handle_server_list(Connection &c, std::span<const std::byte> src)
 
 	/* forward only to the clients which are waiting for the server
 	   list (should be only one) */
-	for (auto &ls : c.servers) {
+	for (auto &ls : servers) {
 		if (ls.state == LinkedServer::State::ACCOUNT_LOGIN) {
 			ls.state = LinkedServer::State::SERVER_LIST;
 			ls.server->Send(src);
@@ -600,80 +575,77 @@ handle_server_list(Connection &c, std::span<const std::byte> src)
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_speak_unicode(Connection &c, [[maybe_unused]] std::span<const std::byte> src)
+PacketAction
+Connection::HandleSpeakUnicode([[maybe_unused]] std::span<const std::byte> src)
 {
-	welcome(c);
+	welcome(*this);
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_supported_features(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleSupportedFeatures(std::span<const std::byte> src)
 {
-	if (c.client.version.protocol >= ProtocolVersion::V6_0_14) {
+	if (client.version.protocol >= ProtocolVersion::V6_0_14) {
 		const auto *const p = reinterpret_cast<const struct uo_packet_supported_features_6014 *>(src.data());
 		assert(src.size() == sizeof(*p));
 
-		c.client.supported_features_flags = p->flags;
+		client.supported_features_flags = p->flags;
 
 		struct uo_packet_supported_features p6;
 		supported_features_6014_to_6(&p6, p);
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6_0_14,
-						 ReferenceAsBytes(p6),
-						 src);
+		BroadcastToInGameClientsDivert(ProtocolVersion::V6_0_14,
+					       ReferenceAsBytes(p6),
+					       src);
 	} else {
 		const auto *const p = reinterpret_cast<const struct uo_packet_supported_features *>(src.data());
 		assert(src.size() == sizeof(*p));
 
-		c.client.supported_features_flags = p->flags;
+		client.supported_features_flags = p->flags;
 
 		struct uo_packet_supported_features_6014 p7;
 		supported_features_6_to_6014(&p7, p);
-		c.BroadcastToInGameClientsDivert(ProtocolVersion::V6_0_14,
-						 src,
-						 ReferenceAsBytes(p7));
+		BroadcastToInGameClientsDivert(ProtocolVersion::V6_0_14,
+					       src,
+					       ReferenceAsBytes(p7));
 	}
 
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_season(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleSeason(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_season *>(src.data());
-
 	assert(src.size() == sizeof(*p));
 
-	c.client.world.packet_season = *p;
-
+	client.world.packet_season = *p;
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_client_version(Connection &c, [[maybe_unused]] std::span<const std::byte> src)
+PacketAction
+Connection::HandleClientVersion([[maybe_unused]] std::span<const std::byte> src)
 {
-	if (c.client.version.IsDefined()) {
+	if (client.version.IsDefined()) {
 		LogFmt(3, "sending cached client version {:?}\n",
-		       c.client.version.packet->version);
+		       client.version.packet->version);
 
 		/* respond to this packet directly if we know the version
 		   number */
-		c.client.client->Send(c.client.version.packet);
+		client.client->Send(client.version.packet);
 		return PacketAction::DROP;
 	} else {
 		/* we don't know the version - forward the request to all
 		   clients */
-		c.client.version_requested = true;
+		client.version_requested = true;
 		return PacketAction::ACCEPT;
 	}
 }
 
-static PacketAction
-handle_extended(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleExtended(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_extended *>(src.data());
-
 	if (src.size() < sizeof(*p))
 		return PacketAction::DISCONNECT;
 
@@ -681,22 +653,22 @@ handle_extended(Connection &c, std::span<const std::byte> src)
 
 	switch (p->extended_cmd) {
 	case 0x0008:
-		if (src.size() <= sizeof(c.client.world.packet_map_change))
-			memcpy(&c.client.world.packet_map_change, src.data(), src.size());
+		if (src.size() <= sizeof(client.world.packet_map_change))
+			memcpy(&client.world.packet_map_change, src.data(), src.size());
 
 		break;
 
 	case 0x0018:
-		if (src.size() <= sizeof(c.client.world.packet_map_patches))
-			memcpy(&c.client.world.packet_map_patches, src.data(), src.size());
+		if (src.size() <= sizeof(client.world.packet_map_patches))
+			memcpy(&client.world.packet_map_patches, src.data(), src.size());
 		break;
 	}
 
 	return PacketAction::ACCEPT;
 }
 
-static PacketAction
-handle_world_item_7(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleWorldItem7(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_world_item_7 *>(src.data());
 	assert(src.size() == sizeof(*p));
@@ -704,16 +676,16 @@ handle_world_item_7(Connection &c, std::span<const std::byte> src)
 	struct uo_packet_world_item old;
 	world_item_from_7(&old, p);
 
-	c.client.world.Apply(*p);
+	client.world.Apply(*p);
 
-	c.BroadcastToInGameClientsDivert(ProtocolVersion::V7,
-					 VarLengthAsBytes(old),
-					 src);
+	BroadcastToInGameClientsDivert(ProtocolVersion::V7,
+				       VarLengthAsBytes(old),
+				       src);
 	return PacketAction::DROP;
 }
 
-static PacketAction
-handle_protocol_extension(Connection &c, std::span<const std::byte> src)
+PacketAction
+Connection::HandleProtocolExtension(std::span<const std::byte> src)
 {
 	const auto *const p = reinterpret_cast<const struct uo_packet_protocol_extension *>(src.data());
 	if (src.size() < sizeof(*p))
@@ -729,55 +701,49 @@ handle_protocol_extension(Connection &c, std::span<const std::byte> src)
 			.extension = 0xff,
 		};
 
-		c.client.client->SendT(response);
+		client.client->SendT(response);
 		return PacketAction::DROP;
 	}
 
 	return PacketAction::ACCEPT;
 }
 
-struct client_packet_binding {
-	UO::Command cmd;
-	PacketAction (*handler)(Connection &c,
-				std::span<const std::byte> src);
-};
-
-static constexpr struct client_packet_binding server_packet_bindings[] = {
-	{ UO::Command::MobileStatus, handle_mobile_status }, /* 0x11 */
-	{ UO::Command::WorldItem, handle_world_item }, /* 0x1a */
-	{ UO::Command::Start, handle_start }, /* 0x1b */
-	{ UO::Command::SpeakAscii, handle_speak_ascii }, /* 0x1c */
-	{ UO::Command::Delete, handle_delete }, /* 0x1d */
-	{ UO::Command::MobileUpdate, handle_mobile_update }, /* 0x20 */
-	{ UO::Command::WalkCancel, handle_walk_cancel }, /* 0x21 */
-	{ UO::Command::WalkAck, handle_walk_ack }, /* 0x22 */
-	{ UO::Command::ContainerOpen, handle_container_open }, /* 0x24 */
-	{ UO::Command::ContainerUpdate, handle_container_update }, /* 0x25 */
-	{ UO::Command::Equip, handle_equip }, /* 0x2e */
-	{ UO::Command::ContainerContent, handle_container_content }, /* 0x3c */
-	{ UO::Command::PersonalLightLevel, handle_personal_light_level }, /* 0x4e */
-	{ UO::Command::GlobalLightLevel, handle_global_light_level }, /* 0x4f */
-	{ UO::Command::PopupMessage, handle_popup_message }, /* 0x53 */
-	{ UO::Command::ReDrawAll, handle_login_complete }, /* 0x55 */
-	{ UO::Command::Target, handle_target }, /* 0x6c */
-	{ UO::Command::WarMode, handle_war_mode }, /* 0x72 */
-	{ UO::Command::Ping, handle_ping }, /* 0x73 */
-	{ UO::Command::ZoneChange, handle_zone_change }, /* 0x76 */
-	{ UO::Command::MobileMoving, handle_mobile_moving }, /* 0x77 */
-	{ UO::Command::MobileIncoming, handle_mobile_incoming }, /* 0x78 */
-	{ UO::Command::CharList3, handle_char_list }, /* 0x81 */
-	{ UO::Command::AccountLoginReject, handle_account_login_reject }, /* 0x82 */
-	{ UO::Command::CharList2, handle_char_list }, /* 0x86 */
-	{ UO::Command::Relay, handle_relay }, /* 0x8c */
-	{ UO::Command::ServerList, handle_server_list }, /* 0xa8 */
-	{ UO::Command::CharList, handle_char_list }, /* 0xa9 */
-	{ UO::Command::SpeakUnicode, handle_speak_unicode }, /* 0xae */
-	{ UO::Command::SupportedFeatures, handle_supported_features }, /* 0xb9 */
-	{ UO::Command::Season, handle_season }, /* 0xbc */
-	{ UO::Command::ClientVersion, handle_client_version }, /* 0xbd */
-	{ UO::Command::Extended, handle_extended }, /* 0xbf */
-	{ UO::Command::WorldItem7, handle_world_item_7 }, /* 0xf3 */
-	{ UO::Command::ProtocolExtension, handle_protocol_extension }, /* 0xf0 */
+constinit const Connection::CommandHandler Connection::command_handlers[] = {
+	{ UO::Command::MobileStatus, &Connection::HandleMobileStatus }, /* 0x11 */
+	{ UO::Command::WorldItem, &Connection::HandleWorldItem }, /* 0x1a */
+	{ UO::Command::Start, &Connection::HandleStart }, /* 0x1b */
+	{ UO::Command::SpeakAscii, &Connection::HandleSpeakAscii }, /* 0x1c */
+	{ UO::Command::Delete, &Connection::HandleDelete }, /* 0x1d */
+	{ UO::Command::MobileUpdate, &Connection::HandleMobileUpdate }, /* 0x20 */
+	{ UO::Command::WalkCancel, &Connection::HandleWalkCancel }, /* 0x21 */
+	{ UO::Command::WalkAck, &Connection::HandleWalkAck }, /* 0x22 */
+	{ UO::Command::ContainerOpen, &Connection::HandleContainerOpen }, /* 0x24 */
+	{ UO::Command::ContainerUpdate, &Connection::HandleContainerUpdate }, /* 0x25 */
+	{ UO::Command::Equip, &Connection::HandleEquip }, /* 0x2e */
+	{ UO::Command::ContainerContent, &Connection::HandleContainerContent }, /* 0x3c */
+	{ UO::Command::PersonalLightLevel, &Connection::HandlePersonalLightLevel }, /* 0x4e */
+	{ UO::Command::GlobalLightLevel, &Connection::HandleGlobalLightLevel }, /* 0x4f */
+	{ UO::Command::PopupMessage, &Connection::HandlePopupMessage }, /* 0x53 */
+	{ UO::Command::ReDrawAll, &Connection::HandleLoginComplete }, /* 0x55 */
+	{ UO::Command::Target, &Connection::HandleTarget }, /* 0x6c */
+	{ UO::Command::WarMode, &Connection::HandleWarMode }, /* 0x72 */
+	{ UO::Command::Ping, &Connection::HandlePing }, /* 0x73 */
+	{ UO::Command::ZoneChange, &Connection::HandleZoneChange }, /* 0x76 */
+	{ UO::Command::MobileMoving, &Connection::HandleMobileMoving }, /* 0x77 */
+	{ UO::Command::MobileIncoming, &Connection::HandleMobileIncoming }, /* 0x78 */
+	{ UO::Command::CharList3, &Connection::HandleCharList }, /* 0x81 */
+	{ UO::Command::AccountLoginReject, &Connection::HandleAccountLoginReject }, /* 0x82 */
+	{ UO::Command::CharList2, &Connection::HandleCharList }, /* 0x86 */
+	{ UO::Command::Relay, &Connection::HandleRelay }, /* 0x8c */
+	{ UO::Command::ServerList, &Connection::HandleServerList }, /* 0xa8 */
+	{ UO::Command::CharList, &Connection::HandleCharList }, /* 0xa9 */
+	{ UO::Command::SpeakUnicode, &Connection::HandleSpeakUnicode }, /* 0xae */
+	{ UO::Command::SupportedFeatures, &Connection::HandleSupportedFeatures }, /* 0xb9 */
+	{ UO::Command::Season, &Connection::HandleSeason }, /* 0xbc */
+	{ UO::Command::ClientVersion, &Connection::HandleClientVersion }, /* 0xbd */
+	{ UO::Command::Extended, &Connection::HandleExtended }, /* 0xbf */
+	{ UO::Command::WorldItem7, &Connection::HandleWorldItem7 }, /* 0xf3 */
+	{ UO::Command::ProtocolExtension, &Connection::HandleProtocolExtension }, /* 0xf0 */
 	{}
 };
 
@@ -786,7 +752,7 @@ Connection::OnClientPacket(std::span<const std::byte> src)
 {
 	assert(client.client != nullptr);
 
-	const auto action = DispatchPacket(*this, server_packet_bindings, src);
+	const auto action = DispatchPacket(*this, command_handlers, src);
 	switch (action) {
 	case PacketAction::ACCEPT:
 		if (!client.reconnecting)

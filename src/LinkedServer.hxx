@@ -16,8 +16,11 @@
 struct Connection;
 
 namespace UO {
+enum class Command : uint8_t;
 class Server;
 }
+
+enum class PacketAction;
 
 /**
  * This object manages one connection from a UO client to uoproxy
@@ -144,6 +147,36 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
 
 private:
 	void ZombieTimeoutCallback() noexcept;
+
+	PacketAction HandleCreateCharacter(std::span<const std::byte> src);
+	PacketAction HandleWalk(std::span<const std::byte> src);
+	PacketAction HandleTalkAscii(std::span<const std::byte> src);
+	PacketAction HandleUse(std::span<const std::byte> src);
+	PacketAction HandleAction(std::span<const std::byte> src);
+	PacketAction HandleLiftRequest(std::span<const std::byte> src);
+	PacketAction HandleDrop(std::span<const std::byte> src);
+	PacketAction HandleResynchronize(std::span<const std::byte> src);
+	PacketAction HandleTarget(std::span<const std::byte> src);
+	PacketAction HandlePing(std::span<const std::byte> src);
+	PacketAction HandleAccountLogin(std::span<const std::byte> src);
+	PacketAction HandleGameLogin(std::span<const std::byte> src);
+	PacketAction HandlePlayCharacter(std::span<const std::byte> src);
+	PacketAction HandlePlayServer(std::span<const std::byte> src);
+	PacketAction HandleSpy(std::span<const std::byte> src);
+	PacketAction HandleTalkUnicode(std::span<const std::byte> src);
+	PacketAction HandleGumpResponse(std::span<const std::byte> src);
+	PacketAction HandleClientVersion(std::span<const std::byte> src);
+	PacketAction HandleExtended(std::span<const std::byte> src);
+	PacketAction HandleHardware(std::span<const std::byte> src);
+	PacketAction HandleSeed(std::span<const std::byte> src);
+
+	using PacketHandlerMethod = PacketAction (LinkedServer::*)(std::span<const std::byte> src);
+	struct CommandHandler {
+		UO::Command cmd;
+		PacketHandlerMethod method;
+	};
+
+	static const CommandHandler command_handlers[];
 
 	/* virtual methods from UO::ServerHandler */
 	bool OnServerPacket(std::span<const std::byte> src) override;

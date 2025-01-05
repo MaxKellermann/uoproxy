@@ -30,9 +30,9 @@ DispatchPacket(T &t, const B *bindings, std::span<const std::byte> packet)
 {
 	const auto cmd = static_cast<UO::Command>(packet.front());
 
-	for (; bindings->handler != nullptr; bindings++) {
+	for (; bindings->method != nullptr; bindings++) {
 		if (bindings->cmd == cmd)
-			return bindings->handler(t, packet);
+			return (t.*bindings->method)(packet);
 	}
 
 	return PacketAction::ACCEPT;

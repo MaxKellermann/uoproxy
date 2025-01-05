@@ -20,9 +20,12 @@ struct Connection;
 struct LinkedServer;
 
 namespace UO {
+enum class Command : uint8_t;
 class Client;
 class Server;
 }
+
+enum class PacketAction;
 
 struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 	Instance &instance;
@@ -119,6 +122,48 @@ struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
 private:
 	void DoReconnect() noexcept;
 	void ReconnectTimerCallback() noexcept;
+
+	PacketAction HandleMobileStatus(std::span<const std::byte> src);
+	PacketAction HandleWorldItem(std::span<const std::byte> src);
+	PacketAction HandleStart(std::span<const std::byte> src);
+	PacketAction HandleSpeakAscii(std::span<const std::byte> src);
+	PacketAction HandleDelete(std::span<const std::byte> src);
+	PacketAction HandleMobileUpdate(std::span<const std::byte> src);
+	PacketAction HandleWalkCancel(std::span<const std::byte> src);
+	PacketAction HandleWalkAck(std::span<const std::byte> src);
+	PacketAction HandleContainerOpen(std::span<const std::byte> src);
+	PacketAction HandleContainerUpdate(std::span<const std::byte> src);
+	PacketAction HandleEquip(std::span<const std::byte> src);
+	PacketAction HandleContainerContent(std::span<const std::byte> src);
+	PacketAction HandlePersonalLightLevel(std::span<const std::byte> src);
+	PacketAction HandleGlobalLightLevel(std::span<const std::byte> src);
+	PacketAction HandlePopupMessage(std::span<const std::byte> src);
+	PacketAction HandleLoginComplete(std::span<const std::byte> src);
+	PacketAction HandleTarget(std::span<const std::byte> src);
+	PacketAction HandleWarMode(std::span<const std::byte> src);
+	PacketAction HandlePing(std::span<const std::byte> src);
+	PacketAction HandleZoneChange(std::span<const std::byte> src);
+	PacketAction HandleMobileMoving(std::span<const std::byte> src);
+	PacketAction HandleMobileIncoming(std::span<const std::byte> src);
+	PacketAction HandleCharList(std::span<const std::byte> src);
+	PacketAction HandleAccountLoginReject(std::span<const std::byte> src);
+	PacketAction HandleRelay(std::span<const std::byte> src);
+	PacketAction HandleServerList(std::span<const std::byte> src);
+	PacketAction HandleSpeakUnicode(std::span<const std::byte> src);
+	PacketAction HandleSupportedFeatures(std::span<const std::byte> src);
+	PacketAction HandleSeason(std::span<const std::byte> src);
+	PacketAction HandleClientVersion(std::span<const std::byte> src);
+	PacketAction HandleExtended(std::span<const std::byte> src);
+	PacketAction HandleWorldItem7(std::span<const std::byte> src);
+	PacketAction HandleProtocolExtension(std::span<const std::byte> src);
+
+	using PacketHandlerMethod = PacketAction (Connection::*)(std::span<const std::byte> src);
+	struct CommandHandler {
+		UO::Command cmd;
+		PacketHandlerMethod method;
+	};
+
+	static const CommandHandler command_handlers[];
 
 	/* virtual methods from UO::ClientHandler */
 	bool OnClientPacket(std::span<const std::byte> src) override;
