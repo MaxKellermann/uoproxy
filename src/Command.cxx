@@ -18,12 +18,12 @@ change_character(Connection &c, LinkedServer &ls, unsigned idx)
 {
 	if (!c.client.char_list ||
 	    !c.client.char_list->IsValidCharacterIndex(idx)) {
-		ls.server->SpeakConsole("uoproxy: no character in slot");
+		ls.SpeakConsole("uoproxy: no character in slot");
 		return;
 	}
 
 	c.character_index = idx;
-	ls.server->SpeakConsole("uoproxy: changing character");
+	ls.SpeakConsole("uoproxy: changing character");
 
 	c.Reconnect();
 }
@@ -37,15 +37,15 @@ LinkedServer::OnCommand(std::string_view command)
 		return;
 
 	if (command.empty()) {
-		server->SpeakConsole("uoproxy commands: % %reconnect %char %drop %verbose");
+		SpeakConsole("uoproxy commands: % %reconnect %char %drop %verbose");
 	} else if (command == "reconnect"sv) {
-		server->SpeakConsole("uoproxy: reconnecting");
+		SpeakConsole("uoproxy: reconnecting");
 		c.Reconnect();
 	} else if (command == "char"sv) {
 		char msg[1024] = "uoproxy:";
 
 		if (!c.client.char_list) {
-			server->SpeakConsole("uoproxy: no characters in list");
+			SpeakConsole("uoproxy: no characters in list");
 			return;
 		}
 
@@ -58,16 +58,16 @@ LinkedServer::OnCommand(std::string_view command)
 			}
 		}
 
-		server->SpeakConsole(msg);
+		SpeakConsole(msg);
 	} else if (SkipPrefix(command, "char "sv)) {
 		if (command.size() == 1 && command.front() >= '0' && command.front() <= '9') {
 			change_character(c, *this, command.front() - '0');
 		} else {
-			server->SpeakConsole("uoproxy: invalid %char syntax");
+			SpeakConsole("uoproxy: invalid %char syntax");
 		}
 	} else if (command == "drop"sv) {
 		if (c.client.client == nullptr || c.client.reconnecting) {
-			server->SpeakConsole("uoproxy: not connected");
+			SpeakConsole("uoproxy: not connected");
 		} else if (c.client.version.protocol < ProtocolVersion::V6) {
 			struct uo_packet_drop p = {
 				.cmd = UO::Command::Drop,
@@ -103,9 +103,9 @@ LinkedServer::OnCommand(std::string_view command)
 			}
 		}
 
-		server->SpeakConsole("uoproxy: invalid %verbose syntax");
+		SpeakConsole("uoproxy: invalid %verbose syntax");
 #endif
 	} else {
-		server->SpeakConsole("unknown uoproxy command, type '%' for help");
+		SpeakConsole("unknown uoproxy command, type '%' for help");
 	}
 }

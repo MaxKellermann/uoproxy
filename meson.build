@@ -137,7 +137,6 @@ executable(
   'src/SHandler.cxx', 'src/CHandler.cxx',
   'src/Attach.cxx', 'src/Reconnect.cxx',
   'src/Dump.cxx',
-  'src/SUtil.cxx',
   'src/Command.cxx',
   'src/UdpKnock.cxx',
   include_directories: inc,

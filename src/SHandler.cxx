@@ -13,6 +13,7 @@
 #include "version.h"
 #include "Bridge.hxx"
 #include "uo/Packets.hxx"
+#include "uo/MakePacket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/SpanCast.hxx"
 
@@ -33,8 +34,8 @@ Connection::Welcome()
 {
 	for (auto &ls : servers) {
 		if (ls.IsInGame() && !ls.welcome) {
-			ls.server->SpeakConsole("Welcome to uoproxy v" VERSION "!  "
-						"https://github.com/MaxKellermann/uoproxy");
+			ls.SpeakConsole("Welcome to uoproxy v" VERSION "!  "
+					"https://github.com/MaxKellermann/uoproxy");
 			ls.welcome = true;
 		}
 	}

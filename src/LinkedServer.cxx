@@ -5,6 +5,7 @@
 #include "Server.hxx"
 #include "Connection.hxx"
 #include "Log.hxx"
+#include "uo/MakePacket.hxx"
 
 #include <fmt/format.h>
 
@@ -47,6 +48,12 @@ LinkedServer::SendDivert(ProtocolVersion new_protocol,
 			 std::span<const std::byte> new_packet) noexcept
 {
 	Send(client_version.protocol >= new_protocol ? new_packet : old_packet);
+}
+
+void
+LinkedServer::SpeakConsole(std::string_view text)
+{
+	Send(UO::MakeSpeakConsole(text));
 }
 
 void

@@ -14,6 +14,7 @@
 #include "Bridge.hxx"
 #include "UdpKnock.hxx"
 #include "uo/Packets.hxx"
+#include "uo/MakePacket.hxx"
 #include "lib/fmt//SocketAddressFormatter.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketAddress.hxx"
@@ -125,7 +126,7 @@ LinkedServer::HandleUse(std::span<const std::byte> src)
 	assert(src.size() == sizeof(*p));
 
 	if (connection->client.reconnecting) {
-		server->SpeakConsole("please wait until uoproxy finishes reconnecting");
+		SpeakConsole("please wait until uoproxy finishes reconnecting");
 		return PacketAction::DROP;
 	}
 
@@ -160,7 +161,7 @@ PacketAction
 LinkedServer::HandleAction([[maybe_unused]] std::span<const std::byte> src)
 {
 	if (connection->client.reconnecting) {
-		server->SpeakConsole("please wait until uoproxy finishes reconnecting");
+		SpeakConsole("please wait until uoproxy finishes reconnecting");
 		return PacketAction::DROP;
 	}
 

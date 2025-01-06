@@ -147,6 +147,8 @@ struct LinkedServer final : IntrusiveListHook<>, UO::PacketHandler {
 			std::span<const std::byte> old_packet,
 			std::span<const std::byte> new_packet) noexcept;
 
+	void SpeakConsole(std::string_view text);
+
 private:
 	void ZombieTimeoutCallback() noexcept;
 

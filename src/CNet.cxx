@@ -3,20 +3,14 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
-#include "Server.hxx"
+#include "uo/MakePacket.hxx"
 
-#include <assert.h>
+#include <cassert>
 
 void
 Connection::SpeakConsole(const char *msg)
 {
-	for (auto &ls : servers) {
-		if (ls.IsInGame()) {
-			assert(ls.server != nullptr);
-
-			ls.server->SpeakConsole(msg);
-		}
-	}
+	BroadcastToInGameClients(UO::MakeSpeakConsole(msg));
 }
 
 void

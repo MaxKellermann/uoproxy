@@ -79,15 +79,6 @@ public:
 		Send(std::as_bytes(std::span{&src, 1}));
 	}
 
-	void SpeakAscii(uint32_t serial,
-			int16_t graphic,
-			uint8_t type,
-			uint16_t hue, uint16_t font,
-			std::string_view name,
-			std::string_view text);
-
-	void SpeakConsole(std::string_view text);
-
 private:
 	void DeferredAbort() noexcept;
 
