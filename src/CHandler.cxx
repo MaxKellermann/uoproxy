@@ -547,16 +547,16 @@ LinkedServer::HandlePlayCharacter(std::span<const std::byte> src)
 	return PacketAction::ACCEPT;
 }
 
-static void
-redirect_to_self(LinkedServer &ls)
+inline void
+LinkedServer::RedirectToSelf()
 {
-	const auto local_ipv4 = ls.server->GetLocalIPv4Address();
+	const auto local_ipv4 = server->GetLocalIPv4Address();
 	if (!local_ipv4.IsDefined())
 		/* this connection was not IPv4 (maybe IPv6?) and we
                    can't send a redirect */
 		return;
 
-	ls.LogF(8, "redirecting to {}", local_ipv4);
+	LogF(8, "redirecting to {}", local_ipv4);
 
 	static uint32_t authid = 0;
 
@@ -569,10 +569,10 @@ redirect_to_self(LinkedServer &ls)
 		.auth_id = authid++,
 	};
 		
-	ls.auth_id = relay.auth_id;
+	auth_id = relay.auth_id;
 
-	ls.server->SendT(relay);
-	ls.state = LinkedServer::State::RELAY_SERVER;
+	server->SendT(relay);
+	state = State::RELAY_SERVER;
 }
 
 PacketAction
@@ -676,7 +676,7 @@ LinkedServer::HandlePlayServer(std::span<const std::byte> src)
 		   it doesn't see a redirect packet.  Note that after the redirect,
 		   the client immediately sends 'GameLogin' which means we turn
 		   compression on. */
-		redirect_to_self(*this);
+		RedirectToSelf();
 	}
 
 	return retaction;

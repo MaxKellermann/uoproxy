@@ -144,6 +144,8 @@ struct LinkedServer final : IntrusiveListHook<>, UO::PacketHandler {
 private:
 	void ZombieTimeoutCallback() noexcept;
 
+	void RedirectToSelf();
+
 	void OnWalkRequest(const struct uo_packet_walk &p);
 
 	void OnCommand(std::string_view command);
