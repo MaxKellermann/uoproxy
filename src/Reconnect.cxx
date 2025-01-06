@@ -52,43 +52,11 @@ Connection::DoReconnect() noexcept
 		const auto &server_address
 			= config.game_servers[server_index].address;
 
-		try {
-			Connect(server_address, seed, true);
-		} catch (...) {
-			log_error("reconnect failed", std::current_exception());
-			ScheduleReconnect();
-			return;
-		}
-
-		const struct uo_packet_game_login p = {
-			.cmd = UO::Command::GameLogin,
-			.auth_id = seed,
-			.credentials = credentials,
-		};
-
-		Log(2, "connected, doing GameLogin\n");
-
-		client.client->SendT(p);
+		ConnectAsync(server_address, seed, true);
 	} else {
 		/* connect to login server */
 
-		try {
-			Connect(config.login_address.GetBest(), seed, false);
-		} catch (...) {
-			log_error("reconnect failed", std::current_exception());
-			ScheduleReconnect();
-			return;
-		}
-
-		const struct uo_packet_account_login p = {
-			.cmd = UO::Command::AccountLogin,
-			.credentials = credentials,
-			.unknown1 = {},
-		};
-
-		Log(2, "connected, doing AccountLogin\n");
-
-		client.client->SendT(p);
+		ConnectAsync(config.login_address.GetBest(), seed, false);
 	}
 }
 

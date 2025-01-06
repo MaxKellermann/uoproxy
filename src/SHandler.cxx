@@ -466,7 +466,6 @@ Connection::HandleRelay(std::span<const std::byte> src)
 	   the new server */
 	const auto *const p = reinterpret_cast<const struct uo_packet_relay *>(src.data());
 	struct uo_packet_relay relay;
-	struct uo_packet_game_login login;
 
 	assert(src.size() == sizeof(*p));
 
@@ -501,22 +500,9 @@ Connection::HandleRelay(std::span<const std::byte> src)
 	if (client.version.seed != nullptr)
 		client.version.seed->seed = relay.auth_id;
 
-	try {
-		Connect({(const struct sockaddr *)&sin, sizeof(sin)},
-			relay.auth_id, true);
-	} catch (...) {
-		log_error("connect to game server failed", std::current_exception());
-		return PacketAction::DISCONNECT;
-	}
+	ConnectAsync({(const struct sockaddr *)&sin, sizeof(sin)},
+		     relay.auth_id, true);
 
-	/* send game login to new server */
-	Log(2, "connected, doing GameLogin\n");
-
-	login.cmd = UO::Command::GameLogin;
-	login.auth_id = relay.auth_id;
-	login.credentials = credentials;
-
-	client.client->SendT(login);
 	return PacketAction::DELETED;
 }
 

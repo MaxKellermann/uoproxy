@@ -120,7 +120,6 @@ executable(
   'src/Instance.cxx',
   'src/Listener.cxx',
   'src/Log.cxx',
-  'src/SocketConnect.cxx',
   'src/SocketBuffer.cxx',
   'src/ProxySocks.cxx',
   'src/Encryption.cxx',

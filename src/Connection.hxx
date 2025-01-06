@@ -6,6 +6,7 @@
 #include "uo/Packets.hxx"
 #include "uo/WalkState.hxx"
 #include "event/CoarseTimerEvent.hxx"
+#include "co/InvokeTask.hxx"
 #include "util/IntrusiveList.hxx"
 #include "World.hxx"
 #include "PacketHandler.hxx"
@@ -45,6 +46,8 @@ struct Connection final : IntrusiveListHook<>, UO::PacketHandler {
 	 */
 	CoarseTimerEvent reconnect_timer;
 
+	Co::InvokeTask connect_task;
+
 	/* state */
 	UO::CredentialsFragment credentials{};
 
@@ -83,11 +86,8 @@ struct Connection final : IntrusiveListHook<>, UO::PacketHandler {
 		return IsInGame() && client.char_list;
 	}
 
-	/**
-	 * Throws on error.
-	 */
-	void Connect(SocketAddress server_address,
-		     uint32_t seed, bool for_game_login);
+	void ConnectAsync(SocketAddress server_address,
+			  uint32_t seed, bool for_game_login) noexcept;
 	void Disconnect() noexcept;
 	void Reconnect();
 	void ScheduleReconnect() noexcept;
@@ -123,6 +123,11 @@ struct Connection final : IntrusiveListHook<>, UO::PacketHandler {
 	void DeleteMobiles() noexcept;
 
 private:
+	[[nodiscard]]
+	Co::InvokeTask CoConnect(SocketAddress server_address,
+				 uint32_t seed, bool for_game_login);
+	void OnConnectComplete(std::exception_ptr error) noexcept;
+
 	void DoReconnect() noexcept;
 	void ReconnectTimerCallback() noexcept;
 

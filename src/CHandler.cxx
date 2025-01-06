@@ -386,24 +386,12 @@ LinkedServer::HandleAccountLogin(std::span<const std::byte> src)
 		else
 			seed = server->GetSeed();
 
-		try {
-			if (config.udp_knock && config.socks4_address.empty())
-				SendUdpKnock(config.login_address.GetBest(), *p);
+		if (config.udp_knock && config.socks4_address.empty())
+			SendUdpKnock(config.login_address.GetBest(), *p);
 
-			c->Connect(config.login_address.GetBest(), seed, false);
-		} catch (...) {
-			log_error("connection to login server failed", std::current_exception());
+		c->ConnectAsync(config.login_address.GetBest(), seed, false);
 
-			static constexpr struct uo_packet_account_login_reject response{
-				.cmd = UO::Command::AccountLoginReject,
-				.reason = 0x02, /* blocked */
-			};
-
-			server->SendT(response);
-			return PacketAction::DROP;
-		}
-
-		return PacketAction::ACCEPT;
+		return PacketAction::DROP;
 	} else {
 		/* should not happen */
 
@@ -651,21 +639,7 @@ LinkedServer::HandlePlayServer(std::span<const std::byte> src)
 		else
 			seed = 0xc0a80102; /* 192.168.1.2 */
 
-		try {
-			c.Connect(server_config.address, seed, true);
-		} catch (...) {
-			log_error("connect to game server failed", std::current_exception());
-			return PacketAction::DISCONNECT;
-		}
-
-		/* send game login to new server */
-		const struct uo_packet_game_login login{
-			.cmd = UO::Command::GameLogin,
-			.auth_id = seed,
-			.credentials = c.credentials,
-		};
-
-		c.client.client->SendT(login);
+		c.ConnectAsync(server_config.address, seed, true);
 
 		retaction = PacketAction::DROP;
 	} else

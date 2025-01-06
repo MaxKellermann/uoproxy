@@ -2,9 +2,11 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "ProxySocks.hxx"
+#include "event/AwaitableSocketEvent.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketError.hxx"
+#include "co/Task.hxx"
 #include "util/SpanCast.hxx"
 
 #include <cstdint>
@@ -24,8 +26,8 @@ struct socks4_header {
 	uint32_t ip;
 };
 
-void
-socks_connect(SocketDescriptor s, SocketAddress address)
+Co::Task<void>
+ProxySocksConnect(EventLoop &event_loop, SocketDescriptor s, SocketAddress address)
 {
 	if (address.GetFamily() != AF_INET)
 		throw std::invalid_argument{"Not an IPv4 address"};
@@ -38,7 +40,7 @@ socks_connect(SocketDescriptor s, SocketAddress address)
 		.ip = in->sin_addr.s_addr,
 	};
 
-	ssize_t nbytes = s.Send(ReferenceAsBytes(header));
+	ssize_t nbytes = s.WriteNoWait(ReferenceAsBytes(header));
 	if (nbytes < 0)
 		throw MakeSocketError("Failed to send SOCKS4 request");
 
@@ -46,11 +48,13 @@ socks_connect(SocketDescriptor s, SocketAddress address)
 		throw std::runtime_error{"Failed to send SOCKS4 request"};
 
 	static const char user[] = "";
-	nbytes = s.Send(ReferenceAsBytes(user));
+	nbytes = s.WriteNoWait(ReferenceAsBytes(user));
 	if (nbytes < 0)
 		throw MakeSocketError("Failed to send SOCKS4 user");
 
-	nbytes = s.Receive(ReferenceAsWritableBytes(header));
+	co_await AwaitableSocketEvent(event_loop, s, SocketEvent::READ);
+
+	nbytes = s.ReadNoWait(ReferenceAsWritableBytes(header));
 	if (nbytes < 0)
 		throw MakeSocketError("Failed to receive SOCKS4 response");
 

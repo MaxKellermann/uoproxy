@@ -3,11 +3,14 @@
 
 #pragma once
 
+class EventLoop;
 class SocketDescriptor;
 class SocketAddress;
+namespace Co { template<typename T> class Task; }
 
 /**
  * Throws on error.
  */
-void
-socks_connect(SocketDescriptor s, SocketAddress address);
+[[nodiscard]]
+Co::Task<void>
+ProxySocksConnect(EventLoop &event_loop, SocketDescriptor s, SocketAddress address);

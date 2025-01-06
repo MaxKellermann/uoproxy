@@ -126,6 +126,10 @@ struct LinkedServer final : IntrusiveListHook<>, UO::PacketHandler {
 		return state == State::RELAY_SERVER && server == nullptr;
 	}
 
+	bool IsAtAccountLogin() const noexcept {
+		return state == State::ACCOUNT_LOGIN;
+	}
+
 	/**
 	 * Can we forward in-game packets to the client connected to this
 	 * object?
