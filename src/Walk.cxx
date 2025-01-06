@@ -95,7 +95,7 @@ Connection::OnWalkCancel(const struct uo_packet_walk_cancel &p)
 	if (i != nullptr && walk.server != nullptr) {
 		auto cancel = p;
 		cancel.seq = i->packet.seq;
-		walk.server->server->SendT(cancel);
+		walk.server->Send(ReferenceAsBytes(cancel));
 	}
 
 	walk.clear();
@@ -156,7 +156,7 @@ Connection::OnWalkAck(const struct uo_packet_walk_ack &p)
 	if (walk.server != nullptr) {
 		auto ack = p;
 		ack.seq = i->packet.seq;
-		walk.server->server->SendT(ack);
+		walk.server->Send(ReferenceAsBytes(ack));
 	}
 
 	/* send WalkForce to all other clients */

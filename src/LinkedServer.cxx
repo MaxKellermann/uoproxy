@@ -34,6 +34,22 @@ LinkedServer::LogVFmt(unsigned level, fmt::string_view format_str, fmt::format_a
 }
 
 void
+LinkedServer::Send(std::span<const std::byte> src)
+{
+	assert(server);
+
+	server->Send(src);
+}
+
+void
+LinkedServer::SendDivert(ProtocolVersion new_protocol,
+			 std::span<const std::byte> old_packet,
+			 std::span<const std::byte> new_packet) noexcept
+{
+	Send(client_version.protocol >= new_protocol ? new_packet : old_packet);
+}
+
+void
 LinkedServer::ZombieTimeoutCallback() noexcept
 {
 	assert(state == State::RELAY_SERVER);

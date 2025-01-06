@@ -24,7 +24,7 @@ Connection::BroadcastToInGameClients(std::span<const std::byte> src) noexcept
 {
 	for (auto &ls : servers)
 		if (ls.IsInGame())
-			ls.server->Send(src);
+			ls.Send(src);
 }
 
 void
@@ -33,7 +33,7 @@ Connection::BroadcastToInGameClientsExcept(std::span<const std::byte> src,
 {
 	for (auto &ls : servers)
 		if (&ls != &except && ls.IsInGame())
-			ls.server->Send(src);
+			ls.Send(src);
 }
 
 void
@@ -47,10 +47,7 @@ Connection::BroadcastToInGameClientsDivert(ProtocolVersion new_protocol,
 
 	for (auto &ls : servers) {
 		if (ls.IsInGame()) {
-			if (ls.client_version.protocol >= new_protocol)
-				ls.server->Send(new_packet);
-			else
-				ls.server->Send(old_packet);
+			ls.SendDivert(new_protocol, new_packet, old_packet);
 		}
 	}
 }

@@ -141,6 +141,12 @@ struct LinkedServer final : IntrusiveListHook<>, UO::PacketHandler {
 		return LogVFmt(level, format_str, fmt::make_format_args(args...));
 	}
 
+	void Send(std::span<const std::byte> src);
+
+	void SendDivert(ProtocolVersion new_protocol,
+			std::span<const std::byte> old_packet,
+			std::span<const std::byte> new_packet) noexcept;
+
 private:
 	void ZombieTimeoutCallback() noexcept;
 
