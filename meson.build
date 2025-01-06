@@ -105,6 +105,7 @@ inc = include_directories(
 
 subdir('src/lib/fmt')
 subdir('src/util')
+subdir('src/co')
 subdir('src/io')
 subdir('src/system')
 subdir('src/memory')
@@ -148,6 +149,7 @@ executable(
     memory_dep,
     io_dep,
     net_dep,
+    coroutines_dep,
     util_dep,
   ],
   install: true,
