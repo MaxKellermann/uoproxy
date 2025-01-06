@@ -14,7 +14,7 @@ class UniqueSocketDescriptor;
 
 namespace UO {
 class Client;
-class ClientHandler;
+class PacketHandler;
 }
 
 struct StatefulClient {
@@ -46,6 +46,7 @@ struct StatefulClient {
 	World world;
 
 	explicit StatefulClient(EventLoop &event_loop) noexcept;
+	~StatefulClient() noexcept;
 
 	StatefulClient(const StatefulClient &) = delete;
 	StatefulClient &operator=(const StatefulClient &) = delete;
@@ -60,7 +61,7 @@ struct StatefulClient {
 
 	void Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 		     uint32_t seed, bool for_game_login,
-		     UO::ClientHandler &handler);
+		     UO::PacketHandler &handler);
 
 	void Disconnect() noexcept;
 

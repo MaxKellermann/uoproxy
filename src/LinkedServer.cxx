@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "LinkedServer.hxx"
+#include "Server.hxx"
 #include "Connection.hxx"
 #include "Log.hxx"
 
@@ -10,6 +11,13 @@
 #include <cassert>
 
 unsigned LinkedServer::id_counter;
+
+LinkedServer::LinkedServer(EventLoop &event_loop, UniqueSocketDescriptor &&s)
+	:server(new UO::Server(event_loop, std::move(s), *this)),
+	zombie_timeout(event_loop, BIND_THIS_METHOD(ZombieTimeoutCallback)),
+	id(++id_counter)
+{
+}
 
 LinkedServer::~LinkedServer() noexcept = default;
 
@@ -34,7 +42,7 @@ LinkedServer::ZombieTimeoutCallback() noexcept
 }
 
 bool
-LinkedServer::OnServerDisconnect() noexcept
+LinkedServer::OnDisconnect() noexcept
 {
 	assert(server != nullptr);
 	server.reset();

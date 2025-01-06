@@ -14,7 +14,7 @@
 #include <assert.h>
 
 bool
-Connection::OnClientDisconnect() noexcept
+Connection::OnDisconnect() noexcept
 {
 	assert(client.client != nullptr);
 

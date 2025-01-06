@@ -14,6 +14,8 @@ StatefulClient::StatefulClient(EventLoop &event_loop) noexcept
 {
 }
 
+StatefulClient::~StatefulClient() noexcept = default;
+
 inline const struct uo_packet_seed *
 StatefulClient::GetSeedPacket(uint32_t seed, bool for_game_login,
 			      struct uo_packet_seed &buffer) const noexcept
@@ -49,7 +51,7 @@ StatefulClient::GetSeedPacket(uint32_t seed, bool for_game_login,
 void
 StatefulClient::Connect(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 			uint32_t seed, bool for_game_login,
-			UO::ClientHandler &handler)
+			UO::PacketHandler &handler)
 {
 	assert(client == nullptr);
 

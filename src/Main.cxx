@@ -8,6 +8,7 @@
 #include "Log.hxx"
 #include "util/PrintException.hxx"
 #include "config.h"
+#include "DefaultFifoBuffer.hxx"
 
 #ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-daemon.h>

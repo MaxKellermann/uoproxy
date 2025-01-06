@@ -21,30 +21,14 @@ struct uo_packet_seed;
 
 namespace UO {
 
-class ClientHandler {
-public:
-	/**
-	 * A packet has been received.
-	 *
-	 * @return false if this object has been closed within the
-	 * function
-	 */
-	virtual bool OnClientPacket(std::span<const std::byte> src) = 0;
-
-	/**
-	 * The connection has been closed due to an error or because the
-	 * peer closed his side.  uo_client_dispose() does not trigger
-	 * this callback, and the method has to invoke this function.
-	 */
-	virtual bool OnClientDisconnect() noexcept = 0;
-};
+class PacketHandler;
 
 class Client final : SocketBufferHandler {
 	SocketBuffer sock;
 	UO::Decompression decompression;
 	DefaultFifoBuffer decompressed_buffer;
 
-	ClientHandler &handler;
+	PacketHandler &handler;
 
 	DeferEvent abort_event;
 
@@ -55,7 +39,7 @@ class Client final : SocketBufferHandler {
 public:
 	explicit Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 			uint32_t seed, const struct uo_packet_seed *seed6,
-			ClientHandler &_handler) noexcept;
+			PacketHandler &_handler) noexcept;
 
 	~Client() noexcept;
 

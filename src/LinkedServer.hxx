@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Server.hxx"
+#include "PacketHandler.hxx"
 #include "CVersion.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
@@ -29,7 +29,7 @@ enum class PacketAction;
  * It may be one of of several clients sharing the connection to the
  * real UO server.
  */
-struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
+struct LinkedServer final : IntrusiveListHook<>, UO::PacketHandler {
 	Connection *connection = nullptr;
 
 	std::unique_ptr<UO::Server> server;
@@ -115,13 +115,8 @@ struct LinkedServer final : IntrusiveListHook<>, UO::ServerHandler {
 		IN_GAME,
 	} state = State::INIT;
 
-	LinkedServer(EventLoop &event_loop, UniqueSocketDescriptor &&s)
-		:server(new UO::Server(event_loop, std::move(s), *this)),
-		 zombie_timeout(event_loop, BIND_THIS_METHOD(ZombieTimeoutCallback)),
-		 id(++id_counter)
-	{
-	}
-
+	[[nodiscard]]
+	LinkedServer(EventLoop &event_loop, UniqueSocketDescriptor &&s);
 	~LinkedServer() noexcept;
 
 	LinkedServer(const LinkedServer &) = delete;
@@ -185,6 +180,6 @@ private:
 	static const CommandHandler command_handlers[];
 
 	/* virtual methods from UO::ServerHandler */
-	bool OnServerPacket(std::span<const std::byte> src) override;
-	bool OnServerDisconnect() noexcept override;
+	bool OnPacket(std::span<const std::byte> src) override;
+	bool OnDisconnect() noexcept override;
 };

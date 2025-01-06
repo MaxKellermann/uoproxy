@@ -8,7 +8,7 @@
 #include "util/IntrusiveList.hxx"
 #include "PacketStructs.hxx"
 #include "World.hxx"
-#include "Client.hxx"
+#include "PacketHandler.hxx"
 #include "StatefulClient.hxx"
 
 #include <array>
@@ -27,7 +27,7 @@ class Server;
 
 enum class PacketAction;
 
-struct Connection final : IntrusiveListHook<>, UO::ClientHandler {
+struct Connection final : IntrusiveListHook<>, UO::PacketHandler {
 	Instance &instance;
 
 	/* flags */
@@ -175,8 +175,8 @@ private:
 	static const CommandHandler command_handlers[];
 
 	/* virtual methods from UO::ClientHandler */
-	bool OnClientPacket(std::span<const std::byte> src) override;
-	bool OnClientDisconnect() noexcept override;
+	bool OnPacket(std::span<const std::byte> src) override;
+	bool OnDisconnect() noexcept override;
 };
 
 [[nodiscard]]

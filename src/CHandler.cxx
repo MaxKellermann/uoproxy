@@ -874,7 +874,7 @@ constinit const LinkedServer::CommandHandler LinkedServer::command_handlers[] = 
 };
 
 bool
-LinkedServer::OnServerPacket(std::span<const std::byte> src)
+LinkedServer::OnPacket(std::span<const std::byte> src)
 {
 	Connection *c = connection;
 

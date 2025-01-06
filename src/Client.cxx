@@ -2,6 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Client.hxx"
+#include "PacketHandler.hxx"
 #include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
@@ -16,7 +17,7 @@ namespace UO {
 
 Client::Client(EventLoop &event_loop, UniqueSocketDescriptor &&s,
 	       uint32_t seed, const struct uo_packet_seed *seed6,
-	       ClientHandler &_handler) noexcept
+	       PacketHandler &_handler) noexcept
 	:sock(event_loop, std::move(s), *this),
 	 handler(_handler),
 	 abort_event(event_loop, BIND_THIS_METHOD(DeferredAbort))
@@ -37,7 +38,7 @@ Client::~Client() noexcept = default;
 inline void
 Client::DeferredAbort() noexcept
 {
-	handler.OnClientDisconnect();
+	handler.OnDisconnect();
 }
 
 } // namespace UO
@@ -90,7 +91,7 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 
 		log_hexdump(10, packet);
 
-		if (!handler.OnClientPacket(packet))
+		if (!handler.OnPacket(packet))
 			return -1;
 
 		consumed += packet_length;
@@ -137,14 +138,14 @@ bool
 UO::Client::OnSocketDisconnect() noexcept
 {
 	Log(2, "server closed the connection\n");
-	return handler.OnClientDisconnect();
+	return handler.OnDisconnect();
 }
 
 void
 UO::Client::OnSocketError(std::exception_ptr error) noexcept
 {
 	log_error("error during communication with server", std::move(error));
-	handler.OnClientDisconnect();
+	handler.OnDisconnect();
 }
 
 void

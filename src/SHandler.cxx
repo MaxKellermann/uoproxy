@@ -748,7 +748,7 @@ constinit const Connection::CommandHandler Connection::command_handlers[] = {
 };
 
 bool
-Connection::OnClientPacket(std::span<const std::byte> src)
+Connection::OnPacket(std::span<const std::byte> src)
 {
 	assert(client.client != nullptr);
 

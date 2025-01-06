@@ -21,30 +21,14 @@ class EventLoop;
 
 namespace UO {
 
-class ServerHandler {
-public:
-	/**
-	 * A packet has been received.
-	 *
-	 * @return false if this object has been closed within the
-	 * function
-	 */
-	virtual bool OnServerPacket(std::span<const std::byte> src) = 0;
-
-	/**
-	 * The connection has been closed due to an error or because the
-	 * peer closed his side.  uo_server_dispose() does not trigger
-	 * this callback, and the method has to invoke this function.
-	 */
-	virtual bool OnServerDisconnect() noexcept = 0;
-};
+class PacketHandler;
 
 class Server final : SocketBufferHandler  {
 	SocketBuffer sock;
 
 	UO::Encryption encryption;
 
-	ServerHandler &handler;
+	PacketHandler &handler;
 
 	DeferEvent abort_event;
 
@@ -56,7 +40,7 @@ class Server final : SocketBufferHandler  {
 
 public:
 	Server(EventLoop &event_loop,
-               UniqueSocketDescriptor &&s, ServerHandler &_handler) noexcept;
+               UniqueSocketDescriptor &&s, PacketHandler &_handler) noexcept;
 
 	~Server() noexcept;
 
