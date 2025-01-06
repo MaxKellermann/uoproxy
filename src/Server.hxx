@@ -67,6 +67,10 @@ public:
 		compression_enabled = _compression_enabled;
 	}
 
+	void ScheduleRead() noexcept {
+		sock.ScheduleRead();
+	}
+
 	void Send(std::span<const std::byte> src);
 
 	template<typename T>

@@ -75,6 +75,9 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 		case PacketHandler::OnPacketResult::OK:
 			break;
 
+		case PacketHandler::OnPacketResult::BLOCKING:
+			return static_cast<ssize_t>(consumed);
+
 		case PacketHandler::OnPacketResult::CLOSED:
 			return -1;
 		}

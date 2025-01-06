@@ -55,6 +55,10 @@ public:
 		protocol_version = _protocol_version;
 	}
 
+	void ScheduleRead() noexcept {
+		sock.ScheduleRead();
+	}
+
 	void Send(std::span<const std::byte> src);
 
 	template<typename T>

@@ -23,6 +23,12 @@ public:
 		OK,
 
 		/**
+		 * The handler is currently unable to consume the
+                 * packet.
+		 */
+		BLOCKING,
+
+		/**
 		 * The #Server object has been closed.
 		 */
 		CLOSED,

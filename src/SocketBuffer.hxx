@@ -50,6 +50,10 @@ public:
 		     SocketBufferHandler &_handler);
 	~SocketBuffer() noexcept;
 
+	void ScheduleRead() noexcept {
+		socket.ScheduleRead();
+	}
+
 	std::span<std::byte> Write() noexcept {
 		output.AllocateIfNull();
 		return output.Write();
