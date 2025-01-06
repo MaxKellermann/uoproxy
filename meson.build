@@ -126,6 +126,7 @@ executable(
   'src/Server.cxx', 'src/Client.cxx',
   'src/uo/Length.cxx',
   'src/Compression.cxx',
+  'src/uo/MakePacket.cxx',
   'src/uo/Version.cxx',
   'src/uo/WalkState.cxx',
   'src/CVersion.cxx', 'src/Bridge.cxx',
