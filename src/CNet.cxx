@@ -41,7 +41,7 @@ Connection::BroadcastToInGameClientsDivert(ProtocolVersion new_protocol,
 
 	for (auto &ls : servers) {
 		if (ls.IsInGame()) {
-			ls.SendDivert(new_protocol, new_packet, old_packet);
+			ls.SendDivert(new_protocol, old_packet, new_packet);
 		}
 	}
 }
