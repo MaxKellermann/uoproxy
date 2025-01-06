@@ -873,7 +873,7 @@ constinit const LinkedServer::CommandHandler LinkedServer::command_handlers[] = 
 	{}
 };
 
-bool
+UO::PacketHandler::OnPacketResult
 LinkedServer::OnPacket(std::span<const std::byte> src)
 {
 	Connection *c = connection;
@@ -907,11 +907,11 @@ LinkedServer::OnPacket(std::span<const std::byte> src)
 		}
 
 		delete this;
-		return false;
+		return OnPacketResult::CLOSED;
 
 	case PacketAction::DELETED:
-		return false;
+		return OnPacketResult::CLOSED;
 	}
 
-	return true;
+	return OnPacketResult::OK;
 }

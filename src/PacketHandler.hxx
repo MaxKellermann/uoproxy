@@ -16,13 +16,25 @@ namespace UO {
  */
 class PacketHandler {
 public:
+	enum class OnPacketResult {
+		/**
+		 * The packet has been consumed.
+		 */
+		OK,
+
+		/**
+		 * The #Server object has been closed.
+		 */
+		CLOSED,
+	};
+
 	/**
 	 * A packet has been received.
 	 *
 	 * @return false if this object has been closed within the
 	 * function
 	 */
-	virtual bool OnPacket(std::span<const std::byte> src) = 0;
+	virtual OnPacketResult OnPacket(std::span<const std::byte> src) = 0;
 
 	/**
 	 * The connection has been closed due to an error or because the

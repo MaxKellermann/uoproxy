@@ -180,6 +180,6 @@ private:
 	static const CommandHandler command_handlers[];
 
 	/* virtual methods from UO::ServerHandler */
-	bool OnPacket(std::span<const std::byte> src) override;
+	OnPacketResult OnPacket(std::span<const std::byte> src) override;
 	bool OnDisconnect() noexcept override;
 };

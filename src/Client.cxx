@@ -91,8 +91,13 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 
 		log_hexdump(10, packet);
 
-		if (!handler.OnPacket(packet))
+		switch (handler.OnPacket(packet)) {
+		case PacketHandler::OnPacketResult::OK:
+			break;
+
+		case PacketHandler::OnPacketResult::CLOSED:
 			return -1;
+		}
 
 		consumed += packet_length;
 		src = src.subspan(packet_length);

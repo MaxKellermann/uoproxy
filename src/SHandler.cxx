@@ -747,7 +747,7 @@ constinit const Connection::CommandHandler Connection::command_handlers[] = {
 	{}
 };
 
-bool
+UO::PacketHandler::OnPacketResult
 Connection::OnPacket(std::span<const std::byte> src)
 {
 	assert(client.client != nullptr);
@@ -774,11 +774,11 @@ Connection::OnPacket(std::span<const std::byte> src)
 		} else {
 			Destroy();
 		}
-		return false;
+		return OnPacketResult::CLOSED;
 
 	case PacketAction::DELETED:
-		return false;
+		return OnPacketResult::CLOSED;
 	}
 
-	return true;
+	return OnPacketResult::OK;
 }
