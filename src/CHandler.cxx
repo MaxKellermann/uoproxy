@@ -283,21 +283,21 @@ LinkedServer::HandleAccountLogin(std::span<const std::byte> src)
 	assert(src.size() == sizeof(*p));
 
 	switch (state) {
-	case LinkedServer::State::INIT:
+	case State::INIT:
 		break;
 
-	case LinkedServer::State::ACCOUNT_LOGIN:
-	case LinkedServer::State::SERVER_LIST:
-	case LinkedServer::State::RELAY_SERVER:
-	case LinkedServer::State::PLAY_SERVER:
-	case LinkedServer::State::GAME_LOGIN:
-	case LinkedServer::State::CHAR_LIST:
-	case LinkedServer::State::PLAY_CHAR:
-	case LinkedServer::State::IN_GAME:
+	case State::ACCOUNT_LOGIN:
+	case State::SERVER_LIST:
+	case State::RELAY_SERVER:
+	case State::PLAY_SERVER:
+	case State::GAME_LOGIN:
+	case State::CHAR_LIST:
+	case State::PLAY_CHAR:
+	case State::IN_GAME:
 		return PacketAction::DISCONNECT;
 	}
 
-	state = LinkedServer::State::ACCOUNT_LOGIN;
+	state = State::ACCOUNT_LOGIN;
 
 #ifdef DUMP_LOGIN
 	LogF(7, "account_login: username={:?} password={:?}",
@@ -316,7 +316,7 @@ LinkedServer::HandleAccountLogin(std::span<const std::byte> src)
 	if (other != nullptr) {
 		if (other->client.server_list) {
 			server->Send(other->client.server_list);
-			state = LinkedServer::State::SERVER_LIST;
+			state = State::SERVER_LIST;
 			return PacketAction::DROP;
 		}
 
@@ -334,7 +334,7 @@ LinkedServer::HandleAccountLogin(std::span<const std::byte> src)
 		p2.game_servers[0].address = 0xdeadbeef;
 
 		server->SendT(p2);
-		state = LinkedServer::State::SERVER_LIST;
+		state = State::SERVER_LIST;
 		return PacketAction::DROP;
 	}
 
@@ -426,27 +426,27 @@ LinkedServer::HandleGameLogin(std::span<const std::byte> src)
 	bool find_zombie = false;
 
 	switch (state) {
-	case LinkedServer::State::INIT:
+	case State::INIT:
 		assert(!connection->client.IsConnected());
 		find_zombie = true;
 		break;
 
-	case LinkedServer::State::ACCOUNT_LOGIN:
-	case LinkedServer::State::SERVER_LIST:
-	case LinkedServer::State::PLAY_SERVER:
+	case State::ACCOUNT_LOGIN:
+	case State::SERVER_LIST:
+	case State::PLAY_SERVER:
 		return PacketAction::DISCONNECT;
 
-	case LinkedServer::State::RELAY_SERVER:
+	case State::RELAY_SERVER:
 		break;
 
-	case LinkedServer::State::GAME_LOGIN:
-	case LinkedServer::State::CHAR_LIST:
-	case LinkedServer::State::PLAY_CHAR:
-	case LinkedServer::State::IN_GAME:
+	case State::GAME_LOGIN:
+	case State::CHAR_LIST:
+	case State::PLAY_CHAR:
+	case State::IN_GAME:
 		return PacketAction::DISCONNECT;
 	}
 
-	state = LinkedServer::State::GAME_LOGIN;
+	state = State::GAME_LOGIN;
 
 	/* I have observed the Razor client ignoring the redirect if the IP
 	   address differs from what it connected to.  (I guess this is a bug in
@@ -510,10 +510,10 @@ LinkedServer::HandleGameLogin(std::span<const std::byte> src)
 		SendWorld(*server, client_version.protocol,
 			  connection->client.supported_features_flags,
 			  connection->client.world);
-		state = LinkedServer::State::IN_GAME;
+		state = State::IN_GAME;
 	} else if (connection->client.char_list) {
 		server->Send(connection->client.char_list);
-		state = LinkedServer::State::CHAR_LIST;
+		state = State::CHAR_LIST;
 	}
 	return PacketAction::DROP;
 }
@@ -526,24 +526,24 @@ LinkedServer::HandlePlayCharacter(std::span<const std::byte> src)
 	assert(src.size() == sizeof(*p));
 
 	switch (state) {
-	case LinkedServer::State::INIT:
-	case LinkedServer::State::ACCOUNT_LOGIN:
-	case LinkedServer::State::SERVER_LIST:
-	case LinkedServer::State::RELAY_SERVER:
-	case LinkedServer::State::PLAY_SERVER:
-	case LinkedServer::State::GAME_LOGIN:
+	case State::INIT:
+	case State::ACCOUNT_LOGIN:
+	case State::SERVER_LIST:
+	case State::RELAY_SERVER:
+	case State::PLAY_SERVER:
+	case State::GAME_LOGIN:
 		return PacketAction::DISCONNECT;
 
-	case LinkedServer::State::CHAR_LIST:
+	case State::CHAR_LIST:
 		break;
 
-	case LinkedServer::State::PLAY_CHAR:
-	case LinkedServer::State::IN_GAME:
+	case State::PLAY_CHAR:
+	case State::IN_GAME:
 		return PacketAction::DISCONNECT;
 	}
 
 	connection->character_index = p->slot;
-	state = LinkedServer::State::PLAY_CHAR;
+	state = State::PLAY_CHAR;
 	return PacketAction::ACCEPT;
 }
 
@@ -587,23 +587,23 @@ LinkedServer::HandlePlayServer(std::span<const std::byte> src)
 	assert(src.size() == sizeof(*p));
 
 	switch (state) {
-	case LinkedServer::State::INIT:
-	case LinkedServer::State::RELAY_SERVER:
-	case LinkedServer::State::ACCOUNT_LOGIN:
+	case State::INIT:
+	case State::RELAY_SERVER:
+	case State::ACCOUNT_LOGIN:
 		return PacketAction::DISCONNECT;
 
-	case LinkedServer::State::SERVER_LIST:
+	case State::SERVER_LIST:
 		break;
 
-	case LinkedServer::State::PLAY_SERVER:
-	case LinkedServer::State::GAME_LOGIN:
-	case LinkedServer::State::CHAR_LIST:
-	case LinkedServer::State::PLAY_CHAR:
-	case LinkedServer::State::IN_GAME:
+	case State::PLAY_SERVER:
+	case State::GAME_LOGIN:
+	case State::CHAR_LIST:
+	case State::PLAY_CHAR:
+	case State::IN_GAME:
 		return PacketAction::DISCONNECT;
 	}
 
-	state = LinkedServer::State::PLAY_SERVER;
+	state = State::PLAY_SERVER;
 
 	assert(std::next(c.servers.iterator_to(*this)) == c.servers.end());
 
@@ -625,7 +625,7 @@ LinkedServer::HandlePlayServer(std::span<const std::byte> src)
 			SendWorld(*server, client_version.protocol,
 				  connection->client.supported_features_flags,
 				  connection->client.world);
-			state = LinkedServer::State::IN_GAME;
+			state = State::IN_GAME;
 			return PacketAction::DROP;
 		}
 
