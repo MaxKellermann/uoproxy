@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "PacketStructs.hxx"
+#include "Packets.hxx"
 
 #include <array>
 #include <cstdint>

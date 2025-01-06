@@ -2,8 +2,8 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Server.hxx"
-#include "PacketStructs.hxx"
 #include "uo/Command.hxx"
+#include "uo/Packets.hxx"
 #include "util/VarStructPtr.hxx"
 
 #include <algorithm>

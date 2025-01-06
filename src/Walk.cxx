@@ -3,11 +3,11 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
-#include "PacketStructs.hxx"
 #include "Server.hxx"
 #include "Client.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
+#include "uo/Packets.hxx"
 #include "util/SpanCast.hxx"
 
 static void

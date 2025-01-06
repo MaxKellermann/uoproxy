@@ -8,7 +8,7 @@
  */
 
 #include "Bridge.hxx"
-#include "PacketStructs.hxx"
+#include "uo/Packets.hxx"
 #include "uo/Command.hxx"
 
 #include <assert.h>

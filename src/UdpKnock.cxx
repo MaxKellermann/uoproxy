@@ -2,7 +2,7 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "UdpKnock.hxx"
-#include "PacketStructs.hxx"
+#include "uo/Packets.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/SocketError.hxx"

@@ -7,7 +7,7 @@
  * Verify UO network packets.
  */
 
-#include "PacketStructs.hxx"
+#include "uo/Packets.hxx"
 #include "util/CharUtil.hxx"
 
 #ifndef NDEBUG

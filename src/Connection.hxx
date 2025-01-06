@@ -3,10 +3,10 @@
 
 #pragma once
 
+#include "uo/Packets.hxx"
 #include "uo/WalkState.hxx"
 #include "event/CoarseTimerEvent.hxx"
 #include "util/IntrusiveList.hxx"
-#include "PacketStructs.hxx"
 #include "World.hxx"
 #include "PacketHandler.hxx"
 #include "StatefulClient.hxx"

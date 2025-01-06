@@ -3,8 +3,8 @@
 
 #include "Connection.hxx"
 #include "LinkedServer.hxx"
-#include "PacketStructs.hxx"
 #include "Log.hxx"
+#include "uo/Packets.hxx"
 
 #include <assert.h>
 

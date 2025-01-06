@@ -2,9 +2,9 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Length.hxx"
+#include "Command.hxx"
 #include "Version.hxx"
-#include "PacketStructs.hxx"
-#include "uo/Command.hxx"
+#include "Packets.hxx"
 #include "util/ByteOrder.hxx"
 
 #include <array>

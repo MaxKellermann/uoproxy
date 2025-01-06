@@ -3,10 +3,10 @@
 
 #include "Client.hxx"
 #include "PacketHandler.hxx"
-#include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
 #include "uo/Length.hxx"
+#include "uo/Packets.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "net/SocketProtocolError.hxx"
 #include "net/UniqueSocketDescriptor.hxx"

@@ -4,7 +4,6 @@
 #include "Connection.hxx"
 #include "Handler.hxx"
 #include "Instance.hxx"
-#include "PacketStructs.hxx"
 #include "VerifyPacket.hxx"
 #include "LinkedServer.hxx"
 #include "Server.hxx"
@@ -13,6 +12,7 @@
 #include "Log.hxx"
 #include "version.h"
 #include "Bridge.hxx"
+#include "uo/Packets.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/SpanCast.hxx"
 

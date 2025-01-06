@@ -2,9 +2,9 @@
 // author: Max Kellermann <max.kellermann@gmail.com>
 
 #include "Encryption.hxx"
-#include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
+#include "uo/Packets.hxx"
 
 #include <cassert>
 

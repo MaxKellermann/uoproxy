@@ -4,9 +4,9 @@
 #pragma once
 
 #include "uo/Command.hxx"
+#include "uo/Packets.hxx"
 #include "util/IntrusiveList.hxx"
 #include "util/VarStructPtr.hxx"
-#include "PacketStructs.hxx"
 
 struct Item final : IntrusiveListHook<> {
 	const uint32_t serial;

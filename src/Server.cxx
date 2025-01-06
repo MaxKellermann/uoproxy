@@ -3,9 +3,9 @@
 
 #include "Server.hxx"
 #include "PacketHandler.hxx"
-#include "PacketStructs.hxx"
 #include "Log.hxx"
 #include "uo/Length.hxx"
+#include "uo/Packets.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "net/IPv4Address.hxx"
 #include "net/SocketProtocolError.hxx"
