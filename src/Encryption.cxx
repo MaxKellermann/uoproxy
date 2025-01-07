@@ -135,26 +135,24 @@ LoginEncryption::Decrypt(const void *src0,
 	}
 }
 
-const void *
-Encryption::FromClient(const void *data0, size_t length)
+DefaultFifoBuffer &
+Encryption::FromClient(DefaultFifoBuffer &encrypted_buffer)
 {
-	assert(data0 != nullptr);
-	assert(length > 0);
-
 	if (state == State::DISABLED)
-		return data0;
+		return encrypted_buffer;
 
-	const uint8_t *const data = (const uint8_t *)data0, *p = data, *const end = p + length;
+	const auto src = encrypted_buffer.Read();
+	const uint8_t *const data = (const uint8_t *)src.data(), *p = data, *const end = p + src.size();
 
 	if (state == State::NEW) {
 		if (p + sizeof(seed) > end)
 			throw SocketProtocolError{"Not enough data"};
 
-		if (p[0] == 0xef) {
+		if (src.front() == std::byte{0xef}) {
 			/* client 6.0.5+ */
 			const struct uo_packet_seed *packet_seed =
 				(const struct uo_packet_seed *)p;
-			if (length < sizeof(*packet_seed))
+			if (src.size() < sizeof(*packet_seed))
 				throw SocketProtocolError{"Not enough data"};
 
 			seed = packet_seed->seed;
@@ -180,13 +178,13 @@ Encryption::FromClient(const void *data0, size_t length)
 			if (account_login_valid(account_login)) {
 				/* unencrypted account login */
 				state = State::DISABLED;
-				return data;
+				return encrypted_buffer;
 			}
 
 			if (!login.Init(seed, p)) {
 				Log(2, "login encryption failure\n");
 				state = State::DISABLED;
-				return data;
+				return encrypted_buffer;
 			}
 
 			state = State::LOGIN;
@@ -195,7 +193,7 @@ Encryption::FromClient(const void *data0, size_t length)
 			    game_login->auth_id == seed) {
 				/* unencrypted game login */
 				state = State::DISABLED;
-				return data;
+				return encrypted_buffer;
 			}
 
 			state = State::GAME;
@@ -203,34 +201,38 @@ Encryption::FromClient(const void *data0, size_t length)
 			/* unrecognized; assume it's not encrypted */
 			Log(2, "unrecognized encryption\n");
 			state = State::DISABLED;
-			return data;
+			return encrypted_buffer;
 		}
 	}
 
 	assert(state == State::LOGIN || state == State::GAME);
 
-	if (length > buffer_size) {
-		free(buffer);
-		buffer_size = ((length - 1) | 0xfff) + 1;
-		buffer = malloc(buffer_size);
-		if (buffer == nullptr)
-			abort();
-	}
+	auto w = decrypted_buffer.Write();
 
-	uint8_t *dest = (uint8_t *)buffer;
 	if (p > data) {
 		size_t l = p - data;
-		memcpy(dest, data, l);
-		dest += l;
+		assert(l <= w.size());
+		memcpy(w.data(), data, l);
+		encrypted_buffer.Consume(l);
+		decrypted_buffer.Append(l);
+
+		w = decrypted_buffer.Write();
 	}
 
 	if (state == State::LOGIN) {
-		login.Decrypt(p, dest, end - p);
+		std::size_t l = std::min(w.size(), static_cast<std::size_t>(end - p));
+		login.Decrypt(p, w.data(), l);
+		encrypted_buffer.Consume(l);
+		decrypted_buffer.Append(l);
 	} else {
+		// TODO implement
+		std::size_t l = std::min(w.size(), static_cast<std::size_t>(end - p));
+		memcpy(w.data(), p, l);
+		encrypted_buffer.Consume(l);
+		decrypted_buffer.Append(l);
 	}
 
-	/* XXX decrypt */
-	return buffer;
+	return decrypted_buffer;
 }
 
 } // namespace UO

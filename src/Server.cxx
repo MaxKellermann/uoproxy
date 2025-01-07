@@ -89,13 +89,11 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 }
 
 BufferedResult
-UO::Server::OnSocketData(DefaultFifoBuffer &input_buffer)
+UO::Server::OnSocketData(DefaultFifoBuffer &_input_buffer)
 {
+	auto &input_buffer = encryption.FromClient(_input_buffer);
 	std::span<const std::byte> src = input_buffer.Read();
 	assert(!src.empty());
-
-	const void *decrypted = encryption.FromClient(src.data(), src.size());
-	src = {reinterpret_cast<const std::byte *>(decrypted), src.size()};
 
 	size_t consumed = 0;
 

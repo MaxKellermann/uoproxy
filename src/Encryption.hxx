@@ -3,8 +3,12 @@
 
 #pragma once
 
+#include "DefaultFifoBuffer.hxx"
+
 #include <cstddef>
 #include <cstdint>
+
+class DefaultFifoBuffer;
 
 namespace UO {
 
@@ -31,17 +35,10 @@ class Encryption {
 
 	LoginEncryption login;
 
-	void *buffer = nullptr;
-	size_t buffer_size = 0;
+	DefaultFifoBuffer decrypted_buffer;
 
 public:
-	/**
-	 * Throws on error
-	 *
-	 * @return encrypted data (may be the original #data pointer if the
-	 * connection is not encrypted)
-	 */
-	const void *FromClient(const void *data, size_t length);
+	DefaultFifoBuffer &FromClient(DefaultFifoBuffer &encrypted_buffer);
 };
 
 } // namespace UO
