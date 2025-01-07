@@ -125,7 +125,7 @@ UO::Client::OnSocketData(std::span<const std::byte> src)
 		if (r.empty())
 			return consumed;
 
-		nbytes = ParsePackets(std::as_bytes(r));
+		nbytes = ParsePackets(r);
 		if (nbytes < 0)
 			return 0;
 
