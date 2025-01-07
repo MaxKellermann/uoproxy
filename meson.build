@@ -124,6 +124,7 @@ executable(
   'src/ProxySocks.cxx',
   'src/Encryption.cxx',
   'src/Server.cxx', 'src/Client.cxx',
+  'src/ParsePackets.cxx',
   'src/uo/Length.cxx',
   'src/Compression.cxx',
   'src/uo/MakePacket.cxx',

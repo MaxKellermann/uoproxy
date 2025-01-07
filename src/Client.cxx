@@ -3,9 +3,9 @@
 
 #include "Client.hxx"
 #include "PacketHandler.hxx"
+#include "ParsePackets.hxx"
 #include "Log.hxx"
 #include "uo/Command.hxx"
-#include "uo/Length.hxx"
 #include "uo/Packets.hxx"
 #include "lib/fmt/ExceptionFormatter.hxx"
 #include "net/SocketProtocolError.hxx"
@@ -64,46 +64,10 @@ UO::Client::Decompress(std::span<const std::byte> src)
 	return src.size();
 }
 
-BufferedResult
+inline BufferedResult
 UO::Client::ParsePackets(DefaultFifoBuffer &buffer)
 {
-	while (true) {
-		const auto src = buffer.Read();
-		if (src.empty()) {
-			buffer.Free();
-			return BufferedResult::OK;
-		}
-
-		const std::size_t packet_length = GetPacketLength(src, protocol_version);
-		if (packet_length == PACKET_LENGTH_INVALID) {
-			Log(1, "malformed packet from server\n");
-			log_hexdump(5, src);
-			throw SocketProtocolError{fmt::format("Malformed {:#02x} packet", src.front())};
-		}
-
-		LogFmt(9, "from server: {:#02x} length={}\n",
-		       src.front(), packet_length);
-
-		if (packet_length == 0 || packet_length > src.size())
-			return BufferedResult::MORE;
-
-		const auto packet = src.first(packet_length);
-
-		log_hexdump(10, packet);
-
-		switch (handler.OnPacket(packet)) {
-		case PacketHandler::OnPacketResult::OK:
-			break;
-
-		case PacketHandler::OnPacketResult::BLOCKING:
-			return BufferedResult::OK;
-
-		case PacketHandler::OnPacketResult::CLOSED:
-			return BufferedResult::DESTROYED;
-		}
-
-		buffer.Consume(packet_length);
-	}
+	return UO::ParsePackets(buffer, protocol_version, "server", handler);
 }
 
 BufferedResult
