@@ -16,11 +16,8 @@ class SocketBufferHandler {
 public:
 	/**
 	 * Data is available.
-	 *
-	 * @return the number of bytes consumed, or 0 if the sock_buff
-	 * has been closed within the function
 	 */
-	virtual size_t OnSocketData(std::span<const std::byte> src) = 0;
+	virtual BufferedResult OnSocketData(DefaultFifoBuffer &input_buffer) = 0;
 
 	/**
 	 * The socket has been closed because the peer closed his

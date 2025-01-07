@@ -89,15 +89,16 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 	return (ssize_t)consumed;
 }
 
-size_t
-UO::Server::OnSocketData(std::span<const std::byte> src)
+BufferedResult
+UO::Server::OnSocketData(DefaultFifoBuffer &input_buffer)
 {
+	std::span<const std::byte> src = input_buffer.Read();
 	assert(!src.empty());
 
 	if (const void *decrypted = encryption.FromClient(src.data(), src.size());
 	    decrypted == nullptr)
 		/* need more data */
-		return 0;
+		return BufferedResult::MORE;
 	else
 		src = {reinterpret_cast<const std::byte *>(decrypted), src.size()};
 
@@ -109,7 +110,7 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 		const auto *p = reinterpret_cast<const struct uo_packet_seed *>(src.data());
 
 		if (src.size() < sizeof(*p))
-			return 0;
+			return BufferedResult::MORE;
 
 		seed = p->seed;
 		if (seed == 0)
@@ -120,7 +121,7 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 		/* the first packet from a client is the seed, 4 bytes without
 		   header */
 		if (src.size() < 4)
-			return 0;
+			return BufferedResult::MORE;
 
 		seed = *(const uint32_t*)src.data();
 		if (seed == 0)
@@ -132,9 +133,11 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 
 	ssize_t nbytes = ParsePackets(src);
 	if (nbytes < 0)
-		return 0;
+		return BufferedResult::DESTROYED;
 
-	return consumed + (size_t)nbytes;
+	input_buffer.Consume(consumed + static_cast<std::size_t>(nbytes));
+	input_buffer.FreeIfEmpty();
+	return BufferedResult::OK;
 }
 
 bool

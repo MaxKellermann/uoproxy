@@ -63,15 +63,7 @@ SocketBuffer::GetLocalIPv4Address() const noexcept
 BufferedResult
 SocketBuffer::OnBufferedData() noexcept
 {
-	const auto r = socket.ReadBuffer();
-	assert(!r.empty());
-
-	const std::size_t nbytes = handler.OnSocketData(r);
-	if (nbytes == 0)
-		return BufferedResult::DESTROYED;
-
-	socket.DisposeConsumed(nbytes);
-	return BufferedResult::OK;
+	return handler.OnSocketData(socket.GetInputBuffer());
 }
 
 bool

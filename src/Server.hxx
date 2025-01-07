@@ -85,7 +85,7 @@ private:
 	ssize_t ParsePackets(std::span<const std::byte> src);
 
 	/* virtual methods from SocketBufferHandler */
-	size_t OnSocketData(std::span<const std::byte> src) override;
+	BufferedResult OnSocketData(DefaultFifoBuffer &input_buffer) override;
 	bool OnSocketDisconnect() noexcept override;
 	void OnSocketError(std::exception_ptr error) noexcept override;
 };

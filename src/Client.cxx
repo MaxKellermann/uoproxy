@@ -109,36 +109,43 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 	return (ssize_t)consumed;
 }
 
-size_t
-UO::Client::OnSocketData(std::span<const std::byte> src)
+BufferedResult
+UO::Client::OnSocketData(DefaultFifoBuffer &input_buffer)
 {
 	if (compression_enabled) {
-		ssize_t nbytes;
-		size_t consumed;
+		const auto compressed_src = input_buffer.Read();
+		assert(!compressed_src.empty());
 
-		nbytes = Decompress(src);
-		if (nbytes <= 0)
-			return 0;
-		consumed = (size_t)nbytes;
+		if (const std::size_t nbytes = Decompress(compressed_src); nbytes == 0)
+			return BufferedResult::OK;
+		else
+			input_buffer.Consume(nbytes);
+		input_buffer.FreeIfEmpty();
 
 		auto r = decompressed_buffer.Read();
 		if (r.empty())
-			return consumed;
+			return BufferedResult::OK;
 
-		nbytes = ParsePackets(r);
+		const auto nbytes = ParsePackets(r);
 		if (nbytes < 0)
-			return 0;
+			return BufferedResult::DESTROYED;
 
 		decompressed_buffer.Consume((size_t)nbytes);
 		decompressed_buffer.FreeIfEmpty();
 
-		return consumed;
+		return BufferedResult::OK;
 	} else {
+		const auto src = input_buffer.Read();
+		assert(!src.empty());
+
 		ssize_t nbytes = ParsePackets(src);
 		if (nbytes < 0)
-			return 0;
+			return BufferedResult::DESTROYED;
 
-		return nbytes;
+		input_buffer.Consume(static_cast<std::size_t>(nbytes));
+		input_buffer.FreeIfEmpty();
+
+		return BufferedResult::OK;
 	}
 }
 
