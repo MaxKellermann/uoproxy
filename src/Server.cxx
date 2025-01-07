@@ -112,11 +112,8 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 			return 0;
 
 		seed = p->seed;
-		if (seed == 0) {
-			Log(2, "zero seed from client\n");
-			Abort();
-			return 0;
-		}
+		if (seed == 0)
+			throw SocketProtocolError{"Zero seed from client"};
 	}
 
 	if (seed == 0) {
@@ -126,11 +123,8 @@ UO::Server::OnSocketData(std::span<const std::byte> src)
 			return 0;
 
 		seed = *(const uint32_t*)src.data();
-		if (seed == 0) {
-			Log(2, "zero seed from client\n");
-			Abort();
-			return 0;
-		}
+		if (seed == 0)
+			throw SocketProtocolError{"Zero seed from client"};
 
 		consumed += sizeof(uint32_t);
 		src = src.subspan(sizeof(uint32_t));
