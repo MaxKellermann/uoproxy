@@ -7,11 +7,12 @@
 #include "util/VarStructPtr.hxx"
 
 #include <cstddef>
+#include <memory>
 #include <string_view>
 
 struct ClientVersion {
 	VarStructPtr<struct uo_packet_client_version> packet;
-	struct uo_packet_seed *seed = nullptr;
+	std::unique_ptr<struct uo_packet_seed> seed;
 	ProtocolVersion protocol = ProtocolVersion::UNKNOWN;
 
 	ClientVersion() = default;

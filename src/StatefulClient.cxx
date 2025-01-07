@@ -22,7 +22,7 @@ StatefulClient::GetSeedPacket(uint32_t seed, bool for_game_login,
 {
 	const struct uo_packet_seed *seed_packet = for_game_login
 		? nullptr
-		: version.seed;
+		: version.seed.get();
 
 	if (!for_game_login && seed_packet == nullptr &&
 	    version.IsDefined() &&

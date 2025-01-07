@@ -10,10 +10,7 @@
 
 #include <string.h>
 
-ClientVersion::~ClientVersion() noexcept
-{
-	delete seed;
-}
+ClientVersion::~ClientVersion() noexcept = default;
 
 static int
 client_version_compare(const char *a, const char *b)
@@ -92,7 +89,7 @@ ClientVersion::Seed(const struct uo_packet_seed &_seed) noexcept
 	assert(seed == nullptr);
 	assert(_seed.cmd == UO::Command::Seed);
 
-	seed = new struct uo_packet_seed(_seed);
+	seed = std::make_unique<struct uo_packet_seed>(_seed);
 
 	/* this packet is only know to 6.0.5.0 clients, so we don't check
 	   the packet contents here */
