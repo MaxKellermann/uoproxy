@@ -77,8 +77,7 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from server\n");
 			log_hexdump(5, src);
-			Abort();
-			return 0;
+			throw SocketProtocolError{fmt::format("Malformed {:#02x} packet", src.front())};
 		}
 
 		LogFmt(9, "from server: {:#02x} length={}\n",
