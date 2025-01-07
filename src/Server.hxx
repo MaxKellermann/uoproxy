@@ -82,7 +82,7 @@ public:
 private:
 	void DeferredAbort() noexcept;
 
-	ssize_t ParsePackets(std::span<const std::byte> src);
+	BufferedResult ParsePackets(DefaultFifoBuffer &buffer);
 
 	/* virtual methods from SocketBufferHandler */
 	BufferedResult OnSocketData(DefaultFifoBuffer &input_buffer) override;

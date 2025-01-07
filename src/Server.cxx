@@ -47,13 +47,17 @@ UO::Server::GetLocalIPv4Address() const noexcept
 	return sock.GetLocalIPv4Address();
 }
 
-inline ssize_t
-UO::Server::ParsePackets(std::span<const std::byte> src)
+inline BufferedResult
+UO::Server::ParsePackets(DefaultFifoBuffer &buffer)
 {
-	size_t consumed = 0;
+	while (true) {
+		const auto src = buffer.Read();
+		if (src.empty()) {
+			buffer.Free();
+			return BufferedResult::OK;
+		}
 
-	while (!src.empty()) {
-		size_t packet_length = GetPacketLength(src, protocol_version);
+		const std::size_t packet_length = GetPacketLength(src, protocol_version);
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from client\n");
 			log_hexdump(5, src);
@@ -64,7 +68,7 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 		       src.front(), packet_length);
 
 		if (packet_length == 0 || packet_length > src.size())
-			break;
+			return BufferedResult::MORE;
 
 		const auto packet = src.first(packet_length);
 
@@ -75,17 +79,14 @@ UO::Server::ParsePackets(std::span<const std::byte> src)
 			break;
 
 		case PacketHandler::OnPacketResult::BLOCKING:
-			return static_cast<ssize_t>(consumed);
+			return BufferedResult::OK;
 
 		case PacketHandler::OnPacketResult::CLOSED:
-			return -1;
+			return BufferedResult::DESTROYED;
 		}
 
-		consumed += packet_length;
-		src = src.subspan(packet_length);
+		buffer.Consume(packet_length);
 	}
-
-	return (ssize_t)consumed;
 }
 
 BufferedResult
@@ -124,13 +125,9 @@ UO::Server::OnSocketData(DefaultFifoBuffer &_input_buffer)
 		src = src.subspan(sizeof(uint32_t));
 	}
 
-	ssize_t nbytes = ParsePackets(src);
-	if (nbytes < 0)
-		return BufferedResult::DESTROYED;
+	input_buffer.Consume(consumed);
 
-	input_buffer.Consume(consumed + static_cast<std::size_t>(nbytes));
-	input_buffer.FreeIfEmpty();
-	return BufferedResult::OK;
+	return ParsePackets(input_buffer);
 }
 
 bool

@@ -64,13 +64,17 @@ UO::Client::Decompress(std::span<const std::byte> src)
 	return src.size();
 }
 
-ssize_t
-UO::Client::ParsePackets(std::span<const std::byte> src)
+BufferedResult
+UO::Client::ParsePackets(DefaultFifoBuffer &buffer)
 {
-	size_t consumed = 0, packet_length;
+	while (true) {
+		const auto src = buffer.Read();
+		if (src.empty()) {
+			buffer.Free();
+			return BufferedResult::OK;
+		}
 
-	while (!src.empty()) {
-		packet_length = GetPacketLength(src, protocol_version);
+		const std::size_t packet_length = GetPacketLength(src, protocol_version);
 		if (packet_length == PACKET_LENGTH_INVALID) {
 			Log(1, "malformed packet from server\n");
 			log_hexdump(5, src);
@@ -81,7 +85,7 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 		       src.front(), packet_length);
 
 		if (packet_length == 0 || packet_length > src.size())
-			break;
+			return BufferedResult::MORE;
 
 		const auto packet = src.first(packet_length);
 
@@ -92,17 +96,14 @@ UO::Client::ParsePackets(std::span<const std::byte> src)
 			break;
 
 		case PacketHandler::OnPacketResult::BLOCKING:
-			return static_cast<ssize_t>(consumed);
+			return BufferedResult::OK;
 
 		case PacketHandler::OnPacketResult::CLOSED:
-			return -1;
+			return BufferedResult::DESTROYED;
 		}
 
-		consumed += packet_length;
-		src = src.subspan(packet_length);
+		buffer.Consume(packet_length);
 	}
-
-	return (ssize_t)consumed;
 }
 
 BufferedResult
@@ -118,30 +119,9 @@ UO::Client::OnSocketData(DefaultFifoBuffer &input_buffer)
 			input_buffer.Consume(nbytes);
 		input_buffer.FreeIfEmpty();
 
-		auto r = decompressed_buffer.Read();
-		if (r.empty())
-			return BufferedResult::OK;
-
-		const auto nbytes = ParsePackets(r);
-		if (nbytes < 0)
-			return BufferedResult::DESTROYED;
-
-		decompressed_buffer.Consume((size_t)nbytes);
-		decompressed_buffer.FreeIfEmpty();
-
-		return BufferedResult::OK;
+		return ParsePackets(decompressed_buffer);
 	} else {
-		const auto src = input_buffer.Read();
-		assert(!src.empty());
-
-		ssize_t nbytes = ParsePackets(src);
-		if (nbytes < 0)
-			return BufferedResult::DESTROYED;
-
-		input_buffer.Consume(static_cast<std::size_t>(nbytes));
-		input_buffer.FreeIfEmpty();
-
-		return BufferedResult::OK;
+		return ParsePackets(input_buffer);
 	}
 }
 
