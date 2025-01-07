@@ -66,7 +66,7 @@ Connection::Resynchronize()
 {
 	walk.clear();
 
-	const struct uo_packet_walk_ack packet = {
+	static constexpr struct uo_packet_walk_ack packet = {
 		.cmd = UO::Command::Resynchronize,
 		.seq = 0,
 		.notoriety = 0,
