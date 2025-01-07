@@ -94,12 +94,8 @@ UO::Server::OnSocketData(DefaultFifoBuffer &input_buffer)
 	std::span<const std::byte> src = input_buffer.Read();
 	assert(!src.empty());
 
-	if (const void *decrypted = encryption.FromClient(src.data(), src.size());
-	    decrypted == nullptr)
-		/* need more data */
-		return BufferedResult::MORE;
-	else
-		src = {reinterpret_cast<const std::byte *>(decrypted), src.size()};
+	const void *decrypted = encryption.FromClient(src.data(), src.size());
+	src = {reinterpret_cast<const std::byte *>(decrypted), src.size()};
 
 	size_t consumed = 0;
 

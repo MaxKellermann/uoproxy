@@ -36,10 +36,12 @@ class Encryption {
 
 public:
 	/**
+	 * Throws on error
+	 *
 	 * @return encrypted data (may be the original #data pointer if the
-	 * connection is not encrypted), or nullptr if more data is necessary
+	 * connection is not encrypted)
 	 */
-	const void *FromClient(const void *data, size_t length) noexcept;
+	const void *FromClient(const void *data, size_t length);
 };
 
 } // namespace UO

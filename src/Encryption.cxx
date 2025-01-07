@@ -5,6 +5,7 @@
 #include "Log.hxx"
 #include "uo/Command.hxx"
 #include "uo/Packets.hxx"
+#include "net/SocketProtocolError.hxx"
 
 #include <cassert>
 
@@ -135,7 +136,7 @@ LoginEncryption::Decrypt(const void *src0,
 }
 
 const void *
-Encryption::FromClient(const void *data0, size_t length) noexcept
+Encryption::FromClient(const void *data0, size_t length)
 {
 	assert(data0 != nullptr);
 	assert(length > 0);
@@ -147,16 +148,14 @@ Encryption::FromClient(const void *data0, size_t length) noexcept
 
 	if (state == State::NEW) {
 		if (p + sizeof(seed) > end)
-			/* need more data */
-			return nullptr;
+			throw SocketProtocolError{"Not enough data"};
 
 		if (p[0] == 0xef) {
 			/* client 6.0.5+ */
 			const struct uo_packet_seed *packet_seed =
 				(const struct uo_packet_seed *)p;
 			if (length < sizeof(*packet_seed))
-				/* need more data */
-				return nullptr;
+				throw SocketProtocolError{"Not enough data"};
 
 			seed = packet_seed->seed;
 			p += sizeof(*packet_seed);
@@ -168,7 +167,7 @@ Encryption::FromClient(const void *data0, size_t length) noexcept
 		state = State::SEEDED;
 
 		if (p == end)
-			return data;
+			throw SocketProtocolError{"Not enough data"};
 	}
 
 	if (state == State::SEEDED) {
