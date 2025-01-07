@@ -52,16 +52,13 @@ UO::Client::Abort() noexcept
 	abort_event.Schedule();
 }
 
-inline ssize_t
+inline std::size_t
 UO::Client::Decompress(std::span<const std::byte> src)
 {
 	decompressed_buffer.AllocateIfNull();
 	auto w = decompressed_buffer.Write();
-	if (w.empty()) {
-		Log(1, "decompression buffer full\n");
-		Abort();
-		return -1;
-	}
+	if (w.empty())
+		throw SocketBufferFullError{"Decompression buffer full"};
 
 	decompressed_buffer.Append(decompression.Decompress(w, src));
 	return src.size();

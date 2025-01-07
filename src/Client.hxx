@@ -70,7 +70,7 @@ public:
 private:
 	void DeferredAbort() noexcept;
 
-	ssize_t Decompress(std::span<const std::byte> src);
+	std::size_t Decompress(std::span<const std::byte> src);
 	ssize_t ParsePackets(std::span<const std::byte> src);
 
 	/* virtual methods from SocketBufferHandler */
