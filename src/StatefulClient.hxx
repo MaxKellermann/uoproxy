@@ -41,7 +41,7 @@ struct StatefulClient {
 
 	uint32_t supported_features_flags = 0;
 
-	unsigned char ping_request = 0, ping_ack = 0;
+	uint8_t ping_request = 0, ping_ack = 0;
 
 	World world;
 
