@@ -235,7 +235,7 @@ public:
 #ifndef NO_FINE_TIMER_EVENT
 			timers.IsEmpty() &&
 #endif // NO_FINE_TIMER_EVENT
-			defer.empty() && idle.empty() &&
+			defer.empty() && idle.empty() && next.empty() &&
 			sockets.empty() && ready_sockets.empty();
 	}
 
