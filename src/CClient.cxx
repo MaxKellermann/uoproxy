@@ -74,7 +74,7 @@ Connection::CoConnect(SocketAddress server_address,
 }
 
 inline void
-Connection::OnConnectComplete(std::exception_ptr error) noexcept
+Connection::OnConnectComplete(std::exception_ptr &&error) noexcept
 {
 	if (error) {
 		log_error("connect failed", std::move(error));

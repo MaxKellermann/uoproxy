@@ -126,7 +126,7 @@ private:
 	[[nodiscard]]
 	Co::InvokeTask CoConnect(SocketAddress server_address,
 				 uint32_t seed, bool for_game_login);
-	void OnConnectComplete(std::exception_ptr error) noexcept;
+	void OnConnectComplete(std::exception_ptr &&error) noexcept;
 
 	void DoReconnect() noexcept;
 	void ReconnectTimerCallback() noexcept;
