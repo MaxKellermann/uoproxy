@@ -52,7 +52,7 @@ jobs:
         run: ninja -C output -v
 
       - name: Unit Tests
-        run: meson test -C output
+        run: meson test -C output --print-errorlogs
 
       - name: Dump Unit Test Log
         if: ${{ failure() }}
