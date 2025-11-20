@@ -7,7 +7,7 @@ project('uoproxy', 'cpp', version: '0.5',
     # This is only here to build subprojects as static libraries
     'default_library=static',
 
-    'fmt:cpp_std=c++2a',
+    'fmt:cpp_std=c++20',
     'fmt:warning_level=0',
   ],
   license: 'GPL-2.0-only',
