@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include <stdlib.h> // for strtoul()
 #include <string.h>
 
 ClientVersion::~ClientVersion() noexcept = default;
