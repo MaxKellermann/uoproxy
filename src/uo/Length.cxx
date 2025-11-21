@@ -85,9 +85,9 @@ GetPacketLengths(ProtocolVersion protocol) noexcept
 
 	case ProtocolVersion::V5:
 	case ProtocolVersion::V6:
+	case ProtocolVersion::V6_0_5:
 		return packet_lengths_6;
 
-	case ProtocolVersion::V6_0_5:
 	case ProtocolVersion::V6_0_14:
 		return packet_lengths_6014;
 

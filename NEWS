@@ -3,6 +3,7 @@ uoproxy (0.6) unstable; urgency=low
   * make connect attempts non-blocking
   * support various KR/SA packets
   * reduce memory usage
+  * fix packet length mismatch for client 6.0.5
 
  --   
 
