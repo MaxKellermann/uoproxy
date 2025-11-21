@@ -449,7 +449,7 @@ Compress(std::span<std::byte> dest, std::span<const std::byte> src)
 	co.OutputBits(dest, &dest_index);
 	co.FlushOutput(dest, &dest_index);
 
-	return (ssize_t)dest_index;
+	return dest_index;
 }
 
 } // namespace UO
