@@ -53,8 +53,3 @@ jobs:
 
       - name: Unit Tests
         run: meson test -C output --print-errorlogs
-
-      - name: Dump Unit Test Log
-        if: ${{ failure() }}
-        continue-on-error: true
-        run: cat output/meson-logs/testlog.txt
