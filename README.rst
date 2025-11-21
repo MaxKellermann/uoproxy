@@ -55,7 +55,7 @@ uoproxy was developed on Linux, but will probably run on any POSIX
 operating system, including Solaris, FreeBSD, MacOS X.  You need the
 following to compile it:
 
-- a C++20 compiler (`GCC <https://gcc.gnu.org/>`__ or `clang
+- a C++23 compiler (`GCC <https://gcc.gnu.org/>`__ or `clang
   <https://clang.llvm.org/>`__)
 - `Meson 1.2 <http://mesonbuild.com/>`__ and `Ninja <https://ninja-build.org/>`__
 - `libfmt <https://fmt.dev/>`__
